@@ -40,6 +40,14 @@ v revision móde, validuje a vyhodnocuje konvergenciu. Loop končí keď:
 - validácia kontraktov prešla,
 - **alebo** dosiahli sa `max_iterations` (default 5) → eskalácia človeku.
 
+**Post-konvergencia** — beží raz, pred PR:
+
+`10-documentation-author` zoberie konvergované výstupy 01–09 a vyrobí
+**konsolidované dokumenty** pre ľudské oko a ďalšiu implementáciu:
+per-modul špecifikácie (`docs/spec/<modul>.md`), system overview, dev
+handbook, onboarding. Ak nájde kritickú inkonzistenciu, môže PM
+re-otvoriť ďalšiu refinement rundu medzi 01–09.
+
 ## Revision contract — povinná záverečná sekcia v každom artefakte
 
 Každý markdown artefakt, ktorý agent produkuje, **musí končiť** sekciou

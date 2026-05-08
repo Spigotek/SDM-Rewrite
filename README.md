@@ -114,6 +114,32 @@ poradia a závislostí v [`GOAL.md` §7](./GOAL.md#7-návrh-agentov-a-ich-rolí)
 | 8 | DevEx / DevOps | bootstrap repa, CI/CD, dev env |
 | 9 | QA / Test Strategy | test pyramída, mock stratégia |
 
+## Spustenie pipeline (bootstrap)
+
+Pipeline beží v **staged multi-chat móde**: každá úroveň spracovania má
+vlastný adresár; predošlý stage pripraví ďalší (prompts + instructions),
+takže user vidí presne, čo paste-núť do nového CC chatu.
+
+### Postup
+
+1. Bootstrap z repo root (jediný terminálový krok):
+   ```bash
+   bash tools/init-pipeline.sh
+   ```
+2. Skript vypíše presný prompt — otvor **nový Claude Code chat** v rovnakom
+   adresári a paste-ni ho.
+3. CC vykoná stage `01-phase-a` (agenti 01, 02, 03 paralelne) a na konci
+   vypíše prompt pre **ďalší chat** (`02-phase-b`).
+4. Opakuj kým pipeline nedosiahne `final-pr` stage, ktorý otvorí PR proti
+   `main`. Človek robí review.
+
+Detail runbook-u: [`.agents/kickoff.md`](./.agents/kickoff.md).
+Helper skripty v `tools/`: `init-pipeline.sh`, `prepare-stage.sh`,
+`assemble-prompt.sh`, `preflight.sh`.
+
+Po dokončení round 1 dorobí agent **08 DevEx/DevOps** natívne PM CLI
+v `apps/pm/`, ktoré nahradí Bash bootstrap.
+
 ## Roadmap
 
 1. **Preparation** ← *aktuálny stav*

@@ -172,6 +172,7 @@ Každý agent má v `.agents/<NN>-<name>/` tieto súbory (kontrakt, ktorý PM vi
 | 07 | `07-design-system` | Tokens, komponenty, a11y |
 | 08 | `08-devex-devops` | Bootstrap repa, CI/CD, mock backend |
 | 09 | `09-qa-test-strategy` | Test pyramída, mock stratégia |
+| 10 | `10-documentation-author` | **Post-konvergencia**: konsolidácia výstupov 01–09 do per-modul špecifikácií + system overview + dev handbook + onboarding |
 
 ### 7.3 Project Manager (00) — supervízor s konvergenčným loopom
 
@@ -231,10 +232,21 @@ GOAL + Phase A výstupy):             │   paralelne, revision mode) │
   06 Tech Stack                                     ▼
   07 Design System                  ┌────────────────────────────┐
   08 DevEx/DevOps                   │  konvergencia?              │
-  09 QA Strategy                    │  YES → exit                 │
+  09 QA Strategy                    │  YES → POST-CONVERGENCE     │
                                     │  NO  → next iteration       │
 ─── PM validation + flag scan ───   │  MAX → eskalácia človeku    │
-                                    └────────────────────────────┘
+                                    └──────────────┬─────────────┘
+                                                   │
+                                                   ▼
+                                    ┌────────────────────────────┐
+                                    │  POST-CONVERGENCE (raz)     │
+                                    │  10 Documentation Author    │
+                                    │  → docs/spec/<modul>.md     │
+                                    │  → system-overview, handbook│
+                                    │  → onboarding               │
+                                    └──────────────┬─────────────┘
+                                                   │
+                                                   ▼ (PR do main)
 ```
 
 ### 7.5 Ako sa agent spúšťa (round-1 vs. revision mode)
