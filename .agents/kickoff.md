@@ -223,6 +223,31 @@ loop:
 
 ---
 
+## 7b. Post-konvergencia — agent 10 (Documentation Author)
+
+Po dosiahnutí konvergencie (§7) **predtým** ako otvoríš PR (§8):
+
+1. Spusti agenta `10-documentation-author` (jediný post-konvergenčný agent):
+   ```
+   Agent({ subagent_type: "general-purpose", isolation: "worktree",
+           description: "Run 10-documentation-author",
+           prompt: <assembled-system-prompt + task> })
+   ```
+2. Po vrátení: validuj výstupy podľa `10-documentation-author/outputs.md`
+   (per-modul špecy v `docs/spec/`, `docs/system-overview.md`,
+   `docs/dev-handbook.md`, `docs/onboarding.md`).
+3. **Špeciálna logika flag-ov agenta 10**:
+   - Ak agent 10 vráti `## Otvorené závislosti` flagy adresované **01–09**
+     ako **kritické** (cross-artifact inkonzistencia objavená pri
+     konsolidácii) → **re-otvor refinement loop**
+     (`pipeline.yaml` → `post_convergence.on_critical_flag: "reopen_refinement"`):
+     - vytvor `pipeline/<runId>/round-<N+1>`,
+     - re-invokuj len dotknutých 01–09,
+     - po novej konvergencii spusti agenta 10 znova.
+   - Ak flagy nie sú kritické (cosmetic / dokumentačné) → pokračuj na §8.
+4. Mergni vetvu agenta 10 do `pipeline/<runId>/round-<N>` a následne do
+   `pipeline/<runId>` (rovnako ako §5 merge protokol).
+
 ## 8. Po konvergencii — finálny PR
 
 ```bash

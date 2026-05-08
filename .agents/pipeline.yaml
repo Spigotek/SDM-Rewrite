@@ -29,6 +29,20 @@ round_1:
       - "09-qa-test-strategy"
 
 # ─────────────────────────────────────────────────────────────────────
+# POST-CONVERGENCE — beží raz, po dosiahnutí konvergencie refinement loopu
+# a PRED otvorením finálneho PR. Konsoliduje výstupy 01–09 do dokumentov
+# pre ľudské oko a ďalšiu implementáciu.
+# ─────────────────────────────────────────────────────────────────────
+post_convergence:
+  description: "Konsolidácia výstupov 01–09 do per-modul špecov + system overview + dev handbook + onboarding."
+  agents:
+    - "10-documentation-author"
+  # Ak agent 10 nájde kritickú inkonzistenciu (flag adresovaný 01–09),
+  # PM môže re-otvoriť ďalšiu refinement rundu medzi 01–09 a po nej
+  # spustiť agenta 10 znova.
+  on_critical_flag: "reopen_refinement"
+
+# ─────────────────────────────────────────────────────────────────────
 # REFINEMENT LOOP — round 2..N, riadený PM.
 # ─────────────────────────────────────────────────────────────────────
 refinement:
@@ -64,6 +78,8 @@ context_hints:
   "07-design-system":       ["02-ux-persona-analyst", "06-tech-stack-selector"]
   "08-devex-devops":        ["04-architecture", "06-tech-stack-selector", "09-qa-test-strategy", "07-design-system"]
   "09-qa-test-strategy":    ["02-ux-persona-analyst", "03-domain-modeller", "04-architecture"]
+  # 10 číta VŠETKO — vstupom mu sú konsolidované výstupy 01–09.
+  "10-documentation-author": ["01-api-analyst", "02-ux-persona-analyst", "03-domain-modeller", "04-architecture", "05-security", "06-tech-stack-selector", "07-design-system", "08-devex-devops", "09-qa-test-strategy"]
 
 # ─────────────────────────────────────────────────────────────────────
 # Globálne defaults pre Claude Agent SDK volania.

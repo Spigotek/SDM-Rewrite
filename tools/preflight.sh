@@ -61,6 +61,7 @@ required_agents=(
   "07-design-system"
   "08-devex-devops"
   "09-qa-test-strategy"
+  "10-documentation-author"
 )
 required_files=(agent.md focus.md inputs.md outputs.md preferences.md skills.md mcp.json hooks.json)
 missing_agents=0
@@ -73,7 +74,7 @@ for a in "${required_agents[@]}"; do
   done
 done
 if [ "$missing_agents" -eq 0 ]; then
-  ok "všetkých 10 agent-folderov má 8/8 súborov"
+  ok "všetkých 11 agent-folderov má 8/8 súborov"
 fi
 
 # 5. pipeline.yaml + kickoff.md + revision contract

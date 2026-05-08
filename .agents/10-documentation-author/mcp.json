@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "_purpose": "Čítanie výstupov agentov 01–09 a zápis konsolidovaných dokumentov."
+    }
+  }
+}
