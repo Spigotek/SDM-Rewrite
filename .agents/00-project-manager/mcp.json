@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "_purpose": "Čítanie pipeline.yaml, agent definícií a writeback state.json a logov."
+    }
+  }
+}

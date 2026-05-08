@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    }
+  },
+  "_optional": {
+    "context7": "Ak je k dispozícii — pre dohľadanie dokumentácie kandidátskych knižníc (TanStack Query, Nx, Turborepo)."
+  }
+}

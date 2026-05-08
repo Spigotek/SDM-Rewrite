@@ -1,0 +1,29 @@
+{
+  "hooks": {
+    "SubagentStart": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          { "type": "command", "command": "node tools/pm-hooks/on-subagent-start.js" }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          { "type": "command", "command": "node tools/pm-hooks/on-subagent-stop.js" }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "node tools/pm-hooks/log-write.js" }
+        ]
+      }
+    ]
+  },
+  "_note": "Hook skripty implementuje DevOps agent v bootstrap fáze. Tu je len kontrakt."
+}

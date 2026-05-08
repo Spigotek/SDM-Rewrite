@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    }
+  },
+  "_optional": {
+    "context7": "Ak je k dispozícii — pre dohľadanie aktuálnej knižničnej dokumentácie.",
+    "fetch": "Pre overenie npmjs / github / bundlephobia metrík."
+  }
+}

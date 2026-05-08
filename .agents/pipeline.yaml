@@ -1,0 +1,85 @@
+# Pipeline definícia v2 — iteratívny konvergenčný model.
+# Project Manager (00) orchestruje 2-fázový round 1 + refinement loop,
+# ukončený PM rozhodnutím alebo limitom max iteration.
+
+version: 2
+project: sdm-rewrite
+
+# ─────────────────────────────────────────────────────────────────────
+# ROUND 1 — broadcast v dvoch fázach. PM validuje výstupy po každej fáze.
+# ─────────────────────────────────────────────────────────────────────
+round_1:
+  phase_a:
+    description: "Vstup: GOAL.md + PDF. Žiadne predchodcovské výstupy."
+    parallel: true
+    agents:
+      - "01-api-analyst"
+      - "02-ux-persona-analyst"
+      - "03-domain-modeller"
+
+  phase_b:
+    description: "Vstup: GOAL.md + výstupy Phase A. Štart po validácii Phase A."
+    parallel: true
+    agents:
+      - "04-architecture"
+      - "05-security"
+      - "06-tech-stack-selector"
+      - "07-design-system"
+      - "08-devex-devops"
+      - "09-qa-test-strategy"
+
+# ─────────────────────────────────────────────────────────────────────
+# REFINEMENT LOOP — round 2..N, riadený PM.
+# ─────────────────────────────────────────────────────────────────────
+refinement:
+  max_iterations: 5
+
+  # Všetky 3 signály musia platiť, aby PM ukončil loop.
+  convergence_signals:
+    - "no_open_dependencies"        # žiadny artefakt nemá neuzavreté flagy
+    - "no_cross_artifact_conflicts" # cross-ref medzi artefaktmi je konzistentný
+    - "validation_passed"           # všetky outputs.md kontrakty splnené
+
+  oscillation_detection:
+    enabled: true
+    window: 3                       # ak agent osciluje medzi 2 stavmi v posledných 3 rundách → eskalácia
+
+  escalation:
+    on_max_iterations: "human"
+    on_unresolvable_conflict: "human"
+    on_oscillation: "human"
+
+# ─────────────────────────────────────────────────────────────────────
+# Context hints — PM ich používa v refinement móde na to, ktoré delta
+# výstupov zahrnúť do revision requestu pre daného agenta.
+# Toto NIE SÚ blokujúce dependencies — len tip, koho výstupy sú relevantné.
+# ─────────────────────────────────────────────────────────────────────
+context_hints:
+  "01-api-analyst":         ["04-architecture", "05-security"]
+  "02-ux-persona-analyst":  ["07-design-system", "04-architecture"]
+  "03-domain-modeller":     ["01-api-analyst", "02-ux-persona-analyst", "04-architecture"]
+  "04-architecture":        ["01-api-analyst", "02-ux-persona-analyst", "03-domain-modeller", "05-security", "06-tech-stack-selector"]
+  "05-security":            ["01-api-analyst", "04-architecture"]
+  "06-tech-stack-selector": ["04-architecture", "02-ux-persona-analyst"]
+  "07-design-system":       ["02-ux-persona-analyst", "06-tech-stack-selector"]
+  "08-devex-devops":        ["04-architecture", "06-tech-stack-selector", "09-qa-test-strategy", "07-design-system"]
+  "09-qa-test-strategy":    ["02-ux-persona-analyst", "03-domain-modeller", "04-architecture"]
+
+# ─────────────────────────────────────────────────────────────────────
+# Globálne defaults pre Claude Agent SDK volania.
+# ─────────────────────────────────────────────────────────────────────
+defaults:
+  model: "claude-opus-4-7"
+  max_turns: 200
+  permission_mode: "acceptEdits"
+  cwd: "."
+  output_dir_pattern: "docs/agents/{agent_short_name}/"
+
+# ─────────────────────────────────────────────────────────────────────
+# Validácia — PM ju vykonáva po každom dokončenom agentovi a po každej fáze.
+# ─────────────────────────────────────────────────────────────────────
+validation:
+  per_agent: true
+  per_round: true
+  fail_fast: false
+  retry_on_validation_fail: 1

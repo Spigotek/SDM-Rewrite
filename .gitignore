@@ -1,0 +1,16 @@
+# macOS
+.DS_Store
+
+# Node
+node_modules/
+dist/
+build/
+*.log
+
+# Environment
+.env
+.env.local
+
+# PM runtime state (per beh, generuje sa za behu, neverzionovať)
+.agents/runs/
+.agents/state.json

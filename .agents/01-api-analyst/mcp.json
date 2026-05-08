@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "."],
+      "_purpose": "Čítanie PDF a zápis výstupov."
+    }
+  },
+  "_notes": [
+    "Žiadny network MCP — všetka analýza je z lokálneho PDF.",
+    "Ak v budúcnosti pribudne živá CA SDM inštancia, doplň HTTP MCP server pre overenie endpointov."
+  ]
+}
