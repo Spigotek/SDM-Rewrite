@@ -75,7 +75,7 @@ git worktree remove "<worktree>"
 ### 5. Finalizuj round-vetvu do pipeline-vetvy
 
 ```bash
-git checkout "pipeline/{{RUN_ID}}"
+git checkout "pipeline/{{RUN_ID}}/integration"
 git merge --no-ff "{{BRANCH}}" \
   -m "[{{RUN_ID}}] integrácia round-{{ROUND}} (konvergencia + dokumentácia)"
 ```

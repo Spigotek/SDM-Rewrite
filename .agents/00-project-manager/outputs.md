@@ -24,7 +24,7 @@ súhrny.
   "currentRound": 1,
   "maxIterations": 5,
   "git": {
-    "pipelineBranch": "pipeline/<runId>",
+    "pipelineBranch": "pipeline/<runId>/integration",
     "baseRef": "<sha-of-main-at-start>",
     "finalPrUrl": "<gh-pr-url|null>"
   },
@@ -123,9 +123,9 @@ Pri eskalácii PM vypíše:
 ## Finálny merge — Pull Request
 
 Po dosiahnutí konvergencie PM:
-1. Commitne posledný integration stav do `pipeline/<runId>`.
-2. Pushne `pipeline/<runId>` do `origin`.
-3. Otvorí PR cez `gh pr create --base main --head pipeline/<runId>` s
+1. Commitne posledný integration stav do `pipeline/<runId>/integration`.
+2. Pushne `pipeline/<runId>/integration` do `origin`.
+3. Otvorí PR cez `gh pr create --base main --head pipeline/<runId>/integration` s
    pre-pripraveným titulkom a popisom (template v `pipeline.yaml` `git.pull_request`).
 4. URL PR-u zapíše do `state.json.git.finalPrUrl`.
 5. Vypíše človeku link na PR a ukončí beh so `status: completed`.

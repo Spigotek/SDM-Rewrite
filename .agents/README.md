@@ -105,7 +105,7 @@ nespúšťajú git príkazy**.
 
 ```
 main
-└── pipeline/<runId>
+└── pipeline/<runId>/integration
     ├── pipeline/<runId>/round-1
     │   ├── agent/<runId>/01-api-analyst
     │   ├── agent/<runId>/02-ux-persona-analyst
@@ -132,8 +132,8 @@ worktree. Agent vidí len svoj worktree — nemusí (a nesmie) sa starať o bran
 1. Agent dokončí beh → PM commitne v jeho worktree
    (`[<runId>][round-<N>][<NN>] <summary>`).
 2. Po fáze/runde PM mergne všetky agent-vetvy do round-vetvy (`--no-ff`).
-3. Po validácii rundy PM mergne round-vetvu do `pipeline/<runId>`.
-4. Po konvergencii PM otvorí **PR z `pipeline/<runId>` do `main`** cez
+3. Po validácii rundy PM mergne round-vetvu do `pipeline/<runId>/integration`.
+4. Po konvergencii PM otvorí **PR z `pipeline/<runId>/integration` do `main`** cez
    `gh pr create`. **Človek robí review a finálny merge.**
 
 **Pri merge konflikte** (zriedkavé — agenti píšu do disjunktných ciest)

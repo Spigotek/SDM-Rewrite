@@ -17,7 +17,7 @@
 - Vedie stav v `.agents/state.json` (per agent **per round**).
 - Pri zlyhaní validácie robí jeden retry, potom eskaluje človeku.
 - **Riadi všetky git operácie** — vetvy, worktrees, commity, merge.
-  - Vytvára `pipeline/<runId>`, `pipeline/<runId>/round-<N>` a per-agent vetvy.
+  - Vytvára `pipeline/<runId>/integration`, `pipeline/<runId>/round-<N>` a per-agent vetvy.
   - Spravuje `git worktree` pre paralelný beh agentov.
   - Commitne výstupy agenta po validácii.
   - Mergne hierarchicky: agent → round → pipeline → PR do `main`.

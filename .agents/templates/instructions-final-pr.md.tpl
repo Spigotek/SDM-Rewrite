@@ -1,7 +1,7 @@
 # Stage final-pr — Finálny Pull Request
 
 > **Run ID**: `{{RUN_ID}}`
-> **Branch**: `pipeline/{{RUN_ID}}` (integrácia všetkých rúnd + post-konvergencie)
+> **Branch**: `pipeline/{{RUN_ID}}/integration` (integrácia všetkých rúnd + post-konvergencie)
 
 ---
 
@@ -13,7 +13,7 @@ Pipeline konvergovala, dokumentácia konsolidovaná. **Posledný krok**: push pi
 
 ```bash
 bash tools/preflight.sh
-git rev-parse --abbrev-ref HEAD       # malo by byť: pipeline/{{RUN_ID}}
+git rev-parse --abbrev-ref HEAD       # malo by byť: pipeline/{{RUN_ID}}/integration
 git log --oneline main..HEAD | head   # zoznam commitov, ktoré sa idú PR-nuť
 ```
 
@@ -27,7 +27,7 @@ Over že:
 ### 1. Push pipeline-vetvy
 
 ```bash
-git push -u origin "pipeline/{{RUN_ID}}"
+git push -u origin "pipeline/{{RUN_ID}}/integration"
 ```
 
 ### 2. Vyrob finálny súhrn
@@ -61,7 +61,7 @@ Zapíš `.agents/runs/{{RUN_ID}}/summary.md` — krátky súhrn behu:
 ```bash
 gh pr create \
   --base main \
-  --head "pipeline/{{RUN_ID}}" \
+  --head "pipeline/{{RUN_ID}}/integration" \
   --title "Pipeline {{RUN_ID}} — analytická dokumentácia (konvergencia po {{TOTAL_ROUNDS}} rundách)" \
   --body "$(cat <<'EOF'
 ## Summary

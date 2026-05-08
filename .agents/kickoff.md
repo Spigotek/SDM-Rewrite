@@ -33,7 +33,7 @@ bash tools/init-pipeline.sh
 Skript vykoná:
 1. Pre-flight check.
 2. Vygeneruje `runId` (timestamp).
-3. Vytvorí `pipeline/<runId>` a `pipeline/<runId>/round-1` z `main`.
+3. Vytvorí `pipeline/<runId>/integration` a `pipeline/<runId>/round-1` z `main`.
 4. Pripraví prvý stage v `.agents/runs/<runId>/stage-01-phase-a/`:
    - `prompts/01-api-analyst.md`, `02-ux-persona-analyst.md`, `03-domain-modeller.md`
      — kompletné system prompty (concat agent kontraktov + task wrapper),

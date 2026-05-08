@@ -109,7 +109,7 @@ git:
     - "main"
 
   branch_naming:
-    pipeline_run:    "pipeline/{runId}"
+    pipeline_run:    "pipeline/{runId}/integration"
     pipeline_round:  "pipeline/{runId}/round-{round}"
     agent_branch:    "agent/{runId}/{agentId}"
 

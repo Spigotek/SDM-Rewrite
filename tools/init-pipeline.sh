@@ -4,8 +4,8 @@
 #
 # Vytvorí:
 #   1. <runId> (timestamp YYYYMMDD-HHMMSS)
-#   2. pipeline/<runId> branch z origin/main
-#   3. pipeline/<runId>/round-1 branch z pipeline/<runId>
+#   2. pipeline/<runId>/integration branch z origin/main
+#   3. pipeline/<runId>/round-1 branch z pipeline/<runId>/integration
 #   4. .agents/runs/<runId>/ s prvým stage-om (01-phase-a)
 #
 # Po skončení vypíše inštrukciu na otvorenie nového CC chatu so správnym
@@ -32,9 +32,9 @@ echo "→ Run ID: $run_id"
 echo "→ Vytváram pipeline branches ..."
 git checkout main >/dev/null 2>&1
 git pull --quiet origin main
-git checkout -b "pipeline/$run_id" main
-git checkout -b "pipeline/$run_id/round-1" "pipeline/$run_id"
-echo "  ✓ pipeline/$run_id"
+git checkout -b "pipeline/$run_id/integration" main
+git checkout -b "pipeline/$run_id/round-1" "pipeline/$run_id/integration"
+echo "  ✓ pipeline/$run_id/integration"
 echo "  ✓ pipeline/$run_id/round-1 (aktívna)"
 
 # 4. Run dir + manifest
@@ -48,7 +48,7 @@ cat > "$run_dir/manifest.json" <<EOF
   "currentRound": 1,
   "maxIterations": 5,
   "git": {
-    "pipelineBranch": "pipeline/$run_id",
+    "pipelineBranch": "pipeline/$run_id/integration",
     "baseRef": "$(git rev-parse main)",
     "finalPrUrl": null
   },
