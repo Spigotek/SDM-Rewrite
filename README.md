@@ -116,28 +116,29 @@ poradia a závislostí v [`GOAL.md` §7](./GOAL.md#7-návrh-agentov-a-ich-rolí)
 
 ## Spustenie pipeline (bootstrap)
 
-V tejto fáze pipeline beží v **bootstrap móde** — Claude Code sám funguje
-ako Project Manager (PM-proxy). Žiadny externý PM CLI sa zatiaľ neinštaluje;
-agent **08 DevEx/DevOps** ho dorobí počas round 1.
+Pipeline beží v **staged multi-chat móde**: každá úroveň spracovania má
+vlastný adresár; predošlý stage pripraví ďalší (prompts + instructions),
+takže user vidí presne, čo paste-núť do nového CC chatu.
 
 ### Postup
 
-1. Z repo root spusti pre-flight:
+1. Bootstrap z repo root (jediný terminálový krok):
    ```bash
-   bash tools/preflight.sh
+   bash tools/init-pipeline.sh
    ```
-2. Otvor **nový Claude Code chat** v rovnakom adresári (čerstvý kontext).
-3. Paste-ni do neho:
-   > Si Project Manager pre projekt SDM-Rewrite. Tvoj kompletný manuál je
-   > v `.agents/kickoff.md`. Prečítaj si ho a `.agents/00-project-manager/*`
-   > a začni round 1.
-4. CC odštartuje pipeline (round 1 phase A → phase B → refinement loop)
-   a po konvergencii otvorí **PR z `pipeline/<runId>` do `main`**.
-5. Človek robí review v PR a finálny merge.
+2. Skript vypíše presný prompt — otvor **nový Claude Code chat** v rovnakom
+   adresári a paste-ni ho.
+3. CC vykoná stage `01-phase-a` (agenti 01, 02, 03 paralelne) a na konci
+   vypíše prompt pre **ďalší chat** (`02-phase-b`).
+4. Opakuj kým pipeline nedosiahne `final-pr` stage, ktorý otvorí PR proti
+   `main`. Človek robí review.
 
-Detail manuálu: [`.agents/kickoff.md`](./.agents/kickoff.md).
-Po dokončení round 1 prejde pipeline na natívne PM CLI z `apps/pm/`
-(produkt agenta 08).
+Detail runbook-u: [`.agents/kickoff.md`](./.agents/kickoff.md).
+Helper skripty v `tools/`: `init-pipeline.sh`, `prepare-stage.sh`,
+`assemble-prompt.sh`, `preflight.sh`.
+
+Po dokončení round 1 dorobí agent **08 DevEx/DevOps** natívne PM CLI
+v `apps/pm/`, ktoré nahradí Bash bootstrap.
 
 ## Roadmap
 

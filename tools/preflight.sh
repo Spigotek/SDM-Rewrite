@@ -80,10 +80,36 @@ fi
 # 5. pipeline.yaml + kickoff.md + revision contract
 [ -f .agents/pipeline.yaml ] && ok ".agents/pipeline.yaml existuje" \
                               || err ".agents/pipeline.yaml chýba"
-[ -f .agents/kickoff.md ]    && ok ".agents/kickoff.md existuje" \
+[ -f .agents/kickoff.md ]    && ok ".agents/kickoff.md existuje (runbook)" \
                               || err ".agents/kickoff.md chýba"
 [ -f .agents/README.md ]     && ok ".agents/README.md existuje (revision contract)" \
                               || err ".agents/README.md chýba"
+
+# Templates pre staged orchestráciu
+required_templates=(
+  ".agents/templates/instructions-broadcast.md.tpl"
+  ".agents/templates/instructions-refinement.md.tpl"
+  ".agents/templates/instructions-post-conv.md.tpl"
+  ".agents/templates/instructions-final-pr.md.tpl"
+  ".agents/templates/prompt-fresh.md.tpl"
+  ".agents/templates/prompt-revision.md.tpl"
+)
+missing_tpl=0
+for t in "${required_templates[@]}"; do
+  [ -f "$t" ] || { err "chýba template: $t"; missing_tpl=$((missing_tpl + 1)); }
+done
+[ "$missing_tpl" -eq 0 ] && ok "všetkých 6 templates v .agents/templates/"
+
+# Helper skripty
+required_scripts=(tools/init-pipeline.sh tools/prepare-stage.sh tools/assemble-prompt.sh)
+missing_sc=0
+for s in "${required_scripts[@]}"; do
+  if [ ! -x "$s" ]; then
+    err "$s chýba alebo nie je executable (chmod +x)"
+    missing_sc=$((missing_sc + 1))
+  fi
+done
+[ "$missing_sc" -eq 0 ] && ok "všetky 3 helper skripty executable"
 
 # 6. zdrojové dokumenty
 [ -f docs/ca-service-management-17-4.pdf ] \
