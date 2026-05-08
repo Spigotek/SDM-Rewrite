@@ -62,6 +62,22 @@ definovaných v `.agents/01-*` až `.agents/09-*`.
 8. **Stav**: `.agents/state.json` per agent **per round**, atomický zápis.
 9. **Resume**: pri `--resume` načítaj posledný stav a pokračuj — ak round
    bol uprostred, dokonči ho; ak round bol kompletný, otvor ďalší.
+10. **Branch isolation a git** (TY si jediný subjekt s git oprávnením):
+    - **Štart pipeline**: vytvor `pipeline/<runId>` z `main`.
+    - **Pre každú rundu**: vytvor `pipeline/<runId>/round-<N>` z `pipeline/<runId>`.
+    - **Pre každého agenta**: vytvor vetvu `agent/<runId>/<NN>-<name>` + `git worktree`
+      v `.agents/runs/<runId>/worktrees/<NN>-<name>/`. Agenta spusti so `cwd`
+      nastaveným na worktree path.
+    - **Po skončení agenta** (a validácii): commitni v jeho worktree:
+      `[<runId>][round-<N>][<NN>] <summary>`.
+    - **Po fáze/runde**: mergni agent-vetvy do round-vetvy (`--no-ff`),
+      uvoľni worktrees (`git worktree remove`).
+    - **Po validácii rundy**: mergni round-vetvu do `pipeline/<runId>`.
+    - **Po konvergencii**: otvor **PR** z `pipeline/<runId>` do `main`
+      cez `gh pr create`. **Nemerguj do main priamo** — vždy PR.
+    - Pri merge konflikte: **eskaluj človeku**, žiaden auto-resolve.
+    - Branch naming, merge strategy, commit template, PR template: pozri
+      `.agents/pipeline.yaml` sekcia `git`.
 
 ## Komunikácia s človekom
 

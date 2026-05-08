@@ -83,3 +83,46 @@ validation:
   per_round: true
   fail_fast: false
   retry_on_validation_fail: 1
+
+# ─────────────────────────────────────────────────────────────────────
+# Branch isolation — PM riadi všetky git operácie. Sub-agenti píšu iba
+# súbory do svojho worktree, nikdy nespúšťajú git príkazy.
+# ─────────────────────────────────────────────────────────────────────
+git:
+  protected_branches:
+    - "main"
+
+  branch_naming:
+    pipeline_run:    "pipeline/{runId}"
+    pipeline_round:  "pipeline/{runId}/round-{round}"
+    agent_branch:    "agent/{runId}/{agentId}"
+
+  # Worktree per agent — umožňuje paralelný beh bez kolízie working tree.
+  worktree_dir: ".agents/runs/{runId}/worktrees/{agentId}"
+
+  merge_strategy:
+    agent_to_round:    "no-ff"          # zachovaj merge commit per agent
+    round_to_pipeline: "no-ff"
+    pipeline_to_main:  "pull-request"   # PM otvorí PR, človek schvaľuje
+
+  commit_message_template: "[{runId}][round-{round}][{agentId}] {summary}"
+
+  # PR config pre finálny merge do main.
+  pull_request:
+    base: "main"
+    title_template: "Pipeline {runId} — konvergencia po {totalRounds} rundách"
+    body_template: |
+      Auto-vytvorené PM po dosiahnutí konvergencie.
+
+      - runId: {runId}
+      - rounds: {totalRounds}
+      - agents run: {agentsRunCount}
+      - escalations: {escalationsCount}
+
+      Súhrn rúnd a artefaktov: `.agents/runs/{runId}/summary.md`.
+    auto_merge: false                   # vyžaduje human review
+
+  cleanup:
+    remove_worktrees_after_merge: true
+    keep_branches: true                  # vetvy ostávajú pre auditovateľnosť
+    branch_retention_days: 30

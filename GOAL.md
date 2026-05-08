@@ -278,6 +278,62 @@ Konkrétny kód PM — vrátane revision-prompt assemblera, diff analyzéra,
 oscillation detectora a konvergenčného scoringu — implementuje DevOps agent
 v bootstrap fáze. Tu definujeme kontrakt.
 
+### 7.6 Izolácia vetiev a merge stratégia
+
+`main` je **chránená**. Žiadny sub-agent nepíše do `main` priamo. Všetky
+zápisy idú cez agent-špecifickú vetvu a PM ich kontrolovane merguje.
+
+**Branching model**:
+
+```
+main                                            ← chránená; iba PR-merge
+└── pipeline/<runId>                            ← integration vetva pipeline behu
+    ├── pipeline/<runId>/round-<N>              ← integration vetva rundy
+    │   ├── agent/<runId>/01-api-analyst        ← sub-agent vetva
+    │   ├── agent/<runId>/02-ux-persona-analyst
+    │   └── ...
+    └── ...
+```
+
+**Mechanizmus** (PM riadi):
+
+1. **Štart pipeline**: PM vytvorí `pipeline/<runId>` z `main`.
+2. **Pre každú rundu**: PM vytvorí `pipeline/<runId>/round-<N>` z `pipeline/<runId>`.
+3. **Pre každého agenta** v rámci rundy:
+   - PM vytvorí vetvu `agent/<runId>/<NN>-<name>` z aktuálnej round-vetvy.
+   - PM vytvorí **`git worktree`** v `.agents/runs/<runId>/worktrees/<NN>-<name>/`
+     (umožňuje **skutočne paralelný** beh agentov bez kolízie working tree).
+   - PM spustí agenta cez Claude Agent SDK s `cwd` nastaveným na worktree path.
+   - Agent píše iba súbory do svojho worktree. **Žiadne git príkazy** —
+     to robí PM.
+   - Po skončení a validácii PM commitne v worktree:
+     `[<runId>][round-<N>][<NN>] <summary>`.
+4. **Po fáze**: PM mergne všetky agent-vetvy do round-vetvy
+   (`--no-ff`, jeden merge commit per agent), uvoľní worktrees.
+5. **Po validácii rundy**: PM mergne round-vetvu do `pipeline/<runId>`.
+6. **Po konvergencii**: PM otvorí **PR z `pipeline/<runId>` do `main`** cez
+   `gh pr create`. **Finálny merge do `main` schvaľuje človek** v PR review.
+
+**Konfliktná stratégia**:
+
+Sub-agenti píšu do **disjunktných ciest** (`docs/agents/<name>/`), takže
+merge konflikty sú zriedkavé. Pri konflikte PM eskaluje človeku, neauto-resolvuje.
+
+**Branch protection na úrovni GitHub** (server-side reinforcement, nezávislé
+od PM):
+
+```bash
+# Jednorazový setup, vyžaduje admin rights na repo:
+gh api -X PUT repos/Spigotek/SDM-Rewrite/branches/main/protection \
+  -F required_pull_request_reviews.required_approving_review_count=1 \
+  -F enforce_admins=false \
+  -f required_status_checks.strict=true \
+  -F restrictions=null
+```
+
+Tým sa zabezpečí, že ani priamy push do `main` (omylom z lokálu) neprejde —
+musí ísť cez PR + review.
+
 ## 8. High-level architektonický skeleton
 
 ```

@@ -43,6 +43,15 @@ PM ťa môže opätovne spustiť v round 2..N s **revision requestom**. V revisi
   pridaj nové). Detail kontraktu: `.agents/README.md` § Revision contract.
 - Na začiatok zmeneného artefaktu pridaj krátky **changelog** oproti predošlej runde.
 
+## Git — riadi ho PM
+
+**Nespúšťaj git príkazy** *v rámci tvojho behu ako analytického agenta.*
+PM spravuje vetvy, worktrees, commity a merge pre tvoje výstupné artefakty.
+
+**Výnimka: tvoje implementačné výstupy.** V rámci scope `08-devex-devops` máš
+za úlohu **napísať kód PM** (vrátane modulu pre git operácie). Tento kód
+píšeš ako bežné súbory v `apps/pm/src/git.ts` — PM ho potom prevezme.
+
 ## Anti-patterny
 
 - Nemeň rozhodnutia 04/06 — len ich realizuj.

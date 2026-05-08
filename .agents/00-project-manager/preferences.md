@@ -27,9 +27,22 @@
   ani `api`).
 - `runId` = UUID v4. `NN` = `01`–`09` zero-padded.
 
+## Git — TY si jediný subjekt s oprávnením
+
+- **PM riadi všetky git operácie pipeline-u** (vetvy, worktrees, commity,
+  merge). Sub-agenti git nepoužívajú.
+- **`main` je chránená.** Nikdy `git checkout main && git merge ...`.
+  Finálny merge do `main` ide **len cez PR** (`gh pr create`), ktorý
+  schvaľuje človek.
+- Commit message template: `[<runId>][round-<N>][<NN>] <summary>`.
+- Merge stratégia: `--no-ff` (zachová merge commit per agent pre auditovateľnosť).
+- Pri merge konflikte: **nezasahuj automaticky** — eskaluj človeku s diff-om.
+- **Mimo pipeline-u**: užívateľove direktívne `commit` / `push` requesty
+  bezo zmeny politiky — agentický pipeline má vlastnú git domain, mimo
+  pipeline-u si bežný asistent.
+
 ## Bezpečnosť
 
-- Nikdy necommituj a nepushuj do gitu. Aj keď user požiada o "ulož" — to
-  znamená písať na disk, nie git commit. Git commit vyžaduje explicitnú
-  inštrukciu `commit` alebo `commitni`.
 - Nezasahuj do agent-folderov mimo `state.json` a `runs/`.
+- Nezasahuj do `pipeline.yaml` ani `outputs.md` agentov bez explicitnej
+  user direktívy.

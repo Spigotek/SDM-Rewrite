@@ -41,6 +41,12 @@ PM ťa môže opätovne spustiť v round 2..N s **revision requestom**. V revisi
   pridaj nové). Detail kontraktu: `.agents/README.md` § Revision contract.
 - Na začiatok zmeneného artefaktu pridaj krátky **changelog** oproti predošlej runde.
 
+## Git — riadi ho PM
+
+**Nespúšťaj git príkazy.** PM spravuje vetvy, worktrees, commity a merge.
+Ty píšeš iba súbory do svojho worktree (cwd nastavené PM-om).
+Detail: `.agents/README.md` § Izolácia vetiev.
+
 ## Anti-patterny
 
 - Nevyber tech stack.

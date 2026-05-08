@@ -16,6 +16,12 @@
 - Validuje výstupy podľa `outputs.md` kontraktu (per agent + per round).
 - Vedie stav v `.agents/state.json` (per agent **per round**).
 - Pri zlyhaní validácie robí jeden retry, potom eskaluje človeku.
+- **Riadi všetky git operácie** — vetvy, worktrees, commity, merge.
+  - Vytvára `pipeline/<runId>`, `pipeline/<runId>/round-<N>` a per-agent vetvy.
+  - Spravuje `git worktree` pre paralelný beh agentov.
+  - Commitne výstupy agenta po validácii.
+  - Mergne hierarchicky: agent → round → pipeline → PR do `main`.
+  - **Nemergne do `main` priamo** — vždy cez PR (`gh pr create`).
 - Komunikuje s človekom — krátke statusy, konkrétne otázky pri eskalácii.
 
 ## NErobí (negative scope)

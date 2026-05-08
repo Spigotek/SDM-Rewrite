@@ -23,12 +23,18 @@ súhrny.
   "status": "round1-phase-a|round1-phase-b|refinement|completed|failed|escalated",
   "currentRound": 1,
   "maxIterations": 5,
+  "git": {
+    "pipelineBranch": "pipeline/<runId>",
+    "baseRef": "<sha-of-main-at-start>",
+    "finalPrUrl": "<gh-pr-url|null>"
+  },
   "rounds": [
     {
       "round": 1,
       "kind": "broadcast",
       "startedAt": "<iso>",
       "completedAt": "<iso|null>",
+      "branch": "pipeline/<runId>/round-1",
       "phases": {
         "a": {
           "agents": ["01-api-analyst", "02-ux-persona-analyst", "03-domain-modeller"],
@@ -48,6 +54,7 @@ súhrny.
       "kind": "refinement",
       "startedAt": "<iso>",
       "completedAt": "<iso|null>",
+      "branch": "pipeline/<runId>/round-2",
       "agentsRun": ["01-api-analyst", "04-architecture", "05-security"],
       "convergenceCheck": {
         "openDependenciesCount": 4,
@@ -63,6 +70,11 @@ súhrny.
       "totalRuns": 2,
       "lastValidationPassed": true,
       "openDependencies": ["[04-architecture] ...", "[?] ..."],
+      "branches": [
+        { "round": 1, "branch": "agent/<runId>/01-api-analyst", "merged": true, "commitSha": "<sha>" },
+        { "round": 2, "branch": "agent/<runId>/01-api-analyst-r2", "merged": true, "commitSha": "<sha>" }
+      ],
+      "worktree": ".agents/runs/<runId>/worktrees/<NN>-<name>/",
       "history": [
         { "round": 1, "outputsValid": true, "durationMs": 123456 },
         { "round": 2, "outputsValid": true, "durationMs": 78900 }
@@ -100,8 +112,23 @@ Všetky 3 signály musia platiť → loop ukončený, status `completed`.
 ## Eskalácia človeku
 
 Pri eskalácii PM vypíše:
-1. Aktuálny round + dôvod eskalácie (`max_iterations` / `oscillation` / `unresolvable_conflict`).
+1. Aktuálny round + dôvod eskalácie (`max_iterations` / `oscillation` /
+   `unresolvable_conflict` / `merge_conflict`).
 2. Otvorené závislosti zoradené po cieľových agentoch.
 3. Konflikty (cross-artifact) so zdrojovými artefaktmi.
 4. Pre osciláciu: trace stavov agenta cez posledné rundy.
-5. Návrh ďalších krokov (napr. „daj direktívu pre 04, či má byť BFF, a re-spusti").
+5. **Pre merge konflikt**: súbor + path + zoznam agentov, ktorí ho oba menili.
+6. Návrh ďalších krokov (napr. „daj direktívu pre 04, či má byť BFF, a re-spusti").
+
+## Finálny merge — Pull Request
+
+Po dosiahnutí konvergencie PM:
+1. Commitne posledný integration stav do `pipeline/<runId>`.
+2. Pushne `pipeline/<runId>` do `origin`.
+3. Otvorí PR cez `gh pr create --base main --head pipeline/<runId>` s
+   pre-pripraveným titulkom a popisom (template v `pipeline.yaml` `git.pull_request`).
+4. URL PR-u zapíše do `state.json.git.finalPrUrl`.
+5. Vypíše človeku link na PR a ukončí beh so `status: completed`.
+
+**PM nikdy nemerguje do `main` priamo.** Aj keď konvergencia prešla,
+finálne rozhodnutie je na človeku.

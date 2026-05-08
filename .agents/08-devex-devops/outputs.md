@@ -12,6 +12,7 @@ súčasne robí dokumentáciu **a** scaffolding).
 | `docs/agents/devops/dev-environment.md` | Lokálny dev (porty, proxy, MSW) |
 | `docs/agents/devops/mock-strategy.md` | Mock backend stratégia (MSW) |
 | `docs/agents/devops/pm-runtime.md` | Ako PM funguje cez Claude Agent SDK |
+| `docs/agents/devops/pm-git-strategy.md` | Branch isolation, worktree management, merge a PR flow PM |
 
 ## Scaffolding (reálne súbory)
 
@@ -22,6 +23,11 @@ súčasne robí dokumentáciu **a** scaffolding).
 | `tsconfig.base.json` + per-package `tsconfig.json` | TS config |
 | `.eslintrc.cjs` + `.prettierrc` | lint/format |
 | `apps/portal/`, `apps/workspace/`, `apps/pm/` | app stuby |
+| `apps/pm/src/orchestrator.ts` | hlavný loop PM (round 1 → refinement → konvergencia) |
+| `apps/pm/src/git.ts` | git modul PM — branch create, worktree add/remove, commit, merge --no-ff, `gh pr create` |
+| `apps/pm/src/revision.ts` | revision-prompt assembler (delta výstupov + revision request) |
+| `apps/pm/src/convergence.ts` | parser `## Otvorené závislosti`, cross-artifact diff, oscillation detection |
+| `apps/pm/src/state.ts` | atomický I/O nad `.agents/state.json` |
 | `packages/api-client/`, `packages/domain/`, `packages/design-system/`, `packages/auth/` | package stuby |
 | `apps/portal/public/config.json` | **runtime config** pre portál (api endpoint, tenanty, feature flags) |
 | `apps/workspace/public/config.json` | **runtime config** pre workspace |
@@ -65,4 +71,8 @@ flagy nemáš, napíš `Žiadne. Artefakt je samonosný.`.
 - `pnpm install` (alebo ekv.) prejde bez chyby v sandbox-e.
 - `npx tsc --noEmit` prejde.
 - `apps/pm/src/index.ts` importuje `@anthropic-ai/claude-agent-sdk`.
+- `apps/pm/src/git.ts` exportuje aspoň: `createBranch`, `addWorktree`,
+  `removeWorktree`, `commitInWorktree`, `mergeBranch`, `openPullRequest`.
 - CI workflow má aspoň 4 joby (lint, typecheck, test, build).
+- `pm-git-strategy.md` obsahuje konkrétne `git` a `gh` príkazy pre každý krok
+  z GOAL §7.6 (žiadne pseudokód-only popisy).

@@ -88,6 +88,52 @@ Agent v revision móde:
 - Aktualizuje `## Otvorené závislosti` (uzatvára vyriešené, pridáva nové).
 - Krátky **changelog** na začiatok artefaktu: čo zmenil oproti predošlej runde.
 
+## Izolácia vetiev a merge stratégia
+
+`main` je **chránená**. PM riadi všetky git operácie; sub-agenti **nikdy
+nespúšťajú git príkazy**.
+
+**Branch hierarchia**:
+
+```
+main
+└── pipeline/<runId>
+    ├── pipeline/<runId>/round-1
+    │   ├── agent/<runId>/01-api-analyst
+    │   ├── agent/<runId>/02-ux-persona-analyst
+    │   └── agent/<runId>/03-domain-modeller
+    ├── pipeline/<runId>/round-2
+    │   └── agent/<runId>/<id>-<name>          (len dotknutí v refinement)
+    └── ...
+```
+
+**Worktree per agent** — paralelný beh bez kolízie working tree:
+
+```
+.agents/runs/<runId>/worktrees/
+├── 01-api-analyst/                ← worktree na agent/<runId>/01-api-analyst
+├── 02-ux-persona-analyst/         ← worktree na agent/<runId>/02-ux-persona-analyst
+└── 03-domain-modeller/
+```
+
+PM spustí každého agenta cez Claude Agent SDK s `cwd` nastaveným na jeho
+worktree. Agent vidí len svoj worktree — nemusí (a nesmie) sa starať o branche.
+
+**PM-driven merge**:
+
+1. Agent dokončí beh → PM commitne v jeho worktree
+   (`[<runId>][round-<N>][<NN>] <summary>`).
+2. Po fáze/runde PM mergne všetky agent-vetvy do round-vetvy (`--no-ff`).
+3. Po validácii rundy PM mergne round-vetvu do `pipeline/<runId>`.
+4. Po konvergencii PM otvorí **PR z `pipeline/<runId>` do `main`** cez
+   `gh pr create`. **Človek robí review a finálny merge.**
+
+**Pri merge konflikte** (zriedkavé — agenti píšu do disjunktných ciest)
+PM eskaluje človeku, neauto-resolvuje.
+
+Detail v [`pipeline.yaml`](./pipeline.yaml) sekcia `git` a
+[`GOAL.md`](../GOAL.md) §7.6.
+
 ## Stav pipeline
 
 PM udržuje `.agents/state.json`:
