@@ -1,5 +1,12 @@
 # Microcopy — voice & tone, chybové hlášky, CTA
 
+## Changelog (round 2)
+
+- Pridaná sekcia `## 403 / RBAC errors` — info-safe formulácie pre permission
+  denied scenarios (rieši 05 r1 flag "hranica info disclosure pri 403").
+- Otvorené závislosti aktualizované — `[05-security]` 403 boundary uzavretý,
+  `[06-tech-stack-selector]` i18n a date formatting uzavreté.
+
 > Pravidlá pre **písaný obsah v UI** — labels, buttons, error messages,
 > empty states, toasts, tooltips. Cieľ: konzistentný hlas naprieč
 > `portal` aj `workspace`, ale s **odlišnou registroviou** per app
@@ -281,7 +288,97 @@ Príklad:
 | `aria-label` — Required field marker | "povinné" | "required" |
 | `aria-live` — Saved | "Uložené pred chvíľou" | "Saved just now" |
 
-## 13. Tone calibration per persona
+## 13. 403 / RBAC errors — info-safe formulácie
+
+> **Hranica info disclosure** (riešený 05 r1 flag). Pravidlo: **user-helpful**
+> (povedz mu, čo má robiť) bez **info-disclosure** (nemenuj rolu, permission
+> key, ani user/group ktorý má prístup). Detail security kontextu v
+> [`security/rbac.md`](../security/rbac.md) §9 + threat-model.md.
+
+### 13.1 Princípy
+
+| Princíp | Áno | Nie |
+|---|---|---|
+| **Povedz, čo robiť** | "Skontroluj rolu s administrátorom." | "Skontaktuj sa s helpdeskom." (bez akcie) |
+| **Menuj tenant** | "Nemáš prístup k ticketu #INC-1042 v tenante Acme East." | "Access denied." |
+| **NEmenuj rolu / permission** | "Skontroluj rolu s administrátorom tenanta." | "Vyžaduje sa rola Change Manager." |
+| **NEmenuj kto má prístup** | "Tento ticket je v inom tenante, do ktorého nemáš prístup." | "Tento ticket vidí len rola agent_l2 v Acme East." |
+| **Aktívny rod** | "Nemáš prístup..." | "Prístup je odmietnutý..." |
+| **NEpriznaj existenciu objektu mimo scope** | "Hľadaný ticket #INC-9999 sa nenašiel." (rovnaký text ako 404) | "Tento ticket existuje, ale nemáš naň prístup." |
+
+**Najdôležitejšie pravidlo**: pri 403 na **read** access objektu mimo scope
+(cross-tenant ticket, KB článok ktorý user nemá vidieť) odpovedáme **rovnakým
+textom ako 404 not-found**. Zámerný overlap — bráni enumeračnému útoku
+("guessing" valid IDs).
+
+### 13.2 Vzorové formulácie per scenár
+
+| Scenár | SK (user-helpful + info-safe) | EN |
+|---|---|---|
+| **Mutation 403** — user vidí akciu (cached permission), ale BFF odmietol | "Túto akciu teraz nemôžeš vykonať. Skús prepnúť tenant alebo skontroluj rolu s administrátorom tenanta {tenant}." | "You can't perform this action right now. Try switching tenant or check your role with admin in {tenant}." |
+| **Mutation 403** — tenant context mismatch (objekt patrí inému tenantu) | "Tento záznam patrí inému tenantu. Prepni tenant a skús znova." | "This record belongs to a different tenant. Switch tenant and try again." |
+| **Route 403** — user navigoval na chránenú obrazovku | "Túto stránku nevidíš v tenante {tenant}. Skontroluj rolu s administrátorom alebo prepni tenant, kde máš prístup." + tenant switcher prominently | "This page isn't available in tenant {tenant}. Check your role with admin or switch to a tenant where you have access." + tenant switcher prominently |
+| **Read 403** — neoprávnený detail (cross-tenant) | (rovnaký text ako 404) "Hľadaný záznam sa nenašiel. Možno bol zmazaný alebo si zlú URL." | (same as 404) "Record not found. It may have been deleted or the URL is wrong." |
+| **Mutation 403 ihneď po tenant switch** — stale permission cache | "Práve si prepol tenant — niektoré akcie sa zmenili. Skús znova." | "You just switched tenants — some actions changed. Try again." |
+| **Stale role** (CA SDM admin zmenila rolu počas session) | "Tvoja rola sa zmenila. Prihlás sa znova, prosím." → auto-redirect na /login po 5 s | "Your role changed. Please sign in again." → auto-redirect to /login in 5s |
+| **Cross-tenant publish attempt** (kb_editor publish "all tenants" without sp_admin) | "Publikovať môžeš len do tenanta {tenant}. Pre cross-tenant publish kontaktuj administrátora služby." | "You can publish only to tenant {tenant}. For cross-tenant publish, contact service admin." |
+| **Bulk action 403 na podmnožinu rows** | "{n} ticketov z {total} sa nepodarilo {action} — nemáš oprávnenie. Ostatné prebehli úspešne." | "{n} of {total} tickets couldn't be {action} — no permission. Others succeeded." |
+| **Step-up auth required** (high-risk action) | "Táto akcia vyžaduje overenie. Potvrď ju ešte raz pre bezpečnosť." | "This action requires verification. Confirm again for security." |
+
+### 13.3 Microcopy pre `Can` komponent fallback
+
+`Can` komponent (per [`components.md`](./components.md) §Can) renderuje
+deti len ak má user permission. Pri deny: **default `fallback={null}`** —
+element zmizne úplne. Ak je `fallback` explicitly poskytnutý:
+
+| Use case | Vzor fallback (SK) | Vzor fallback (EN) |
+|---|---|---|
+| Tooltip "nemáš oprávnenie" pri hover (rare — väčšinou skrývame) | "Vyžaduje rolu s vyšším oprávnením. Skontroluj s administrátorom tenanta." | "Requires higher permission. Check with tenant admin." |
+| Disabled button so visible feedback | (Button v `disabled` state + `aria-describedby` linkujúci na hidden helper) "Túto akciu nemôžeš vykonať v aktuálnom tenante." | "You can't perform this action in the current tenant." |
+
+**Pozor**: `Can` fallback **nikdy nemenuje konkrétnu permission key** (`"requires
+incident.escalate"` = info disclosure). Maximum špecifickosti: "vyššie oprávnenie".
+
+### 13.4 Admin-friendly skratka
+
+Pre tenant administrátorov a sp_admin role pridáme do error message
+"Kontaktujte správcu tenanta {tenant}." — admin vie kontaktovať priamo,
+hluchý user nepotrebuje vedieť detaily.
+
+Cieľová úroveň informácie:
+
+```
+Nemáš prístup k tomuto ticketu v tenante Acme East.
+Kontaktujte správcu tenanta Acme East.
+```
+
+NIE:
+
+```
+Nemáš permission 'incident.update.assignee' (rola requester v tenante Acme East).
+Túto rolu má agent_l1, agent_l2, change_manager.
+```
+
+### 13.5 Anti-patterny pri 403 microcopy
+
+| Antipattern | Prečo zlé | Lepšia verzia |
+|---|---|---|
+| "Vyžaduje rolu agent_l2" | Info disclosure roly. | "Skontroluj rolu s administrátorom." |
+| "Permission 'incident.delete' chýba" | Disclosure permission key (útok vie targetovať). | "Túto akciu nemôžeš vykonať." |
+| "Tento ticket vidia len role X a Y" | Disclosure access matrix. | "Tento záznam sa nenašiel." (rovnaký text ako 404) |
+| "Access denied" | Nezrozumiteľný, nie actionable. | "Túto stránku nevidíš v tenante X. Skontroluj rolu s administrátorom." |
+| "Forbidden" (raw HTTP status text) | Tech jargon na portal Lucia. | (rovnako ako vyššie) |
+| Zobraziť technicky `403` ako error code v UI | Nepomáha; vyzerá ako leak. | Skry status code; ukáž user-helpful copy + (optional) "Error ID: {requestId}" pre support trace. |
+
+### 13.6 Audit logging contract
+
+Každý 403 (route alebo mutation) loguje BFF s `actor`, `tenant`, `requested
+permission`, `denied reason`. UI **nezdieľa** requestId default-ne; iba pri
+"Show error details" expand (pre support flow). Detail audit-and-compliance
+viď [`security/audit-and-compliance.md`](../security/audit-and-compliance.md)
+(ak existuje) alebo 05 OWASP §logging.
+
+## 14. Tone calibration per persona
 
 | Persona | App | Tone | Príklad copy |
 |---|---|---|---|
@@ -292,7 +389,7 @@ Príklad:
 | `kb_editor_jana` | workspace | Editorial, helpful | "Draft auto-saved", "Submit for review" |
 | `cmdb_owner_robert` | workspace | Senior, data-rich | "Stale data — last sync 14h ago" |
 
-## 14. Style nits
+## 15. Style nits
 
 - **Slovenská diakritika** — povinná (`ľ ĺ č ď ť ž`). Žiadne `regulacie` /
   `helpdesk`.
@@ -311,19 +408,22 @@ Príklad:
 
 ## Otvorené závislosti
 
-- `[06-tech-stack-selector]` i18n knižnica (i18next vs. react-intl vs. lingui)
-  musí podporovať ICU MessageFormat alebo `Intl.PluralRules` pre SK 3-formy.
-- `[06-tech-stack-selector]` Locale-aware date formatting (`Intl.RelativeTimeFormat`,
-  `Intl.DateTimeFormat`) — všetky moderne library to majú native.
+- `[06-tech-stack-selector]` i18n knižnica — **[resolved-in-round-2]**
+  react-i18next 15 + i18next-icu confirmed (ICU MessageFormat pre SK 3-form
+  plurals).
+- `[06-tech-stack-selector]` Locale-aware date formatting —
+  **[resolved-in-round-2]** date-fns 3.x (modular) + natívny `Intl` API
+  confirmed (06 `libraries.md` §17).
+- `[05-security]` Error messages pri 403 / RBAC — **[resolved-in-round-2]**
+  kontrakt definovaný v sekcii `## 13. 403 / RBAC errors` vyššie. Pravidlo:
+  user-helpful + info-safe, žiadny disclosure roly/permission/access matrix,
+  read-403 = 404 text overlap (anti-enumeration).
 - `[03-domain-modeller]` Mapovanie CA SDM status codes na SK / EN labels —
-  potvrdiť per modul (Incident, Request, Problem, Change majú odlišné states).
-- `[05-security]` Error messages pri permission denied (403) — kde je hranica
-  medzi "user-helpful" a "info disclosure" (sec concern)? Pravidlo: nezdieľame
-  detail kto má prístup; len "Skontroluj rolu s administrátorom."
-- `[09-qa-test-strategy]` Linting microcopy — `vale.sh` pravidlá na CI?
-  Anti-pattern detection (Caps lock, "click here", "operation failed").
-- `[?]` Gender-aware verb formy (`prevzala` vs. `prevzal`) — potrebujeme
-  v user profile `gender` field? Alternative: gender-neutral formulácie
-  ("Ticket prevzala osoba: Anna" — clunky). Decision: použijeme gender-aware
-  verb len keď máme spoľahlivý zdroj (CA SDM nemá native, ale SSO claim môže
-  obsahovať `given_name` + `gender`).
+  **pretrváva** (vstup pre 03 v post-conv stage). Per modul (Incident, Request,
+  Problem, Change) majú odlišné states.
+- `[09-qa-test-strategy]` Linting microcopy — `vale.sh` pravidlá na CI —
+  **pretrváva** (QA + DevOps Phase C). Anti-pattern detection (Caps lock,
+  "click here", "operation failed", 403 info disclosure patterns).
+- `[?]` Gender-aware verb formy (`prevzala` vs. `prevzal`) — **pretrváva**.
+  Potrebujeme `gender` field v user profile alebo SSO claim. Default
+  fallback: generic male ("prevzal") + zobrazenie meno-priezvisko z profilu.

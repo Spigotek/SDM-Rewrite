@@ -1,5 +1,24 @@
 # Komponentový inventory v1 — SDM-Rewrite Design System
 
+## Changelog (round 2)
+
+- Doplnené komponenty po 04 component-diagram aligning (`QueueTable` alias k
+  `DataTable.density=compact`, `ServiceCatalogRenderer` ako JSON-schema dynamic
+  form pre Service Catalog, `CMDBGraph` ako CMDB-specifický alias k
+  `RelationshipGraph`).
+- Pridaný **`Can`** permission wrapper komponent (rieši `[05-security]` flag pre
+  RBAC UI gating) — kontrakt mapovaný na permission keys z
+  [`security/rbac.md`](../security/rbac.md) §6.
+- Pridaný **`Markdown`** read komponent (react-markdown + remark-gfm +
+  rehype-sanitize, allowlist tagov per
+  [`security/owasp-mitigations.md`](../security/owasp-mitigations.md))
+  — rieši `[05-security]` markdown rendering contract.
+- `RelationshipGraph` aktualizovaný: 06 r2 zvolilo **Cytoscape 3** canvas mode
+  (NIE React Flow). r1 zmienka o React Flow odstránená.
+- `Calendar` doplnený: 06 r2 zvolilo **FullCalendar 6** priamo v MVP (NIE
+  react-big-calendar).
+- `KbEditor` doplnený: 06 r2 confirmed **TipTap 2** s konkrétnymi extensions.
+
 > Inventory komponentov odvodený z UX wireframov
 > (`docs/agents/ux-persona-analyst/wireframes/`) a screen-inventory.
 > Každý komponent: účel, varianty, props (vysoká úroveň, nie TS signatúra),
@@ -555,14 +574,55 @@ Po kliku live region oznámi "Skopírované".
 
 ## MarkdownRenderer
 
-**Účel.** Render KB článok body (portal + workspace), comment body.
+> **Alias `Markdown`** — preferovaný kratší názov pri použití v JSX:
+> `<Markdown content={article.body} />`. `MarkdownRenderer` je dlhšia forma
+> pre kontext kde alias kolidoval.
 
-**Supported.** Headings, lists, links, code blocks, images, callouts
-(`> [!note]`, `> [!warning]`).
+**Účel.** Render KB článok body (portal + workspace), comment body, ticket
+description body. **Read-side render only** — write-side je `KbEditor` (TipTap).
 
-**A11y.** Heading hierarchia preserved (`<h2>` v rámci article keď H1 je
-article title). Images `alt` required. Externí odkaz indikuje
-"otvorí sa v novom okne" cez `aria-label`.
+**Implementation backend (r2 final per 06 + 05 security contract)**:
+`react-markdown@9.x` + `remark-gfm` + `rehype-sanitize` (allowlist mode). NIE
+`dangerouslySetInnerHTML`, NIE raw HTML pass-through. **Sanitization je
+povinná** — nesmie sa obísť ani s `unsafe={true}` flagom; ESLint pravidlo
+to bude blokovať.
+
+**Sanitization allowlist** (synchronizovaná s
+[`security/owasp-mitigations.md`](../security/owasp-mitigations.md)
+§Markdown sanitizer whitelist):
+
+| Allowed | Blocked |
+|---|---|
+| `p, strong, em, ul, ol, li, code, pre, a, h1-h6, blockquote, img, table, thead, tbody, tr, td, th, hr, br` | `script, style, iframe, form, object, embed, link, meta` |
+| Attributes: `href`, `src`, `alt`, `title`, `colspan`, `rowspan` | `on*` (všetky event handlers), `style`, `javascript:` URIs |
+| URL schemes: `http`, `https`, `mailto`, relative paths | `javascript:`, `data:` (okrem `data:image/png|jpg|svg+xml` whitelisted v `img.src`) |
+
+**Props.**
+
+- `content` (required, string — raw markdown)
+- `variant` ("article" | "comment" | "inline") — line-height + heading scale tune
+- `onLinkClick` (optional, intercepts external links — telemetry hook)
+- `density` (compact / default / comfortable)
+
+**Defaults.**
+
+- Externé linky (`http://` mimo current origin): `target="_blank"
+  rel="noopener noreferrer"` + visual hint (↗ icon) + `aria-label` "otvorí sa
+  v novom okne".
+- Code blocks: render cez `CodeBlock` komponent (syntax highlight + copy).
+- Images: lazy-load (`loading="lazy"`), max-width container, click → modal full-size.
+- Callouts: `> [!note]`, `> [!warning]`, `> [!danger]` rendered ako `Card`
+  variant subtle s ikonou + `color.{info|warning|danger}.bg`.
+
+**A11y.**
+
+- Heading hierarchia preserved — komponent zhadzuje H1 z markdown na H2 v
+  rámci article (lebo article title je už H1).
+- Images `alt` required — markdown bez alt textu vyhodí build-time warning v
+  Storybook (v unit teste sa fail-uje).
+- Externý odkaz `aria-label` "otvorí sa v novom okne".
+- Tables majú implicit `<caption>` ak markdown obsahuje "Table:" prefix na riadku
+  pred tabuľkou (extension cez remark plugin).
 
 ## Toast
 
@@ -715,6 +775,9 @@ KB suggestions, related records. Sections collapsible.
 ## Calendar
 
 **Účel.** Change calendar — Day / Week / Month view, time × days grid.
+**Implementation backend (r2 final per 06)**: FullCalendar 6 (open-source build)
++ `@fullcalendar/daygrid` + `@fullcalendar/timegrid` + `@fullcalendar/interaction`
+(drag-resize). Lazy-loaded chunk (~95 kB) na route `/changes/calendar`.
 
 **Variants.** `day`, `week`, `month`.
 
@@ -770,24 +833,69 @@ Custom). Collapsible per group, per-user persistence.
 
 ## RelationshipGraph
 
-**Účel.** CMDB CI relationships visualization — canvas/SVG graph, pan/zoom,
-click select, double-click drill-in.
+**Účel.** CMDB CI relationships visualization — canvas-based graph, pan/zoom,
+click select, double-click drill-in. **Implementation backend (r2 final per
+06)**: Cytoscape 3 (canvas mode) + `react-cytoscapejs`. Lazy-loaded chunk
+(~110 kB) na route `/cmdb/ci/:id` tab Relationships.
 
-**Props.** `nodes[]`, `edges[]`, `centerNodeId`, `layout` ("auto"|"tree"|"force"),
-`onNodeSelect`, `onNodeDrillIn`, `directionFilter` ("up"|"down"|"both").
+**Layout algorithms** (cytoscape plugin): `cose-bilkent` (default — force-directed
+high-quality), `dagre` (tree / hierarchy), `breadthfirst` (impact-cascade
+visualization). Layout config je súčasť props.
+
+**Props.** `nodes[]` (id, label, type, tenantId), `edges[]` (source, target,
+relationType), `centerNodeId`, `layout` ("auto"|"tree"|"force"),
+`onNodeSelect`, `onNodeDrillIn`, `directionFilter` ("up"|"down"|"both"),
+`maxNodes` (default 200 — performance gate; nad limitom prompt "Zobraziť viac").
 
 **A11y.**
 
-- **Povinný alternative list view** pre screen readers (toggle).
-- Graph keyboard navigation: `Tab` cycle nodes, `Enter` drill-in,
-  arrow keys pan.
-- Each node `role="treeitem"` (v list view).
-- Cross-tenant nodes `aria-label="External tenant: Acme East"`.
+- **Povinný alternative list view** pre screen readers (toggle button "Zobraziť
+  ako zoznam" / "Zobraziť ako graf"). Cytoscape canvas je natívne SR-unfriendly
+  — list view je obligatórny fallback.
+- Graph keyboard navigation: `Tab` cycle nodes (poradie = breadth-first od
+  center node), `Enter` drill-in, arrow keys pan canvas.
+- Each node v list view `role="treeitem"`, `aria-level`, `aria-expanded`.
+- Cross-tenant nodes (read-only cross-tenant viewer per `[05-security/rbac.md]`
+  sp_admin) majú `aria-label` rozšírený o tenant kontext:
+  `aria-label="External tenant: Acme East — DB cluster prod-01"`.
+- Zoom level oznámený live region pri zmene (Cmd+plus / Cmd+minus).
+
+## CMDBGraph
+
+**Účel.** CMDB-specifický alias k `RelationshipGraph` so pre-konfigurovanými
+defaults pre CMDB use case (per 04 `components/workspace.md` W-05 module).
+
+**Defaults vs. base `RelationshipGraph`**:
+
+- `layout` default `"cose-bilkent"` (force).
+- `directionFilter` default `"both"` (CMDB impact analysis chce upstream + downstream).
+- `maxNodes` default 200, prompt nad limitom.
+- Node color coding per CI class (`color.severity.*` pre risk tier of CI).
+- Edge style per relationType: `depends_on` solid, `hosts` thick, `peers_with`
+  dashed (`border.style.dashed`).
+- Built-in legend toggle.
+
+**Pozor**: ak budeme niekedy chcieť graf v inej doméne (napr. problem → root
+cause graph), použijeme base `RelationshipGraph` priamo s custom konfiguráciou,
+nie `CMDBGraph`.
+
+**A11y.** Inherited from `RelationshipGraph`. Plus: legend musí mať textovú
+alternatívu (visible + `aria-label` na legend trigger).
 
 ## KbEditor
 
 **Účel.** WYSIWYG editor s markdown shortcuts, drag-drop images, code blocks,
-internal record `#` autocomplete, version history.
+internal record `#` autocomplete, version history. **Implementation backend
+(r2 final per 06)**: TipTap 2 s extensions: `@tiptap/starter-kit`,
+`@tiptap/extension-link`, `@tiptap/extension-image`,
+`@tiptap/extension-code-block-lowlight`, `@tiptap/extension-mention` (pre `#`
+record autocomplete), `@tiptap/extension-task-list`. Lazy-loaded chunk (~70 kB)
+na route `/kb/editor`.
+
+**Pozor**: `KbEditor` je **write-side** komponent. Pre **read-side** render
+(KB článok detail, komentáre) použij `Markdown` komponent — react-markdown +
+remark-gfm + rehype-sanitize, NIE TipTap render mode (sanitization stack je
+iný).
 
 **Underlying library recommendation** — viď [`library-recommendation.md`](./library-recommendation.md).
 
@@ -907,6 +1015,130 @@ Help (`?` shortcut overlay), Sign out.
 **A11y.** Trigger `aria-haspopup="menu"`. Menu items čisto `role="menuitem"`.
 Sign out vyžaduje confirm dialog (prevention against accidental click).
 
+## Can
+
+**Účel.** Permission-guarded wrapper — render `children` iba ak aktívny tenant
++ aktívna rola má dané permission. UX optimalizácia (skrytie akcie keď user
+nemá right) — **NIE security gate** (server-side enforcement je v BFF, viď
+[`security/rbac.md`](../security/rbac.md) §1 princíp 4).
+
+**Implementation backend.** Permission keys sú definované v
+[`security/rbac.md`](../security/rbac.md) §6 (Permission union type).
+`Can` komponent číta `ActiveTenantContext.effectivePermissions[]` z React
+context, ktorý je naplnený pri tenant switch BFF response.
+
+**Props.**
+
+- `permission` (string — permission key, napr. `"incident.transition.status"`)
+- `permissions` (string[] — viacero permissions, AND-spojené default)
+- `mode` ("all" | "any") — defaultný `"all"` pri `permissions[]`
+- `fallback` (ReactNode — render alternative keď deny; default `null`)
+- `children` (ReactNode)
+
+**Príklad použitia.**
+
+```jsx
+<Can permission="incident.transition.status">
+  <Button variant="primary">Zmeniť status</Button>
+</Can>
+
+<Can permissions={["change.read", "change.approve"]} mode="all">
+  <Button>Approve change</Button>
+</Can>
+
+<Can permission="incident.delete" fallback={<Tooltip content="Vyžaduje rolu admin">...</Tooltip>}>
+  <IconButton aria-label="Odstrániť" icon={<TrashIcon />} />
+</Can>
+```
+
+**A11y.**
+
+- Žiadny vlastný DOM output — children sú render-prop. Žiadne wrapper `<div>`.
+- Keď permission deny: deti **nie sú vôbec mountnuté**, nie len `display:none`.
+  Inak by skrytý fokus-able element rušil tab order.
+- Pri rapid permission change (tenant switch) sa re-render rieši cez React
+  context — visible feedback je v parent `AppShell` (toast "Tenant prepnutý,
+  niektoré akcie sa zmenili").
+
+**Pozor — žiadny info disclosure**: ak permission deny, `Can` **nemá**
+zobrazovať detail prečo. Pre 403 RBAC errors zobrazené pri API call (mutation
+returned 403), pozri [`microcopy.md`](./microcopy.md) §403 / RBAC errors —
+text "Skontroluj rolu s administrátorom", bez menovania konkrétnej permission.
+
+## QueueTable
+
+**Účel.** Workspace-specifický alias k `DataTable` s pre-konfigurovanými
+defaults pre queue (per 04 `components/workspace.md` W-01 module). Dense
+inbox view, optimalizovaný na keyboard navigation.
+
+**Defaults vs. base `DataTable`**:
+
+- `density="compact"` (28–32 px rows per UX risks R-008).
+- `selectable="multi"` (bulk actions per `BulkActionBar`).
+- `splitView=true` (klik na row otvorí ticket detail v right pane, nie route).
+- `columns[]` typical preset: status badge, priority badge, ID, summary,
+  requester, assignee, age, SLA state. Persisted v localStorage cez `columnConfig`.
+- `pollingInterval=30000` (30 s TTL refetch per 04 workspace.md W-01).
+- Keyboard shortcuts (j/k/Enter/Space/b) viac scoped — `j`/`k` cycling preferred.
+
+**Pozor**: ak chceme tabuľku mimo workspace queue (KB list, CMDB browse, change
+list), použijeme priamo `DataTable` s vlastnou konfiguráciou. `QueueTable` má
+**queue-specific** defaults a polling.
+
+**A11y.** Inherited from `DataTable`. Plus:
+
+- Sticky filter bar nad table — `role="search"` landmark.
+- Aktívne filter chips musia byť oznámené pri page load (live region:
+  "Zobrazujem 24 ticketov, filtrované podľa: Otvorené, Vysoká priorita").
+
+## ServiceCatalogRenderer
+
+**Účel.** Schema-driven dynamic form renderer pre Service Catalog Request Item
+template (per 04 `components/portal.md` §2.4 + 06
+`libraries.md` §3 pattern). Backend (BFF) normalizuje CA SDM Service Catalog
+template → JSON schema; tento komponent render-uje formulár.
+
+**Implementation backend.** RHF + Zod (06 r2 confirmed). Render off Zod schema
+built from CatalogField[] via `buildZodSchema(fields)` registry
+(per [`tech-stack-selector/libraries.md`](../tech-stack-selector/libraries.md) §3).
+
+**Field type registry** (typovo-bezpečný discriminated union):
+
+| Field type | Renderuje sa ako | Validation defaults |
+|---|---|---|
+| `text` | `TextField` | `z.string().min(1)` ak required |
+| `textarea` | `TextArea` | `z.string()` |
+| `number` | `TextField type="number"` | `z.number().int().optional()` |
+| `date` | `TextField type="date"` (React Aria DatePicker v1+) | `z.date()` |
+| `select` (single) | `Select` | `z.enum([...])` |
+| `select` (multi) | `Combobox multi` | `z.array(z.enum([...]))` |
+| `radio` | `RadioGroup` | `z.enum([...])` |
+| `checkbox` | `Checkbox` | `z.boolean()` |
+| `file` | `FileUpload` | `z.array(z.instanceof(File))` |
+| `user-picker` | `Combobox` (async loadOptions) | `z.string()` (user ID) |
+| `ci-picker` | `Combobox` (async loadOptions na CI search) | `z.string()` (CI ID) |
+| `markdown-help` (non-input) | `Markdown` block (read-only help text) | n/a |
+
+**Props.**
+
+- `schema` (CatalogField[] from BFF)
+- `defaultValues` (optional — prefill pre edit)
+- `onSubmit` (data, formApi) — submit handler
+- `onCancel` (optional)
+- `submitting` (controlled)
+- `mode` ("create" | "edit")
+
+**Server-side validation.** Server vráti per-field errors po submit; renderer
+mapuje na `setError(fieldName, ...)` v RHF.
+
+**A11y.**
+
+- Wrapper je `Form` komponent → všetky `Form` a11y pravidlá platia.
+- Každý field má `FormField` wrapper (label + hint + error spojené cez `aria-describedby`).
+- Conditional fields (visibility podľa iného field value) musia mať `aria-live`
+  oznámenie pri zjavení / zmiznutí.
+- Scroll-to-first-error on submit fail (inherited from `Form`).
+
 ## RouteBanner
 
 System banner top-of-page — read-only tenant, suspended, scheduled maintenance.
@@ -955,19 +1187,41 @@ nemá hard-coded hex / px hodnotu. Kontrolný checklist:
 
 ## Otvorené závislosti
 
-- `[06-tech-stack-selector]` Finálny framework rozhoduje, či komponenty
-  staviame **custom** (na base Radix/Headless primitives) alebo **adopcia
-  full library** (MUI/Mantine). Detail v [`library-recommendation.md`](./library-recommendation.md).
-- `[06-tech-stack-selector]` Graph viz library pre `RelationshipGraph` —
-  React Flow vs. Cytoscape vs. vis.js (CMDB wireframe `[06]` flag).
-- `[06-tech-stack-selector]` WYSIWYG editor pre `KbEditor` — TipTap vs.
-  Lexical vs. ProseMirror (KB editor wireframe `[07]` flag).
-- `[04-architecture]` `DataTable` split-view pattern — ako route reaguje
-  (queue route + `?selectedTicket=ID` query param vs. modal-only state).
-- `[04-architecture]` Notification drawer state — globálny store
-  (Zustand/jotai?) alebo per-component fetch.
-- `[09-qa-test-strategy]` E2E test selectors — každý komponent má
-  `data-component` atribút (deklarované hore), ale potrebujeme overiť že
-  to QA stratégii vyhovuje.
-- `[03-domain-modeller]` `StatusBadge` mapping label-ov — potvrdiť per modul
-  state labels v slovenčine a angličtine.
+- `[06-tech-stack-selector]` Finálny framework / komponentová knižnica —
+  **[resolved-in-round-2]** React 19 + Radix UI primitives + custom skin
+  (canonical). Detail v [`library-recommendation.md`](./library-recommendation.md).
+- `[06-tech-stack-selector]` Graph viz library pre `RelationshipGraph` /
+  `CMDBGraph` — **[resolved-in-round-2]** Cytoscape 3 canvas mode (NIE React Flow).
+- `[06-tech-stack-selector]` WYSIWYG editor pre `KbEditor` —
+  **[resolved-in-round-2]** TipTap 2 s extensions (StarterKit, Link, Image,
+  CodeBlockLowlight, Mention, TaskList).
+- `[06-tech-stack-selector]` Calendar library — **[resolved-in-round-2]**
+  FullCalendar 6 (daygrid + timegrid + interaction).
+- `[06-tech-stack-selector]` Markdown render library — **[resolved-in-round-2]**
+  react-markdown 9 + remark-gfm + rehype-sanitize (sanitization allowlist
+  per 05 OWASP).
+- `[06-tech-stack-selector]` Form library — **[resolved-in-round-2]** RHF 7 +
+  Zod 3 + `@hookform/resolvers/zod` (canonical pre `Form`,
+  `ServiceCatalogRenderer`, `DynamicForm`).
+- `[04-architecture]` `DataTable` / `QueueTable` split-view pattern —
+  **[resolved-in-round-2]** cez `splitView=true` prop + `QueueTable` defaults
+  (klik row → right pane render, route ostáva `/queue`). Detail v 04
+  `components/workspace.md` §2.3.
+- `[04-architecture]` Notification drawer state — **[resolved-in-round-2]** cez
+  `NotificationDrawer` komponent (deklarovaný vyššie) + TanStack Query
+  cache (žiadny Zustand/jotai per 06 r2 "Žiadny Redux/Zustand"). Polling
+  interval + badge counter rieši `useNotifications()` hook.
+- `[05-security]` `<Can permission="...">` wrapper komponent —
+  **[resolved-in-round-2]** kontrakt definovaný v sekcii `## Can` vyššie.
+- `[05-security]` Markdown rendering contract (sanitization) —
+  **[resolved-in-round-2]** kontrakt definovaný v sekcii `## MarkdownRenderer`
+  (alias `Markdown`) vyššie. Allowlist synchronizovaná s 05 OWASP whitelist.
+- `[09-qa-test-strategy]` E2E test selectors — `data-component` atribút per
+  komponent **pretrváva** (deklarované v intro). QA r2 acceptance-criteria.md
+  ich používa v 18 journeys.
+- `[09-qa-test-strategy]` axe-core v CI — **pretrváva** (QA + DevOps Phase C).
+- `[03-domain-modeller]` `StatusBadge` mapping label-ov v SK/EN per modul —
+  **pretrváva** (vstup pre 03 v post-conv stage). Microcopy referenčný mapping
+  je v [`microcopy.md`](./microcopy.md) §2.2.
+- `[08-devex-devops]` Self-host Inter Variable + JetBrains Mono fonts —
+  **pretrváva** (Phase C DevOps detail).

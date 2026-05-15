@@ -1,5 +1,17 @@
 # Design Tokens — SDM-Rewrite
 
+## Changelog (round 2)
+
+- Overené, že 5-stupňová severity color škála (`critical` / `high` / `medium` /
+  `low` / `none`) **už existuje** v sekcii 4 "Priority / Risk semantic mapping"
+  + zrkadlovo v [`tokens.json`](./tokens.json) (`color.severity.*`). Bez zmeny
+  hodnôt.
+- Pridaná poznámka pod severity tabuľku o závislosti od 05 RBAC pre kontext,
+  kde sa severity zobrazuje (`Can` permission gating riadi viditeľnosť polí
+  s priority/risk severity).
+- `## Otvorené závislosti` aktualizované — `[06-tech-stack-selector]` CSS
+  strategy uzavreté (CSS Custom Properties + CSS Modules per 06 r2).
+
 > Autoritatívny zdroj všetkých vizuálnych konštánt pre `apps/portal`
 > a `apps/workspace`. **Žiadne magic numbers v komponentoch** — všetko
 > cez tokeny. Naming konvencia: `kategória.role.variant`
@@ -180,6 +192,14 @@ Workspace queue, change calendar a CMDB CI status zdieľajú túto škálu.
 | `low` | `color.severity.low` | `#65A30D` | `#A3E635` | 🟩 + label "Low" |
 | `none` / `info` | `color.severity.none` | `color.neutral.400` | `color.neutral.500` | ⚪ + label "Info" |
 
+> **Závislosť na 05 RBAC** (od r2). Severity sa zobrazuje v poliach, ktoré
+> môžu byť permission-gated (priority je zobrazovaná aj v `requester` portal
+> view, ale `change.risk_tier` je len pre `agent_l2` / `change_manager`).
+> Komponenty (`PriorityBadge`, `CalendarBlock`, `CMDBGraph` node color) musia
+> byť obalené v `<Can permission="...">` keď scope nie je univerzálny. Detail
+> v [`security/rbac.md`](../security/rbac.md) §6 a `Can` komponente v
+> [`components.md`](./components.md).
+
 ### Status badge mapping (ticket lifecycle)
 
 | Status (CA SDM mapping by 03) | Background | Text | Border |
@@ -344,14 +364,20 @@ Mobile-first, používané najmä v `apps/portal` (Lucia: 30 % mobile).
 
 ## Otvorené závislosti
 
-- `[06-tech-stack-selector]` Po finálnej voľbe stacku potrebujeme overiť,
-  že variabilný font Inter sa dá selfhostovať bez CDN call (on-prem deploy,
-  GOAL §5 "Performance"). Predpoklad: áno (Inter má vlastný self-host build).
-- `[06-tech-stack-selector]` CSS strategy — či pôjdeme do CSS Custom Properties
-  + plain CSS modules, alebo cez Vanilla Extract / Stitches s typed tokens.
-  Tokeny sú framework-agnostic, ale tooling sa líši.
+- `[06-tech-stack-selector]` Variabilný font Inter self-host —
+  **[resolved-in-round-2]** áno, Inter má vlastný self-host build a 06 r2
+  potvrdilo. Implementačný detail (subset, woff2 generation) je
+  `[08-devex-devops]` Phase C.
+- `[06-tech-stack-selector]` CSS strategy — **[resolved-in-round-2]** CSS
+  Custom Properties + CSS Modules confirmed (06 `decision.md` "Styling" riadok
+  "Žiadne CSS-in-JS — runtime overhead..."). Tokeny zostávajú framework-agnostic.
+- `[05-security]` Severity color use s `Can` gating — **[resolved-in-round-2]**
+  kontrakt mapping na permission keys je v sekcii "Priority / Risk semantic
+  mapping" + [`components.md`](./components.md) `Can` komponent.
 - `[08-devex-devops]` Self-host Inter Variable + JetBrains Mono z
-  `packages/design-system/fonts/`. Subset SK + EN + symboly. Latency budget?
-- `[09-qa-test-strategy]` Visual regression baseline — ktoré tokeny sú
-  "load-bearing" (zmena lámu screenshot diff). Návrh: všetky `color.*`
-  a `spacing.4`, `spacing.6`, `radius.md`.
+  `packages/design-system/fonts/` — **pretrváva**. Subset: latin + latin-ext
+  (SK diakritika) + symbols. Latency budget: < 50 ms na first paint cez
+  font-display: swap.
+- `[09-qa-test-strategy]` Visual regression baseline — **pretrváva**. Load-bearing
+  tokeny návrh: všetky `color.*`, `spacing.{2,3,4,6}`, `radius.{sm,md}`,
+  `shadow.focus.brand`, `font.size.{sm,base,md,lg}`. Final list QA Phase r2.

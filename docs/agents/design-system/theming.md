@@ -1,5 +1,14 @@
 # Theming — light / dark / high-contrast
 
+## Changelog (round 2)
+
+- Žiadna obsahová zmena, theming model stable (light + dark + hc, CSS Custom
+  Properties + `data-theme` attr).
+- Uzavretý flag `[06-tech-stack-selector]` CSS strategy — CSS Custom Properties
+  + CSS Modules confirmed (06 `decision.md` "Styling" riadok).
+- Uzavretý flag `[06-tech-stack-selector]` FOUC-prevention script — inline
+  v `index.html` HEAD (Vite default).
+
 > Definuje, ako sa tokeny z [`tokens.md`](./tokens.md) prelínajú medzi témami.
 > **Theme switching** funguje cez CSS custom properties (`--color-*`) na
 > `<html data-theme="light|dark|hc">`. Žiadny FOUC pri prepínaní (theme
@@ -247,17 +256,18 @@ Plus: `prefers-reduced-motion` × každá z 6 kombinácií (12 total).
 
 ## Otvorené závislosti
 
-- `[06-tech-stack-selector]` CSS strategy — či pôjdeme do CSS custom properties
-  (najjednoduchšie, work-out-of-box) alebo CSS-in-JS s typed tokens
-  (Vanilla Extract, Stitches). Tokens sú framework-agnostic, ale tooling diff.
-- `[06-tech-stack-selector]` Bundle inline FOUC-prevention script — či cez
-  Vite plugin (inject pred build) alebo manuálne v `index.html`.
+- `[06-tech-stack-selector]` CSS strategy — **[resolved-in-round-2]** CSS
+  Custom Properties + CSS Modules confirmed.
+- `[06-tech-stack-selector]` Bundle inline FOUC-prevention script —
+  **[resolved-in-round-2]** Vite default inline `<script>` v `index.html`
+  HEAD pred bundle. Žiadny plugin potrebný.
 - `[08-devex-devops]` Visual regression baseline naprieč 6 (12) kombináciami —
-  ktorá tooling (Percy, Chromatic, Playwright snapshots).
-- `[09-qa-test-strategy]` Cross-theme visual regression v CI. Sample obrazovky:
-  portal home, workspace queue, ticket detail.
-- `[03-domain-modeller]` Per-tenant logo data shape — predpokladáme
-  ` tenant.brand.logoUrl` v tenant config, validation rules (max size, mime).
-- `[?]` Manual theme override má prednosť pred system pref. Otázka: re-detect
-  system pref keď user nastaví na "Podľa systému" znovu — áno (live listener
-  na `matchMedia` change).
+  **pretrváva** (Phase C tooling — Chromatic alebo Playwright snapshots).
+- `[09-qa-test-strategy]` Cross-theme visual regression v CI — **pretrváva**
+  (QA + DevOps Phase C). Sample obrazovky: portal home, workspace queue,
+  ticket detail.
+- `[03-domain-modeller]` Per-tenant logo data shape — **pretrváva**
+  (predpokladáme `tenant.brand.logoUrl` v tenant config, validation rules
+  max size + mime).
+- `[?]` Manual theme override má prednosť pred system pref — **pretrváva**.
+  Live listener na `matchMedia` change keď user nastaví "Podľa systému".
