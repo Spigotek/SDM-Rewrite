@@ -1,5 +1,15 @@
 # Runtime config — `config.json` kontrakt
 
+## Changelog (round 2)
+
+- **Tenant header zmenený z `X-CA-SDM-Tenant` na `X-Tenant`** (04 r2 ADR-11 finálne).
+- Pridané pole **`auth.bffOrigin`** v `AuthConfig` schema — URL BFF servera
+  (dev `http://localhost:5174`, prod `https://sdm.example.org/bff`).
+- Pridaný príklad č. **4 Production on-prem (BFF mode)** — finálny target po 04 r2 ADR-01.
+- `apiBasePath` default zmenený z `/caisd-rest` na **`/api`** (BFF endpoint) — FE
+  volá BFF, nie CA SDM priamo.
+- Otvorené závislosti — uzavreté `[04-architecture]` BFF + multi-tenancy, `[05-security]` auth mode default.
+
 > CA SDM 17.4 je **on-prem** produkt. Endpoint, IdP, tenant defaults a feature
 > flagy sa **musia dať meniť bez rebuildu** — typický deployment cyklus on-prem
 > je „zmeň config, reštartuj nginx", nie „rebuild + redeploy".
@@ -16,8 +26,8 @@
 ```ts
 // packages/api-client/src/config.types.ts
 export interface RuntimeConfig {
-  apiBaseUrl: string;                     // CA SDM REST root, napr. "https://sdm.example.org"
-  apiBasePath: string;                    // path prefix, default "/caisd-rest"
+  apiBaseUrl: string;                     // BFF root URL, napr. "https://sdm.example.org"
+  apiBasePath: string;                    // path prefix, default "/api" (BFF endpoint)
   auth: AuthConfig;
   tenants: TenantsConfig;
   features: FeatureFlags;
@@ -27,23 +37,24 @@ export interface RuntimeConfig {
 
 export interface AuthConfig {
   mode: "sso-oidc" | "sso-saml" | "rest-access-key";
+  bffOrigin: string;                      // URL BFF servera (04 r2 ADR-01); dev "http://localhost:5174", prod "https://sdm.example.org/bff"
   issuer?: string;                        // OIDC issuer URL, len pre sso-oidc
   clientId?: string;                      // OIDC client ID, len pre sso-oidc
   redirectPath?: string;                  // OIDC callback path, default "/auth/callback"
   scopes?: string[];                      // default ["openid", "profile", "email"]
   samlSpEntityId?: string;                // len pre sso-saml
   samlIdpUrl?: string;                    // len pre sso-saml
-  restAccessKeyEndpoint?: string;         // len pre rest-access-key, default "/caisd-rest/rest_access"
+  restAccessKeyEndpoint?: string;         // len pre rest-access-key (dev mock), default "/caisd-rest/rest_access"
   tokenStorageKey?: string;               // localStorage key, default "sdm-token"
   tokenLifetimeSeconds?: number;          // default 3600
 }
 
 export interface TenantsConfig {
   defaultMode: "user-profile" | "subdomain" | "explicit-select";
-  // user-profile: použiť default tenant z /whoami response.
+  // user-profile: použiť default tenant z /me response (BFF aggregator).
   // subdomain: extract z hostname (acme.portal.example → tenant "acme").
   // explicit-select: pri prvom prihlásení nechať usera zvoliť.
-  tenantContextHeader: string;            // default "X-CA-SDM-Tenant" (zhodne s mockmi)
+  tenantContextHeader: string;            // 04 r2 ADR-11: "X-Tenant"
   allowSwitching: boolean;                // default true
 }
 
@@ -78,14 +89,15 @@ export interface ConfigMeta {
 ```json
 {
   "apiBaseUrl": "http://localhost:5173",
-  "apiBasePath": "/caisd-rest",
+  "apiBasePath": "/api",
   "auth": {
     "mode": "rest-access-key",
+    "bffOrigin": "http://localhost:5174",
     "restAccessKeyEndpoint": "/caisd-rest/rest_access"
   },
   "tenants": {
     "defaultMode": "user-profile",
-    "tenantContextHeader": "X-CA-SDM-Tenant",
+    "tenantContextHeader": "X-Tenant",
     "allowSwitching": true
   },
   "features": {
@@ -107,14 +119,15 @@ export interface ConfigMeta {
 }
 ```
 
-### 2. Production on-prem (OIDC SSO)
+### 2. Production on-prem (OIDC SSO + BFF)
 
 ```json
 {
   "apiBaseUrl": "https://sdm.example.org",
-  "apiBasePath": "/caisd-rest",
+  "apiBasePath": "/api",
   "auth": {
     "mode": "sso-oidc",
+    "bffOrigin": "https://sdm.example.org/bff",
     "issuer": "https://idp.example.org/realms/corp",
     "clientId": "sdm-portal",
     "redirectPath": "/auth/callback",
@@ -123,7 +136,7 @@ export interface ConfigMeta {
   },
   "tenants": {
     "defaultMode": "user-profile",
-    "tenantContextHeader": "X-CA-SDM-Tenant",
+    "tenantContextHeader": "X-Tenant",
     "allowSwitching": true
   },
   "features": {
@@ -147,20 +160,21 @@ export interface ConfigMeta {
 }
 ```
 
-### 3. Staging (BFF mode, ak Architecture rozhodne pre BFF)
+### 3. Staging (BFF mode)
 
 ```json
 {
   "apiBaseUrl": "https://sdm-staging.example.org",
-  "apiBasePath": "/bff/api",
+  "apiBasePath": "/api",
   "auth": {
     "mode": "sso-oidc",
+    "bffOrigin": "https://sdm-staging.example.org/bff",
     "issuer": "https://idp-staging.example.org/realms/corp",
     "clientId": "sdm-portal-staging"
   },
   "tenants": {
     "defaultMode": "user-profile",
-    "tenantContextHeader": "X-CA-SDM-Tenant",
+    "tenantContextHeader": "X-Tenant",
     "allowSwitching": true
   },
   "features": {
@@ -229,13 +243,14 @@ export function getConfig(): RuntimeConfig {
 function buildFallbackFromEnv(): RuntimeConfig {
   return {
     apiBaseUrl: import.meta.env.VITE_API_BASE_URL ?? "http://localhost:5173",
-    apiBasePath: import.meta.env.VITE_API_BASE_PATH ?? "/caisd-rest",
+    apiBasePath: import.meta.env.VITE_API_BASE_PATH ?? "/api",
     auth: {
       mode: (import.meta.env.VITE_AUTH_MODE as "rest-access-key") ?? "rest-access-key",
+      bffOrigin: import.meta.env.VITE_BFF_ORIGIN ?? "http://localhost:5174",
     },
     tenants: {
       defaultMode: "user-profile",
-      tenantContextHeader: "X-CA-SDM-Tenant",
+      tenantContextHeader: "X-Tenant",
       allowSwitching: true,
     },
     features: {
@@ -301,6 +316,7 @@ import { z } from "zod";
 
 const authConfigSchema = z.object({
   mode: z.enum(["sso-oidc", "sso-saml", "rest-access-key"]),
+  bffOrigin: z.string().url(),                                       // 04 r2 ADR-01 — povinné v r2
   issuer: z.string().url().optional(),
   clientId: z.string().optional(),
   redirectPath: z.string().default("/auth/callback"),
@@ -321,7 +337,7 @@ const authConfigSchema = z.object({
 
 const tenantsConfigSchema = z.object({
   defaultMode: z.enum(["user-profile", "subdomain", "explicit-select"]).default("user-profile"),
-  tenantContextHeader: z.string().default("X-CA-SDM-Tenant"),
+  tenantContextHeader: z.string().default("X-Tenant"),               // 04 r2 ADR-11
   allowSwitching: z.boolean().default(true),
 });
 
@@ -486,8 +502,9 @@ je single-version. Pri breaking change pridáme `meta.configSchemaVersion`.
 
 ## Otvorené závislosti
 
-- `[05-security]` Auth modes (`sso-oidc` / `sso-saml` / `rest-access-key`) — Security agent finálne rozhodne, ktorý mode je primárny pre MVP. Default predpoklad: `sso-oidc` pre prod, `rest-access-key` pre lokálny dev. Schema podporuje všetky 3 → zero impact na DevOps bootstrap, len 05 doplní reálnu implementáciu loaderov.
-- `[04-architecture]` `apiBasePath` — `/caisd-rest` ak FE komunikuje priamo s CA SDM, `/bff/api` ak BFF. DevOps loader je agnostic, len UI route mapping sa zmení. Re-validovať po 04.
-- `[04-architecture]` `tenants.tenantContextHeader` — default `X-CA-SDM-Tenant`. Architecture+Security spoločne rozhodnú o multi-tenancy stratégii (header vs cookie vs route prefix vs subdomain). Schema má `defaultMode` field pre subdomain prípad. Reálna logika ide v `packages/api-client/src/client.ts` (vloženie headera).
+- `[05-security]` Auth mode default — `[resolved-in-round-2]`. Production: `sso-oidc` (OIDC redirect cez BFF). Dev: `rest-access-key` (permissive mock). Schema podporuje všetky 3, 05 dodá reálnu implementáciu loaderov v `packages/auth/`.
+- `[04-architecture]` `apiBasePath` — `[resolved-in-round-2]`. **`/api`** (BFF endpoint). FE volá BFF, nie CA SDM priamo.
+- `[04-architecture]` Multi-tenancy header — `[resolved-in-round-2]`. 04 ADR-11 finalizoval **`X-Tenant`**. Zod schema default + všetky 3 príklady aktualizované.
+- `[04-architecture]` `auth.bffOrigin` — `[resolved-in-round-2]`. Pridané v r2 ako povinné pole (`bffOrigin: z.string().url()`). Dev: `http://localhost:5174`, prod: `https://sdm.example.org/bff`.
 - `[07-design-system]` Sentry release tracking používa `meta.buildId`. Žiadny impact na design-system, len pre úplnosť.
 - `[?]` Field `features.*` momentálne mapuje na v1 features z GOAL §3. Ak post-MVP pribudnú ďalšie, schema sa rozšíri (so `.default(false)`).

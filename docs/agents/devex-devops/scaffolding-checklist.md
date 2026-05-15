@@ -1,5 +1,19 @@
 # Scaffolding checklist — Phase C súbory
 
+## Changelog (round 2)
+
+- Pridaná sekcia **`apps/bff/`** (~25 súborov) — 04 r2 ADR-01 finalizoval BFF;
+  Architecture `monorepo-layout.md` autoritatívny pre adresárovú štruktúru.
+- Pridané `turbo.json` (root config) a `tools/coverage/check-thresholds.ts`,
+  `tools/axe/config.ts`, `lighthouserc.json`, `size-limit.config.js` per ci-cd r2.
+- Pridané **self-hosted fonts** (`apps/portal/public/fonts/`, `apps/workspace/public/fonts/`)
+  — Inter + JetBrains Mono v2 woff2 — zhodne so 07 r1 (žiadny CDN, CSP-friendly).
+- Pridané `packages/api-types/` a `packages/i18n/` (zo 04 monorepo-layout) — predtým chýbali.
+- Per Otvorené závislosti uzavreté `[04-architecture]` BFF + monorepo tool + repo layout,
+  `[06-tech-stack-selector]` React 19, `[09-qa-test-strategy]` test runner.
+- Sumár súborov rastie z **~115** na **~150** (BFF ~25, nové packages ~10, tools ~5,
+  fonts a config skripty).
+
 > Tento dokument je **finálny zoznam súborov**, ktoré sa fyzicky vytvoria
 > v Phase C (post-convergence). Round 1 produkuje iba dokumentáciu v
 > `docs/agents/devex-devops/`. Reálny scaffolding (package.json, vite.config.ts,
@@ -18,8 +32,9 @@
 
 | Stav | Cesta | Zdroj template | Účel |
 |---|---|---|---|
-| new | `package.json` | `repo-bootstrap.md` § Koreňový package.json | Root workspace manifest |
-| new | `pnpm-workspace.yaml` | `repo-bootstrap.md` § pnpm-workspace.yaml | Workspace topológia |
+| new | `package.json` | `repo-bootstrap.md` § Koreňový package.json | Root workspace manifest (turbo scripts) |
+| new | `pnpm-workspace.yaml` | `repo-bootstrap.md` § pnpm-workspace.yaml | Workspace topológia (`apps/bff` explicit) |
+| new | `turbo.json` | `repo-bootstrap.md` § Turborepo config | Task orchestrator + cache config (04 r2 ADR-02) |
 | new | `tsconfig.json` | `repo-bootstrap.md` § Base tsconfig | Base TS config — extends per workspace |
 | new | `eslint.config.js` | `repo-bootstrap.md` § ESLint flat | ESLint flat config |
 | new | `.prettierrc.json` | `repo-bootstrap.md` § Prettier | Formatter config |
@@ -31,6 +46,8 @@
 | new | `.env.example` | `repo-bootstrap.md` § .env.example | Env template |
 | new | `playwright.config.ts` | `ci-cd.md` § E2E | Playwright konfig |
 | new | `vitest.config.ts` | `ci-cd.md` § test | Root Vitest config (workspace project array) |
+| new | `lighthouserc.json` | `ci-cd.md` § Lighthouse CI | LHCI config (per stránka prahy z 09 perf.md) |
+| new | `size-limit.config.js` | `ci-cd.md` § Bundle size budget | Initial bundle size assertions |
 | new | `dev-setup.sh` | `dev-environment.md` § dev-setup.sh | One-shot bootstrap skript |
 
 ## `.husky/`
@@ -44,10 +61,11 @@
 
 | Stav | Cesta | Zdroj template |
 |---|---|---|
-| new | `.github/workflows/ci.yml` | `ci-cd.md` § ci.yml |
+| new | `.github/workflows/ci.yml` | `ci-cd.md` § ci.yml — 9 jobov vrátane coverage + a11y + lhci |
 | new | `.github/workflows/codeql.yml` | `ci-cd.md` § codeql.yml |
 | new | `.github/workflows/agent-pipeline.yml` | `ci-cd.md` § agent-pipeline.yml |
 | new | `.github/workflows/release.yml` | `ci-cd.md` § release.yml |
+| new | `.github/workflows/nightly.yml` | `ci-cd.md` § Nightly (full LHCI + axe sweep) |
 | new | `.github/PULL_REQUEST_TEMPLATE.md` | (opt) Convention |
 | new | `.github/dependabot.yml` | (opt) Weekly deps update |
 
@@ -64,10 +82,14 @@
 |---|---|---|
 | new | `apps/portal/package.json` | App manifest, dev/build/test scripts |
 | new | `apps/portal/tsconfig.json` | Extends root, jsx, paths |
-| new | `apps/portal/vite.config.ts` | Per `repo-bootstrap.md` § vite.config |
+| new | `apps/portal/vite.config.ts` | Per `repo-bootstrap.md` § vite.config + `/api` proxy → BFF :5174 |
 | new | `apps/portal/index.html` | Vite entry |
 | new | `apps/portal/public/config.json` | Runtime config (per `runtime-config.md`) |
 | new | `apps/portal/public/mockServiceWorker.js` | `pnpm exec msw init public/ --save` |
+| new | `apps/portal/public/fonts/Inter-Regular.woff2` | Self-hosted (07 r1 — žiadny CDN, CSP `font-src 'self'`) |
+| new | `apps/portal/public/fonts/Inter-Medium.woff2` | Self-hosted |
+| new | `apps/portal/public/fonts/Inter-SemiBold.woff2` | Self-hosted |
+| new | `apps/portal/public/fonts/JetBrainsMono-Regular.woff2` | Self-hosted (code blocks, KB monospace) |
 | new | `apps/portal/src/main.tsx` | React entry + MSW bootstrap |
 | new | `apps/portal/src/App.tsx` | Root component |
 | new | `apps/portal/src/mocks/browser.ts` | Re-export `@sdm/api-mocks/browser` |
@@ -76,21 +98,76 @@
 
 ## `apps/workspace/`
 
-(Identicky štruktúre `apps/portal/` — port 5174.)
+(Identicky štruktúre `apps/portal/` — port **5175** v r2, viď `dev-environment.md`.)
 
 | Stav | Cesta | Účel |
 |---|---|---|
 | new | `apps/workspace/package.json` | |
 | new | `apps/workspace/tsconfig.json` | |
-| new | `apps/workspace/vite.config.ts` | |
+| new | `apps/workspace/vite.config.ts` | `/api` proxy → BFF :5174 |
 | new | `apps/workspace/index.html` | |
 | new | `apps/workspace/public/config.json` | |
 | new | `apps/workspace/public/mockServiceWorker.js` | |
+| new | `apps/workspace/public/fonts/Inter-Regular.woff2` | Self-hosted (zhodné s portal) |
+| new | `apps/workspace/public/fonts/Inter-Medium.woff2` | Self-hosted |
+| new | `apps/workspace/public/fonts/Inter-SemiBold.woff2` | Self-hosted |
+| new | `apps/workspace/public/fonts/JetBrainsMono-Regular.woff2` | Self-hosted |
 | new | `apps/workspace/src/main.tsx` | |
 | new | `apps/workspace/src/App.tsx` | |
 | new | `apps/workspace/src/mocks/browser.ts` | |
 | new | `apps/workspace/vitest.config.ts` | |
 | new | `apps/workspace/vitest.setup.ts` | |
+
+## `apps/bff/`
+
+BFF server per 04 ADR-01 + `components/bff.md`. Runtime: Node 22 + zvolený
+framework (Hono / Fastify — finálne 04/06 r2; predvolene **Hono** ako tenký
+Web Fetch-based framework s vynikajúcou TS ergonomiou). Bundle: tsup.
+
+| Stav | Cesta | Účel |
+|---|---|---|
+| new | `apps/bff/package.json` | Manifest, `bin`/`start` skripty, deps (hono / fastify, ioredis, openid-client, pino) |
+| new | `apps/bff/tsconfig.json` | Extends root, Node target, `module: "Node16"` |
+| new | `apps/bff/tsup.config.ts` | Bundle config (single ESM file, target node22) |
+| new | `apps/bff/src/index.ts` | Entry — HTTP gateway bootstrap, graceful shutdown, signal handling |
+| new | `apps/bff/src/config.ts` | Runtime config loader (z `BFF_CONFIG_PATH` env alebo `./config.json`) |
+| new | `apps/bff/src/middleware/session.ts` | Cookie session middleware (HttpOnly + Secure + SameSite=Lax) |
+| new | `apps/bff/src/middleware/tenant.ts` | `X-Tenant` header validator vs. `session.activeTenantId` (ADR-11) |
+| new | `apps/bff/src/middleware/csrf.ts` | Double-submit token (Security agent autoritative) |
+| new | `apps/bff/src/middleware/rate-limit.ts` | Per-session rate limit (defenzívne) |
+| new | `apps/bff/src/middleware/audit.ts` | Request → audit-log per `audit-and-compliance.md` |
+| new | `apps/bff/src/middleware/error-shaper.ts` | CA SDM 401/4xx → `AppError` taxonomy |
+| new | `apps/bff/src/routes/auth/login.ts` | `POST /auth/login` — OIDC start redirect |
+| new | `apps/bff/src/routes/auth/callback.ts` | `GET /auth/callback` — OIDC code → session + Access Key broker |
+| new | `apps/bff/src/routes/auth/refresh.ts` | Silent access-key refresh endpoint |
+| new | `apps/bff/src/routes/auth/logout.ts` | `POST /auth/logout` — destroy session + DELETE rest_access |
+| new | `apps/bff/src/routes/auth/me.ts` | `GET /me`, `POST /me/active-tenant` |
+| new | `apps/bff/src/routes/proxy/incidents.ts` | `/api/incidents/*` → CA SDM `/caisd-rest/in/*` |
+| new | `apps/bff/src/routes/proxy/requests.ts` | `/api/requests/*` → CA SDM `/caisd-rest/cr/*` |
+| new | `apps/bff/src/routes/proxy/problems.ts` | `/api/problems/*` → CA SDM `/caisd-rest/pr/*` |
+| new | `apps/bff/src/routes/proxy/changes.ts` | `/api/changes/*` → CA SDM `/caisd-rest/chg/*` |
+| new | `apps/bff/src/routes/proxy/knowledge.ts` | `/api/kb/*` → CA SDM `/caisd-rest/SKELETONS/*` + BUI suggested |
+| new | `apps/bff/src/routes/proxy/cmdb.ts` | `/api/ci/*` → CA SDM `/caisd-rest/nr/*` |
+| new | `apps/bff/src/routes/proxy/attachments.ts` | `/api/attachments/*` (streaming multipart) |
+| new | `apps/bff/src/routes/aggregator/me-tenants.ts` | `GET /me/tenants` — multi-call fan-out (per ADR-01 + components/bff.md) |
+| new | `apps/bff/src/routes/aggregator/queue.ts` | `GET /api/queue` — incidents + requests + problems merge |
+| new | `apps/bff/src/routes/aggregator/ticket-detail.ts` | `GET /api/tickets/:type/:id` — fan-out ticket + linked |
+| new | `apps/bff/src/routes/platform/config.ts` | `GET /config` — runtime config endpoint (FE konzument) |
+| new | `apps/bff/src/routes/platform/health.ts` | `GET /health` (liveness), `GET /ready` (readiness) |
+| new | `apps/bff/src/lib/session-store.ts` | Session store interface — Redis (ioredis) + in-memory adapter pre dev |
+| new | `apps/bff/src/lib/access-key-broker.ts` | POST `/caisd-rest/rest_access` + cache + refresh + DELETE |
+| new | `apps/bff/src/lib/audit-log.ts` | Pino JSON line logger per 05 audit-and-compliance taxonomy |
+| new | `apps/bff/src/lib/ca-sdm-client.ts` | Typed HTTP klient nad CA SDM REST (interný, BFF-only) |
+| new | `apps/bff/src/lib/reference-cache.ts` | TTL cache pre priorities/severities/statuses (5–15 min) |
+| new | `apps/bff/src/lib/error-taxonomy.ts` | `AppError` shape + CA SDM 401 disambiguation |
+| new | `apps/bff/src/types.ts` | Zdielané typy (Session, AppError, AuditEvent) |
+| new | `apps/bff/tests/middleware/tenant.test.ts` | X-Tenant header validation tests |
+| new | `apps/bff/tests/routes/auth.test.ts` | OIDC callback + session lifecycle tests |
+| new | `apps/bff/tests/routes/aggregator.test.ts` | `/me/tenants` fan-out tests |
+| new | `apps/bff/tests/lib/error-taxonomy.test.ts` | 401 → AUTH_EXPIRED vs AUTH_FORBIDDEN |
+| new | `apps/bff/README.md` | Bootstrap, ENV vars, dev port :5174 |
+
+**Cov target**: line 80 % / branch 70 % (per `ci-cd.md` § Coverage thresholds).
 
 ## `apps/pm/`
 
@@ -131,11 +208,22 @@ PM CLI — viď `pm-runtime.md`.
 | new | `packages/api-client/tsconfig.json` | |
 | new | `packages/api-client/src/index.ts` | Public API |
 | new | `packages/api-client/src/config.ts` | `fetch('/config.json')` loader |
-| new | `packages/api-client/src/client.ts` | CA SDM REST client |
-| new | `packages/api-client/src/types/` | Generované TS typy zo schém 01-api-analyst |
+| new | `packages/api-client/src/client.ts` | HTTP klient → BFF `/api/*` (X-Tenant inject) |
+| new | `packages/api-client/src/queryKeys.ts` | TanStack Query keys (tenant-scoped) |
+| new | `packages/api-client/src/errors.ts` | AppError throw helper |
 
 > Hlavná zodpovednosť: **04-architecture** (kontrakt) + **01-api-analyst** (typy).
 > DevOps len bootstrap-uje balík + config loader.
+
+## `packages/api-types/`
+
+| Stav | Cesta | Účel |
+|---|---|---|
+| new | `packages/api-types/package.json` | |
+| new | `packages/api-types/tsconfig.json` | |
+| new | `packages/api-types/src/index.ts` | Re-export typov z `@sdm/domain` (consume CA SDM schémy z 01) |
+
+> Hlavná zodpovednosť: **01-api-analyst** (typy) + **04-architecture** (re-export shape).
 
 ## `packages/domain/`
 
@@ -168,10 +256,46 @@ PM CLI — viď `pm-runtime.md`.
 | new | `packages/auth/package.json` | |
 | new | `packages/auth/tsconfig.json` | |
 | new | `packages/auth/src/index.ts` | |
-| new | `packages/auth/src/sso.ts` | Z 05-security |
-| new | `packages/auth/src/token.ts` | Z 05-security |
+| new | `packages/auth/src/session.ts` | Session refresh hook (z 05) |
+| new | `packages/auth/src/role-guard.tsx` | `<Can permission="…">` + RouteGuard (z 05 + 07 r2) |
+| new | `packages/auth/src/login.ts` | Redirect helpers (z 05) |
+| new | `packages/auth/src/permissions.ts` | RoleCode → Permission[] mapping (z 05) |
+| new | `packages/auth/src/preferences.ts` | Typed localStorage wrapper |
 
 > Hlavná zodpovednosť: **05-security**. DevOps len scaffold.
+
+## `packages/i18n/`
+
+| Stav | Cesta | Účel |
+|---|---|---|
+| new | `packages/i18n/package.json` | |
+| new | `packages/i18n/tsconfig.json` | |
+| new | `packages/i18n/src/provider.tsx` | I18nProvider (react-i18next wrap) |
+| new | `packages/i18n/src/hook.ts` | `useTranslation` re-export |
+| new | `packages/i18n/src/format.ts` | Date / number / relative formatters |
+| new | `packages/i18n/src/dynamic.ts` | Backend-provided label adapter |
+| new | `packages/i18n/catalogs/portal/sk.json` | |
+| new | `packages/i18n/catalogs/portal/en.json` | |
+| new | `packages/i18n/catalogs/workspace/sk.json` | |
+| new | `packages/i18n/catalogs/workspace/en.json` | |
+| new | `packages/i18n/catalogs/shared/sk.json` | |
+| new | `packages/i18n/catalogs/shared/en.json` | |
+
+> Hlavná zodpovednosť: **04-architecture** (ADR-07 i18n) + **07-design-system** (microcopy).
+
+## `packages/utils/`
+
+| Stav | Cesta | Účel |
+|---|---|---|
+| new | `packages/utils/package.json` | |
+| new | `packages/utils/tsconfig.json` | |
+| new | `packages/utils/src/date.ts` | Date helpers (formatters, comparators) |
+| new | `packages/utils/src/string.ts` | String helpers |
+| new | `packages/utils/src/object.ts` | Object/array helpers |
+| new | `packages/utils/src/result.ts` | `Result<T, E>` helper |
+| new | `packages/utils/src/index.ts` | Public exports |
+
+> Hlavná zodpovednosť: **04-architecture** (utility shape). DevOps scaffold.
 
 ## `packages/api-mocks/`
 
@@ -219,6 +343,37 @@ PM hook skripty — viď `pm-hooks.md`.
 | new | `tools/pm-hooks/on-subagent-stop.js` | SubagentStop + quickValidate |
 | new | `tools/pm-hooks/_shared.js` | (opt) Common utils |
 
+## `tools/coverage/`
+
+Coverage threshold enforcement skript — viď `ci-cd.md` § Coverage thresholds.
+
+| Stav | Cesta | Účel |
+|---|---|---|
+| new | `tools/coverage/check-thresholds.ts` | Per-package + per-modul prah validation (z 09 coverage-targets.md) |
+| new | `tools/coverage/package.json` | (opt) Standalone tool package |
+
+## `tools/axe/`
+
+axe-core shared config — viď `ci-cd.md` § axe-core.
+
+| Stav | Cesta | Účel |
+|---|---|---|
+| new | `tools/axe/config.ts` | WCAG 2.1 AA rules + TAGS (z 09 a11y-tests.md) |
+| new | `tools/axe/playwright-helpers.ts` | `injectAxe(page)` + `checkA11y(page, severity)` helpers |
+
+## `tools/eslint-config/`, `tools/tsconfig-base/`, `tools/scaffold/`, `tools/boundaries-check/`, `tools/i18n-check/`
+
+Per 04 `monorepo-layout.md`. DevOps len scaffolduje package.json/index, owners
+sú konkrétni agenti (boundaries-check → 04, i18n-check → 04, scaffold → 08).
+
+| Stav | Cesta | Účel |
+|---|---|---|
+| new | `tools/eslint-config/package.json` + `index.js` | Zdielaný ESLint preset |
+| new | `tools/tsconfig-base/package.json` + `tsconfig.base.json` | Zdielaný TS base |
+| new | `tools/scaffold/` | `plop` šablóny pre nový package/feature (substitute za Nx generators) |
+| new | `tools/boundaries-check/` | CI script — import boundaries enforcement |
+| new | `tools/i18n-check/` | CI script — catalog parity |
+
 ## `e2e/` (Playwright)
 
 | Stav | Cesta | Účel |
@@ -244,52 +399,67 @@ PM hook skripty — viď `pm-hooks.md`.
 
 | Kategória | Súbory |
 |---|---|
-| Root config | ~14 |
+| Root config | ~16 (+ `turbo.json`, `lighthouserc.json`, `size-limit.config.js`) |
 | `.husky/` | 2 |
-| `.github/workflows/` | 4 (+ 2 opt) |
+| `.github/workflows/` | 5 (+ 2 opt) |
 | `.vscode/` | 2 |
-| `apps/portal/` | 11 |
-| `apps/workspace/` | 11 |
+| `apps/portal/` | 15 (+ 4 fonts) |
+| `apps/workspace/` | 15 (+ 4 fonts) |
+| `apps/bff/` | ~38 (vrátane testov) |
 | `apps/pm/` | ~22 (vrátane testov) |
-| `packages/api-client/` | 5 |
+| `packages/api-client/` | 7 |
+| `packages/api-types/` | 3 |
 | `packages/domain/` | 4 (+ obsah z 03) |
 | `packages/design-system/` | 4 (+ obsah z 07) |
-| `packages/auth/` | 5 (+ obsah z 05) |
-| `packages/api-mocks/` | ~25 |
+| `packages/auth/` | 7 (+ obsah z 05) |
+| `packages/i18n/` | 11 (+ obsah z 04 ADR-07) |
+| `packages/utils/` | 6 |
+| `packages/api-mocks/` | ~25 (10 handler modulov) |
 | `tools/pm-hooks/` | 3 (+ 1 opt) |
+| `tools/coverage/` | 2 |
+| `tools/axe/` | 2 |
+| `tools/{eslint-config,tsconfig-base,scaffold,boundaries-check,i18n-check}/` | ~10 |
 | `e2e/` | 4 |
-| **Spolu** | **~115 súborov** |
+| **Spolu** | **~155 súborov** |
 
 ## Phase C — poradie volaní
 
-1. Root config (package.json, tsconfig, eslint, prettier, husky).
-2. `apps/pm/` (PM CLI musí byť ready, lebo bude orchestrovať budúce re-runy).
-3. `packages/api-mocks/` (mock backend pre dev).
-4. `apps/portal/` + `apps/workspace/` (FE skelet).
-5. `packages/api-client/`, `domain/`, `design-system/`, `auth/` (zdielané balíky).
-6. `.github/workflows/` (CI).
-7. `tools/pm-hooks/` (Hook skripty).
-8. `e2e/` (Playwright skelet).
-9. `dev-setup.sh` + `.env.example` + finalize `.gitignore`.
+1. Root config (package.json, tsconfig, eslint, prettier, husky, **`turbo.json`**).
+2. `tools/{eslint-config,tsconfig-base}/` — zdielané presets.
+3. `apps/pm/` (PM CLI musí byť ready, lebo bude orchestrovať budúce re-runy).
+4. `packages/{utils,domain,api-types,api-client,auth,i18n,design-system}/` — zdielané balíky.
+5. `packages/api-mocks/` — mock backend (závisí od `api-client` typov).
+6. `apps/bff/` — BFF server (závisí od `domain`, `api-client`, `auth`).
+7. `apps/portal/` + `apps/workspace/` — FE skelet (závisí od všetkých FE packages).
+8. `.github/workflows/` — CI (po príprave `tools/coverage/check-thresholds.ts`, `tools/axe/config.ts`, `lighthouserc.json`).
+9. `tools/{pm-hooks,coverage,axe,boundaries-check,i18n-check,scaffold}/` — CI/PM podpora.
+10. `e2e/` — Playwright skelet (po BFF + apps existencii).
+11. Fonts — `apps/{portal,workspace}/public/fonts/` z dodaných woff2 (Inter + JetBrains Mono).
+12. `dev-setup.sh` + `.env.example` + finalize `.gitignore` (`.turbo/`, `.env.local`).
 
 ## Validačné kritériá pre Phase C (post-bootstrap)
 
 Po dokončení Phase C platí:
 
 1. `pnpm install --frozen-lockfile` → exit 0.
-2. `pnpm typecheck` → exit 0.
-3. `pnpm lint` → exit 0.
-4. `pnpm build` → exit 0, `apps/portal/dist/index.html` + `apps/workspace/dist/index.html` existujú.
-5. `pnpm test` → exit 0 (aj keď reálny test count je nízky — len skeleton tests).
-6. `pnpm dev` štartuje paralelne portal:5173 + workspace:5174.
+2. `pnpm typecheck` (`turbo run typecheck`) → exit 0.
+3. `pnpm lint` (`turbo run lint`) → exit 0.
+4. `pnpm build` (`turbo run build`) → exit 0; existujú `apps/portal/dist/index.html`,
+   `apps/workspace/dist/index.html`, `apps/bff/dist/index.js`.
+5. `pnpm test` (`turbo run test`) → exit 0 (aj keď reálny test count je nízky — len skeleton tests).
+6. `pnpm dev` štartuje paralelne **portal:5173 + BFF:5174 + workspace:5175** (viď `dev-environment.md`).
 7. `pnpm pm --help` → exit 0.
-8. CI pipeline `ci.yml` → všetkých 5+ jobov zelených na PR.
+8. `pnpm exec lhci autorun --config=./lighthouserc.json` → assert prahy splnené (alebo skip ak `dist/` ešte nemá content).
+9. CI pipeline `ci.yml` → všetkých 9 jobov zelených na PR (vrátane coverage, a11y, lhci).
+10. `pnpm exec tsx tools/coverage/check-thresholds.ts` → exit 0 (po teste).
 
 ## Otvorené závislosti
 
-- `[04-architecture]` Tento checklist predpokladá **pnpm workspaces + apps + packages** layout. Ak Architecture rozhodne pre BFF, pribudne `apps/bff/` (~15 súborov: server entry, route handlers, middleware, BFF-only mocks). Ak Architecture preferuje Turborepo, pribudne `turbo.json` v root.
-- `[06-tech-stack-selector]` Predpoklad React 19. Pri Angular by sa `apps/<x>/` štruktúra zmenila zásadne (žiadny `index.html`+`main.tsx`, namiesto toho `angular.json`+`main.ts`+`app.module.ts`). Mock setup analogicky cez `msw` browser worker (Angular je framework-agnostic z MSW pohľadu).
-- `[07-design-system]` `packages/design-system/src/components/` štruktúra (atómy, moleky, organizmy) je zodpovednosť 07. Bootstrap len vytvorí prázdny `index.ts` a `package.json`.
-- `[09-qa-test-strategy]` `e2e/` štruktúra a počet sample spec-ov sú placeholder. 09 dodá finálny strom (per modul folder, page objects, fixtures).
-- `[05-security]` `packages/auth/` sa scaffolduje s 2 placeholder súbormi. Reálne SSO impl (OIDC / SAML) dodá 05.
+- `[04-architecture]` Monorepo layout — `[resolved-in-round-2]`. `apps/bff/` (~38 súborov) + Turborepo + extra packages (`api-types`, `i18n`, `utils`, `api-mocks`) zahrnuté.
+- `[04-architecture]` BFF technológia (Hono vs Fastify) — pretrváva. Default v `apps/bff/package.json` šablóne: **Hono** (tenký Web Fetch-based framework, vynikajúca TS ergonomia, podporuje cookie session + middleware composition). 06 r2 alebo 04 r2 finalne potvrdí.
+- `[06-tech-stack-selector]` React 19 stack — `[resolved-in-round-2]`. 06 r1 `decision.md` potvrdený.
+- `[07-design-system]` Design system komponenty (atómy, moleky, organizmy) — pretrváva ako 07 zodpovednosť. Bootstrap vytvorí len index.ts + package.json. 07 r1 dáva 78 komponentov + tokens — naplnenie v Phase C.
+- `[07-design-system]` Self-host fonts — `[resolved-in-round-2]`. Inter + JetBrains Mono v woff2 v `apps/{portal,workspace}/public/fonts/`. 07 r1 vybral fonty; **fonty samotné** (woff2 binárie) sa získajú z `rsms/inter` GitHub releases + `JetBrains/JetBrainsMono` (oba SIL OFL 1.1 — open source licensing OK).
+- `[09-qa-test-strategy]` `e2e/` štruktúra a počet sample spec-ov sú placeholder. 09 dodá finálny strom (per modul folder, page objects, fixtures) v Phase C.
+- `[05-security]` `packages/auth/` scaffoldnutý so 5 modulmi (session, role-guard, login, permissions, preferences). Reálne SSO impl (OIDC) dodá 05 + BFF auth routes (`apps/bff/src/routes/auth/`) v Phase C.
 - `[?]` `apps/portal/public/config.json` a `apps/workspace/public/config.json` — default hodnoty pre lokálny dev. Pre staging/prod sa runtime config nahradí pri deploy (`runtime-config.md`).

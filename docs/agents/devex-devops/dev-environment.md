@@ -1,21 +1,34 @@
 # Dev environment — one-command local setup
 
-> Cieľ: vývojár spustí **`pnpm dev`** a má zelený stack — portál na `:5173`,
-> workspace na `:5174`, MSW mock backend aktívny, hot reload funguje. Bez Docker.
-> Bez živej CA SDM inštancie.
+## Changelog (round 2)
+
+- Pridaný **BFF dev port `:5174`** (04 r2 ADR-01 finalizoval BFF). Workspace presunutý z `:5174` na **`:5175`**, port mapa prebalená.
+- Pridaný **Vite proxy `/api/* → BFF :5174`** v `apps/portal/vite.config.ts` a `apps/workspace/vite.config.ts`. FE volá `/api/*` (relatívne), Vite proxy posiela na BFF.
+- Pridaný **port `9333` (Chrome remote debug)** — pre Playwright + electron-chrome MCP scenár.
+- MSW worker beží v BFF dev mode (Node MSW serve-uje CA SDM upstream pre BFF), nie v FE. FE komunikuje s BFF kontraktom `/api/*`.
+- `.env.local` rozšírené o `VITE_BFF_ORIGIN`, `BFF_PORT`, `BFF_SESSION_STORE_MODE=in-memory`.
+- `dev-setup.sh` doplnené o krok pre BFF (`pnpm --filter @sdm/bff dev` ako background).
+- Otvorené závislosti — uzavreté `[04-architecture]` BFF + multi-tenancy, `[06-tech-stack-selector]` React 19.
+
+> Cieľ: vývojár spustí **`pnpm dev`** a má zelený stack — portal na `:5173`,
+> BFF na `:5174`, workspace na `:5175`, MSW mock backend aktívny v BFF (Node MSW
+> serve-uje CA SDM upstream). Hot reload funguje. Bez Docker. Bez živej CA SDM inštancie.
 
 ## Mapa portov
 
 | Port | Služba | URL | Účel |
 |---|---|---|---|
 | 5173 | `apps/portal` (Vite) | http://localhost:5173 | Self-service SPA |
-| 5174 | `apps/workspace` (Vite) | http://localhost:5174 | Agent workspace SPA |
-| 5175 | Vitest UI (voliteľné) | http://localhost:5175 | `pnpm test --ui` |
+| 5174 | `apps/bff` (Node + Hono/Fastify) | http://localhost:5174 | BFF dev server (04 r2 ADR-01) |
+| 5175 | `apps/workspace` (Vite) | http://localhost:5175 | Agent workspace SPA |
+| 5176 | Vitest UI (voliteľné) | http://localhost:5176 | `pnpm test --ui` |
 | 9323 | Playwright UI mode | http://localhost:9323 | `pnpm test:e2e --ui` |
-| (none) | MSW worker | — | Service Worker v browseri, žiadny port |
+| 9333 | Chrome remote debug (CDP) | http://localhost:9333 | Playwright remote + electron-chrome MCP scenárov |
+| (none) | MSW Node server | — | V BFF dev procese — serve-uje `/caisd-rest/*` upstream mocky |
 
-Žiadny port mimo `:5173–:5175` a `:9323`. Žiadny BE proces lokálne — REST volania
-zachytáva MSW worker priamo v browseri (alebo Node MSW server v Vitest behu).
+Žiadny port mimo `:5173–:5176`, `:9323`, `:9333`. BFF beží lokálne ako Node
+proces a interne používa MSW Node server pre CA SDM upstream calls (žiadna
+sieť von z dev laptopu).
 
 ## `pnpm dev` — čo robí
 
@@ -23,21 +36,32 @@ V koreňovom `package.json`:
 
 ```jsonc
 "scripts": {
-  "dev": "pnpm -r --parallel --filter './apps/portal' --filter './apps/workspace' dev"
+  "dev": "turbo run dev --parallel --filter=@sdm/portal --filter=@sdm/workspace --filter=@sdm/bff"
 }
 ```
 
-Spúšťa **paralelne** Vite dev server v každom app workspace. pnpm spája stdout
-a prefixuje názvom workspace, takže logy zostávajú čitateľné:
+Turborepo spúšťa **paralelne** dev servery vo všetkých 3 apps. Stdout je
+prefixovaný názvom workspace, logy ostávajú čitateľné:
 
 ```
-[portal]    VITE v6.0.3  ready in 412 ms
-[portal]    ➜  Local:   http://localhost:5173/
-[workspace] VITE v6.0.3  ready in 438 ms
-[workspace] ➜  Local:   http://localhost:5174/
+[@sdm/bff]       Hono server listening on http://localhost:5174
+[@sdm/bff]       MSW upstream mocks active (CA SDM)
+[@sdm/portal]    VITE v6.0.3  ready in 412 ms
+[@sdm/portal]    ➜  Local:   http://localhost:5173/
+[@sdm/workspace] VITE v6.0.3  ready in 438 ms
+[@sdm/workspace] ➜  Local:   http://localhost:5175/
 ```
 
-Ctrl-C zabije obidvoch potomkov.
+Ctrl-C zabije všetkých 3 potomkov.
+
+### Variant — len FE bez BFF
+
+```bash
+pnpm dev:fe                              # iba portal + workspace
+```
+
+V tomto móde FE pobeží proti **MSW browser worker** (priame mocky `/api/*`),
+bez BFF dev servera. Užitočné pre rýchle UI iterácie alebo demo bez Node BFF.
 
 ## Per-app `dev` skript
 
@@ -57,8 +81,27 @@ Ctrl-C zabije obidvoch potomkov.
 }
 ```
 
-`apps/workspace/package.json` identicky s portom 5174 (cez `vite.config.ts` →
+`apps/workspace/package.json` identicky s portom 5175 (cez `vite.config.ts` →
 `server.port`).
+
+`apps/bff/package.json`:
+
+```jsonc
+{
+  "name": "@sdm/bff",
+  "type": "module",
+  "scripts": {
+    "dev":       "tsx watch src/index.ts",
+    "build":     "tsup",
+    "start":     "node dist/index.js",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test":      "vitest run",
+    "test:watch": "vitest"
+  }
+}
+```
+
+BFF v dev mode používa `tsx watch` pre HMR (Node).
 
 ## MSW — mock backend setup
 
@@ -118,25 +161,51 @@ po `pnpm install`).
 
 Detail handlerov v `mock-strategy.md`.
 
-## Vite proxy — fallback bez MSW
+## Vite proxy — `/api/* → BFF :5174`
 
-Pre prípady `VITE_USE_MOCKS=false` + ukazovanie proti živej CA SDM inštancii:
+V dev mode FE volá `/api/*` (relatívne). Vite proxy posiela všetky `/api/*`
+requesty na BFF dev server `http://localhost:5174`. Tým získame **CORS-free
+fetch** v dev (rovnaký origin pre FE aj proxy target z pohľadu browsera).
 
 ```ts
-// apps/portal/vite.config.ts
+// apps/portal/vite.config.ts (rovnaké pre apps/workspace)
 server: {
-  proxy: env.VITE_USE_MOCKS === "true" ? undefined : {
-    "/caisd-rest": {
-      target: env.VITE_API_BASE_URL,     // napr. https://sdm-staging.example/
+  port: 5173,                              // apps/workspace: 5175
+  strictPort: true,
+  proxy: {
+    "/api": {
+      target: env.VITE_BFF_ORIGIN ?? "http://localhost:5174",
       changeOrigin: true,
-      secure: false,                       // CA SDM staging má často self-signed cert
+      secure: false,
+    },
+    "/auth": {
+      target: env.VITE_BFF_ORIGIN ?? "http://localhost:5174",
+      changeOrigin: true,
+      secure: false,
+    },
+    "/me": {
+      target: env.VITE_BFF_ORIGIN ?? "http://localhost:5174",
+      changeOrigin: true,
+      secure: false,
     },
   },
 }
 ```
 
-Tým si vývojár môže rýchlo prepnúť `VITE_USE_MOCKS=false` v `.env.local` (gitignored)
-a debugovať voči konkrétnej staging inštancii bez kompilácie.
+`VITE_BFF_ORIGIN` je environment variable (default `http://localhost:5174`).
+
+### Fallback proti živej staging inštancii (bez BFF)
+
+Edge case — vývojár chce debugovať priamo voči staging CA SDM **bez BFF**.
+V `apps/portal/src/mocks/browser.ts` zapne sa MSW browser worker s mockmi
+`/api/*` (kontrakt, ktorý BFF normálne vystavuje). Tým FE nemusí mať bežiaci
+lokálny BFF, ale stále hovorí "BFF kontraktom".
+
+```env
+# .env.local
+VITE_USE_MOCKS=true                        # FE-side MSW browser worker
+VITE_BFF_ORIGIN=                           # ignorované, MSW intercept-uje
+```
 
 ## HMR a state preservation
 
@@ -229,18 +298,22 @@ fi
 echo "==> [4/6] pnpm install"
 pnpm install --frozen-lockfile
 
-echo "==> [5/6] MSW worker bootstrap (idempotent)"
+echo "==> [5/7] MSW worker bootstrap (idempotent, FE fallback mode)"
 [ -f apps/portal/public/mockServiceWorker.js ] || \
   pnpm --filter @sdm/portal exec msw init public/ --save
 [ -f apps/workspace/public/mockServiceWorker.js ] || \
   pnpm --filter @sdm/workspace exec msw init public/ --save
 
-echo "==> [6/6] Playwright browsers (cached)"
+echo "==> [6/7] Playwright browsers (cached)"
 pnpm exec playwright install chromium
+
+echo "==> [7/7] BFF build (pre prvé spustenie 'pnpm dev')"
+pnpm --filter @sdm/bff build || true     # idempotent — fail-soft pri prvom behu
 
 echo ""
 echo "Done. Next:"
-echo "  pnpm dev          # start portal + workspace"
+echo "  pnpm dev          # start portal :5173 + BFF :5174 + workspace :5175"
+echo "  pnpm dev:fe       # iba FE (MSW browser worker, bez BFF)"
 echo "  pnpm test         # run unit tests"
 echo "  pnpm test:e2e     # run Playwright"
 ```
@@ -255,27 +328,34 @@ Ak má vývojár prístup k živej CA SDM staging inštancii (po nasadení na se
 
 ```env
 VITE_USE_MOCKS=false
-VITE_API_BASE_URL=https://sdm-staging.example.org
+VITE_BFF_ORIGIN=http://localhost:5174
+BFF_CA_SDM_URL=https://sdm-staging.example.org
+BFF_CA_SDM_USE_MOCKS=false
 ```
 
-Vite proxy automaticky preroute `/caisd-rest/*` na túto inštanciu. CORS rieši
-proxy (server-side), takže žiadny `Access-Control-*` problem v browseri.
+BFF dev server (`apps/bff`) sa pripojí na živú CA SDM staging inštanciu;
+Vite proxy v FE stále posiela `/api/*` na BFF (`:5174`). CORS rieši BFF
+side (server-to-server fetch), žiadny `Access-Control-*` problem v browseri.
 
 ## Troubleshooting
 
 | Symptom | Pravdepodobná príčina | Riešenie |
 |---|---|---|
-| `pnpm dev` zlyhá s "port already in use" | Predošlý Vite dev nezomrel | `lsof -ti:5173,5174 \| xargs kill -9` |
-| MSW handlery nefungujú, requesty padajú na 404 | Service Worker nie je registrovaný | DevTools → Application → Service Workers → Unregister; reload |
+| `pnpm dev` zlyhá s "port already in use" | Predošlý Vite/BFF dev nezomrel | `lsof -ti:5173,5174,5175 \| xargs kill -9` |
+| FE `/api/*` calls padajú na 404 | BFF nebeží alebo Vite proxy zle nakonfigurovaný | `curl -i http://localhost:5174/health`; ak fail → `pnpm dev:bff` |
+| MSW handlery nefungujú v fallback FE mode | Service Worker nie je registrovaný | DevTools → Application → Service Workers → Unregister; reload |
 | `mockServiceWorker.js` 404 | `msw init` nebol spustený | `pnpm --filter @sdm/portal exec msw init public/ --save` |
+| BFF crash s `Redis connection refused` | Redis nie je nainštalovaný/ nebeží | Default v dev: `BFF_SESSION_STORE_MODE=in-memory` (žiadny Redis potrebný) |
 | TS errors len v IDE, nie v `pnpm typecheck` | IDE používa zlé TS verziu | Cmd-Shift-P → "TypeScript: Select Version" → Workspace |
 | HMR reload neresetne state | Vite cache stale | `rm -rf apps/portal/.vite && pnpm dev` |
 | Playwright failuje hneď | Browsers chýbajú | `pnpm exec playwright install --with-deps` |
+| Turbo cache "out of sync" po pull | `.turbo/` zo starej vetvy | `rm -rf .turbo` + `pnpm install` + `pnpm build` |
 
 ## Otvorené závislosti
 
-- `[04-architecture]` BFF rozhodnutie ovplyvní dev environment. Ak Architecture rozhodne pre BFF (`apps/bff`), pribudne port `:5170` pre BFF dev server a Vite proxy v apps mieri na BFF, nie priamo na CA SDM. MSW handlery sa presunú do BFF dev mockov (rovnaké MSW knižnice, iný runtime — Node `msw/node` namiesto browser SW).
-- `[06-tech-stack-selector]` Predpoklad React 19 + Vite 6. Ak Angular → `apps/portal` má `ng serve` + Angular CLI proxy config namiesto Vite, MSW sa nasadzuje cez `@angular/service-worker` hook.
-- `[07-design-system]` Storybook port (`:6006`) nie je v port mape — design-system samostatne nemá dev server, ale ak 07 zvolí Storybook ako dokumentačný nástroj, pridá sa.
-- `[09-qa-test-strategy]` Playwright `:9323` (UI mode) port je default; ak 09 zvolí iný E2E runner, port mapa sa zmení.
-- `[?]` Multi-tenancy kontext v lokálnom dev — predpoklad fixture s 2 tenantmi (`acme-corp`, `globex`) v MSW data; reálna stratégia (header / cookie / route) je 04+05 vec. Po jej rozhodnutí MSW handlery dostanú parsovanie tenant kontextu.
+- `[04-architecture]` BFF rozhodnutie + dev port — `[resolved-in-round-2]`. BFF na `:5174`, workspace na `:5175`. Vite proxy `/api/*` → BFF. MSW Node v BFF procese serve-uje CA SDM upstream mocky.
+- `[04-architecture]` Multi-tenancy header — `[resolved-in-round-2]`. **`X-Tenant`** per 04 ADR-11.
+- `[06-tech-stack-selector]` React 19 + Vite 6 — `[resolved-in-round-2]`. 06 r1 potvrdený.
+- `[07-design-system]` Storybook port (`:6006`) nie je v port mape — design-system samostatne nemá dev server v MVP. Ak 07 r2 pridá Storybook ako dev nástroj, doplníme port.
+- `[09-qa-test-strategy]` Playwright `:9323` (UI mode) + `:9333` (CDP debug) — `[resolved-in-round-2]`. Z 09 r1 `test-strategy.md` (Playwright canonical).
+- `[?]` BFF session store v dev — default `in-memory` (žiadny Redis dependency). Pre HA dev (multi-laptop debugging) pridáme `redis://localhost:6379` cez `docker-compose.dev.yml` (opt-in).

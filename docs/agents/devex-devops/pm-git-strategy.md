@@ -1,5 +1,10 @@
 # PM git stratégia — branch isolation, worktrees, merge a PR flow
 
+## Changelog (round 2)
+
+r2: žiadna zmena. Konkrétne `git`/`gh` príkazy z r1 sú stable a validované
+prebehnutou pipeline `20260508-192438`.
+
 > Implementácia GOAL §7.6 *Izolácia vetiev a merge stratégia* — konkrétne
 > `git` a `gh` príkazy, ktoré PM spúšťa cez `execa`. Žiadny pseudokód-only popis.
 >

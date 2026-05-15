@@ -1,5 +1,14 @@
 # PM runtime — Claude Agent SDK implementácia
 
+## Changelog (round 2)
+
+- **Default model `claude-opus-4-7` potvrdený** (zhoda s `pipeline.yaml` defaults).
+  Per-agent override popísaný explicitne (frontmatter `model:` field v `.agents/<NN>/agent.md`).
+- Doplnená sekcia **Shell vs reimplementácia tools/** — v1 `apps/pm/src/orchestrator.ts`
+  shelluje `tools/assemble-prompt.sh` a `tools/prepare-stage.sh`. Reimplementácia
+  v TS je v2 vec (po validácii orchestračného flow).
+- Otvorené závislosti — uzavreté `[04-architecture]` `apps/pm/` layout, `[06-tech-stack-selector]` Node 22.
+
 > Project Manager (PM) je **TypeScript CLI** v `apps/pm/`, založený na
 > `@anthropic-ai/claude-agent-sdk`. Spúšťa sub-agentov v izolovaných git worktrees,
 > validuje výstupy, riadi refinement loop, mergne výsledky a otvára finálny PR.
@@ -166,8 +175,33 @@ export async function runAgent(
 je veľký (sloučenie 6 markdown súborov) a opakuje sa pri každom turn, takže cache
 hit rate sa pri správnom použití dostáva nad 80 %.
 
-**Model**: default `claude-opus-4-7` zhodne s `pipeline.yaml` § `defaults.model`.
-Override per-agent cez frontmatter `model:` field.
+**Model**: default **`claude-opus-4-7`** zhodne s `pipeline.yaml` §
+`defaults.model`. Override per-agent cez frontmatter `model:` field v
+`.agents/<NN>-<name>/agent.md`:
+
+```markdown
+---
+name: api-analyst
+description: ...
+tools: [Read, Write, Edit, Glob, Grep]
+model: claude-sonnet-4-7              # override pre lacnejšie / rýchlejšie behy
+---
+```
+
+`agent-runner.ts` číta `frontmatter.model` (cez `loadAgentConfig`) a passne
+do `query({ options: { model: cfg.model } })`. Pre kritických agentov
+(`04-architecture`, `05-security`) **NIKDY** neoverride-uj default — Opus tier
+poskytuje najlepší architecture reasoning.
+
+Príklad use case overrice:
+
+| Agent | Default | Override (voľný) | Dôvod |
+|---|---|---|---|
+| `01-api-analyst` | `claude-opus-4-7` | `claude-sonnet-4-7` | Extraction-heavy work, štruktúrované I/O |
+| `02-ux-persona-analyst` | `claude-opus-4-7` | `claude-sonnet-4-7` | Persona dokumentácia, rozumné s Sonnet |
+| `04-architecture` | `claude-opus-4-7` | (žiadny) | Komplex reasoning, zachovať Opus |
+| `05-security` | `claude-opus-4-7` | (žiadny) | Threat modeling, zachovať Opus |
+| `10-documentation-author` | `claude-opus-4-7` | `claude-sonnet-4-7` | Aggregation len, Sonnet stačí |
 
 ## Orchestrator — `orchestrator.ts`
 
@@ -394,6 +428,57 @@ export class AgentLogger {
 }
 ```
 
+## Shell vs reimplementácia `tools/*` skriptov
+
+Repo má v `tools/` shell skripty pre stage management:
+
+| Skript | Účel |
+|---|---|
+| `tools/assemble-prompt.sh` | Skladá per-agent revision prompt zo system promptu + revision-body + delta |
+| `tools/prepare-stage.sh` | Vytvorí `stage-NN/instructions.md`, prompts adresár, revision-context |
+| `tools/preflight.sh` | Kickoff checky (branch clean, .env, dependencies) |
+
+**Strategy pre `apps/pm/src/orchestrator.ts`** (v1):
+
+Orchestrator **shelluje** tieto skripty cez `execa`, namiesto reimplementácie
+v TS. Dôvody:
+
+1. Skripty sú battle-tested z prebehnutej pipeline (tento beh `20260508-192438`).
+2. Reimplementácia v TS by duplikovala logiku, žiadny benefit (PM už je dlhý projekt).
+3. Shell skripty zostávajú samostatne spustiteľné (debug-friendly bez PM).
+
+```ts
+// apps/pm/src/orchestrator.ts (snippet)
+import { execa } from "execa";
+
+async function assemblePrompt(agentId: string, runId: string, round: number, bodyPath: string, deltaPath: string): Promise<string> {
+  const { stdout } = await execa("bash", [
+    "tools/assemble-prompt.sh",
+    agentId,
+    runId,
+    "revision",
+    String(round),
+    bodyPath,
+    deltaPath,
+  ], { cwd: this.repoRoot });
+  return stdout;
+}
+
+async function prepareNextStage(runId: string, stageLabel: string, round: number, prevStage: string): Promise<void> {
+  await execa("bash", [
+    "tools/prepare-stage.sh",
+    runId,
+    stageLabel,
+    String(round),
+    prevStage,
+  ], { cwd: this.repoRoot });
+}
+```
+
+V2 (post-MVP): ak shell skripty narazia na bash-isms / portability bugy, port
+do TS modulov v `apps/pm/src/stage.ts`. Triggers pre port: Windows support
+(napriek tomu, že MVP target je macOS + Linux), bash 3.x compat (macOS default).
+
 ## Hooks — odkaz
 
 PM nepíše hooks priamo do agent configu — agent-folder `hooks.json` ich
@@ -473,7 +558,9 @@ pre auditovateľnosť.
 
 ## Otvorené závislosti
 
-- `[06-tech-stack-selector]` PM CLI je TypeScript (Node 22). Stack rozhodnutie pre frontend (React vs Angular) **nepôsobí** na PM CLI — ten je oddelený `apps/pm/`. Flag len pre potvrdenie, že Node 22 LTS je akceptovaný v 06.
-- `[04-architecture]` Architecture rozhoduje, či PM CLI patrí do `apps/` alebo `tools/`. Default predpoklad: `apps/pm/` (zhodne s GOAL §9 layoutom + `pipeline.yaml` `pm pipeline` skript v root `package.json`). Ak Architecture preferuje `tools/pm/`, premiestnenie je trivial (zmena workspace path).
+- `[06-tech-stack-selector]` Node 22 LTS — `[resolved-in-round-2]`. 06 r1 `decision.md` potvrdený, žiadny konflikt s React 19 stack.
+- `[04-architecture]` `apps/pm/` umiestnenie — `[resolved-in-round-2]`. 04 `monorepo-layout.md` má `apps/pm/` ako prvotriedny package.
+- `[06-tech-stack-selector]` Default model `claude-opus-4-7` + per-agent override — `[resolved-in-round-2]`. Konvencia v `agent.md` frontmatter `model:` field finalizovaná.
 - `[?]` Verzia `@anthropic-ai/claude-agent-sdk` — `^0.5.0` je placeholder. Pri bootstrape DevOps v Phase C zafixuje aktuálnu stable verziu k dátumu nasadenia (2026-05-15+). API SDK je stable post-1.0; pre prípad pre-1.0 breaking changes monitorujeme changelog.
-- `[?]` Cross-artifact diff je single-prompt LLM call — môže by nedeterministický. Mitigation: low temperature (default opus + `temperature: 0` ak SDK podporuje), JSON output cez zod validáciu. Ak sa ukáže ako problém v praxi (>5% false positives), prepneme na deterministický string-diff + regex flag scan.
+- `[?]` Cross-artifact diff je single-prompt LLM call — môže byť nedeterministický. Mitigation: low temperature (default opus + `temperature: 0` ak SDK podporuje), JSON output cez zod validáciu. Ak sa ukáže ako problém v praxi (>5% false positives), prepneme na deterministický string-diff + regex flag scan.
+- `[?]` `tools/*.sh` skripty shell-out (v1) vs reimplementácia v TS (v2) — pretrváva. Default v1: shell call. Re-evaluate po prvých 3 production beh-och pipeline.

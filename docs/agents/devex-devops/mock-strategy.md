@@ -1,5 +1,16 @@
 # Mock backend stratégia — MSW nad CA SDM REST
 
+## Changelog (round 2)
+
+- **Tenant header zmenený z `X-CA-SDM-Tenant` na `X-Tenant`** (04 r2 ADR-11 finálne rozhodnutie).
+- Handler set rozšírený z **8 modulov na 10** — pridané `users` (BFF `/me`, `/me/active-tenant`, `/whoami`) a `audit` (BFF `/api/audit/*` endpointy pre admin audit log viewer). `service-catalog` ostáva ako pod-modul v `requests.ts` (zhoda s 09 r1).
+- Mocky majú **dve vrstvy** podľa 04 r2 BFF (ADR-01 finalizovaný):
+  - **CA SDM upstream mocks** (`/caisd-rest/*`) — pre integration testy BFF (Node MSW).
+  - **BFF endpoint mocks** (`/api/*`, `/me/*`, `/auth/*`, `/config`) — pre FE dev a integration testy (browser/Node MSW).
+- 09 r1 `mock-strategy.md` (zdroj pravdy pre QA) zarovnaný — tu doplnené handler bloky.
+- `parseTenantFromRequest` aktualizovaný na `X-Tenant` lookup + session cookie fallback (BFF-style).
+- `## Otvorené závislosti` uzavreté `[04-architecture]` (multi-tenancy header + BFF), `[05-security]` (auth flow).
+
 > Vývoj prebieha **bez živej CA SDM 17.4 inštancie**. Mock backend je založený na
 > **Mock Service Worker (MSW)** — zachytáva HTTP requesty v browseri (Service Worker)
 > a v Node (Vitest, Playwright integračné testy).
@@ -10,16 +21,22 @@
 ## Princípy
 
 1. **Schemafirst** — TypeScript typy zo schém `01-api-analyst` sú zdielané medzi
-   `packages/api-client` a `apps/<x>/src/mocks/`. Žiadne hand-rolled typy v mockoch.
+   `packages/api-client`, `apps/bff/src/lib/ca-sdm-client.ts` a `apps/<x>/src/mocks/`.
+   Žiadne hand-rolled typy v mockoch.
 2. **Disjunktný stav per modul** — incidents, requests, problems, … žijú v
-   samostatných `data/<modul>.json` fixtures, mutácie sú in-memory v worker scope.
+   samostatných `fixtures/<modul>.ts` súboroch, mutácie sú in-memory v worker scope.
 3. **Idempotentnosť** — reload page = reset stavu (Service Worker scope mizne).
    Pre stabilné testy: každý test si reset volá `worker.resetHandlers()`.
 4. **Multi-tenancy v mockoch od dňa 1** — fixtures majú `tenant` field, handlery
-   filtrujú podľa request header (`X-CA-SDM-Tenant` — TBD per 04/05).
+   filtrujú podľa request header **`X-Tenant`** (04 r2 ADR-11) + session cookie
+   fallback (BFF-style).
 5. **Žiadna business logic v mockoch** — len CRUD + minimálne state transitions
    (napr. status incidentu: `open → in-progress → resolved`). Workflow logiku má
    reálna CA SDM, mock len simuluje response shape.
+6. **Dvojvrstvový mock set** (04 r2 ADR-01 BFF accepted):
+   - `handlers/upstream/*` — CA SDM `/caisd-rest/*` endpointy (pre BFF integration testy v Node MSW).
+   - `handlers/bff/*` — BFF `/api/*`, `/me/*`, `/auth/*` endpointy (pre FE dev + apps integration tests).
+   - V dev mode FE volá iba BFF mocky (`/api/*`). V `bff/tests` Node MSW serve-uje upstream `/caisd-rest/*`.
 
 ## Knižnice
 
@@ -35,46 +52,66 @@
 packages/api-mocks/
 ├── package.json
 ├── src/
-│   ├── index.ts                  # public exports
-│   ├── browser.ts                # setupWorker pre apps
-│   ├── node.ts                   # setupServer pre Vitest / Playwright
-│   ├── db.ts                     # @mswjs/data model factory
+│   ├── index.ts                       # public exports
+│   ├── browser.ts                     # setupWorker pre apps (FE dev — BFF mocks)
+│   ├── node.ts                        # setupServer pre Vitest / Playwright (FE + BFF testy)
+│   ├── node-upstream.ts               # setupServer pre BFF integration tests (CA SDM mocks)
+│   ├── db.ts                          # @mswjs/data model factory
 │   ├── handlers/
-│   │   ├── index.ts              # zlúčenie všetkých
-│   │   ├── auth.ts
-│   │   ├── tenants.ts
-│   │   ├── incidents.ts
-│   │   ├── requests.ts
-│   │   ├── problems.ts
-│   │   ├── changes.ts
-│   │   ├── knowledge.ts
-│   │   ├── cmdb.ts
-│   │   └── service-catalog.ts
+│   │   ├── index.ts                   # zlúčenie všetkých (bff + upstream)
+│   │   ├── bff/
+│   │   │   ├── auth.ts                # /auth/login, /auth/callback, /auth/logout, /auth/refresh
+│   │   │   ├── users.ts               # /me, /me/active-tenant, /whoami
+│   │   │   ├── tenants.ts             # /me/tenants (aggregator)
+│   │   │   ├── incidents.ts           # /api/incidents/*
+│   │   │   ├── requests.ts            # /api/requests/* + /api/catalog/*
+│   │   │   ├── problems.ts            # /api/problems/*
+│   │   │   ├── changes.ts             # /api/changes/*
+│   │   │   ├── knowledge.ts           # /api/kb/*
+│   │   │   ├── cmdb.ts                # /api/ci/*
+│   │   │   └── audit.ts               # /api/audit/* (admin viewer; per 05 audit-and-compliance)
+│   │   └── upstream/
+│   │       ├── auth.ts                # /caisd-rest/rest_access
+│   │       ├── tenants.ts             # /caisd-rest/tenant_group_member, cnt_role
+│   │       ├── incidents.ts           # /caisd-rest/in/*
+│   │       ├── requests.ts            # /caisd-rest/cr/*, /pcatSearch, /getOfferings
+│   │       ├── problems.ts            # /caisd-rest/pr/*
+│   │       ├── changes.ts             # /caisd-rest/chg/*, /wf/*
+│   │       ├── knowledge.ts           # /caisd-rest/SKELETONS/*, /bui/suggestedSolutions
+│   │       ├── cmdb.ts                # /caisd-rest/nr/*
+│   │       └── reference.ts           # /caisd-rest/cr_stat, /pcat, /sevrty, /cr_resolutions
 │   ├── fixtures/
-│   │   ├── tenants.ts            # 2 tenanti — acme-corp, globex
-│   │   ├── users.ts
-│   │   ├── incidents.ts          # ~40 záznamov, distribuované po stavoch
-│   │   ├── requests.ts
-│   │   ├── problems.ts
-│   │   ├── changes.ts
-│   │   ├── knowledge.ts
-│   │   ├── ci.ts                 # CMDB CI items + relations
-│   │   └── catalog.ts            # service catalog items + form schemas
+│   │   ├── tenants.ts                 # 2 tenanti — acme-corp, globex
+│   │   ├── users.ts                   # 6 — 3 per tenant
+│   │   ├── incidents.ts               # ~40 záznamov, distribuované po stavoch
+│   │   ├── requests.ts                # ~25
+│   │   ├── problems.ts                # ~10
+│   │   ├── changes.ts                 # ~15
+│   │   ├── knowledge.ts               # ~30
+│   │   ├── ci.ts                      # CMDB CI items + relations
+│   │   ├── catalog.ts                 # service catalog items + form schemas
+│   │   └── audit-events.ts            # ~50 audit events (per 05 audit-and-compliance taxonomy)
 │   └── utils/
-│       ├── tenant.ts             # parseTenantFromRequest()
-│       ├── pagination.ts         # toCaSdmPaginatedResponse()
-│       └── errors.ts             # CA SDM error shape helpers
+│       ├── tenant.ts                  # parseTenantFromRequest()
+│       ├── pagination.ts              # toCaSdmPaginatedResponse()
+│       └── errors.ts                  # CA SDM error shape helpers + BFF AppError shape
 └── tsconfig.json
 ```
 
 `apps/portal/src/mocks/browser.ts` a `apps/workspace/src/mocks/browser.ts` len
-re-exportujú zo `@sdm/api-mocks` — žiadny per-app handler override.
+re-exportujú zo `@sdm/api-mocks` (BFF mocks only) — žiadny per-app handler override.
+`apps/bff/tests/setup.ts` importuje `@sdm/api-mocks/node-upstream` (CA SDM mocks).
 
 ## Handler bloky — povinné moduly
 
-Minimálne **6 handler-blokov** pre MVP scope z GOAL §3:
+**10 handler modulov** pre MVP scope z GOAL §3 (zhoda s 09 r1 `mock-strategy.md` §
+3.1–3.10): `auth`, `users`, `tenants`, `incidents`, `requests`, `problems`,
+`changes`, `knowledge`, `cmdb`, `audit`.
 
-### 1. `auth.ts`
+> Príklady kódu nižšie ukazujú **BFF vrstvu** (`/api/*`, `/me/*`). Upstream vrstva
+> (`/caisd-rest/*` v `handlers/upstream/*.ts`) má rovnaký shape ale iné URL.
+
+### 1. `auth.ts` (BFF auth flow)
 
 ```ts
 import { http, HttpResponse } from "msw";
@@ -114,18 +151,80 @@ export const authHandlers = [
 ];
 ```
 
-### 2. `tenants.ts`
+### 2. `users.ts` (BFF `/me` family)
+
+Aggregator endpoints, ktoré BFF skladá z `/caisd-rest/whoami` + `cnt_role`
+(per `api-analyst/multi-tenancy.md` § 3.1). FE volá vždy BFF, nikdy CA SDM
+priamo.
 
 ```ts
 import { http, HttpResponse } from "msw";
-import { tenants } from "../fixtures/tenants";
+import { db } from "../../db";
+import { parseTenantFromRequest } from "../../utils/tenant";
 
-export const tenantHandlers = [
-  http.get("/caisd-rest/tenants", () => HttpResponse.json({ tenants })),
+export const userHandlers = [
+  // GET /me — user profile + session info + activeTenantId
+  http.get("/me", ({ request }) => {
+    const activeTenant = parseTenantFromRequest(request);
+    return HttpResponse.json({
+      user: {
+        id: "user-1",
+        username: "anna.analyst",
+        fullName: "Anna Analyst",
+        email: "anna@acme-corp.example",
+      },
+      session: {
+        activeTenantId: activeTenant,
+        expiresAt: new Date(Date.now() + 30 * 60_000).toISOString(),
+      },
+    });
+  }),
+
+  // POST /me/active-tenant — switch tenant
+  http.post("/me/active-tenant", async ({ request }) => {
+    const body = await request.json() as { tenantId: string };
+    const user = db.user.findFirst({ where: { id: { equals: "user-1" } } });
+    if (!user?.tenants.includes(body.tenantId)) {
+      return HttpResponse.json(
+        { error: { code: "TENANT_FORBIDDEN", message: "User has no role in tenant" } },
+        { status: 403 },
+      );
+    }
+    return HttpResponse.json({ activeTenantId: body.tenantId }, {
+      headers: { "Set-Cookie": `sdm-session=mock-session; HttpOnly; SameSite=Lax` },
+    });
+  }),
 ];
 ```
 
-### 3. `incidents.ts`
+### 3. `tenants.ts` (BFF `/me/tenants` aggregator)
+
+BFF skladá z 3+ CA SDM volaní (`/caisd-rest/cnt_role`, `/tenant_group_member`,
+`/whoami`) per `api-analyst/multi-tenancy.md` § 3.1. Mock vracia agregovaný shape:
+
+```ts
+import { http, HttpResponse } from "msw";
+import { db } from "../../db";
+
+export const tenantHandlers = [
+  // GET /me/tenants — aggregator
+  http.get("/me/tenants", () => {
+    const tenants = db.tenant.findMany({});
+    return HttpResponse.json({
+      tenants: tenants.map((t) => ({
+        id: t.id,
+        name: t.name,
+        roles: ["analyst", "approver"],          // simplified — z user.roles mapping
+      })),
+    });
+  }),
+];
+```
+
+Upstream variant (`handlers/upstream/tenants.ts`) volá `/caisd-rest/cnt_role`
+a `/caisd-rest/tenant_group_member` — pre BFF integration tests.
+
+### 4. `incidents.ts`
 
 ```ts
 import { http, HttpResponse } from "msw";
@@ -203,7 +302,7 @@ function matchWhereClause(record: Incident, wc: string): boolean {
 }
 ```
 
-### 4. `requests.ts`
+### 5. `requests.ts`
 
 ```ts
 import { http, HttpResponse } from "msw";
@@ -258,7 +357,7 @@ export const requestHandlers = [
 ];
 ```
 
-### 5. `problems.ts`
+### 6. `problems.ts`
 
 ```ts
 import { http, HttpResponse } from "msw";
@@ -295,7 +394,7 @@ export const problemHandlers = [
 ];
 ```
 
-### 6. `changes.ts`
+### 7. `changes.ts`
 
 ```ts
 import { http, HttpResponse } from "msw";
@@ -328,7 +427,7 @@ export const changeHandlers = [
 ];
 ```
 
-### 7. `knowledge.ts`
+### 8. `knowledge.ts`
 
 ```ts
 import { http, HttpResponse } from "msw";
@@ -355,7 +454,7 @@ export const knowledgeHandlers = [
 ];
 ```
 
-### 8. `cmdb.ts`
+### 9. `cmdb.ts`
 
 ```ts
 import { http, HttpResponse } from "msw";
@@ -391,6 +490,98 @@ export const cmdbHandlers = [
     return HttpResponse.json({ relations });
   }),
 ];
+```
+
+### 10. `audit.ts` (BFF admin audit log viewer)
+
+Endpoints pre admin audit log UI per 05 r1 `audit-and-compliance.md`. BFF
+zaslúhne audit events do JSON log streamu — admin UI dotazuje cez paginated
+endpoint.
+
+```ts
+import { http, HttpResponse } from "msw";
+import { db } from "../../db";
+import { parseTenantFromRequest } from "../../utils/tenant";
+import { toCaSdmPaginatedResponse } from "../../utils/pagination";
+
+export const auditHandlers = [
+  // GET /api/audit/events — list audit events (paginated)
+  http.get("/api/audit/events", ({ request }) => {
+    const tenant = parseTenantFromRequest(request);
+    const url = new URL(request.url);
+    const start = Number(url.searchParams.get("start") ?? 0);
+    const count = Number(url.searchParams.get("count") ?? 25);
+    const eventType = url.searchParams.get("eventType");
+    const userId = url.searchParams.get("userId");
+    const from = url.searchParams.get("from");
+    const to = url.searchParams.get("to");
+
+    let events = db.auditEvent.findMany({
+      where: { tenantId: { equals: tenant } },
+    });
+    if (eventType) events = events.filter((e) => e.eventType === eventType);
+    if (userId) events = events.filter((e) => e.userId === userId);
+    if (from) events = events.filter((e) => e.timestamp >= from);
+    if (to) events = events.filter((e) => e.timestamp <= to);
+
+    // Most recent first
+    events.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+
+    return HttpResponse.json(toCaSdmPaginatedResponse(events, start, count, "events"));
+  }),
+
+  // GET /api/audit/events/:id — single event detail
+  http.get("/api/audit/events/:id", ({ params, request }) => {
+    const tenant = parseTenantFromRequest(request);
+    const event = db.auditEvent.findFirst({
+      where: { id: { equals: String(params.id) }, tenantId: { equals: tenant } },
+    });
+    if (!event) {
+      return HttpResponse.json({ error: { code: "NOT_FOUND" } }, { status: 404 });
+    }
+    return HttpResponse.json({ event });
+  }),
+
+  // GET /api/audit/event-types — taxonomy (per 05 audit-and-compliance.md)
+  http.get("/api/audit/event-types", () => {
+    return HttpResponse.json({
+      eventTypes: [
+        "auth.login",
+        "auth.logout",
+        "auth.session_expired",
+        "tenant.switched",
+        "incident.created",
+        "incident.updated",
+        "incident.status_changed",
+        "change.approved",
+        "change.rejected",
+        "kb.published",
+        "permission.denied",
+        "data.exported",
+      ],
+    });
+  }),
+];
+```
+
+Fixture (`fixtures/audit-events.ts`):
+
+```ts
+import { faker } from "@faker-js/faker";
+faker.seed(43);
+
+const TYPES = ["auth.login", "incident.created", "tenant.switched", "change.approved", "permission.denied"];
+
+export const auditEventsFixture = Array.from({ length: 50 }).map((_, i) => ({
+  id: `aud:${100_000 + i}`,
+  timestamp: faker.date.recent({ days: 7 }).toISOString(),
+  eventType: faker.helpers.arrayElement(TYPES),
+  userId: faker.helpers.arrayElement(["user-1", "user-2", "user-3"]),
+  tenantId: i % 3 === 0 ? "globex" : "acme-corp",
+  correlationId: faker.string.uuid(),
+  outcome: faker.helpers.arrayElement(["success", "failure"]),
+  details: { ipAddress: faker.internet.ip(), userAgent: "Mozilla/5.0" },
+}));
 ```
 
 ## In-memory DB — `db.ts`
@@ -500,6 +691,16 @@ export const db = factory({
     target: String,
     type: String,             // "depends_on", "contains", "uses"
   },
+  auditEvent: {
+    id: primaryKey(String),
+    timestamp: String,        // ISO-8601
+    eventType: String,        // per 05 audit taxonomy
+    userId: String,
+    tenantId: String,
+    correlationId: String,
+    outcome: String,          // "success" | "failure"
+    details: Object,
+  },
 });
 
 // Seed
@@ -513,6 +714,7 @@ changesFixture.forEach((c) => db.change.create(c));
 knowledgeFixture.forEach((k) => db.knowledgeDoc.create(k));
 ciFixture.forEach((c) => db.configurationItem.create(c));
 ciRelationFixture.forEach((r) => db.ciRelation.create(r));
+auditEventsFixture.forEach((e) => db.auditEvent.create(e));
 ```
 
 ## Fixture generátor — `fixtures/incidents.ts`
@@ -549,18 +751,28 @@ critical pre stabilné E2E.
 
 ### `parseTenantFromRequest(request)` — `utils/tenant.ts`
 
+04 r2 ADR-11 finalizoval **`X-Tenant`** ako tenant context header. BFF má
+session ako autoritu — header je defenzívny audit-friendly hint. Mock akceptuje
+header alebo session-cookie fallback:
+
 ```ts
 export function parseTenantFromRequest(req: Request): string {
-  // Stratégia 1 — header (predpoklad — final rozhoduje 04+05).
-  const header = req.headers.get("X-CA-SDM-Tenant");
+  // Stratégia 1 — X-Tenant header (per 04 ADR-11, primárna v BFF + FE komunikácii).
+  const header = req.headers.get("X-Tenant");
   if (header) return header;
-  // Stratégia 2 — cookie (fallback).
-  const cookie = req.headers.get("Cookie")?.match(/sdm-tenant=([^;]+)/);
+  // Stratégia 2 — session cookie (BFF-side autorita; FE nečíta).
+  const cookie = req.headers.get("Cookie")?.match(/sdm-active-tenant=([^;]+)/);
   if (cookie?.[1]) return cookie[1];
-  // Default tenant z user profile.
+  // Default tenant — typicky z user.defaultTenantId.
   return "acme-corp";
 }
 ```
+
+CA SDM upstream mocky (`handlers/upstream/*`) **nečítajú** `X-Tenant` priamo —
+namiesto toho dostávajú `X-Role` od BFF (zhodne s `components/bff.md` § 2.3
+REST proxy: BFF inject `X-Role` zo session). Mock to môže simulovať tak, že
+v upstream variant `parseTenantFromRequest` číta `X-Role` a mapuje role → tenant
+(via fixture user role table).
 
 ### `toCaSdmPaginatedResponse(records, start, count, key)` — `utils/pagination.ts`
 
@@ -634,9 +846,11 @@ test("UI shows error banner on 500", async () => {
 | Knowledge docs | 30 | s kategóriami |
 | CIs | 50 | servery + sieťové prvky |
 | CI relations | 60 | depends_on, contains, uses |
+| Audit events | 50 | per 05 audit-taxonomy; rozloženie 7 dní |
 
-Celkovo ~250 rekordov — dostatočné na demo všetkých UX flowov z GOAL §3, malé
-dosť aby boli loadnuté inštantne, deterministické thanks to `faker.seed(42)`.
+Celkovo **~300 rekordov** — dostatočné na demo všetkých UX flowov z GOAL §3,
+malé dosť aby boli loadnuté inštantne, deterministické thanks to
+`faker.seed(42)` (general) + `faker.seed(43)` (audit-events — žiadne kolízie ID).
 
 ## Migrácia na živé CA SDM
 
@@ -652,9 +866,10 @@ Mock backend nie je vyhadzovaný — zostáva **druhým runtimeom**.
 
 ## Otvorené závislosti
 
-- `[04-architecture]` Multi-tenancy stratégia (header / cookie / route prefix / subdoména) z GOAL §6 → určuje, ako `parseTenantFromRequest` parsuje kontext. Default predpoklad: header `X-CA-SDM-Tenant`. Po rozhodnutí 04 prepíšeme utility v jednom mieste.
-- `[01-api-analyst]` Schémy v `docs/agents/api-analyst/schemas/` sú **autoritatívne** pre TS typy fixture záznamov a handlerov. Round 1 phase A produkuje tieto schémy paralelne — v post-conv overíme, či každý handler matchuje schému. Ak schémy odhalia ďalšie endpointy (napr. attachments, comments), pridajú sa ďalšie handler bloky.
-- `[04-architecture]` Ak Architecture rozhodne pre BFF, mocky sa môžu posunúť **medzi BFF a frontend** — BFF mockuje CA SDM REST (Node MSW), apps komunikujú s BFF kontraktom. Toto je nontrivial change v štruktúre balíka `api-mocks`.
-- `[05-security]` REST access key flow (`/caisd-rest/rest_access`) — mock akceptuje akékoľvek credentials. Ak Security model požaduje stricter mock (validácia hesla, expiration, replay protection), handler `auth.ts` sa rozšíri. Default: permissive mock.
-- `[09-qa-test-strategy]` `onUnhandledRequest: "error"` v Vitest setup je strict default — každý nezachytený fetch v teste = fail. Flag → 09 ak preferuje `"warn"`. Default je strict, lebo expose missing handlers skoro.
-- `[?]` SOAP fallback endpointy (Web Services) z GOAL §2 — momentálne **mimo MVP** (predpokladáme, že REST pokrýva). Ak 01-api-analyst nájde dieru, pridáme SOAP mock cez `wiremock` (osobitný service) alebo `nock` v Node.
+- `[04-architecture]` Multi-tenancy header — `[resolved-in-round-2]`. 04 ADR-11 finalizoval **`X-Tenant`**. `parseTenantFromRequest` aktualizovaný v § Utils.
+- `[04-architecture]` BFF rozhodnutie — `[resolved-in-round-2]`. 04 ADR-01 accepted. Mocky majú teraz dve vrstvy (`bff/*` a `upstream/*`).
+- `[05-security]` Auth flow — `[resolved-in-round-2]`. Mode `sso-oidc` v prod, `rest-access-key` permissive mock v dev. BFF handler `auth.ts` skladá OIDC redirect → cookie session shape.
+- `[09-qa-test-strategy]` Handler module count — `[resolved-in-round-2]`. **10 modulov** zarovnaných s 09 r1 `mock-strategy.md` § 3.1–3.10 (auth, users, tenants, incidents, requests, problems, changes, knowledge, cmdb, audit). `reference` ostáva ako upstream-only sub-handler (nie samostatný BFF endpoint, lebo BFF cachuje reference data interne).
+- `[01-api-analyst]` Schémy v `docs/agents/api-analyst/schemas/` sú **autoritatívne** pre TS typy fixture záznamov a handlerov — pretrváva. Round 1 phase A produkuje tieto schémy; v post-conv overíme, či každý handler matchuje schému. Ak schémy odhalia ďalšie endpointy (napr. attachments, comments), pridajú sa ďalšie handler bloky.
+- `[09-qa-test-strategy]` `onUnhandledRequest: "error"` v Vitest setup je strict default — 09 r1 `mock-strategy.md` § 8 potvrdil "strict" smer. Zachovaná default.
+- `[?]` SOAP fallback endpointy (Web Services) z GOAL §2 — pretrváva. Momentálne **mimo MVP** (predpokladáme, že REST pokrýva). Ak 01-api-analyst nájde dieru, pridáme SOAP mock cez `wiremock` (osobitný service) alebo `nock` v Node.

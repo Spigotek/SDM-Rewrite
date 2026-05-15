@@ -1,5 +1,9 @@
 # PM hook skripty — `tools/pm-hooks/*.js`
 
+## Changelog (round 2)
+
+r2: žiadna zmena. Hook telá (3 skripty + shared module) z r1 sú stable.
+
 > Kontrakt a vzorové telá pre 3 hook skripty, ktoré PM (a každý sub-agent) volá
 > cez Claude Agent SDK hooks API. Skripty bežia ako **detached node processes**
 > pri každom hook evente.
