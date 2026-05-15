@@ -14,7 +14,7 @@
 - Layered handler split potvrdený (04 BFF prijatý): **BFF-layer handlers**
   pre BFF endpoints (`/me/tenants`, `/me/active-tenant`, `/api/queue`, ...) vs.
   **CA SDM upstream handlers** pre `/caisd-rest/*`. Stratégia popisuje obe.
-- Tenant kontext mechanizmus — `X-Tenant` header per ADR-11. `parseTenantFromRequest`
+- Tenant kontext mechanizmus — `X-CA-SDM-Tenant` header per ADR-11. `parseTenantFromRequest`
   middleware v MSW (§6) testuje jeden mechanizmus (header), nie fallback chain.
 - Tech stack potvrdený (06 r2): `msw@2.x` + `@mswjs/data@0.16.x` + `@faker-js/faker@9.x`
   (seeded). Stratégia bola od r1 framework-agnostic; teraz fixuje verzie.
@@ -85,7 +85,7 @@ packages/api-mocks/src/
 ├── browser.ts        # setupWorker pre apps (dev + Playwright)
 ├── node.ts           # setupServer pre Vitest
 └── utils/
-    ├── tenant.ts     # parseTenantFromRequest — X-Tenant header per ADR-11
+    ├── tenant.ts     # parseTenantFromRequest — X-CA-SDM-Tenant header per ADR-11
     ├── pagination.ts # toCaSdmPaginatedResponse
     ├── errors.ts     # CA SDM error shape + AppError taxonomy
     └── audit.ts      # in-memory audit log sink (assertable v BFF tests)
@@ -140,7 +140,7 @@ zapínajú per-test cez `server.use(...overrides)`.
 **Edge cases:**
 
 - Switch na tenant, ku ktorému user nemá rolu → 403 `forbidden_tenant`.
-- Cross-tab race: tab B request s `X-Tenant: T1` ale session má T2 → 403 `TENANT_FORBIDDEN` + `correctTenantId: T2`.
+- Cross-tab race: tab B request s `X-CA-SDM-Tenant: T1` ale session má T2 → 403 `TENANT_FORBIDDEN` + `correctTenantId: T2`.
 - Tenant suspension → 403 `tenant_suspended`.
 
 ### 3.3 Incidents (`incidents.ts`) — zlúčené s attachments per ticket scope
@@ -408,16 +408,16 @@ timeout handling (loading state, cancel button, error fallback).
 Pre **BFF perf measurement** (p50/p95 per `performance.md`) sa použije
 realistic latency s seeded jitter (±20 ms σ).
 
-## 6. Multi-tenancy semantika v handlers (ADR-11 — `X-Tenant` header)
+## 6. Multi-tenancy semantika v handlers (ADR-11 — `X-CA-SDM-Tenant` header)
 
-Po 04 r2 finalizácii: tenant context = `X-Tenant: <tenantId>` header z FE → BFF.
+Po 04 r2 finalizácii: tenant context = `X-CA-SDM-Tenant: <tenantId>` header z FE → BFF.
 BFF validuje proti `session.activeTenantId`. Mock `parseTenantFromRequest`:
 
 ```ts
 // packages/api-mocks/src/utils/tenant.ts
 export function parseTenantFromRequest(req: Request): string | null {
   // ADR-11: jediný legitímny mechanizmus.
-  const header = req.headers.get("X-Tenant");
+  const header = req.headers.get("X-CA-SDM-Tenant");
   if (!header && !isPublicEndpoint(req.url)) {
     return null;
   }
@@ -433,7 +433,7 @@ if (!tenantId && !isPublicEndpoint(req.url)) {
   emitAudit({ action: "tenant_context_missing", result: "denied", ... });
   return new HttpResponse(JSON.stringify({ error: "tenant_context_missing" }), { status: 401 });
 }
-// Cross-tab race: ak `X-Tenant` neodpovedá session.activeTenantId
+// Cross-tab race: ak `X-CA-SDM-Tenant` neodpovedá session.activeTenantId
 if (tenantId !== session.activeTenantId) {
   return new HttpResponse(
     JSON.stringify({ error: "TENANT_FORBIDDEN", correctTenantId: session.activeTenantId }),
@@ -444,7 +444,7 @@ if (tenantId !== session.activeTenantId) {
 
 Tým testujeme:
 
-- Náš api-client **vždy** posiela `X-Tenant` header (regression guard).
+- Náš api-client **vždy** posiela `X-CA-SDM-Tenant` header (regression guard).
 - BFF má server-side authority (session.activeTenantId), nie request input.
 - Cross-tab tenant drift detekuje BFF (per multi-tenancy-security L4 + L12).
 
@@ -501,7 +501,7 @@ CI flag: `onUnhandledRequest: "error"` (strict — každý nezachytený fetch v 
 - `[04-architecture]` BFF rozhodnutie — `[resolved-in-round-2]`. Layered handler
   set s explicitným split BFF-layer vs. CA SDM upstream je implementovaný (§2).
 - `[04-architecture]` Tenant context mechanizmus — `[resolved-in-round-2]`.
-  `X-Tenant` header per ADR-11; `parseTenantFromRequest` testuje jeden
+  `X-CA-SDM-Tenant` header per ADR-11; `parseTenantFromRequest` testuje jeden
   mechanizmus (§6).
 - `[01-api-analyst]` Gap #3 (Service Catalog dynamic form schema). MSW handler
   `/getOfferings/{id}` zatiaľ vracia mock s 3 statickými poliami. Akonáhle

@@ -354,7 +354,7 @@ side (server-to-server fetch), žiadny `Access-Control-*` problem v browseri.
 ## Otvorené závislosti
 
 - `[04-architecture]` BFF rozhodnutie + dev port — `[resolved-in-round-2]`. BFF na `:5174`, workspace na `:5175`. Vite proxy `/api/*` → BFF. MSW Node v BFF procese serve-uje CA SDM upstream mocky.
-- `[04-architecture]` Multi-tenancy header — `[resolved-in-round-2]`. **`X-Tenant`** per 04 ADR-11.
+- `[04-architecture]` Multi-tenancy header — `[resolved-in-round-2]`. **`X-CA-SDM-Tenant`** per 04 ADR-11.
 - `[06-tech-stack-selector]` React 19 + Vite 6 — `[resolved-in-round-2]`. 06 r1 potvrdený.
 - `[07-design-system]` Storybook port (`:6006`) nie je v port mape — design-system samostatne nemá dev server v MVP. Ak 07 r2 pridá Storybook ako dev nástroj, doplníme port.
 - `[09-qa-test-strategy]` Playwright `:9323` (UI mode) + `:9333` (CDP debug) — `[resolved-in-round-2]`. Z 09 r1 `test-strategy.md` (Playwright canonical).

@@ -11,7 +11,7 @@
   contract-testov z `api-client`, ale celkové pomery sa neposúvajú.
 - Tech stack potvrdený (06 r2): Vitest + Playwright + MSW + Zod + fast-check
   + `@faker-js/faker` + `@mswjs/data`. Self-flag "runner" uzavretý.
-- Tenant kontext mechanizmus uzavretý: `X-Tenant` header (server-side authority
+- Tenant kontext mechanizmus uzavretý: `X-CA-SDM-Tenant` header (server-side authority
   v BFF session) per ADR-11. Contract testy preformulované z fallback chain na
   jeden mechanizmus.
 - 18 user journeys, smoke E2E (5 scenárov), Lighthouse prahy, flaky policy,
@@ -77,7 +77,7 @@ Boundary mapping je teraz 1:1 s 04 container set
 | **Unit — hooks / utils** | React hooks (TanStack Query hooks, auth hooks), pure formatters, i18n helpers | `vitest` + `@testing-library/react` (jsdom) | Render bez DOM = preferované, ak hook DOM nepotrebuje | `apps/portal/src/**/*.test.ts`, `apps/workspace/src/**/*.test.ts`, `packages/auth/src/**/*.test.ts`, `packages/i18n/src/**/*.test.ts` |
 | **Component — UI** | Komponenty design-systemu + feature komponenty s deterministickými dátami | `vitest` + `@testing-library/react` + `vitest-axe` | Interakcie, a11y, render snapshots **iba pre design-system** primitív | `packages/design-system/src/**/*.test.tsx`, `apps/*/src/components/**/*.test.tsx` |
 | **Integration — UI + data (per app)** | Feature komponent → hook → TanStack Query → `api-client` → **MSW node server** → assertion. Pre `apps/portal` aj `apps/workspace` zvlášť. **Boundary = jedna app**. | `vitest` + `@testing-library/react` + `msw/node` | Pokryté hlavné CRUD flowy per modul × app (incident triage v workspace, request submit v portal, KB search v oboch, CMDB CI detail v workspace) | `apps/portal/src/features/<modul>/__tests__/*.itest.tsx`, `apps/workspace/src/features/<modul>/__tests__/*.itest.tsx` |
-| **Integration — BFF (nový)** | BFF route handler → session middleware → tenant scoping → REST proxy → **MSW v Node mock-uje CA SDM upstream** → assertion. Bezpečnostne kritická vrstva (session, tenant injection, RBAC enforcement, `X-Tenant` validation). | `vitest` (node env) + `msw/node` + in-memory session store | Pokryté: auth flow (`/auth/login`, `/auth/callback`, `/auth/logout`, `/auth/heartbeat`, `/auth/step-up`), tenant switch (`/me/active-tenant`), aggregator endpoints (`/me/tenants`, `/api/queue`, `/api/tickets/:type/:id`), REST proxy s tenant filter injection, error shape unification (AppError taxonomy), audit log emission per request. | `apps/bff/src/routes/**/*.itest.ts`, `apps/bff/src/middleware/**/*.itest.ts` |
+| **Integration — BFF (nový)** | BFF route handler → session middleware → tenant scoping → REST proxy → **MSW v Node mock-uje CA SDM upstream** → assertion. Bezpečnostne kritická vrstva (session, tenant injection, RBAC enforcement, `X-CA-SDM-Tenant` validation). | `vitest` (node env) + `msw/node` + in-memory session store | Pokryté: auth flow (`/auth/login`, `/auth/callback`, `/auth/logout`, `/auth/heartbeat`, `/auth/step-up`), tenant switch (`/me/active-tenant`), aggregator endpoints (`/me/tenants`, `/api/queue`, `/api/tickets/:type/:id`), REST proxy s tenant filter injection, error shape unification (AppError taxonomy), audit log emission per request. | `apps/bff/src/routes/**/*.itest.ts`, `apps/bff/src/middleware/**/*.itest.ts` |
 | **Contract — api-client vs. schémy** | `api-client` volá MSW handler odvodený z `docs/agents/api-analyst/schemas/*.ts`. Test verifikuje, že typed klient produkuje payload kompatibilný so **Zod** schémou a parsuje response správne. | `vitest` + `msw/node` + `zod` runtime parse | Každý endpoint z `endpoints.csv` použitý v MVP má aspoň jeden happy-path + jeden error-path contract test | `packages/api-client/src/**/__contracts__/*.ctest.ts` |
 | **Contract — BFF vs. CA SDM (nový)** | BFF posiela správny payload smerom k CA SDM upstream. MSW mockuje CA SDM, test verifikuje, že BFF produkuje očakávaný `X-AccessKey`, `X-Role`, defenzívny `WC=tenant%3DU'<id>'` filter, XML→JSON conversion a error mapping. | `vitest` + `msw/node` | Každý CA SDM endpoint, ktorý BFF volá, má kontrakt overený | `apps/bff/src/proxy/**/__contracts__/*.ctest.ts` |
 | **E2E — kritické journeys** | Playwright, real browser, real `portal` / `workspace` build s **MSW worker** (Playwright route fixture importuje handler set z `@sdm/api-mocks`) ako backend. BFF beží ako reálny proces lokálne (alebo MSW-stub-nutý per scenár). | `playwright@1.x` | Pokryje 18 journeys z `02-ux-persona-analyst` cez tag `@scenario:<journey-id>` | `e2e/<modul>/*.spec.ts` |
@@ -264,7 +264,7 @@ Po 06 round 2 fixácii sú všetky stack-závislé voľby vyriešené:
 - `[04-architecture]` BFF boundary — `[resolved-in-round-2]` (BFF samostatný
   test target, dva nové layer-y: BFF integration + BFF contract).
 - `[04-architecture]` tenant context mechanizmus — `[resolved-in-round-2]`
-  (`X-Tenant` header per ADR-11; contract test verifikuje 1 mechanizmus, nie
+  (`X-CA-SDM-Tenant` header per ADR-11; contract test verifikuje 1 mechanizmus, nie
   fallback chain).
 - `[04-architecture]` routing strategy / lazy-load — `[resolved-in-round-2]`
   (React Router v6 lazy + route-level code-split per ADR-05; per-route bundle

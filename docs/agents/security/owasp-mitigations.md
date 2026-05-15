@@ -24,7 +24,7 @@
 
 > **Primárna architektonická mitigácia**: 04 ADR 11 (multi-tenancy) — server-side
 > aktívny tenant v BFF session + defenzívny `WC=tenant%3DU'<id>'` filter na CA SDM
-> volaniach + `X-Tenant` header revalidácia (per 04 ADR 11 § dôsledok 3, 4).
+> volaniach + `X-CA-SDM-Tenant` header revalidácia (per 04 ADR 11 § dôsledok 3, 4).
 > Implementácia v 04 `components/bff.md` § 2.3 (REST proxy) — žiadny generický
 > passthrough, každý handler má explicitný `requirePermission(...)` check.
 

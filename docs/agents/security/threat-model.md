@@ -60,8 +60,8 @@ flowchart LR
     C2 -->|GET /config| C6e
     C3 -->|OIDC redirect| C7[IdP]
     C7 -->|callback| C6a[BFF :: Auth]
-    C4 -->|fetch + cookie + X-Tenant| C6b[BFF :: API]
-    C4 -->|fetch + cookie + X-Tenant| C6c[BFF :: Aggregator]
+    C4 -->|fetch + cookie + X-CA-SDM-Tenant| C6b[BFF :: API]
+    C4 -->|fetch + cookie + X-CA-SDM-Tenant| C6c[BFF :: Aggregator]
     C6a -. session lifecycle .-> C6d[(Session Store)]
     C6b -. session lookup .-> C6d
     C6c -. session lookup .-> C6d
@@ -135,7 +135,7 @@ flowchart LR
 ## 4. STRIDE — `@sdm/api-client` package (C4)
 
 > Zdroj: `docs/agents/architecture/architecture.md` §3.2 (`@sdm/api-client` —
-> typed wrapper okolo `fetch`, vkladá session cookie + `X-Tenant` header
+> typed wrapper okolo `fetch`, vkladá session cookie + `X-CA-SDM-Tenant` header
 > per 04 ADR 11).
 
 | Kategória | Threat | Likelihood | Impact | Mitigation |
@@ -200,7 +200,7 @@ flowchart LR
 |---|---|---|---|---|
 | **S**poofing | DNS / cert spoofing CA SDM endpoint | Low | Critical | Endpoint URL pinned in BFF env; HTTPS cert validation strict; HSTS na BFF surface |
 | | Server-side request forgery (SSRF) z hostname param | Med | Critical | Whitelist of allowed upstream URLs (CA SDM, IdP); block private IP ranges (RFC 1918, 169.254/16, ::1); viď `owasp-mitigations.md` A10 |
-| **T**ampering | `X-Tenant` header forgery | High | High | BFF revaliduje `X-Tenant === session.activeTenantId`; mismatch = 409 `TENANT_MISMATCH` per 04 ADR 11; viď `auth-flow.md` §4.3 a `multi-tenancy-security.md` §3 |
+| **T**ampering | `X-CA-SDM-Tenant` header forgery | High | High | BFF revaliduje `X-CA-SDM-Tenant === session.activeTenantId`; mismatch = 409 `TENANT_MISMATCH` per 04 ADR 11; viď `auth-flow.md` §4.3 a `multi-tenancy-security.md` §3 |
 | | WC filter injection cez search params | Med | High | Parameterized `WC` builder s whitelist polí; per `owasp-mitigations.md` A03 |
 | | Replay attack on signed CSRF token | Low | Med | Token includes timestamp + nonce; expiry 15 min; rotated on tenant switch |
 | | XML/JSON injection v ticket payload | Med | Med | BFF normalizes/escapes payload pre rendering; output encoding na SPA |

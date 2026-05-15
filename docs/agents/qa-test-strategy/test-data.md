@@ -4,7 +4,7 @@
 
 - r2: žiadna zmena vo factory taxonomy ani per-journey fixture štruktúre.
 - Závislosti uzavreté: 06 r2 factory library (`@faker-js/faker@9.x` seeded),
-  06 r2 schema validator (`zod@3.x`), 04 r2 tenant context (`X-Tenant` header
+  06 r2 schema validator (`zod@3.x`), 04 r2 tenant context (`X-CA-SDM-Tenant` header
   → `Tenant` domain entity je dostatočné; žiadny `TenantContext` composite
   v MVP).
 - Self-flagy: realistic SK + EN sample texts pre i18n testy + backup fixture
@@ -288,7 +288,7 @@ Toto je **per PR CI step**, ktorý chytí drift skôr než sa rozšíri.
 - `[01-api-analyst]` Schema validator — `[resolved-in-round-2]` (`zod@3.x`
   zdielané s `api-client` per 06 r2 libraries §3).
 - `[04-architecture]` Tenant kontext fixture — `[resolved-in-round-2]`.
-  `Tenant` doménovej entity je dostatočné (per ADR-11: `X-Tenant` header,
+  `Tenant` doménovej entity je dostatočné (per ADR-11: `X-CA-SDM-Tenant` header,
   server-side authority v session; žiadny `TenantContext` composite v MVP).
 - `[09-qa]` "Realistický slovník" pre random text content (popis incidentu,
   KB body) — momentálne stub strings. Round 2 → post-conv: doplniť SK + EN

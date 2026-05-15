@@ -2,7 +2,7 @@
 
 ## Changelog (round 2)
 
-- **Tenant header zmenený z `X-CA-SDM-Tenant` na `X-Tenant`** (04 r2 ADR-11 finálne).
+- **Tenant header zmenený z `X-CA-SDM-Tenant` na `X-CA-SDM-Tenant`** (04 r2 ADR-11 finálne).
 - Pridané pole **`auth.bffOrigin`** v `AuthConfig` schema — URL BFF servera
   (dev `http://localhost:5174`, prod `https://sdm.example.org/bff`).
 - Pridaný príklad č. **4 Production on-prem (BFF mode)** — finálny target po 04 r2 ADR-01.
@@ -54,7 +54,7 @@ export interface TenantsConfig {
   // user-profile: použiť default tenant z /me response (BFF aggregator).
   // subdomain: extract z hostname (acme.portal.example → tenant "acme").
   // explicit-select: pri prvom prihlásení nechať usera zvoliť.
-  tenantContextHeader: string;            // 04 r2 ADR-11: "X-Tenant"
+  tenantContextHeader: string;            // 04 r2 ADR-11: "X-CA-SDM-Tenant"
   allowSwitching: boolean;                // default true
 }
 
@@ -97,7 +97,7 @@ export interface ConfigMeta {
   },
   "tenants": {
     "defaultMode": "user-profile",
-    "tenantContextHeader": "X-Tenant",
+    "tenantContextHeader": "X-CA-SDM-Tenant",
     "allowSwitching": true
   },
   "features": {
@@ -136,7 +136,7 @@ export interface ConfigMeta {
   },
   "tenants": {
     "defaultMode": "user-profile",
-    "tenantContextHeader": "X-Tenant",
+    "tenantContextHeader": "X-CA-SDM-Tenant",
     "allowSwitching": true
   },
   "features": {
@@ -174,7 +174,7 @@ export interface ConfigMeta {
   },
   "tenants": {
     "defaultMode": "user-profile",
-    "tenantContextHeader": "X-Tenant",
+    "tenantContextHeader": "X-CA-SDM-Tenant",
     "allowSwitching": true
   },
   "features": {
@@ -250,7 +250,7 @@ function buildFallbackFromEnv(): RuntimeConfig {
     },
     tenants: {
       defaultMode: "user-profile",
-      tenantContextHeader: "X-Tenant",
+      tenantContextHeader: "X-CA-SDM-Tenant",
       allowSwitching: true,
     },
     features: {
@@ -337,7 +337,7 @@ const authConfigSchema = z.object({
 
 const tenantsConfigSchema = z.object({
   defaultMode: z.enum(["user-profile", "subdomain", "explicit-select"]).default("user-profile"),
-  tenantContextHeader: z.string().default("X-Tenant"),               // 04 r2 ADR-11
+  tenantContextHeader: z.string().default("X-CA-SDM-Tenant"),               // 04 r2 ADR-11
   allowSwitching: z.boolean().default(true),
 });
 
@@ -504,7 +504,7 @@ je single-version. Pri breaking change pridáme `meta.configSchemaVersion`.
 
 - `[05-security]` Auth mode default — `[resolved-in-round-2]`. Production: `sso-oidc` (OIDC redirect cez BFF). Dev: `rest-access-key` (permissive mock). Schema podporuje všetky 3, 05 dodá reálnu implementáciu loaderov v `packages/auth/`.
 - `[04-architecture]` `apiBasePath` — `[resolved-in-round-2]`. **`/api`** (BFF endpoint). FE volá BFF, nie CA SDM priamo.
-- `[04-architecture]` Multi-tenancy header — `[resolved-in-round-2]`. 04 ADR-11 finalizoval **`X-Tenant`**. Zod schema default + všetky 3 príklady aktualizované.
+- `[04-architecture]` Multi-tenancy header — `[resolved-in-round-2]`. 04 ADR-11 finalizoval **`X-CA-SDM-Tenant`**. Zod schema default + všetky 3 príklady aktualizované.
 - `[04-architecture]` `auth.bffOrigin` — `[resolved-in-round-2]`. Pridané v r2 ako povinné pole (`bffOrigin: z.string().url()`). Dev: `http://localhost:5174`, prod: `https://sdm.example.org/bff`.
 - `[07-design-system]` Sentry release tracking používa `meta.buildId`. Žiadny impact na design-system, len pre úplnosť.
 - `[?]` Field `features.*` momentálne mapuje na v1 features z GOAL §3. Ak post-MVP pribudnú ďalšie, schema sa rozšíri (so `.default(false)`).

@@ -132,7 +132,7 @@ Web Fetch-based framework s vynikajúcou TS ergonomiou). Bundle: tsup.
 | new | `apps/bff/src/index.ts` | Entry — HTTP gateway bootstrap, graceful shutdown, signal handling |
 | new | `apps/bff/src/config.ts` | Runtime config loader (z `BFF_CONFIG_PATH` env alebo `./config.json`) |
 | new | `apps/bff/src/middleware/session.ts` | Cookie session middleware (HttpOnly + Secure + SameSite=Lax) |
-| new | `apps/bff/src/middleware/tenant.ts` | `X-Tenant` header validator vs. `session.activeTenantId` (ADR-11) |
+| new | `apps/bff/src/middleware/tenant.ts` | `X-CA-SDM-Tenant` header validator vs. `session.activeTenantId` (ADR-11) |
 | new | `apps/bff/src/middleware/csrf.ts` | Double-submit token (Security agent autoritative) |
 | new | `apps/bff/src/middleware/rate-limit.ts` | Per-session rate limit (defenzívne) |
 | new | `apps/bff/src/middleware/audit.ts` | Request → audit-log per `audit-and-compliance.md` |
@@ -161,7 +161,7 @@ Web Fetch-based framework s vynikajúcou TS ergonomiou). Bundle: tsup.
 | new | `apps/bff/src/lib/reference-cache.ts` | TTL cache pre priorities/severities/statuses (5–15 min) |
 | new | `apps/bff/src/lib/error-taxonomy.ts` | `AppError` shape + CA SDM 401 disambiguation |
 | new | `apps/bff/src/types.ts` | Zdielané typy (Session, AppError, AuditEvent) |
-| new | `apps/bff/tests/middleware/tenant.test.ts` | X-Tenant header validation tests |
+| new | `apps/bff/tests/middleware/tenant.test.ts` | X-CA-SDM-Tenant header validation tests |
 | new | `apps/bff/tests/routes/auth.test.ts` | OIDC callback + session lifecycle tests |
 | new | `apps/bff/tests/routes/aggregator.test.ts` | `/me/tenants` fan-out tests |
 | new | `apps/bff/tests/lib/error-taxonomy.test.ts` | 401 → AUTH_EXPIRED vs AUTH_FORBIDDEN |
@@ -208,7 +208,7 @@ PM CLI — viď `pm-runtime.md`.
 | new | `packages/api-client/tsconfig.json` | |
 | new | `packages/api-client/src/index.ts` | Public API |
 | new | `packages/api-client/src/config.ts` | `fetch('/config.json')` loader |
-| new | `packages/api-client/src/client.ts` | HTTP klient → BFF `/api/*` (X-Tenant inject) |
+| new | `packages/api-client/src/client.ts` | HTTP klient → BFF `/api/*` (X-CA-SDM-Tenant inject) |
 | new | `packages/api-client/src/queryKeys.ts` | TanStack Query keys (tenant-scoped) |
 | new | `packages/api-client/src/errors.ts` | AppError throw helper |
 

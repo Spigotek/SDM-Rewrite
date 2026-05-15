@@ -86,7 +86,7 @@
 | **Popis** | MSW 2.x service worker robí HTTP interception. Pri tenant switching v dev mode môže worker zaostať za state-om a vrátiť dáta z minulého tenanta (ak handlery nemajú per-tenant logiku). |
 | P / I | Med / Low |
 | Trigger | Dev tester vidí dáta z iného tenanta po switch-i. |
-| Mitigácia | MSW handlery v `mocks/handlers/` musia rešpektovať `tenant` query param alebo `X-Tenant` header. `08-devex-devops` dodá template handler factory; každý mock factory akceptuje `tenantId` ako param. |
+| Mitigácia | MSW handlery v `mocks/handlers/` musia rešpektovať `tenant` query param alebo `X-CA-SDM-Tenant` header. `08-devex-devops` dodá template handler factory; každý mock factory akceptuje `tenantId` ako param. |
 | Vlastník | `08-devex-devops` |
 
 ## R-T-07 — i18n dynamic backend values (R-102 cross-link) `[persists]`

@@ -10,7 +10,7 @@
   tagy v §4 — security testy nesedia v izolácii, ale fan-out z journey context-u.
 - Uzavreté flagy: 05 emergency 2FA challenge type → default TOTP
   (`[business-deferred]`), 07 keyboard shortcuts → `[resolved-in-round-2]`,
-  04 tenant context → `X-Tenant` header per ADR-11.
+  04 tenant context → `X-CA-SDM-Tenant` header per ADR-11.
 
 > Mapovanie 18 user journeys z `docs/agents/ux-persona-analyst/journeys.md`
 > na konkrétne testy. **Žiadny test bez acceptance criterion**, **žiadny
@@ -314,7 +314,7 @@ Mimo per-journey overení musí byť pokryté:
 |---|---|---|---|
 | C1 | Tenant izolácia: prepnutie tenanta vyčistí cache / state predošlého | E2E + integration | `@tenant:isolation` |
 | C2 | Tenant switcher: zoznam iba tenantov, kde má user rolu | E2E | `@tenant:list` |
-| C3 | Tenant scope v každom request — `X-Tenant` header validovaný server-side per ADR-11 | contract | `@tenant:scope` |
+| C3 | Tenant scope v každom request — `X-CA-SDM-Tenant` header validovaný server-side per ADR-11 | contract | `@tenant:scope` |
 | C4 | RBAC per tenant: rovnaký user, rôzne role v rôznych tenantoch → rôzne UI | E2E | `@tenant:rbac` |
 | C5 | i18n: SK + EN pre všetky route — žiadne hard-coded stringy v JSX | static + integration smoke | `@i18n` |
 | C6 | a11y: žiadne `serious`/`critical` axe violations na hlavných obrazovkách | E2E | `@a11y` |
@@ -454,7 +454,7 @@ Journey je **passed** ak:
   s `aria-keyshortcuts` atribútom; E2E testy referencujú konštanty z
   `@sdm/design-system/keymap.ts`.
 - `[04-architecture]` Tenant context mechanizmus — `[resolved-in-round-2]`.
-  `X-Tenant` header per ADR-11; cross-cutting C3 (contract test šablóna)
+  `X-CA-SDM-Tenant` header per ADR-11; cross-cutting C3 (contract test šablóna)
   testuje jeden mechanizmus, nie fallback chain.
 - `[02-ux-persona-analyst]` GAP-3 cross-tenant viewer rola — pretrváva. Ak CA
   SDM takúto rolu nemá, journey #12 (`workspace-change-cross-tenant-conflict`)

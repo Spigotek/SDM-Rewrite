@@ -4,7 +4,7 @@
 
 - **Variant A povýšený na canonical** po 04 ADR 01 = BFF=YES (`docs/agents/architecture/decision-records/01-bff.md`).
 - Variant B presunutý do prílohy ako **legacy no-BFF fallback** — slúži už len ako referencia, nie reálne alternatívne riešenie.
-- Tenant switch + cross-tab sync používa header `X-Tenant` podľa 04 ADR 11 (`docs/agents/architecture/decision-records/11-multi-tenancy.md`).
+- Tenant switch + cross-tab sync používa header `X-CA-SDM-Tenant` podľa 04 ADR 11 (`docs/agents/architecture/decision-records/11-multi-tenancy.md`).
 - Hodnoty `idleTimeout = 30 min` (oba aplikácie, default), `stepUpTtl = 5 min`, `reopenTimeBox = 7 dní`, `bulkStepUpThreshold = > 50` — zharmonizované s `audit-and-compliance.md` a `multi-tenancy-security.md` r2.
 - OIDC client lib (BFF) a JWT validation lib uzavreté: BFF používa stack-rozhodnutie 06 (`docs/agents/tech-stack-selector/libraries.md` §16 — žiadna FE OIDC knižnica, BFF si vyberie `openid-client` + `jose` ekv. v 06 r2). Tento dokument zostáva IdP-agnostic.
 
@@ -32,7 +32,7 @@
 | Bulk step-up threshold | **> 50** záznamov | r2 finalized |
 | Reopen time-box (requester own) | **7 dní** od `resolve_date` | r2 finalized |
 | Tenant switch | re-fetch session na BFF, **bez** re-loginu (re-auth len pri SP cross-tenant enable) | Security |
-| Tenant context header (FE → BFF) | `X-Tenant: <activeTenantId>` | 04 ADR 11 (resolved) |
+| Tenant context header (FE → BFF) | `X-CA-SDM-Tenant: <activeTenantId>` | 04 ADR 11 (resolved) |
 
 > **Status variantov po r2**: Variant A (BFF + httpOnly cookie) je **canonical**.
 > Variant B (no-BFF) je v prílohe (§ A) ako legacy referencia.
@@ -325,16 +325,16 @@ fetch("/api/incidents", {
 });
 ```
 
-### 4.3 Tenant header — `X-Tenant`
+### 4.3 Tenant header — `X-CA-SDM-Tenant`
 
-Každý mutating + read API call z SPA na BFF posiela header `X-Tenant: <activeTenantId>`
+Každý mutating + read API call z SPA na BFF posiela header `X-CA-SDM-Tenant: <activeTenantId>`
 (per 04 ADR 11). BFF tento header **revaliduje** proti `session.activeTenantId`:
 
 | Match | Akcia |
 |---|---|
-| `X-Tenant` chýba | BFF použije `session.activeTenantId` (kompatibilita), audit warning. |
-| `X-Tenant === session.activeTenantId` | Proceed. |
-| `X-Tenant !== session.activeTenantId` | 409 `TENANT_MISMATCH` (per 04 ADR 11 § two-tab pattern) + `correctTenantId` v body → SPA auto-reload. Audit event `tenant.mismatch.detected`. |
+| `X-CA-SDM-Tenant` chýba | BFF použije `session.activeTenantId` (kompatibilita), audit warning. |
+| `X-CA-SDM-Tenant === session.activeTenantId` | Proceed. |
+| `X-CA-SDM-Tenant !== session.activeTenantId` | 409 `TENANT_MISMATCH` (per 04 ADR 11 § two-tab pattern) + `correctTenantId` v body → SPA auto-reload. Audit event `tenant.mismatch.detected`. |
 
 Header je **informačný / audit-friendly**, autorita je v session. Defense-in-depth — viď `multi-tenancy-security.md` §3.
 

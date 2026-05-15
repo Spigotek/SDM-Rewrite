@@ -2,13 +2,13 @@
 
 ## Changelog (round 2)
 
-- **Tenant header zmenený z `X-CA-SDM-Tenant` na `X-Tenant`** (04 r2 ADR-11 finálne rozhodnutie).
+- **Tenant header zmenený z `X-CA-SDM-Tenant` na `X-CA-SDM-Tenant`** (04 r2 ADR-11 finálne rozhodnutie).
 - Handler set rozšírený z **8 modulov na 10** — pridané `users` (BFF `/me`, `/me/active-tenant`, `/whoami`) a `audit` (BFF `/api/audit/*` endpointy pre admin audit log viewer). `service-catalog` ostáva ako pod-modul v `requests.ts` (zhoda s 09 r1).
 - Mocky majú **dve vrstvy** podľa 04 r2 BFF (ADR-01 finalizovaný):
   - **CA SDM upstream mocks** (`/caisd-rest/*`) — pre integration testy BFF (Node MSW).
   - **BFF endpoint mocks** (`/api/*`, `/me/*`, `/auth/*`, `/config`) — pre FE dev a integration testy (browser/Node MSW).
 - 09 r1 `mock-strategy.md` (zdroj pravdy pre QA) zarovnaný — tu doplnené handler bloky.
-- `parseTenantFromRequest` aktualizovaný na `X-Tenant` lookup + session cookie fallback (BFF-style).
+- `parseTenantFromRequest` aktualizovaný na `X-CA-SDM-Tenant` lookup + session cookie fallback (BFF-style).
 - `## Otvorené závislosti` uzavreté `[04-architecture]` (multi-tenancy header + BFF), `[05-security]` (auth flow).
 
 > Vývoj prebieha **bez živej CA SDM 17.4 inštancie**. Mock backend je založený na
@@ -28,7 +28,7 @@
 3. **Idempotentnosť** — reload page = reset stavu (Service Worker scope mizne).
    Pre stabilné testy: každý test si reset volá `worker.resetHandlers()`.
 4. **Multi-tenancy v mockoch od dňa 1** — fixtures majú `tenant` field, handlery
-   filtrujú podľa request header **`X-Tenant`** (04 r2 ADR-11) + session cookie
+   filtrujú podľa request header **`X-CA-SDM-Tenant`** (04 r2 ADR-11) + session cookie
    fallback (BFF-style).
 5. **Žiadna business logic v mockoch** — len CRUD + minimálne state transitions
    (napr. status incidentu: `open → in-progress → resolved`). Workflow logiku má
@@ -751,14 +751,14 @@ critical pre stabilné E2E.
 
 ### `parseTenantFromRequest(request)` — `utils/tenant.ts`
 
-04 r2 ADR-11 finalizoval **`X-Tenant`** ako tenant context header. BFF má
+04 r2 ADR-11 finalizoval **`X-CA-SDM-Tenant`** ako tenant context header. BFF má
 session ako autoritu — header je defenzívny audit-friendly hint. Mock akceptuje
 header alebo session-cookie fallback:
 
 ```ts
 export function parseTenantFromRequest(req: Request): string {
-  // Stratégia 1 — X-Tenant header (per 04 ADR-11, primárna v BFF + FE komunikácii).
-  const header = req.headers.get("X-Tenant");
+  // Stratégia 1 — X-CA-SDM-Tenant header (per 04 ADR-11, primárna v BFF + FE komunikácii).
+  const header = req.headers.get("X-CA-SDM-Tenant");
   if (header) return header;
   // Stratégia 2 — session cookie (BFF-side autorita; FE nečíta).
   const cookie = req.headers.get("Cookie")?.match(/sdm-active-tenant=([^;]+)/);
@@ -768,7 +768,7 @@ export function parseTenantFromRequest(req: Request): string {
 }
 ```
 
-CA SDM upstream mocky (`handlers/upstream/*`) **nečítajú** `X-Tenant` priamo —
+CA SDM upstream mocky (`handlers/upstream/*`) **nečítajú** `X-CA-SDM-Tenant` priamo —
 namiesto toho dostávajú `X-Role` od BFF (zhodne s `components/bff.md` § 2.3
 REST proxy: BFF inject `X-Role` zo session). Mock to môže simulovať tak, že
 v upstream variant `parseTenantFromRequest` číta `X-Role` a mapuje role → tenant
@@ -866,7 +866,7 @@ Mock backend nie je vyhadzovaný — zostáva **druhým runtimeom**.
 
 ## Otvorené závislosti
 
-- `[04-architecture]` Multi-tenancy header — `[resolved-in-round-2]`. 04 ADR-11 finalizoval **`X-Tenant`**. `parseTenantFromRequest` aktualizovaný v § Utils.
+- `[04-architecture]` Multi-tenancy header — `[resolved-in-round-2]`. 04 ADR-11 finalizoval **`X-CA-SDM-Tenant`**. `parseTenantFromRequest` aktualizovaný v § Utils.
 - `[04-architecture]` BFF rozhodnutie — `[resolved-in-round-2]`. 04 ADR-01 accepted. Mocky majú teraz dve vrstvy (`bff/*` a `upstream/*`).
 - `[05-security]` Auth flow — `[resolved-in-round-2]`. Mode `sso-oidc` v prod, `rest-access-key` permissive mock v dev. BFF handler `auth.ts` skladá OIDC redirect → cookie session shape.
 - `[09-qa-test-strategy]` Handler module count — `[resolved-in-round-2]`. **10 modulov** zarovnaných s 09 r1 `mock-strategy.md` § 3.1–3.10 (auth, users, tenants, incidents, requests, problems, changes, knowledge, cmdb, audit). `reference` ostáva ako upstream-only sub-handler (nie samostatný BFF endpoint, lebo BFF cachuje reference data interne).
