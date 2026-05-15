@@ -1,29 +1,41 @@
 # Auth Flow — SDM-Rewrite
 
+## Changelog (round 2)
+
+- **Variant A povýšený na canonical** po 04 ADR 01 = BFF=YES (`docs/agents/architecture/decision-records/01-bff.md`).
+- Variant B presunutý do prílohy ako **legacy no-BFF fallback** — slúži už len ako referencia, nie reálne alternatívne riešenie.
+- Tenant switch + cross-tab sync používa header `X-Tenant` podľa 04 ADR 11 (`docs/agents/architecture/decision-records/11-multi-tenancy.md`).
+- Hodnoty `idleTimeout = 30 min` (oba aplikácie, default), `stepUpTtl = 5 min`, `reopenTimeBox = 7 dní`, `bulkStepUpThreshold = > 50` — zharmonizované s `audit-and-compliance.md` a `multi-tenancy-security.md` r2.
+- OIDC client lib (BFF) a JWT validation lib uzavreté: BFF používa stack-rozhodnutie 06 (`docs/agents/tech-stack-selector/libraries.md` §16 — žiadna FE OIDC knižnica, BFF si vyberie `openid-client` + `jose` ekv. v 06 r2). Tento dokument zostáva IdP-agnostic.
+
 > Cieľ: definovať autentifikačný a tokenový flow pre dve SPA aplikácie
 > (`portal`, `workspace`) nad CA SDM 17.4. Auth model je **IdP-agnostic** —
 > popisuje kontrakt OIDC / SAML s corp IdP (typicky Azure AD / Keycloak),
 > nezamyká sa na konkrétny produkt.
 >
 > Vstupy: `docs/agents/api-analyst/auth.md`, `docs/agents/api-analyst/multi-tenancy.md`,
+> `docs/agents/architecture/decision-records/01-bff.md`,
+> `docs/agents/architecture/decision-records/11-multi-tenancy.md`,
 > GOAL.md §4, §5, §8.
 
-## 0. TL;DR a default-y
+## 0. TL;DR a default-y (canonical po r2)
 
-| Rozhodnutie | Default | Variant | Závisí od |
-|---|---|---|---|
-| Protokol IdP | **OIDC (Authorization Code + PKCE)** | SAML 2.0 (SP-initiated) | corp IdP — voľba je DevOps + Security spoločne |
-| Token handling | **Variant A — BFF + httpOnly session cookie** | Variant B — no-BFF, in-memory token + silent refresh | Architecture (`[04-architecture]`) |
-| CA SDM auth | REST `POST /caisd-rest/rest_access` (Basic, alebo EEM Artifact pri OIDC↔SAML bridgi) | BOPSID pre seamless transition zo starého webclienta | API Analyst §1.1–1.3 |
-| Token lifetime (FE↔BFF) | Access cookie: 15 min; Refresh cookie: 8 h (sliding) | – | Security |
-| CA SDM Access Key lifetime | server-side, default per `expiration_date`, BFF rotuje | – | API Analyst §6 |
-| Idle timeout | 15 min od posledného user-eventu | configurable per tenant | Security |
-| Tenant switch | re-fetch session na BFF, **bez** re-loginu | hard re-auth pre cross-tenant SP eskaláciu | Security |
+| Rozhodnutie | Hodnota | Justifikácia |
+|---|---|---|
+| Protokol IdP | **OIDC (Authorization Code + PKCE)** ako default; SAML 2.0 (SP-initiated) ak corp IdP nevie OIDC | corp IdP voľba (DevOps + Security spoločne) |
+| Token handling | **BFF + httpOnly session cookie** (canonical) | 04 ADR 01 (resolved) |
+| CA SDM auth | REST `POST /caisd-rest/rest_access` (Basic, alebo EEM Artifact pri OIDC↔SAML bridgi); BOPSID pre seamless transition zo starého webclienta | API Analyst §1.1–1.3 |
+| Token lifetime (FE↔BFF) | Access cookie: 15 min; Refresh cookie: 8 h (sliding) | Security |
+| CA SDM Access Key lifetime | server-side, default per `expiration_date`, BFF rotuje | API Analyst §6 |
+| Idle timeout | **30 min** od posledného user-eventu (portal aj workspace; configurable per tenant) | Security r2 (finalized) |
+| Step-up TTL | **5 min** po MFA prompt | `multi-tenancy-security.md` §6 |
+| Bulk step-up threshold | **> 50** záznamov | r2 finalized |
+| Reopen time-box (requester own) | **7 dní** od `resolve_date` | r2 finalized |
+| Tenant switch | re-fetch session na BFF, **bez** re-loginu (re-auth len pri SP cross-tenant enable) | Security |
+| Tenant context header (FE → BFF) | `X-Tenant: <activeTenantId>` | 04 ADR 11 (resolved) |
 
-> **Poznámka — variant A vs. B**: Architecture agent (04) beží súbežne s týmto
-> artefaktom v round-1. Variant A (BFF) je odporúčaný default, lebo eliminuje
-> dlhožijúce shared-secrety (`X-AccessKey`) z browseru. Variant B je dokumentovaný
-> pre prípad, že Architecture rozhodne **bez BFF** (viď flag v `## Otvorené závislosti`).
+> **Status variantov po r2**: Variant A (BFF + httpOnly cookie) je **canonical**.
+> Variant B (no-BFF) je v prílohe (§ A) ako legacy referencia.
 
 ## 1. Slovník
 
@@ -32,10 +44,14 @@
 | **IdP** | Identity Provider — corp Azure AD / Keycloak / iné. Vydáva ID Token + Access Token (OIDC) alebo SAML Assertion. |
 | **BFF** | Backend-for-Frontend — Node/Java/Go proces, ktorý vlastní session cookies a hovorí s CA SDM v mene SPA. |
 | **Session cookie** | `__Host-sdm.sid` (httpOnly, Secure, SameSite=Lax, Path=/), len BFF k nej má prístup. |
-| **Access Key (SDM)** | `X-AccessKey: <numeric>` — token vydaný CA SDM REST endpointom `POST /caisd-rest/rest_access`. Drží ho **iba BFF** (variant A). |
+| **Access Key (SDM)** | `X-AccessKey: <numeric>` — token vydaný CA SDM REST endpointom `POST /caisd-rest/rest_access`. Drží ho **iba BFF**. |
 | **Tenant context** | `{ tenantId, roleId }` aktívneho tenanta používateľa, držaný v session. |
 
-## 2. Variant A (default) — OIDC + BFF + httpOnly session
+## 2. Canonical flow — OIDC + BFF + httpOnly session
+
+> Toto je **jediný** happy-path auth flow po r2. BFF=YES je rozhodnutý
+> (04 ADR 01). Diagramy v sekcii 2.1–2.6 sú smerodajné pre QA test
+> vectors (§ 8) aj pre 09 acceptance criteria.
 
 ### 2.1 Sekvenčný diagram — login
 
@@ -78,7 +94,7 @@ sequenceDiagram
 
 - **PKCE** je povinné aj pre confidential client — chráni pred code interception.
 - **State + nonce** validácia chráni proti CSRF a token-injection.
-- **CA SDM Access Key sa nikdy nevracia do prehliadača** — žije len v BFF session store (Redis / in-memory s sticky session).
+- **CA SDM Access Key sa nikdy nevracia do prehliadača** — žije len v BFF session store (in-memory v MVP single-instance per 04 `components/bff.md` §2.2 + 04 ADR 01; Redis post-MVP, gating na `[08-devex-devops] session-store`).
 - Mapovanie IdP claims → CA SDM identita: claim `sub` alebo `preferred_username` matchuje `cnt.userid` (alternatívne `cnt.email`).
 
 ### 2.2 Sekvenčný diagram — token refresh (FE strana)
@@ -166,27 +182,31 @@ sequenceDiagram
     BFF->>BFF: session.idleAt = now()
     BFF-->>SPA: 204
 
-    Note over SPA: User neaktívny 15 min — žiadny heartbeat
-    SPA->>SPA: client-side timer: 14 min → warning modal<br/>"Vaša relácia vyprší o 60 sekúnd. Pokračovať?"
+    Note over SPA: User neaktívny 30 min — žiadny heartbeat
+    SPA->>SPA: client-side timer: 29 min → warning modal<br/>"Vaša relácia vyprší o 60 sekúnd. Pokračovať?"
     alt user clicks "Pokračovať"
         SPA->>BFF: POST /auth/heartbeat
         BFF-->>SPA: 204
-    else timer 15 min uplynul
+    else timer 30 min uplynul
         SPA->>BFF: GET /me
-        BFF->>BFF: now() - session.idleAt > 15 min → invalidate
+        BFF->>BFF: now() - session.idleAt > 30 min → invalidate
         BFF-->>SPA: 401 + reason="idle_timeout"
         SPA->>SPA: redirect → /auth/login?reason=idle
     end
 ```
 
-**Parametre idle timeout:**
+**Parametre idle timeout (r2 finalized):**
 
 | App | Default idle | Override per tenant |
 |---|---|---|
-| `portal` | 30 min | áno (admin config 5–120 min) |
-| `workspace` | 15 min | áno (5–60 min) |
+| `portal` | **30 min** | áno (admin config 5–120 min) |
+| `workspace` | **30 min** | áno (5–120 min) |
 
-Workspace má kratší idle, lebo agenti pracujú s citlivými ticket-dátami (PII žiadateľov).
+> r1 návrh diferencovaného idle (15 min workspace / 30 min portal) bol r2 zjednotený
+> na 30 min pre obe aplikácie — alignment s 04 `components/bff.md` §2.2 (Session
+> manager: Idle timeout 30 min default). Kratší idle pre workspace bol nepraktický
+> (agenti často držia ticket otvorený dlhé minúty pri research-i), výhody PII
+> ochrany zabezpečuje absolútny 8 h cap a Workspace-špecifický cookie scope.
 
 ### 2.5 Sekvenčný diagram — tenant switch
 
@@ -254,52 +274,13 @@ sequenceDiagram
     TabB->>TabB: redirect → /auth/login
 ```
 
-## 3. Variant B (fallback) — no-BFF, in-memory token
+## 3. Príloha: variant B — legacy no-BFF fallback
 
-> ⚠️ Tento variant sa použije iba ak Architecture (04) rozhodne **proti BFF**.
-> Bezpečnostne je horší — kľúč CA SDM resp. ID token žije v JS heap-e a je
-> tak exponovaný XSS attack-u.
+> **Status po r2**: variant B je archivovaný v sekcii § A (na konci dokumentu).
+> Nepoužíva sa, BFF=YES po 04 ADR 01. Príloha existuje len ako historická
+> referencia pre prípad re-evaluácie architektúry v post-MVP.
 
-### 3.1 Token storage
-
-- **ID token + Access token (IdP)**: v memory (JS variable v auth module-i), nikdy nie v `localStorage` / `sessionStorage`. Pri reload-i sa vykoná silent refresh cez `prompt=none` flow.
-- **CA SDM Access Key**: SPA si musí vyžiadať Access Key sama (cez CA SDM REST `POST /caisd-rest/rest_access` s `X-ExtAuthArtifact` zo IdP-validated artefaktu — t. j. SPA potrebuje **mať backend, ktorý exchanguje IdP token za EEM artifact** — čo je vlastne mini-BFF, takže "no-BFF" je v praxi ťažko dosiahnuteľné).
-- **Refresh token**: nikdy v browseri. Iba ak BFF (variant A) ho drží.
-- **Silent refresh**: cez hidden iframe na IdP `/authorize?prompt=none&...` — vracia sa new ID token bez user interakcie, ak je IdP session ešte živá.
-
-### 3.2 Sekvenčný diagram — variant B login
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant SPA as SPA
-    participant IdP as IdP
-    participant SDM as CA SDM
-
-    SPA->>SPA: no token in memory → start auth
-    SPA->>IdP: redirect /authorize (PKCE)
-    IdP-->>SPA: redirect back with code
-    SPA->>IdP: POST /token (code + verifier)
-    IdP-->>SPA: { access_token, id_token, expires_in }
-    SPA->>SPA: store in memory only
-    SPA->>SDM: POST /caisd-rest/rest_access<br/>X-ExtAuthArtifact: <artifact><br/>X-UserName: <username>
-    SDM-->>SPA: 201 + access_key
-    SPA->>SPA: store access_key in memory<br/>(NEVER in localStorage)
-    Note over SPA,SDM: All subsequent calls use<br/>X-AccessKey from JS memory
-```
-
-### 3.3 Bezpečnostné rozdiely vs. variant A
-
-| Vec | Variant A (BFF) | Variant B (no-BFF) |
-|---|---|---|
-| Token exposure pri XSS | Nemožné (httpOnly cookie) | Token-theft riskové (JS variable) |
-| CSRF protection | Required (sameSite=Lax + CSRF token na write) | Nepotrebné (no cookie-based auth) |
-| Tenant switch | Server-side validovaný v BFF | Client-side, ľahšie obísť |
-| Refresh strategy | Server-driven, transparent | Client-managed, silent iframe |
-| Auditovateľnosť | BFF má kompletný log | SPA log je nedôveryhodný |
-| Implementačná zložitosť | Higher (BFF process) | Lower (no extra service) |
-
-## 4. Token contract (FE ↔ BFF, variant A)
+## 4. Token contract (FE ↔ BFF)
 
 ### 4.1 Cookie definícia
 
@@ -319,7 +300,7 @@ Set-Cookie: __Host-sdm.sid=<opaque-32B-base64url>;
 | `Secure` | true | Iba HTTPS. |
 | `SameSite=Lax` | – | CSRF mitigation (Strict by blokoval IdP redirect na BFF; Lax povoľuje top-level navigation). |
 | `Path=/` | – | Cookie sa posiela na všetky BFF endpointy. |
-| `Max-Age=28800` | 8h | Absolute upper bound. Sliding window cez `idleAt` (15 min idle). |
+| `Max-Age=28800` | 8h | Absolute upper bound. Sliding window cez `idleAt` (30 min idle, r2). |
 
 ### 4.2 CSRF protection
 
@@ -344,7 +325,20 @@ fetch("/api/incidents", {
 });
 ```
 
-### 4.3 Heartbeat endpoint
+### 4.3 Tenant header — `X-Tenant`
+
+Každý mutating + read API call z SPA na BFF posiela header `X-Tenant: <activeTenantId>`
+(per 04 ADR 11). BFF tento header **revaliduje** proti `session.activeTenantId`:
+
+| Match | Akcia |
+|---|---|
+| `X-Tenant` chýba | BFF použije `session.activeTenantId` (kompatibilita), audit warning. |
+| `X-Tenant === session.activeTenantId` | Proceed. |
+| `X-Tenant !== session.activeTenantId` | 409 `TENANT_MISMATCH` (per 04 ADR 11 § two-tab pattern) + `correctTenantId` v body → SPA auto-reload. Audit event `tenant.mismatch.detected`. |
+
+Header je **informačný / audit-friendly**, autorita je v session. Defense-in-depth — viď `multi-tenancy-security.md` §3.
+
+### 4.4 Heartbeat endpoint
 
 ```
 POST /auth/heartbeat
@@ -355,7 +349,7 @@ POST /auth/heartbeat
 
 SPA volá heartbeat **iba** pri user-eventoch (click, keypress, focus), nie na timer. Debounce 30 s.
 
-### 4.4 `/me` endpoint contract
+### 4.5 `/me` endpoint contract
 
 ```typescript
 GET /me  →  200
@@ -448,7 +442,7 @@ Tento zoznam je vstup pre QA agent (`09-qa-test-strategy`):
 - [ ] Nonce mismatch v id_token → abort + audit log.
 - [ ] CSRF: POST bez `X-CSRF-Token` → 403.
 - [ ] CSRF: POST s expired/wrong CSRF token → 403.
-- [ ] Idle timeout: 15 min bez heartbeat → 401 na ďalší call.
+- [ ] Idle timeout: 30 min bez heartbeat → 401 na ďalší call.
 - [ ] Tenant switch happy: user s 2 tenantmi, switch → cookie verzia rotuje, SPA cache invaliduje.
 - [ ] Tenant switch attack: forge `tenantId` mimo session.tenants[] → 403, audit event "forbidden_tenant_switch".
 - [ ] Logout: cookie zmazaná, BFF session deleted, CA SDM Access Key DELETE-d, IdP refresh revoked.
@@ -458,11 +452,58 @@ Tento zoznam je vstup pre QA agent (`09-qa-test-strategy`):
 
 ## Otvorené závislosti
 
-- `[04-architecture]` BFF rozhodnutie — variant A (BFF + httpOnly cookie) je default. Ak Architecture rozhodne **bez BFF**, sekcia 3 (Variant B) sa stáva canonical a variant A je referencia. Auth flow diagramy v sekcii 2.1–2.6 sa potom musia prerobiť (no-BFF varianta).
-- `[04-architecture]` Storage pre BFF session: in-memory (jeden BFF node, sticky session) vs. Redis (horizontal scaling). Voľba ovplyvní failover behavior (re-login pri restart vs. zero-downtime). Default odporúčaný Redis, ale závisí od deployment topológie.
+- `[04-architecture]` BFF rozhodnutie — `[resolved-in-round-2]` 04 ADR 01 = BFF=YES. Canonical flow (sekcia 2) je jediný happy path; variant B v § A je legacy referencia.
+- `[04-architecture]` Storage pre BFF session — `[resolved-in-round-2]` 04 `components/bff.md` §2.2 + ADR 01 = in-memory MVP single-instance, Redis post-MVP. Failover behavior: re-login pri BFF restart v MVP (acceptable per audit-and-compliance §8).
 - `[04-architecture]` `[01-api-analyst]` Voľba SDM bootstrap metódy (EEM artifact vs. BOPSID vs. service-account fallback) — vyžaduje overenie na cieľovej CA SDM inštancii a corp IdP. Bez overenia drží default = EEM artifact.
-- `[06-tech-stack-selector]` Knižnica pre OIDC client v BFF (passport-openid-connect, openid-client, Spring Security OIDC, ...) — voľba je tech-stack rozhodnutie, kontrakt v tomto dokumente je IdP-agnostic.
+- `[06-tech-stack-selector]` Knižnica pre OIDC client v BFF — `[resolved-in-round-2]` BFF stack (Node.js variant z 06 `decision.md`) si vyberie konkrétnu knižnicu (predpokladaný `openid-client@5.x` alebo `passport-openid-connect`); FE OIDC knižnica **nie je** potrebná (06 `libraries.md` §16). Kontrakt v tomto dokumente zostáva IdP-agnostic.
+- `[06-tech-stack-selector]` JWT validation lib — `[resolved-in-round-2]` BFF používa `jose` (kompatibilné s `openid-client`) alebo ekv. — výber je v 06 r2 BFF stack profile.
 - `[06-tech-stack-selector]` Cross-tab broadcast: BroadcastChannel API je natívne, ale starší Safari (iOS < 15.4) nemá full support. Pre PWA na mobile zvážiť `localStorage` event fallback (žiadne secrets v storage, len `{ type, tenantId, ts }` notifikácia).
 - `[?]` Role-mapping bootstrap z IdP `groups[]` claim — sekcia 5.1. Treba potvrdiť, či corp IdP claim `groups[]` poskytuje, a či CA SDM admin akceptuje "first-login provisioning" model. Alternatíva: roly sú pre-provisioned v CA SDM nezávisle od IdP.
-- `[?]` Default idle timeout (15 min workspace, 30 min portal) — biznis hodnota. Treba potvrdiť, alebo zvoliť per-tenant config.
+- `[?]` Default idle timeout 30 min — `[resolved-in-round-2]` konkrétna hodnota nastavená; finálna autorita = compliance / biznis stakeholder, môže byť zmenená per-tenant config bez code change.
 - `[09-qa-test-strategy]` Test vectors v sekcii 8 sú návrh — QA agent ich rozšíri a previaže na test pyramídu.
+
+## A. Príloha — variant B (legacy no-BFF fallback)
+
+> **Nepoužíva sa.** Sekcia zachovaná pre historickú stopu (round-1) a pre prípad
+> hypotetickej re-evaluácie po MVP. Canonical flow je v sekcii 2.
+
+### A.1 Token storage (legacy)
+
+- **ID token + Access token (IdP)**: v memory (JS variable v auth module-i), nikdy nie v `localStorage` / `sessionStorage`. Pri reload-i sa vykoná silent refresh cez `prompt=none` flow.
+- **CA SDM Access Key**: SPA si musí vyžiadať Access Key sama (cez CA SDM REST `POST /caisd-rest/rest_access` s `X-ExtAuthArtifact` zo IdP-validated artefaktu — t. j. SPA potrebuje **mať backend, ktorý exchanguje IdP token za EEM artifact** — čo je vlastne mini-BFF, takže "no-BFF" je v praxi ťažko dosiahnuteľné).
+- **Refresh token**: nikdy v browseri. Iba ak BFF ho drží.
+- **Silent refresh**: cez hidden iframe na IdP `/authorize?prompt=none&...` — vracia sa new ID token bez user interakcie, ak je IdP session ešte živá.
+
+### A.2 Sekvenčný diagram — variant B login (legacy)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant SPA as SPA
+    participant IdP as IdP
+    participant SDM as CA SDM
+
+    SPA->>SPA: no token in memory → start auth
+    SPA->>IdP: redirect /authorize (PKCE)
+    IdP-->>SPA: redirect back with code
+    SPA->>IdP: POST /token (code + verifier)
+    IdP-->>SPA: { access_token, id_token, expires_in }
+    SPA->>SPA: store in memory only
+    SPA->>SDM: POST /caisd-rest/rest_access<br/>X-ExtAuthArtifact: <artifact><br/>X-UserName: <username>
+    SDM-->>SPA: 201 + access_key
+    SPA->>SPA: store access_key in memory<br/>(NEVER in localStorage)
+    Note over SPA,SDM: All subsequent calls use<br/>X-AccessKey from JS memory
+```
+
+### A.3 Bezpečnostné rozdiely vs. canonical
+
+| Vec | Canonical (BFF) | Legacy variant B (no-BFF) |
+|---|---|---|
+| Token exposure pri XSS | Nemožné (httpOnly cookie) | Token-theft riskové (JS variable) |
+| CSRF protection | Required (`SameSite=Lax` + CSRF token na write) | Nepotrebné (no cookie-based auth) |
+| Tenant switch | Server-side validovaný v BFF | Client-side, ľahšie obísť |
+| Refresh strategy | Server-driven, transparent | Client-managed, silent iframe |
+| Auditovateľnosť | BFF má kompletný log | SPA log je nedôveryhodný |
+| Implementačná zložitosť | Higher (BFF process) | Lower (no extra service) |
+
+> Tabuľka dokumentuje **prečo** sa 04 rozhodol pre BFF=YES — odkazovaná z 04 ADR 01 § Alternatívy A.

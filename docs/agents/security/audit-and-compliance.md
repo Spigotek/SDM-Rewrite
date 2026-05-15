@@ -1,10 +1,50 @@
 # Audit log & compliance — scope, GDPR, retention
 
+## Changelog (round 2)
+
+- **Konkrétne hodnoty finalized** (r2):
+  - Idle timeout: **30 min** (oba aplikácie).
+  - Step-up TTL: **5 min**.
+  - Reopen time-box (requester own ticket): **7 dní** od `resolve_date`.
+  - Retention auth/authz log: **1 rok**.
+  - Retention data log: **3 roky**.
+  - Bulk step-up threshold: **> 50** záznamov.
+- Cross-link na 04 ADR 09 (Observability) + 08 `runtime-config.md` + 08 `ci-cd.md` (security-audit job: npm audit + CodeQL/Snyk podľa 08 r2).
+- `correlationId` formát zarovnaný s 04 ADR 09 (UUID v4 alebo ULID — 04 nechalo otvorené v `correlation-id-spec` flag; pre tento dokument predpokladáme UUID v4 ako default).
+- §0 pridaná — Konkrétne hodnoty v jednej tabuľke pre rýchlu referenciu.
+
 > Cieľ: definovať, ČO loguje FE / BFF nad rámec CA SDM native audlog, AKO sa
 > tieto logy spravujú a aké GDPR / compliance ohraničenia platia.
 >
 > Cross-ref: `auth-flow.md`, `rbac.md`, `multi-tenancy-security.md`,
-> `threat-model.md`, `owasp-mitigations.md` (A09).
+> `threat-model.md`, `owasp-mitigations.md` (A09),
+> `docs/agents/architecture/decision-records/09-observability.md`,
+> `docs/agents/devex-devops/ci-cd.md`,
+> `docs/agents/devex-devops/runtime-config.md`.
+
+## 0. Konkrétne hodnoty — kanonická referenčná tabuľka (r2)
+
+| Parameter | Hodnota | Citácia / odkaz |
+|---|---|---|
+| Idle timeout (portal aj workspace) | **30 min** | `auth-flow.md` §0, §2.4 |
+| Idle timeout per-tenant override | 5–120 min | `auth-flow.md` §2.4 |
+| Absolute session lifetime | **8 hodín** | `auth-flow.md` §4.1 |
+| Step-up TTL (po MFA prompt) | **5 min** | `multi-tenancy-security.md` §6 |
+| Bulk step-up threshold | **> 50 záznamov** | `rbac.md` §6.1 bulk action + `multi-tenancy-security.md` §6 |
+| Reopen time-box (requester own ticket) | **7 dní** od `resolve_date` | `rbac.md` §6.1 (incident.reopen) |
+| Bulk operation limit — agent_l1 | ≤ 50 rows | `rbac.md` §6.1 |
+| Bulk operation limit — agent_l2 | ≤ 200 rows | `rbac.md` §6.1 |
+| Audit log retention — `auth`, `authz`, `security`, `sensitive` | **1 rok** | §5 nižšie |
+| Audit log retention — `data` category | **3 roky** | §5 nižšie |
+| Reverse proxy access log retention | 90 dní | §5 |
+| Sentry / Frontend errors retention | 90 dní | §5 |
+| CSP violation reports retention | 30 dní | §5 |
+| BFF role re-fetch interval | 60 s | `owasp-mitigations.md` A01, `auth-flow.md` §0 |
+| Session ID entropy | ≥ 256 bits (`crypto.randomBytes(32)`) | `owasp-mitigations.md` A04 |
+| `correlationId` formát | UUID v4 (default; ULID acceptable per 04 ADR 09 `correlation-id-spec` flag) | 04 ADR 09 §3 |
+
+> Tieto hodnoty sú **konkrétne MVP defaults**. Finálna autorita = compliance /
+> legal stakeholder; per-tenant config môže prepnúť idle timeout bez code change.
 
 ## 1. Vrstvy audit logu
 
@@ -191,14 +231,16 @@ Unit tests verifikujú: no `password|token|key|cookie|secret` substring in any e
 | Vrstva | Retention | Storage | Justifikácia |
 |---|---|---|---|
 | CA SDM `audlog` | per CA SDM admin config | CA SDM DB | Vendor-managed, mimo nášho scope |
-| BFF audit log — `auth`, `authz`, `security`, `sensitive` | **min 1 rok** | Append-only S3 / equivalent immutable storage | Forensic minimum; tenant compliance |
-| BFF audit log — `data` category | **3 roky** | Same storage, separate retention class | GDPR Art. 30 records of processing |
-| Reverse proxy access log | **90 days** | SIEM hot tier; cold archive 1 rok | Operational debugging + incident response |
-| Sentry frontend errors | **90 days** | Sentry org default | Diagnostic only, not audit-grade |
-| CSP violation reports | **30 days** | SIEM | Operational; spikes are real-time alerted |
+| BFF audit log — `auth`, `authz`, `security`, `sensitive` | **1 rok** (r2 finalized) | Append-only S3 / equivalent immutable storage | Forensic minimum; tenant compliance |
+| BFF audit log — `data` category | **3 roky** (r2 finalized) | Same storage, separate retention class | GDPR Art. 30 records of processing |
+| Reverse proxy access log | **90 dní** | SIEM hot tier; cold archive 1 rok | Operational debugging + incident response |
+| Sentry frontend errors | **90 dní** | Sentry org default (alebo GlitchTip self-hosted per 04 ADR 09) | Diagnostic only, not audit-grade |
+| CSP violation reports | **30 dní** | SIEM | Operational; spikes are real-time alerted |
 
-> Konkrétne retention hodnoty sú návrh — finálne sú **biznis decision** s legal
-> stakeholder. Flag → user / `[?]`.
+> Hodnoty sú MVP defaults (r2 finalized). Per-tenant alebo per-compliance-region
+> override je možný cez config (gating na `[?]` legal / DPO review). 1 rok pre
+> auth a 3 roky pre data je v súlade s typickou EU compliance baseline (GDPR
+> Art. 30 records of processing + LMA SK 18/2018 audit požiadavky).
 
 ## 6. GDPR — kľúčové ohraničenia
 
@@ -318,13 +360,17 @@ Inštrukcia pre `buddy:security-review` pri novej feature:
 
 ## Otvorené závislosti
 
-- `[04-architecture]` SIEM destinácia (Splunk / ELK / cloud provider) — voľba ovplyvní log forwarder config. Kontrakt eventov je destination-agnostic.
+- `[04-architecture]` SIEM destinácia (Splunk / ELK / cloud provider) — voľba ovplyvní log forwarder config. Kontrakt eventov je destination-agnostic. Per 04 ADR 09 `log-aggregation` flag — DevOps decision.
 - `[04-architecture]` Audit log storage backend (immutable S3 vs. WORM filesystem vs. dedicated audit DB) — DevOps decision.
-- `[04-architecture]` Sentry hosting model — self-hosted (on-prem-friendly, no DPA needed) vs. Sentry.io SaaS (DPA required, EU region).
-- `[08-devex-devops]` Log rotation, shipping, retention enforcement — implementation detail; spec needs concrete cron / config.
+- `[04-architecture]` Sentry hosting model — self-hosted GlitchTip (on-prem-friendly, no DPA needed) vs. Sentry.io SaaS (DPA required, EU region). Per 04 ADR 09 `error-tracking-product` flag — DevOps + Security spoluvyberajú.
+- `[04-architecture]` `correlationId` formát — `[resolved-in-round-2]` UUID v4 default; ULID acceptable per 04 ADR 09 `correlation-id-spec` flag.
+- `[08-devex-devops]` Log rotation, shipping, retention enforcement — `[resolved-in-round-2]` čiastočne: 08 `ci-cd.md` r2 publikuje security-audit job (npm audit + CodeQL/Snyk per 08 r2). Konkrétny cron/config pre log rotation zostáva DevOps detail.
 - `[08-devex-devops]` Privacy notice content (legal text) — business / legal decision.
 - `[02-ux-persona-analyst]` GDPR self-service UI (data export, profile edit) — post-MVP, but UX hint needed for v1 backlog.
 - `[10-documentation-author]` Operational runbooks (incident response, GDPR request handling) — konsolidácia v doc handbook.
-- `[?]` Retention values — 1 rok pre auth, 3 roky pre data category. Treba potvrdiť s legal / DPO.
-- `[?]` Step-up TTL (5 min) — biznis hodnota, potvrdiť.
-- `[?]` Privacy notice owner — kto píše, kto schvaľuje.
+- `[?]` Retention values — `[resolved-in-round-2]` 1 rok pre auth, 3 roky pre data (r2 finalized; final autorita = legal / DPO review pred go-live).
+- `[?]` Step-up TTL — `[resolved-in-round-2]` **5 min** (r2 finalized).
+- `[?]` Idle timeout — `[resolved-in-round-2]` **30 min** default (r2 finalized).
+- `[?]` Reopen time-box — `[resolved-in-round-2]` **7 dní** (r2 finalized).
+- `[?]` Bulk step-up threshold — `[resolved-in-round-2]` **> 50** (r2 finalized).
+- `[?]` Privacy notice owner — kto píše, kto schvaľuje (zostáva otvorené).

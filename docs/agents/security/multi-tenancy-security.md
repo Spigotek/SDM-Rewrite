@@ -1,10 +1,20 @@
 # Multi-tenancy security — kontrakt, izolácia, leakage scenáre
 
+## Changelog (round 2)
+
+- **Tenant header zharmonizovaný na `X-Tenant`** podľa 04 ADR 11 (`docs/agents/architecture/decision-records/11-multi-tenancy.md`). Konflikt s 08 `runtime-config.md` (`tenantContextHeader = "X-CA-SDM-Tenant"`) flag-ovaný v Otvorených závislostiach na 08 r2 alignment.
+- Cookie tenant-version pattern (§2.3) zachovaný ako **fallback** pre cross-tab — primárna autorita je `session.activeTenantId` na BFF strane (per 04 ADR 11 § 3).
+- Cross-link na konkrétne 04 ADR + components pridaný.
+- Konkrétne hodnoty (r2): bulk step-up threshold **> 50** záznamov, step-up TTL **5 min** — alignment s `audit-and-compliance.md`.
+
 > Cieľ: definovať bezpečnostný kontrakt multi-tenancy v novom FE nad CA SDM 17.4.
 > Pokrýva izoláciu dát medzi tenantmi, switch flow, leakage scenáre, audit
 > a deferred topics (impersonation, SP elevation).
 >
-> Vstupy: `docs/agents/api-analyst/multi-tenancy.md`, `auth-flow.md`, `rbac.md`,
+> Vstupy: `docs/agents/api-analyst/multi-tenancy.md`,
+> `docs/agents/architecture/decision-records/11-multi-tenancy.md`,
+> `docs/agents/architecture/components/bff.md`,
+> `auth-flow.md`, `rbac.md`,
 > GOAL.md §5, §11.
 
 ## 1. Threat statement
@@ -26,12 +36,13 @@ istý invariant a aké dodatočné mitigácie pridajú.
 | Pojem | Význam |
 |---|---|
 | `tenantId` | UUID, primárny kľúč v `ca_tenant`. |
-| `activeTenantId` | Aktuálne zvolený tenant v session (BFF-side). |
+| `activeTenantId` | Aktuálne zvolený tenant v session (BFF-side). **Server-side authority** per 04 ADR 11. |
+| `X-Tenant` header | FE → BFF informačný/audit header s aktuálnym `activeTenantId` (per 04 ADR 11). BFF re-validuje voči session; mismatch = 409 `TENANT_MISMATCH`. |
 | `allowedTenants` | Pole tenantov, kde user má aspoň jednu rolu cez `cnt_role`. Computed pri logine, cache TTL = 5 min. |
 | `effectiveTenants` | Aktívny tenant + tenant_group členovia + (ak SP) všetky managed tenants. Pre query filtering. |
-| `tenantScopeFilter` | Vždy aplikovaný WC filter na CA SDM volaniach: `WC=tenant%3DU'<activeTenantId>'`. |
+| `tenantScopeFilter` | Vždy aplikovaný WC filter na CA SDM volaniach (BFF → CA SDM): `WC=tenant%3DU'<activeTenantId>'`. Defense-in-depth nad `X-Role` scope-om (per 04 ADR 11 § dôsledok 4). |
 
-### 2.2 Session štruktúra (BFF, variant A)
+### 2.2 Session štruktúra (BFF, canonical po 04 ADR 01)
 
 ```typescript
 interface Session {
@@ -95,10 +106,11 @@ Detail sekvenčného diagramu je v `auth-flow.md` §2.5. Tu sumarizujeme invaria
 | 1 | `tenantId` z requestu nikdy nedôveryhodný | BFF validuje proti `session.allowedTenants[].id` |
 | 2 | Switch nevyžaduje re-login (happy path) | BFF rotuje len `activeTenantId` + `accessKey` rebind |
 | 3 | Cross-tab broadcast | BroadcastChannel + cookie version |
-| 4 | Cache flush | React Query → `queryClient.clear()`; BFF → drop tenant-scoped cache keys |
+| 4 | Cache flush | TanStack Query → `queryClient.clear()`; BFF → drop tenant-scoped cache keys |
 | 5 | In-flight requesty | Pri switch sa cancel-nú existujúce pending requesty (AbortController) |
-| 6 | Audit event | `{userId, fromTenant, toTenant, ts, ip, ua}` do audit logu |
+| 6 | Audit event | `{userId, fromTenant, toTenant, ts, ip, ua}` do audit logu (`tenant.switch.success` per `audit-and-compliance.md` §2.2) |
 | 7 | Re-auth pre SP elevation | Switch z bežného tenantu do SP-scope tenantu vyžaduje step-up (re-prompt IdP, viď §6) |
+| 8 | `X-Tenant` header revalidácia per request | BFF kontroluje `request.headers["X-Tenant"] === session.activeTenantId`; mismatch = 409 `TENANT_MISMATCH` + `correctTenantId` v body → SPA auto-reload (per 04 ADR 11 § dôsledok 2 two-tab pattern) |
 
 ### 3.1 Server-side defensive depth
 
@@ -177,7 +189,7 @@ Niektoré operácie vyžadujú silnejšiu identitu validation (re-prompt IdP):
 |---|---|
 | SP cross-tenant view ON | High-impact privilege |
 | Tenant admin akcie (`tenant.admin.*`) | Configuration change |
-| Bulk delete > 50 záznamov | High-impact data operation |
+| Bulk delete / bulk update > **50** záznamov | High-impact data operation (r2 finalized: bulkStepUpThreshold > 50) |
 | Export audit log | Compliance-sensitive |
 | Impersonation start (mimo MVP) | Identity assumption |
 
@@ -210,7 +222,7 @@ sequenceDiagram
     end
 ```
 
-**Step-up TTL**: 5 minút. Po expirácii ďalšia sensitive operation vyžaduje znova MFA.
+**Step-up TTL**: **5 min** (r2 finalized). Po expirácii ďalšia sensitive operation vyžaduje znova MFA. Hodnota zhodná naprieč security artefaktami (`auth-flow.md` §0, `audit-and-compliance.md` §2.1).
 
 ## 7. Tenant deletion / suspension — UX impact
 
@@ -233,27 +245,32 @@ Pre nový tenant (admin operácia, `tenant.admin.create`):
 
 ## 9. Konkrétne CSP additions pre multi-tenancy
 
-Žiadne. Multi-tenancy nemení CSP. Per-tenant content je vždy servovaný z toho istého originu (BFF). Tenant logo cez `img-src` z trusted CDN (predpoklad: `data:` schema pre logo upload v MVP, neskôr blob storage). Detail v `headers-and-csp.md`.
+Žiadne. Multi-tenancy nemení CSP. Per-tenant content je vždy servovaný z toho istého originu (BFF). Tenant logo cez `img-src` z trusted source (predpoklad: `data:` schema pre logo upload v MVP, neskôr blob storage). Detail v `headers-and-csp.md`.
+
+Per-tenant branding (`/config` `branding.productName`) sa renderuje cez safe text node — nikdy nie cez `dangerouslySetInnerHTML`. Per `owasp-mitigations.md` A03.
 
 ## 10. Test scenáre
 
-- [ ] **L1 forgery**: POST `/auth/switch-tenant { tenantId: "<forbidden>" }` → 403.
+- [ ] **L1 forgery**: POST `/me/active-tenant { tenantId: "<forbidden>" }` → 403.
+- [ ] **L1b header forgery**: `X-Tenant: <forbidden>` na ľubovoľnom mutating endpointe → 409 `TENANT_MISMATCH` (per 04 ADR 11 § two-tab) + audit `tenant.mismatch.detected`.
 - [ ] **L2 cache leak**: po switch z T1 do T2, žiadny T1 id sa v DOM/network neobjavuje.
 - [ ] **L4 cross-tab**: tab A switch → tab B re-fetch do 2 s.
 - [ ] **L6 search**: query "secret-only-in-T1" v T2 vráti 0 results.
 - [ ] **L7 attachment**: GET `/api/attachments/<T1-id>` ako T2 user → 404 (not 403, leakuje existenciu).
 - [ ] **L9 CMDB**: CI relationship graph nezobrazuje cudzí-tenant CI nodes (ak nemá shared marker).
-- [ ] **L12 race**: switch počas in-flight requestu → response discarded.
+- [ ] **L12 race**: switch počas in-flight requestu → response discarded (per `auth-flow.md` §2.5 invariant 5).
 - [ ] **L14 SP audit**: každý cross-tenant call sa objaví v audit log do 5 s.
-- [ ] **Step-up**: bulk delete 60 → IdP MFA prompt.
-- [ ] **Tenant suspension**: count → next API call → 403 + redirect na tenant switcher.
+- [ ] **Step-up**: bulk delete > 50 → IdP MFA prompt (r2 threshold).
+- [ ] **Tenant suspension**: tenant marked suspended → next API call → 403 + redirect na tenant switcher.
 
 ## Otvorené závislosti
 
-- `[04-architecture]` BFF cache stratégia pre per-tenant data — Redis key naming convention (`tenant:<id>:incidents:<query-hash>`). Treba potvrdiť TTL a invalidation hooks.
-- `[04-architecture]` Per-tab session model (vs. single-session, multi-tab) — single-session je default. Per-tab vyžaduje refactor cookie modelu (`__Host-sdm.sid-{tabId}` is nepraktické). Treba potvrdiť pre MVP single-session.
+- `[04-architecture]` BFF cache stratégia pre per-tenant data — `[resolved-in-round-2]` 04 `components/bff.md` §2.3 + §2.4 publikoval `Reference data cache` (TTL 5–15 min) a aggregator cache (TTL 30 s queue, 60 s ticket-detail). Per-tenant key naming je BFF implementačný detail (gating na `[08-devex-devops] aggregator-cache-store`).
+- `[04-architecture]` Per-tab session model — `[resolved-in-round-2]` 04 ADR 11 + `data-flows.md` § Tenant switch potvrdil single-session model s two-tab `TENANT_MISMATCH` flow.
+- `[04-architecture]` Tenant header name — `[resolved-in-round-2]` `X-Tenant` (per 04 ADR 11). Konflikt s 08 `runtime-config.md` (`tenantContextHeader = "X-CA-SDM-Tenant"`) — flag na 08 r2 alignment **NEW**.
 - `[01-api-analyst]` X-Role per-request vs. nový access_key pri tenant switch — finálna stratégia. Predpoklad: nový access_key (cleaner audit trail), ale ak per-request X-Role je acceptable, môže byť výkonnejšie. Treba overiť na inštancii.
-- `[02-ux-persona-analyst]` UI pre tenant switcher s 50+ tenantmi (SP scenár) — search, pinned, recent. Treba wireframe.
+- `[02-ux-persona-analyst]` UI pre tenant switcher s 50+ tenantmi (SP scenár) — search, pinned, recent. Treba wireframe (post-MVP per 04 ADR 11 flag #1).
+- `[08-devex-devops]` `tenantContextHeader` v runtime-config — 08 r2 by mal zharmonizovať default na `X-Tenant` (per 04 ADR 11). Aktuálne `runtime-config.md` r1 uvádza `X-CA-SDM-Tenant` ako default; vyžaduje alignment v 08 r2 alebo objasnenie, či je `X-CA-SDM-Tenant` interný BFF→CA SDM header a `X-Tenant` je verejný FE→BFF header (dva rôzne headers, dve rôzne hranice). **NEW flag**.
 - `[09-qa-test-strategy]` Test scenáre v sekcii 10 sú návrh — QA agent ich rozšíri.
-- `[?]` Step-up TTL 5 minút — biznis hodnota, treba potvrdiť.
+- `[?]` Step-up TTL 5 minút — `[resolved-in-round-2]` finalized hodnota; biznis stakeholder môže prepnúť per config bez code zmien.
 - `[?]` Tenant onboarding flow (sekcia 8) — kompletný admin UX je mimo MVP scope. Treba potvrdiť, či v MVP postačí "vyžaduje CA SDM admin priamo".

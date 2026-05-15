@@ -1,12 +1,32 @@
 # OWASP Top 10 (2021) — mitigation matrix
 
+## Changelog (round 2)
+
+- **Cross-references na 04 ADRs** pridané pre kľúčové kategórie:
+  - A01 (Broken Access Control) → 04 ADR 11 (multi-tenancy) a `components/bff.md` (server-side tenant validation).
+  - A07 (Auth & Session) → 04 ADR 01 (BFF) ako primárna mitigácia (token nie je v browser-side localStorage).
+  - A09 (Logging & Monitoring) → 04 ADR 09 (Sentry + štruktúrované JSON logs + `correlationId`).
+- Pridaná A03 cross-ref na 07 `library-recommendation.md` (DOMPurify pre TipTap, `react-markdown` default sanitization).
+- Otvorené závislosti aktualizované — uzavreté flagy za r2.
+
 > Cieľ: mapovať každú kategóriu OWASP top 10 (2021) na konkrétne riziko
 > v SDM-Rewrite a definovať mitigácie + kde žijú.
 >
 > Cross-ref: `threat-model.md` (STRIDE per container), `auth-flow.md`,
-> `rbac.md`, `multi-tenancy-security.md`, `headers-and-csp.md`.
+> `rbac.md`, `multi-tenancy-security.md`, `headers-and-csp.md`,
+> `docs/agents/architecture/decision-records/01-bff.md`,
+> `docs/agents/architecture/decision-records/09-observability.md`,
+> `docs/agents/architecture/decision-records/11-multi-tenancy.md`,
+> `docs/agents/architecture/components/bff.md`,
+> `docs/agents/design-system/library-recommendation.md`.
 
 ## A01 — Broken Access Control
+
+> **Primárna architektonická mitigácia**: 04 ADR 11 (multi-tenancy) — server-side
+> aktívny tenant v BFF session + defenzívny `WC=tenant%3DU'<id>'` filter na CA SDM
+> volaniach + `X-Tenant` header revalidácia (per 04 ADR 11 § dôsledok 3, 4).
+> Implementácia v 04 `components/bff.md` § 2.3 (REST proxy) — žiadny generický
+> passthrough, každý handler má explicitný `requirePermission(...)` check.
 
 ### Riziká v projekte
 
@@ -65,6 +85,12 @@
 - Audit session cookie atribútov v DevTools.
 
 ## A03 — Injection
+
+> **Primárna mitigácia pre rich-text / markdown**: 07 `library-recommendation.md`
+> + 06 `libraries.md` §17 vybrali **DOMPurify** pre TipTap (KB editor) +
+> **`react-markdown`** s default `rehype-sanitize` pre KB read (žiadny
+> `dangerouslySetInnerHTML`). CSP nonce-based `script-src` + `style-src`
+> per `headers-and-csp.md` §1 je backstop pre uniknutý vektor.
 
 ### Riziká v projekte
 
@@ -138,7 +164,7 @@
 
 | Mitigácia | Kde | Detail |
 |---|---|---|
-| Strict CSP | Reverse proxy | Viď `headers-and-csp.md`. `default-src 'none'`; explicit allow per direktívu. |
+| Strict CSP | Reverse proxy | Viď `headers-and-csp.md` §1. `default-src 'none'`; explicit allow per direktívu. **Nonce-based `script-src` aj `style-src`** (žiadny `'unsafe-inline'`) — Radix UI nonce prop + DOMPurify pre TipTap + Sentry session-replay disabled v MVP (per 06 R-T-17 resolution v r2). |
 | CORS minimal | BFF | Default deny. Žiaden `*` origin. Pre BFF same-origin nie je potrebné CORS (SPA + BFF za rovnakou doménou alebo subdomain s explicit allow). |
 | Source maps strategy | Build | `sentry-cli` uploaduje source maps počas CI; build artifact obsahuje len `.map` references; deployed bundle nemá `.map` files |
 | Health endpoint minimal | BFF | `GET /health` vráti `{ status: "ok" }` only. Detail `/health/deep` len pre internal IP range alebo Basic auth s rotating secret. |
@@ -180,6 +206,12 @@
 - SBOM diff medzi releases zachytí pridanú transitive.
 
 ## A07 — Identification and Authentication Failures
+
+> **Primárna architektonická mitigácia**: 04 ADR 01 (BFF=YES) — Access Key
+> nikdy neopustí server, SPA má len HttpOnly + Secure + SameSite cookie so
+> session ID. Žiadny XSS leak Access Keya, žiadne tokeny v browser-side
+> localStorage / sessionStorage. Detail v 04 ADR 01 § dôsledok 1
+> a `auth-flow.md` §2 (canonical flow).
 
 ### Riziká v projekte
 
@@ -241,6 +273,13 @@
 - Modify build artifact → checksum verification fails.
 
 ## A09 — Security Logging and Monitoring Failures
+
+> **Primárna architektonická mitigácia**: 04 ADR 09 (Observability) — Sentry
+> (alebo self-hosted GlitchTip) pre FE error tracking + štruktúrované BFF JSON
+> logy s `requestId` + `correlationId` (per ADR 09 §3) + Sentry GDPR-safe
+> beforeSend hook (žiadne PII v error platforme, len pseudonymizované userId).
+> End-to-end debug cez `correlationId` ako join key naprieč FE → BFF → CA SDM.
+> Detail v `audit-and-compliance.md` §1-2 (event taxonomy) a 04 ADR 09 § dôsledok 1.
 
 ### Riziká v projekte
 
@@ -323,11 +362,12 @@ Tento checklist je vstup pre `buddy:security-review` skill volaný PR-time:
 
 ## Otvorené závislosti
 
-- `[04-architecture]` Sentry / observability collector — kde žije, aké credentials, či pristupuje k cudzímu tenantu (Sentry org-level). Treba zladiť so SIEM stratégiou.
+- `[04-architecture]` Sentry / observability collector — `[resolved-in-round-2]` 04 ADR 09 publikoval trojvrstvovú observability (Sentry/GlitchTip + BFF JSON logs + RUM nice-to-have). `error-tracking-product` flag (SaaS vs. self-hosted) zostáva DevOps + Security spoluvyber.
 - `[04-architecture]` Reverse proxy voľba (Nginx / Envoy / Traefik / cloud LB) — určuje, kde sa configuruje HSTS, CSP, server header strip.
-- `[06-tech-stack-selector]` Markdown sanitizer knižnica (rehype-sanitize, sanitize-html, ...) — kontrakt whitelist je definovaný, výber je stack rozhodnutie.
-- `[06-tech-stack-selector]` Zod / equivalent schema validation knižnica — pre BFF a SPA boundary validation.
-- `[08-devex-devops]` SBOM generator, dependency scanner, secrets scanner integration v CI — konkrétne nástroje a thresholds.
+- `[06-tech-stack-selector]` Markdown sanitizer — `[resolved-in-round-2]` **DOMPurify** pre TipTap (per 06 R-T-13 mitigácia) + **`react-markdown`** s default `rehype-sanitize` pre KB read (per 06 `libraries.md` §17).
+- `[06-tech-stack-selector]` Schema validation — `[resolved-in-round-2]` **Zod** pre BFF + SPA boundary validation (per 06 r2 stack — `libraries.md` § forms / validation).
+- `[06-tech-stack-selector]` OIDC client / JWT validation lib — `[resolved-in-round-2]` BFF Node.js stack picks `openid-client` + `jose`; FE žiadna OIDC knižnica (per 06 `libraries.md` §16).
+- `[08-devex-devops]` SBOM generator, dependency scanner, secrets scanner integration v CI — `[resolved-in-round-2]` 08 `ci-cd.md` r2 publikoval security-audit job (npm audit + CodeQL/Snyk).
 - `[08-devex-devops]` SIEM destinácia + retention policy + alerting rules — DevOps + Security spoločne.
 - `[09-qa-test-strategy]` Test vectors v každej sekcii sú návrh; QA agent ich konsoliduje do test plánu.
 - `[?]` Penetration test plan a frequency — out of scope tohto dokumentu, biznis rozhodnutie.

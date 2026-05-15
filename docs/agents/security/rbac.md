@@ -1,11 +1,20 @@
 # RBAC — CA SDM ↔ UI role mapping (tenant-scoped)
 
+## Changelog (round 2)
+
+- **Doplnené obrazovky** podľa 04 `components/portal.md` § 3 a `components/workspace.md` § 3 — pridané: portal `/notifications` (P-07, MVP), portal `/profile` (P-08, MVP), portal `/onboarding` (P-11, post-MVP), workspace `/profile` (W-14, MVP), workspace `/settings` (W-13, post-MVP), workspace `/changes/cab/:date` (W-18, post-MVP CAB Meeting). Total: 25 → **31 obrazoviek**.
+- Reopen time-box pre `incident.reopen` finalized na **7 dní** (alignment s `audit-and-compliance.md` §0).
+- Bulk operation limits (50 / 200) zachované a cross-linkované so step-up flow v `multi-tenancy-security.md` §6 (bulk > 50 = step-up MFA).
+- Cross-link na 04 components a tech-stack libraries pridaný.
+
 > Cieľ: definovať **tenant-scoped** mapping CA SDM rolí na UI role, povolené
 > obrazovky a akcie. Každá rola je vyhodnocovaná v kontexte konkrétneho
 > tenantu — používateľ môže mať odlišné role v rôznych tenantoch.
 >
 > Vstupy: `docs/agents/api-analyst/auth.md` §5, `docs/agents/api-analyst/multi-tenancy.md`,
-> `docs/agents/ux-persona-analyst/personas.md`, `docs/agents/domain-modeller/glossary.md`.
+> `docs/agents/ux-persona-analyst/personas.md`, `docs/agents/domain-modeller/glossary.md`,
+> `docs/agents/architecture/components/portal.md` §3,
+> `docs/agents/architecture/components/workspace.md` §3.
 
 ## 1. Princípy
 
@@ -63,7 +72,7 @@ sequenceDiagram
 
 **Invariant**: keď user prepne tenant, `uiRole` v session sa **mení** (lebo je odvodená od role v `cnt_role` matching tenant). UI musí re-render odznova podľa novej role. Cache invalidation viď `auth-flow.md` §2.5.
 
-## 4. Mapa obrazoviek (screens) — 25 obrazoviek v oboch SPA
+## 4. Mapa obrazoviek (screens) — 31 obrazoviek v oboch SPA (r2)
 
 | # | Screen | Route | App | Modul | Vyžaduje permission |
 |---|---|---|---|---|---|
@@ -92,6 +101,12 @@ sequenceDiagram
 | 23 | Workspace — CI impact graph | `/cmdb/:id/impact` | workspace | CMDB | `ci.read.relationships` |
 | 24 | Workspace — Tenant admin | `/admin/tenants` | workspace | Admin | `tenant.admin` |
 | 25 | Workspace — Reports | `/reports` | workspace | Reporting | `reports.read` |
+| 26 | Portal — Notifications | `/notifications` | portal | Cross | `app.portal.access` |
+| 27 | Portal — Profile / Prefs | `/profile` | portal | Cross | `app.portal.access` |
+| 28 | Portal — Onboarding (post-MVP) | `/onboarding` | portal | Cross | `app.portal.access` |
+| 29 | Workspace — Profile / Prefs | `/profile` | workspace | Cross | `app.workspace.access` |
+| 30 | Workspace — Settings (post-MVP) | `/settings` | workspace | Admin | `app.workspace.access` |
+| 31 | Workspace — CAB Meeting (post-MVP) | `/changes/cab/:date` | workspace | Change | `cab.approve` |
 
 ## 5. Screen visibility matica (per UI role)
 
@@ -124,6 +139,12 @@ sequenceDiagram
 | 23 | CI impact graph | ✗ | ▣ | ▣ | ▣ | ✗ | ✓ | ✓ |
 | 24 | Tenant admin | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
 | 25 | Reports | ✗ | ▣ | ▣ | ▣ | ▣ | ▣ | ✓ |
+| 26 | Portal Notifications | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| 27 | Portal Profile / Prefs | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| 28 | Portal Onboarding | ✓ | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ |
+| 29 | Workspace Profile / Prefs | ✗ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| 30 | Workspace Settings | ✗ | ✗ | ✗ | ✗ | ✗ | ✗ | ✓ |
+| 31 | CAB Meeting | ✗ | ✗ | ✗ | ✓ | ✗ | ✗ | ✓ |
 
 ## 6. Action matica — kľúčové akcie per modul
 
@@ -148,8 +169,13 @@ sequenceDiagram
 | Add private comment | `incident.comment.private` | ✗ | ✓ | ✓ | ▣ | ✓ |
 | Add public comment | `incident.comment.public` | ✓ (own) | ✓ | ✓ | ▣ | ✓ |
 | Resolve / Close | `incident.close` | ✗ (request close only) | ✓ | ✓ | ✗ | ✓ |
-| Reopen | `incident.reopen` | ✓ (own, within N days) | ✓ | ✓ | ✗ | ✓ |
-| Bulk operations | `incident.bulk` | ✗ | ✓ (≤50 rows) | ✓ (≤200 rows) | ✗ | ✓ |
+| Reopen | `incident.reopen` | ✓ (own, within **7 dní** od `resolve_date`) | ✓ | ✓ | ✗ | ✓ |
+| Bulk operations | `incident.bulk` | ✗ | ✓ (≤ 50 rows) | ✓ (≤ 200 rows) | ✗ | ✓ |
+
+> **Bulk step-up flow**: hocijaký bulk operation > **50** záznamov (naprieč rolami)
+> vyžaduje step-up MFA per `multi-tenancy-security.md` §6. Limit per rola
+> (50 / 200) je hard cap; medzi limitom a step-up thresholdom je acceptable
+> bulk len pre agent_l2 (51–200 → step-up MFA), sp_admin (51+ → step-up MFA).
 | Delete | `incident.delete` | ✗ | ✗ | ✗ | ✗ | ✓ (audit-logged) |
 
 ### 6.2 Request
@@ -302,7 +328,7 @@ KB článok môže byť publikovaný "all tenants" (`tenant=NULL`). UI ho zobraz
 
 Tento zoznam slúži ako vstup pre QA agent (`09-qa-test-strategy`):
 
-- [ ] Každá z 25 obrazoviek má aspoň jednu rolu, ktorá je ✓ (žiadna obrazovka nie je úplne dead).
+- [ ] Každá z 31 obrazoviek má aspoň jednu rolu, ktorá je ✓ (žiadna obrazovka nie je úplne dead).
 - [ ] Žiadna rola nemá ✓ na obrazovkách v inej aplikácii (requester nemá nič vo workspace).
 - [ ] Pre každú akciu existuje server-side guard v BFF (nie len UI-hide).
 - [ ] Tenant switch invaliduje `effectivePermissions[]` a UI re-renderuje.
@@ -311,11 +337,11 @@ Tento zoznam slúži ako vstup pre QA agent (`09-qa-test-strategy`):
 
 ## Otvorené závislosti
 
-- `[04-architecture]` Permission-evaluation cache stratégia — kde sa drží `effectivePermissions[]`? Forced refresh interval (default 60 s) je biznis-driven. Treba zladiť s BFF cache stratégiou.
+- `[04-architecture]` Permission-evaluation cache stratégia — `[resolved-in-round-2]` 04 `components/bff.md` §2.4 publikoval per-tenant cache pre `/me/tenants` (TTL 5 min) + per-aggregator cache pre queue/ticket-detail. Force refresh role re-fetch interval = 60 s (per `owasp-mitigations.md` A01).
 - `[04-architecture]` `[01-api-analyst]` Mapovanie CA SDM `cnt_role` → UI rola — predpokladá, že role-name pattern matching (`Analyst Level 1` → `agent_l1`) je deterministický. Treba potvrdiť, či CA SDM admin garantuje pomenovanie, alebo treba explicit `usp_role.id`-based mapping cez config table v BFF env.
 - `[02-ux-persona-analyst]` Persona `requester_external` (extern zákazníci) — chýba detailný journey. Predbežne mapujem na `requester` + filter. Treba potvrdiť alebo vytvoriť persona detail.
-- `[07-design-system]` Permission-guarded UI komponent (`<Can>` wrapper) — kontrakt API treba zharmonizovať s Design System komponentami a route guardmi.
-- `[?]` Bulk operations limit (50 rows pre L1, 200 pre L2) — biznis hodnota, treba potvrdiť alebo zvoliť per-tenant config.
-- `[?]` Reopen incident time-box pre requester ("within N days") — N nie je špecifikovaný. Default 7 dní, potvrdiť.
+- `[07-design-system]` Permission-guarded UI komponent (`<Can>` wrapper) — `[resolved-in-round-2]` 07 `library-recommendation.md` zahŕňa app-level wrapper komponenty; konkrétny `<Can>` API kontrakt zostáva 07 r2/r3 detail.
+- `[?]` Bulk operations limit — `[resolved-in-round-2]` 50 / 200 + step-up MFA pre > 50 (r2 finalized). Per-tenant config override možný bez code zmien.
+- `[?]` Reopen incident time-box — `[resolved-in-round-2]` **7 dní** (r2 finalized).
 - `[09-qa-test-strategy]` Validation checklist v sekcii 10 je vstup pre test plan.
 - `[10-documentation-author]` Per-role onboarding guide — vyžaduje konsolidáciu tejto matice s UX wireframami.
