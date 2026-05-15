@@ -3,7 +3,15 @@
 > C4 Level 3 dekompozícia `workspace` aplikácie. Agent / specialist SPA pre
 > 5 person (`agent_l1_anna`, `agent_l2_marek`, `change_manager_peter`,
 > `kb_editor_jana`, `cmdb_owner_robert`). Vyššia information density,
-> hot-keys, multi-pane.
+> hot-keys, multi-pane. Stack finalizovaný v r2: **React 19 + Vite 5 +
+> React Router v6 data router + TanStack Query v5 + React Hook Form + Zod
+> + i18next + TipTap (KB editor) + FullCalendar (change calendar) +
+> Cytoscape (CMDB graph) + Sentry React** (per 06 a ADRs).
+
+## Changelog (round 2)
+
+- Tenant header v diagrame zharmonizovaný na `X-CA-SDM-Tenant` (ADR-11 r2).
+- Stack popis v úvode doplnený o konkrétne knižnice z 06.
 
 ## 1. Component diagram
 
@@ -55,7 +63,7 @@ flowchart TB
     features --> QueryClient
     features --> TenantCtx
     features --> UserCtx
-    ApiClient -- "HttpOnly cookie<br/>+ X-Tenant header" --> BFF
+    ApiClient -- "HttpOnly cookie<br/>+ X-CA-SDM-Tenant header" --> BFF
 ```
 
 ## 2. Komponenty — zodpovednosti
@@ -187,12 +195,12 @@ v Tech Stack ADR.
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `ui-framework` | → 06-tech-stack-selector | Rovnaký flag ako Portal — workspace zdieľa stack. |
-| 2 | `wysiwyg-library` | → 06-tech-stack-selector | TipTap / Lexical / ProseMirror — viď R-010. |
-| 3 | `graph-library` | → 06-tech-stack-selector | Cytoscape / D3 / ReactFlow — viď R-011. |
-| 4 | `calendar-library` | → 06-tech-stack-selector | FullCalendar / vlastné / iné. Heavy chunk. |
-| 5 | `cross-tenant-viewer-role` | → 05-security, 01-api-analyst | W-03 cross-tenant overlay vyžaduje rolu (GAP-3). |
-| 6 | `cmd-palette-search-scope` | → 01-api-analyst | Global search cez tickets + KB + CI — vyžaduje BFF aggregate endpoint, ktorý api-analyst gap #5 popisuje (parallel fan-out + dedup). |
-| 7 | `hot-key-i18n` | → 07-design-system | Cheat-sheet `?` overlay potrebuje preložiteľný popis každej skratky. |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `ui-framework` | (vlastné) | React 19. | `[resolved-in-round-2]` |
+| 2 | `wysiwyg-library` | (vlastné) | TipTap (06). | `[resolved-in-round-2]` |
+| 3 | `graph-library` | (vlastné) | Cytoscape canvas mode (06). | `[resolved-in-round-2]` |
+| 4 | `calendar-library` | (vlastné) | FullCalendar (06). Lazy-loaded chunk. | `[resolved-in-round-2]` |
+| 5 | `cross-tenant-viewer-role` | → 05-security, 01-api-analyst | W-03 cross-tenant overlay (GAP-3). | open (inherent — A-111) |
+| 6 | `cmd-palette-search-scope` | → 01-api-analyst | Global search aggregate endpoint (gap #5). | open (inherent API gap) |
+| 7 | `hot-key-i18n` | → 07-design-system | Cheat-sheet `?` overlay i18n. | open (07 vlastní) |

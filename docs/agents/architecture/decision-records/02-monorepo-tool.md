@@ -1,8 +1,22 @@
 # ADR-02 — Monorepo tool
 
-**Status**: accepted
+**Status**: accepted (potvrdené v r2 cross-konvergenciou s 06 + 08)
 **Dátum**: 2026-05-15
-**Autor**: 04-architecture agent (runId 20260508-192438, round 1)
+**Autor**: 04-architecture agent (runId 20260508-192438, round 1+2)
+
+## Changelog (round 2)
+
+- Status povýšený z r1 (originálne bolo `accepted`, ostáva — len doplnená
+  cross-validácia s peer agentmi).
+- 06 v `tech-stack-selector/comparison.md` + `decision.md` potvrdil
+  kompatibilitu s pnpm workspaces (žiadna kolízia).
+- 08 v `devex-devops/repo-bootstrap.md` zafixoval pnpm 9 workspaces +
+  Node 22 LTS — nepriamo potvrdzuje toto ADR.
+- Doplnené: **Turborepo je over the top pnpm workspaces**, nie alternatíva.
+  Pri ich rozdelení (pnpm = package manager; Turborepo = task orchestrator)
+  sú vrstvy ortogonálne — Turborepo je remove-able bez vplyvu na dep
+  resolution.
+- Flagy uzavreté na `[resolved-in-round-2]` kde aplikovateľné.
 
 ## Kontext
 
@@ -107,8 +121,8 @@ položiek v queue — žiadne enterprise potreby na škálu (10k+ packages).
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `turborepo-remote-cache-host` | → 08-devex-devops | Self-hosted Turborepo cache server URL pre CI. |
-| 2 | `pnpm-version` | → 08-devex-devops | Konkrétna verzia (pnpm 9.x), `corepack enable` v build image. |
-| 3 | `scaffolding-tool` | → 08-devex-devops | Náhrada za Nx generators — vlastný CLI v `tools/` alebo `plop` / `degit`. |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `turborepo-remote-cache-host` | → 08-devex-devops | Self-hosted Turborepo cache server URL pre CI. | open (operatívne — patrí 08 deployment) |
+| 2 | `pnpm-version` | → 08-devex-devops | pnpm 9.x cez corepack. | `[resolved-in-round-2]` — 08 `repo-bootstrap.md` zafixoval pnpm 9. |
+| 3 | `scaffolding-tool` | → 08-devex-devops | Náhrada za Nx generators. | open (08 vlastní `tools/` CLI strategy). |

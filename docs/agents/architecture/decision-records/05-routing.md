@@ -1,8 +1,16 @@
 # ADR-05 — Routing
 
-**Status**: accepted
+**Status**: accepted (konkrétna knižnica finalizovaná v r2)
 **Dátum**: 2026-05-15
-**Autor**: 04-architecture agent (runId 20260508-192438, round 1)
+**Autor**: 04-architecture agent (runId 20260508-192438, round 1+2)
+
+## Changelog (round 2)
+
+- 06 v `tech-stack-selector/libraries.md` zvolil **React Router v6 data router**.
+- ADR aktualizovaný: knižnica `react-router-dom` v6 data router mode (nie legacy
+  `<BrowserRouter>` API; `createBrowserRouter` + `RouterProvider`).
+- Doplnený rationale + dôsledky pre `apps/*/src/routes/` štruktúru.
+- Flag `routing-library` `[resolved-in-round-2]`.
 
 ## Kontext
 
@@ -26,8 +34,9 @@ GOAL §5 NFR — browsery posledné 2 verzie evergreens.
 
 ## Rozhodnutie
 
-**Client-side routing s konfiguráciou (config-based, nie file-based) — výber
-konkrétnej knižnice patrí 06 Tech Stack Selector.**
+**Client-side routing s konfiguráciou (config-based, nie file-based).
+Knižnica: `react-router-dom` v6 data router mode** (`createBrowserRouter` +
+`RouterProvider` + per-route `loader` / `action` / `errorElement`).
 
 Architekt-úroveň pravidlá:
 1. **Routing config je centralizovaný** per app (`apps/portal/src/routes.ts`,
@@ -45,14 +54,59 @@ Architekt-úroveň pravidlá:
 6. **Browser back/forward = TanStack Query refetch on stale**. Žiadne special
    handlers — natívne správanie funguje.
 
-**Kandidáti pre 06 Tech Stack** (zoznam je informačný, výber 06):
+### Konkrétne API (React Router v6 data router)
 
-| Kandidát | Pluses | Minuses |
-|---|---|---|
-| React Router 6 (data router mode) | de facto štandard React; loaders, actions, error elements | Aktívna 6 → 7 migrácia, drobné breaking changes |
-| TanStack Router | Type-safe routes, integrated with TanStack Query | Mladšia knižnica, menšia komunita |
-| Vue Router 4 | de facto Vue | (ak Tech Stack zvolí Vue) |
-| Angular Router | Built-in, robust | (ak Tech Stack zvolí Angular) |
+```ts
+// apps/portal/src/routes/index.ts
+import { createBrowserRouter } from "react-router-dom";
+
+export const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <AppShell />,
+    errorElement: <RootErrorBoundary />,
+    loader: appShellLoader,           // /me, /config preloaded
+    children: [
+      {
+        path: "tickets/:id",
+        lazy: () => import("../features/tickets/TicketDetailRoute"),
+        // RouteGuard wraps inside the lazy component
+      },
+      {
+        path: "queue",
+        lazy: () => import("../features/queue/QueueRoute"),
+      },
+      // ...
+    ],
+  },
+]);
+```
+
+**Štruktúra `apps/<app>/src/routes/`**:
+```
+apps/portal/src/
+├── routes/
+│   ├── index.ts              # createBrowserRouter export
+│   ├── guards.ts             # <RouteGuard requires={["..."]}> + loader helpers
+│   └── error-boundaries.tsx  # RootErrorBoundary, NotFoundElement
+├── features/
+│   ├── tickets/
+│   │   ├── TicketDetailRoute.tsx   # default export: { Component, loader, action }
+│   │   └── ...
+│   └── ...
+```
+
+**Lazy route convention**: každý feature route file exportuje
+`{ Component, loader?, action?, ErrorBoundary? }`. React Router v6 data router
+`lazy:` import to očakáva nativne. Loader spustí `queryClient.ensureQueryData()`
+pre primary data → žiadny waterfall pri prvom paint route.
+
+### 06 rationale (od Tech Stack agenta — pre úplnosť)
+
+06 zamietol TanStack Router pre menšiu komunitu + chýbajúci data router
+mode v stable verzii (v MVP horizonte). React Router v6 data router je
+de-facto štandard 2024+ s explicit `loader` / `action` / `errorElement`
+API, ktoré zapadá do nášho per-route prefetching pravidla.
 
 ## Dôsledky
 
@@ -104,8 +158,8 @@ Architekt-úroveň pravidlá:
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `routing-library` | → 06-tech-stack-selector | React Router 6 vs. TanStack Router vs. Vue Router atď. |
-| 2 | `code-split-boundaries` | → 06-tech-stack-selector, 08-devex-devops | Bundle visualizer + per-route chunk size budgets. |
-| 3 | `permission-guard-impl` | → 05-security | `<RouteGuard requires={...}>` komponenta — Security agent finalizuje permission catalog (per ADR-04 v `entities.md` Otvorené závislosti). |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `routing-library` | (vlastné) | React Router v6 data router. | `[resolved-in-round-2]` — 06 stack pick. |
+| 2 | `code-split-boundaries` | → 08-devex-devops | Per-route chunk size budgets + bundle visualizer. | open — 08 vlastní v `ci-cd.md` (size-limit gate). |
+| 3 | `permission-guard-impl` | → 05-security | `<RouteGuard requires={...}>` komponenta. 05 dodal permission catalog v `rbac.md`. | `[resolved-in-round-2]` — permission code map je v `security/rbac.md`. Implementáciu komponenty robí Phase C. |

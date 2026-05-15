@@ -1,8 +1,16 @@
 # ADR-03 — Data fetching layer
 
-**Status**: accepted
+**Status**: accepted (potvrdené v r2 zhodou s 06)
 **Dátum**: 2026-05-15
-**Autor**: 04-architecture agent (runId 20260508-192438, round 1)
+**Autor**: 04-architecture agent (runId 20260508-192438, round 1+2)
+
+## Changelog (round 2)
+
+- 06 v `tech-stack-selector/libraries.md` nezávisle zvolil **TanStack Query v5**
+  s React bindingom — zhoda s týmto ADR.
+- Framework binding flag `[resolved-in-round-2]` — `@tanstack/react-query`.
+- Doplnená poznámka o spolupráci s ADR-11 (per-tenant cache keys cez QueryKey
+  prefix) — zhoda s `security/multi-tenancy-security.md` L2 mitigáciou.
 
 ## Kontext
 
@@ -114,8 +122,8 @@ Použitie:
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `framework-binding` | → 06-tech-stack-selector | React / Vue / Angular / Solid → vyber konkrétny TanStack Query binding. |
-| 2 | `query-key-conventions` | → 08-devex-devops | Žiadna config-level decision; bude v dev handbook konvencia (`['<resource>', ...keys]`). |
-| 3 | `optimistic-update-policy` | → 09-qa | Pri ktorých mutáciách robíme optimistic (status change áno; ticket create nie — server musí dať `ref_num`). |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `framework-binding` | (vlastné) | `@tanstack/react-query` (React 19). | `[resolved-in-round-2]` — 06 potvrdil React 19. |
+| 2 | `query-key-conventions` | → 08-devex-devops | Dev handbook konvencia `['<tenant>', '<resource>', ...keys]`. Tenant prefix kvôli L2 mitigácii. | open (handbook task) |
+| 3 | `optimistic-update-policy` | → 09-qa | Per-mutation policy. QA agent (09) v `acceptance-criteria.md` má 18 journey scenárov — bude finalizovať. | open (vlastní 09) |

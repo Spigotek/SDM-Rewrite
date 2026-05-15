@@ -1,8 +1,22 @@
 # ADR-09 — Observability vo FE a BFF
 
-**Status**: accepted
+**Status**: accepted (FE error tracker finalizovaný v r2)
 **Dátum**: 2026-05-15
-**Autor**: 04-architecture agent (runId 20260508-192438, round 1)
+**Autor**: 04-architecture agent (runId 20260508-192438, round 1+2)
+
+## Changelog (round 2)
+
+- 06 v `tech-stack-selector/libraries.md` zvolil **`@sentry/react`** (FE
+  error tracking). GlitchTip zostáva ako alternatíva pre self-hosted variant
+  (08 + 05 spoločne rozhodnú podľa customer security policy).
+- 05 v `security/audit-and-compliance.md` definoval **~40 eventov v 5
+  kategóriách** (`auth`, `authz`, `sensitive`, `security`, `data`) — táto
+  taxonomia je teraz autoritatívna pre BFF audit logger.
+- 08 destinácia logov: **JSON stdout (pino) → log aggregátor (ELK alebo
+  Loki) cez DevOps** (per `security/audit-and-compliance.md`). SIEM connector
+  post-MVP.
+- Flag `error-tracking-product` `[resolved-in-round-2]` (Sentry primárne,
+  GlitchTip ako self-hosted fallback v `risks.md` A-104).
 
 ## Kontext
 
@@ -25,11 +39,13 @@ Konkrétne potreby:
 
 ### 1. FE: Error tracking platforma
 
-**Voľba**: **Sentry** (alebo `GlitchTip` ako open-source self-hosted
-alternatíva — DevOps + Security spolurozhodne).
+**Voľba**: **`@sentry/react`** (06 stack pick). GlitchTip zostáva ako
+self-hosted Sentry-compatible alternatíva — vzhľadom na rovnaký DSN protokol
+je prepnutie iba zmena `sentryDsn` v `config.json` (08 `runtime-config.md`).
 
 Setup:
-- `@sentry/browser` v obidvoch SPA, init v `App Bootstrap`.
+- `@sentry/react` v obidvoch SPA, init v `App Bootstrap` cez
+  `Sentry.init({ dsn: config.observability.sentryDsn, ... })`.
 - Capture: `errors`, `unhandledRejection`, React error boundary.
 - Beforesend filter: striktne `details` field a PII z `extra` (mená, emaily
   cez allowlist regex).
@@ -51,7 +67,28 @@ performance monitoring enabled. Štart s tým, RUM dedikovaný do v1.
 
 ### 3. BFF: Štruktúrované logy + traces
 
-**Format** (JSON Lines):
+**Logger**: `pino` 9 (JSON Lines, stdout). Žiadny vlastný serializer; pino
+schémy s `serializers.err` + `redact: ['req.headers.authorization', '*.password']`
+sú dostatočné.
+
+**Audit event taxonómia (autoritatívne — 05)**: BFF audit logger používa
+kategórie a event names z `security/audit-and-compliance.md` § 2:
+- `auth.*` (login, logout, session, MFA) — ~10 eventov
+- `authz.*` (permission decisions, RBAC denies) — ~7 eventov
+- `sensitive.*` (cross-tenant, admin operations, impersonation) — ~8 eventov
+- `security.*` (rate-limit, CSP violations, suspicious activity) — ~6 eventov
+- `data.*` (CRUD on regulated entities) — ~9 eventov
+
+BFF v `audit` middleware vyfiltruje request → emit event s príslušným
+`category.event` tagom. Sampling per `audit-and-compliance.md` § 3.
+
+**Destinácia**: **JSON stdout → log shipper** (filebeat / vector / promtail
+podľa DevOps voľby) → **ELK alebo Loki** (08 finalizuje konkrétny stack
+v post-MVP topológii; obidva sú line-stream-compatible). **SIEM connector
+(Splunk / QRadar / Sentinel) je post-MVP** — taxonómia eventov je
+destination-agnostic, žiadny rework kontraktu.
+
+**Format** (JSON Lines, pino default + náš `auditEvent` field):
 ```json
 {
   "ts": "2026-05-15T10:33:21.412Z",
@@ -135,10 +172,10 @@ Sentry events z FE majú `tags.correlationId` matching BFF log.
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `error-tracking-product` | → 05-security, 08-devex-devops | Sentry SaaS vs. GlitchTip self-hosted. Závisí od customer security policy. |
-| 2 | `log-aggregation` | → 08-devex-devops | Kam BFF logy idú (stdout → Loki / ELK / Splunk). |
-| 3 | `metrics-exporter` | → 08-devex-devops | Prometheus / iný — pre BFF / RUM metrics. |
-| 4 | `gdpr-data-policy` | → 05-security | Plný DPIA pre Sentry / RUM — Security agent finalizuje. |
-| 5 | `correlation-id-spec` | → 08-devex-devops | Formát (UUID v4 vs. ULID), header name (`X-Correlation-ID`), TTL. |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `error-tracking-product` | (vlastné) | `@sentry/react` (FE); GlitchTip self-hosted ako compatible swap (08 + 05 podľa security policy). | `[resolved-in-round-2]` |
+| 2 | `log-aggregation` | → 08-devex-devops | JSON stdout → ELK alebo Loki (08 voľba); SIEM post-MVP. | `[resolved-in-round-2]` (stack-agnostic dest); konkrétne ELK/Loki vlastní 08. |
+| 3 | `metrics-exporter` | → 08-devex-devops | Prometheus alebo Loki metrics. | open (post-MVP, RUM dedikovaný v1) |
+| 4 | `gdpr-data-policy` | → 05-security | Pokryté `security/audit-and-compliance.md` retention table (§5) + Sentry `beforeSend` v r1. | `[resolved-in-round-2]` |
+| 5 | `correlation-id-spec` | → 08-devex-devops | Formát: **ULID** (lexicograficky sortable v logoch), header `X-Correlation-ID`, TTL = request lifetime. | `[resolved-in-round-2]` (ULID + `X-Correlation-ID` rozhodnutie tu) |

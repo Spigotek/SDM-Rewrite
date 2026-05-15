@@ -1,8 +1,16 @@
 # Komponenty — Portal SPA
 
 > C4 Level 3 dekompozícia `portal` aplikácie. Self-service SPA pre persona
-> `requester_lucia`. Tech stack je framework-neutrálny v tomto dokumente —
-> ADR-10 ponúka kandidátov, finálne 06 Tech Stack Selector.
+> `requester_lucia`. Stack finalizovaný v r2: **React 19 + Vite 5 + React
+> Router v6 data router + TanStack Query v5 + React Hook Form + Zod +
+> i18next + Sentry React** (per 06 `tech-stack-selector/libraries.md` a
+> ADRs 03/05/06/07/09/10).
+
+## Changelog (round 2)
+
+- Tenant header v diagrame zharmonizovaný na `X-CA-SDM-Tenant` (zhoda s
+  ADR-11 r2 update a 08 `runtime-config.md`).
+- Stack popis v úvode aktualizovaný — žiadne TBD knižnice.
 
 ## 1. Component diagram
 
@@ -52,7 +60,7 @@ flowchart TB
     features --> QueryClient
     features --> TenantCtx
     features --> UserCtx
-    ApiClient -- "HttpOnly cookie<br/>+ X-Tenant header" --> BFF
+    ApiClient -- "HttpOnly cookie<br/>+ X-CA-SDM-Tenant header" --> BFF
     Catalog -- "JSON schema" --> Domain
     AuthLib --> UserCtx
     AuthLib --> TenantCtx
@@ -179,10 +187,10 @@ nie zamestnanec); mobile UX je iba responzívna varianta workspace W-03.
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `ui-framework` | → 06-tech-stack-selector | React / Vue / Angular / Solid — rozhodne 06. Tento dokument je framework-neutrálny. |
-| 2 | `form-library` | → 06-tech-stack-selector, 07-design-system | `react-hook-form` ekv. pre dynamic forms — voľba ovplyvní renderer signature. |
-| 3 | `service-catalog-form-source` | → 03-domain-modeller, 01-api-analyst | Formát Service Catalog form schema (gap #3 v api-analyst). |
-| 4 | `mobile-emergency-approve-app` | → 04-architecture (potvrdenie) | P-12 sa routuje do workspace, nie portál. Potvrdenie pre UX. Detail v `monorepo-layout.md`. |
-| 5 | `notifications-channel` | → 04-architecture, 01-api-analyst | P-07 závisí od CA SDM webhooks/polling — viď R-012 a `gaps.md` #7. MVP: polling + badge. |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `ui-framework` | (vlastné) | React 19. | `[resolved-in-round-2]` |
+| 2 | `form-library` | (vlastné) | React Hook Form 7 + Zod 3 (ADR-06). | `[resolved-in-round-2]` |
+| 3 | `service-catalog-form-source` | → 01-api-analyst | gap #3. | open (inherent) |
+| 4 | `mobile-emergency-approve-app` | (vlastné) | P-12 routuje do workspace. | `[resolved-in-round-1]` |
+| 5 | `notifications-channel` | → 01-api-analyst | Polling MVP; SSE/webhooks v1. | open (post-MVP) |

@@ -1,8 +1,17 @@
 # ADR-10 — Build pipeline / bundler
 
-**Status**: proposed (čaká na finálne potvrdenie 06 Tech Stack Selector)
+**Status**: accepted (potvrdené 06 v r2)
 **Dátum**: 2026-05-15
-**Autor**: 04-architecture agent (runId 20260508-192438, round 1)
+**Autor**: 04-architecture agent (runId 20260508-192438, round 1+2)
+
+## Changelog (round 2)
+
+- 06 v `tech-stack-selector/libraries.md` potvrdil **Vite 5 (s prechodom na 6
+  až bude stable)** pre obe SPA. 08 `repo-bootstrap.md` adopuje Vite 5 v Phase C.
+- ADR povýšený z `proposed` na `accepted`.
+- BFF (Hono) v r2 finalizovaný ako Node bez bundleru (tsx watch v dev, plain
+  `tsc --build` pre prod) — viď `components/bff.md` §2.5.
+- Flagy `framework-plugin`, `bff-bundler`, `polyfill-strategy` uzavreté.
 
 ## Kontext
 
@@ -90,9 +99,9 @@ Vite.
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `framework-plugin` | → 06-tech-stack-selector | `@vitejs/plugin-react` / Vue / Angular ekv. — voľba podľa stacku. |
-| 2 | `bff-bundler` | → 06-tech-stack-selector | BFF má vlastný bundler/runtime (typically tsx, esbuild, bun, ts-node). |
-| 3 | `chunk-strategy` | → 08-devex-devops | `manualChunks` config — vendor split granularity. Po prvom build-e si pozrieme bundle visualizer. |
-| 4 | `polyfill-strategy` | → 06-tech-stack-selector | Browser target `ES2020` znamená žiadne IE polyfills. Konkrétny browserslist config v `package.json`. |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `framework-plugin` | (vlastné) | `@vitejs/plugin-react`. | `[resolved-in-round-2]` (React 19 pick). |
+| 2 | `bff-bundler` | (vlastné) | BFF: žiadny bundler — `tsx` watch v dev, `tsc --build` v prod, `node --enable-source-maps`. | `[resolved-in-round-2]` (ADR-01 finalizoval Hono+Node). |
+| 3 | `chunk-strategy` | → 08-devex-devops | `manualChunks` config — vendor split. Bundle visualizer + size-limit gate v CI vlastní 08. | open (operatívne) |
+| 4 | `polyfill-strategy` | (vlastné) | Browser target `ES2020`, browserslist `last 2 Chrome versions, last 2 Firefox versions, last 2 Safari versions, last 2 Edge versions`. Žiadne polyfills. | `[resolved-in-round-2]` |

@@ -1,8 +1,25 @@
 # ADR-11 — Multi-tenancy stratégia
 
-**Status**: accepted
+**Status**: accepted (header name zharmonizovaný v r2)
 **Dátum**: 2026-05-15
-**Autor**: 04-architecture agent (runId 20260508-192438, round 1)
+**Autor**: 04-architecture agent (runId 20260508-192438, round 1+2)
+
+## Changelog (round 2)
+
+- **Tenant header name zharmonizovaný**: r1 používal `X-Tenant` v FE→BFF
+  hopu. 08 `runtime-config.md` zafixoval **`X-CA-SDM-Tenant`** ako kľúč v
+  `RuntimeConfig.tenants.tenantContextHeader`. 05 `multi-tenancy-security.md`
+  považuje FE-side header iba za hint, autorita je session.
+- ADR v r2 fixuje **`X-CA-SDM-Tenant`** pre FE → BFF (defenzívny / audit-friendly
+  hint). BFF interný hop BFF → CA SDM zostáva bez tohto headera (CA SDM nemá
+  natívny tenant header — viď api-analyst `multi-tenancy.md`; tenant scope
+  cez `X-Role` + defenzívny WC filter `tenant%3DU'<id>'`).
+- Pridaná tabuľka §3.1 **Header taxonomy** pre jasnosť.
+- Cross-tab tenant drift (r1 A-004) je vyriešený cez `__Host-sdm.tenantVer`
+  cookie pattern (05 `multi-tenancy-security.md` §2.3) — zhoda, žiadne
+  nové rozhodnutia.
+- Flagy `bff-session-persistence`, `two-tab-tenant-conflict` resolved
+  v r2 cross-referenciou s 05/08.
 
 ## Kontext
 
@@ -31,16 +48,33 @@ Kandidáti propagácie tenant kontextu z FE → BFF:
 
 ## Rozhodnutie
 
-**Server-side aktívny tenant v BFF session + HTTP header `X-Tenant` v API
-volaniach z FE.**
+**Server-side aktívny tenant v BFF session + HTTP header `X-CA-SDM-Tenant`
+v API volaniach z FE → BFF.**
+
+> Header name **`X-CA-SDM-Tenant`** je zhodný s 08
+> `runtime-config.md` (`RuntimeConfig.tenants.tenantContextHeader` default).
+> 05 `multi-tenancy-security.md` autoritou multi-tenancy je server-side
+> `session.activeTenantId`; FE header je informačný hint, BFF re-validuje.
+> Cross-tab consistency cez `__Host-sdm.tenantVer` cookie (05 §2.3).
+
+### 3.1 Header taxonomy
+
+| Header | Smer | Účel | Autorita |
+|---|---|---|---|
+| `X-CA-SDM-Tenant: <tenantId>` | FE SPA → BFF | Defenzívny hint, audit trail. BFF re-validuje proti `session.activeTenantId`. Mismatch → 403 `TENANT_FORBIDDEN` s `correctTenantId`. | Hint (autorita: session) |
+| `X-Role: <roleIdScopedToTenant>` | BFF → CA SDM | Tenant scoping cez CA SDM rolu. | Autoritatívne pre CA SDM |
+| `WC=tenant%3DU'<id>'` (query) | BFF → CA SDM | Defenzívny WC filter (defense-in-depth). | Doplnkové (05) |
+| `__Host-sdm.tenantVer=<n>` (cookie) | BFF ↔ SPA tabs | Cross-tab broadcast pri tenant switch. Inkrementované server-side. | BFF authoritative |
 
 Mechanika:
 1. **Po login**: BFF zoberie `User.defaultTenantId` (z `UiUserProfile`).
    Uloží do session ako `activeTenantId`.
 2. **FE bootstrap**: `GET /me` vráti `{ user, tenants, activeTenantId }`.
    FE uloží do `TenantContext`.
-3. **Per request**: `@sdm/api-client` v FE injektuje `X-Tenant: <activeTenantId>`
-   header. BFF re-validuje (`activeTenantId === session.activeTenantId`),
+3. **Per request**: `@sdm/api-client` v FE injektuje
+   `X-CA-SDM-Tenant: <activeTenantId>` header (presná hodnota z `RuntimeConfig
+   .tenants.tenantContextHeader` načítaná v bootstrape).
+   BFF re-validuje (`activeTenantId === session.activeTenantId`),
    defenzívne — header je informačný, autorita je v session.
 4. **BFF → CA SDM**: BFF pridá `X-Role: <roleIdScopedToTenant>` (vybraná
    z `cnt_role` matching tenant) + defenzívne `WC=tenant%3DU'<id>'` filter
@@ -89,9 +123,12 @@ Mechanika:
    ak ten istý user má rolu v target tenantu.
 2. **Two-tab pattern lock** — ak user otvorí workspace v dvoch taboch a
    v jednom prepne tenant, druhý tab má stale tenant kontext v JS pamäti
-   (X-Tenant header), ale BFF má novú hodnotu v session. BFF musí
+   (`X-CA-SDM-Tenant` header), ale BFF má novú hodnotu v session. BFF musí
    detektovať mismatch a vrátiť `TENANT_FORBIDDEN` (s `correctTenantId`
-   field), FE auto-reload do správneho tenantu. Detail v `data-flows.md`.
+   field), FE auto-reload do správneho tenantu. **05
+   `multi-tenancy-security.md` §2.3 doplnil druhý fail-safe mechanizmus —
+   `__Host-sdm.tenantVer` cookie sledovaný cez `document.visibilityChange`
+   alebo BroadcastChannel**. Detail v `data-flows.md`.
 3. **Dirty form switch UX friction** — confirm dialog je trochu viac kliknutí.
    Acceptable, je to UX safety net.
 
@@ -140,11 +177,12 @@ Mechanika:
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `service-provider-multi-view` | → 02-ux-persona, 04-architecture (post-MVP) | Service Provider tenant vidí 100+ managed tenantov. UI flow (search v switcher, pinned) — UX agent v post-MVP. V MVP scope predpoklad: < 10 tenantov per user. |
-| 2 | `tenant-impersonation` | → 05-security | SOAP `impersonate` flow (gap #15) — post-MVP. Architecture neodporúča v MVP. |
-| 3 | `cross-tenant-view-role` | → 01-api-analyst, 05-security | "Global compliance officer" rola — gap #3, UX risk R-003. Závisí od existencie v CA SDM. |
-| 4 | `two-tab-tenant-conflict` | → 09-qa | Test scenár — open 2 tabs, switch v jednom, verify automatic reload v druhom. QA strategy. |
-| 5 | `tenant-switch-perf` | → 09-qa, 04-architecture | Cache flush + first refetch < 800 ms goal. Meraný v workspace render. |
-| 6 | `bff-session-persistence` | → 08-devex-devops | In-memory MVP / Redis v1 — vplyv na SSO recovery (R-007). |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `service-provider-multi-view` | → 02-ux-persona, 04 (post-MVP) | SP tenant vidí 100+ managed tenantov. Post-MVP. | open (post-MVP) |
+| 2 | `tenant-impersonation` | → 05-security | SOAP `impersonate` flow (gap #15). | open (post-MVP) |
+| 3 | `cross-tenant-view-role` | → 01-api-analyst, 05-security | "Global compliance officer" rola — gap #3. | open (inherent API gap) |
+| 4 | `two-tab-tenant-conflict` | → 09-qa | Test scenár. 05 dodal `__Host-sdm.tenantVer` mechaniku; 09 v `acceptance-criteria.md` má cross-cutting scenár. | `[resolved-in-round-2]` — pokryté 05 + 09. |
+| 5 | `tenant-switch-perf` | → 09-qa | Cache flush + first refetch < 800 ms goal. | open (vlastní 09 perf criteria) |
+| 6 | `bff-session-persistence` | → 08-devex-devops | Dev: in-memory `Map`; Prod: Redis 7. SSO recovery cez Redis perzistenciu. | `[resolved-in-round-2]` — architecturally fixed; topology vlastní 08. |
+| 7 | `tenant-header-name` | (vlastné) | `X-CA-SDM-Tenant` (zhoda s 08 `runtime-config.md` + 05 `multi-tenancy-security.md`). | `[resolved-in-round-2]` |

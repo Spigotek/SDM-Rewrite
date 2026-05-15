@@ -1,8 +1,19 @@
-# ADR-01 — BFF áno/nie
+# ADR-01 — BFF áno/nie + technológia
 
 **Status**: accepted
-**Dátum**: 2026-05-15
-**Autor**: 04-architecture agent (runId 20260508-192438, round 1)
+**Dátum**: 2026-05-15 (round 1) → 2026-05-15 (round 2 — pridaná technologická voľba)
+**Autor**: 04-architecture agent (runId 20260508-192438, round 1+2)
+
+## Changelog (round 2)
+
+- BFF technológia finalizovaná: **Hono 4 na Node.js 22 LTS** (zhoda s 06 stack
+  rationale a 08 `pm-runtime.md` Node 22 LTS engine). Žiadny TBD.
+- Pridaná sekcia §3 **Konkrétna technológia** s porovnaním Hono vs. Fastify
+  + run-list závislostí.
+- ADR-01 flag `bff-technology` premenovaný na `[resolved-in-round-2]`.
+- Ostatné flagy (`session-store`, `bff-deployment`, `bff-threat-model`) zostávajú
+  smerom k 08/05 — sú to ich operatívne / threat-model rozhodnutia, nie blokátor
+  pre architecture.
 
 ## Kontext
 
@@ -38,9 +49,95 @@ UX analytik popisuje 5+ riziká okolo tenant kontextu, error shapingu
 BFF beží ako samostatný server proces medzi prehliadačmi (Portal + Workspace
 SPA) a CA SDM 17.4. Detail dekompozície v `components/bff.md`.
 
-Konkrétna technológia (Node.js + Fastify / Hono / NestJS / Bun / iné) je
-úloha **06 Tech Stack Selector**. Architecture poskytuje boundary, API
-kontrakt a dekompozíciu.
+**Konkrétna technológia: Hono 4 na Node.js 22 LTS, TypeScript 5.7 strict.**
+Plný runtime stack — vrátane session store-u, observability dependencies
+a startup flow — je v `components/bff.md` § 2.0 a § 2.5.
+
+## 3. Konkrétna technológia — Hono vs. Fastify
+
+Round 1 ponechal voľbu na 06 Tech Stack Selector. 06 v
+`tech-stack-selector/libraries.md` BFF runtime **mimo svojho scope** (FE-only
+stack) — preto rozhodnutie ostalo na Architecture. Round 2 ho uzatvára.
+
+### Kandidáti
+
+| Kritérium | **Hono 4** (zvolený) | Fastify 4 |
+|---|---|---|
+| TypeScript-first | natívne, typed routing API (`Context<>` generics) | type-safe, ale schema-first cez `@fastify/type-provider-typebox` |
+| Runtime kompatibilita | Node 22 LTS + Bun + Deno + Edge — žiadny lock-in | Node-only (oficiálne) |
+| Bundle / cold start | malý (jadro ~20 kB), rýchly cold start | väčší (~150 kB), pomalší cold start |
+| Ekosystém middlewaru | rastúci (CORS, JWT, compress, logger, secure-headers) — vlastné middleware sú trivial | zrelší (compress, jwt, helmet, multipart, rate-limit) |
+| Komunita / aktivita | menšia, ale aktívna; aktívny vývoj | väčšia, stabilnejšia |
+| Web Standards API | natívne `Request`/`Response` (Fetch API) — kompatibilné s našou FE-side `fetch` stratégiou v `@sdm/api-client` | proprietárny `req`/`reply` objekt |
+| Multipart upload (attachments) | cez `hono/multipart` alebo Node streams | `@fastify/multipart` zrelší (busboy) |
+
+### Voľba: Hono 4
+
+**Dôvody**:
+1. **Web Standards API** — Hono `Context` má `c.req: Request` (Fetch standard).
+   Náš FE `@sdm/api-client` používa native `fetch` (06/`libraries.md` §15).
+   Zdieľaný mental model FE ↔ BFF (Request/Response shape).
+2. **TypeScript-first** — typed routing s generics nad app objektom,
+   bez schema-first build step-u. Path params, headers, body sú type-inferred
+   priamo z routing chainu.
+3. **Malý bundle + fast cold start** — relevantné pre customer on-prem deploy
+   (často Docker s `node --enable-source-maps`); reštart < 1 s.
+4. **Runtime portability ako budúca opcia** — ak by v post-MVP customer
+   požadoval edge deployment, Hono ide na Bun / Workers / Deno bez prepísania.
+   Žiadny vendor lock-in.
+5. **Tenká filozofia v súlade s P8** — Hono je deliberately small framework;
+   custom middleware (audit logger, tenant injection, CSRF) sú 20–40 LOC.
+
+**Prečo nie Fastify**:
+- Fastify je excellent boring choice, ale jeho schema-first plugin
+  ergonómia (`@fastify/type-provider-typebox` / `ajv`) je nadbytočná pre náš
+  case — `@sdm/api-types` zo `domain/model.ts` je už zdrojová pravda
+  schém na FE aj BFF. Zod validation v BFF je trivial bez Fastify plugin
+  loaderu.
+- Proprietárny req/reply object odlišný od FE `fetch` mental modelu — drobný
+  cognitive cost.
+
+**Prečo nie NestJS** (zamietnuté bez detailu):
+- Heavy DI framework s decorator-syntax. Pre 20–30 BFF route-ov je overkill;
+  bije proti P8.
+
+**Prečo nie Bun ako runtime**:
+- Bun beží Hono nativne, ale 08 `pm-runtime.md` fixuje Node 22 LTS pre celú
+  pipeline. Stick s Node 22 LTS pre MVP; re-evaluate Bun ak v1 ukáže perf
+  bottleneck.
+
+### Run-list dependencies (BFF package)
+
+```jsonc
+// apps/bff/package.json (informačné — Tech Stack Selector pre balíky frontu)
+{
+  "engines": { "node": ">=22.0.0" },
+  "dependencies": {
+    "hono": "^4.6.0",
+    "@hono/node-server": "^1.13.0",
+    "zod": "^3.23.0",
+    "pino": "^9.5.0",
+    "pino-pretty": "^11.0.0",
+    "ioredis": "^5.4.0",
+    "@hono/zod-validator": "^0.4.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "typescript": "^5.7.0",
+    "@types/node": "^22.0.0"
+  }
+}
+```
+
+- `hono` — HTTP framework.
+- `@hono/node-server` — Node adapter (production); v dev `tsx watch`.
+- `pino` — JSON line logger (stdout), `pino-pretty` len v dev.
+- `ioredis` — Redis client pre session store (production); in-memory `Map`
+  pre dev (žiadny extra dep).
+- `zod` — request body / params validation, schema sharing s FE.
+- `@hono/zod-validator` — middleware adapter.
+
+Detail startup flow + signal handlers v `components/bff.md` §2.5.
 
 ## Dôsledky
 
@@ -145,9 +242,9 @@ alebo cookie.
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `bff-technology` | → 06-tech-stack-selector | Konkrétna voľba (Node.js + Fastify / Hono / NestJS / Bun / iné). |
-| 2 | `session-store` | → 08-devex-devops | MVP in-memory, v1 Redis. |
-| 3 | `bff-deployment` | → 08-devex-devops | Container / systemd service / Kubernetes Deployment. Po výbere stacku. |
-| 4 | `bff-threat-model` | → 05-security | Plný threat model BFF (CSRF, session hijack, key broker leakage, ...). |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `bff-technology` | (vlastné) | Konkrétna voľba (Hono / Fastify / NestJS / Bun / iné). | `[resolved-in-round-2]` — Hono 4 na Node 22 LTS. |
+| 2 | `session-store` | → 08-devex-devops | Dev: in-memory `Map`. Prod: Redis 7 (ioredis client v BFF, deployment topológia patrí 08). | open (architecturally resolved: Redis prod / in-memory dev — viď `components/bff.md` §2.2; 08 vlastní HA topológiu a Redis hostnames v `runtime-config.md`/secrets) |
+| 3 | `bff-deployment` | → 08-devex-devops | Container (image) + reverse-proxy. Konkrétna orchestration (systemd / Docker compose / Kubernetes) je 08 decision. | open |
+| 4 | `bff-threat-model` | → 05-security | Plný threat model BFF (CSRF, session hijack, key broker leakage, ...). | open — pokryté `security/threat-model.md` + `multi-tenancy-security.md` v r1. Cross-reference, nie nový flag. |

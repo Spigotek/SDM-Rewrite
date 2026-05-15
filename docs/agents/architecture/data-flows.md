@@ -4,6 +4,12 @@
 > overiť threat model, QA agentovi naplánovať integračné testy a 10
 > Documentation Author napísať per-module specs.
 
+## Changelog (round 2)
+
+- Tenant header v sequence diagrame § 2 (Tenant switch) zharmonizovaný na
+  **`X-CA-SDM-Tenant`** (zhoda s ADR-11 r2 update + 08 `runtime-config.md`).
+  Sémantika diagramov nezmenená.
+
 ## 1. Login flow (SSO)
 
 ```mermaid
@@ -78,7 +84,7 @@ sequenceDiagram
         SPA->>SPA: refetch current page queries
     end
 
-    SPA->>BFF: GET /api/queue (X-Tenant: T2)
+    SPA->>BFF: GET /api/queue (X-CA-SDM-Tenant: T2)
     BFF->>SDM: GET /caisd-rest/in (X-AccessKey, X-Role-for-T2, WC tenant=T2)
     SDM-->>BFF: data
     BFF-->>SPA: UiQueueItem[]
@@ -87,7 +93,7 @@ sequenceDiagram
 
 **Two-tab race condition**:
 - Tab A má T1, Tab B má T1. User v Tab A switchne na T2.
-- Tab B robí ďalší request s `X-Tenant: T1` v hlavičke, ale BFF session má T2.
+- Tab B robí ďalší request s `X-CA-SDM-Tenant: T1` v hlavičke, ale BFF session má T2.
 - BFF detekuje mismatch → vráti `TENANT_FORBIDDEN` s `{ correctTenantId: T2 }`.
 - `@sdm/api-client` zachytí, FE auto-refresh Tab B do T2 a toast "Tenant
   bol prepnutý v inom okne".
@@ -349,10 +355,10 @@ Detail step-up auth vlastní Security agent (05).
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `step-up-auth-flow` | → 05-security | Detail step-up flow pre approve / sensitive actions (impl flow #9). |
-| 2 | `service-catalog-detail-endpoint` | → 01-api-analyst | Flow #6 predpokladá `GET /api/catalog/items/<id>` ktorý normalizuje z BUI / Service Catalog backend. Detail v gap #3. |
-| 3 | `attachment-link-flow` | → 01-api-analyst | Flow #3 vyžaduje pre-attach + link-after-create. CA SDM má aj kombinovaný multipart POST. BFF zvolí podľa scenára. |
-| 4 | `single-logout-spec` | → 05-security | SLO (IdP single logout) flow — či ho BFF aktívne triggeruje alebo nie. |
-| 5 | `optimistic-update-list` | → 09-qa | Per-mutation policy (close, take, escalate sú optimistic; create nie). Test plan. |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `step-up-auth-flow` | → 05-security | Detail step-up flow pre approve / sensitive actions. | open (post-MVP — A-113) |
+| 2 | `service-catalog-detail-endpoint` | → 01-api-analyst | gap #3. | open (inherent API gap) |
+| 3 | `attachment-link-flow` | → 01-api-analyst | Pre-attach + link-after-create vs. kombinovaný multipart. | open (operatívne — BFF voľba per scenár) |
+| 4 | `single-logout-spec` | → 05-security | SLO flow. | open (post-MVP) |
+| 5 | `optimistic-update-list` | → 09-qa | Per-mutation policy. 09 v r1 doručil 18 acceptance criteria. | `[resolved-in-round-2]` (na úrovni stratégie); per-mutation matrix v 09 dev handbook. |

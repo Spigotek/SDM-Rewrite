@@ -1,8 +1,17 @@
 # ADR-06 — Dynamic forms (Service Catalog)
 
-**Status**: accepted
+**Status**: accepted (knižnica finalizovaná v r2)
 **Dátum**: 2026-05-15
-**Autor**: 04-architecture agent (runId 20260508-192438, round 1)
+**Autor**: 04-architecture agent (runId 20260508-192438, round 1+2)
+
+## Changelog (round 2)
+
+- 06 v `tech-stack-selector/libraries.md` zvolil **React Hook Form + Zod**.
+- ADR fixuje knižnicu na `react-hook-form` 7 + `zod` 3 + `@hookform/resolvers/zod`.
+- Doplnená sekcia §4 **JSON Schema → Zod bridge** — ako sa BFF `DynamicFormSchema`
+  premieta na Zod schema runtime side, žiadny build step.
+- Flag `form-library` (ADR-04) + `i18n-library-choice` (ADR-07) sa pretínajú.
+  Tu ADR-06 fixuje len form runtime.
 
 ## Kontext
 
@@ -67,10 +76,88 @@ zostavený z CA SDM Service Catalog template. Implementačný detail flow-u
 patrí api-analyst (`gaps.md` #3 a flag `service-catalog-form-schema`).
 
 **Validation**:
-- **Client-side**: `react-hook-form` (alebo ekv.) + custom resolver zo schémy
-  — `@sdm/domain/forms/validate.ts`.
-- **Server-side**: BFF re-validuje pred posunom do CA SDM. Žiadny trust
-  v client validation.
+- **Client-side**: `react-hook-form` 7 + `zod` 3 + `@hookform/resolvers/zod`.
+  Zod schema je generovaná runtime z `DynamicFormSchema` cez
+  `@sdm/domain/forms/schemaToZod.ts` (žiadny build step, žiadny code-gen).
+- **Server-side**: BFF re-validuje cez identickú Zod schema pred posunom do
+  CA SDM. Žiadny trust v client validation.
+
+## 4. JSON Schema → Zod bridge
+
+```ts
+// @sdm/domain/forms/schemaToZod.ts
+import { z, ZodTypeAny } from "zod";
+import type { DynamicFormSchema, DynamicFormField } from "./dynamic-form-schema";
+
+export function schemaToZod(schema: DynamicFormSchema): z.ZodObject<Record<string, ZodTypeAny>> {
+  const shape: Record<string, ZodTypeAny> = {};
+  for (const field of schema.fields) {
+    shape[field.key] = fieldToZod(field);
+  }
+  return z.object(shape);
+}
+
+function fieldToZod(f: DynamicFormField): ZodTypeAny {
+  let s: ZodTypeAny;
+  switch (f.kind) {
+    case "text":
+    case "textarea": {
+      let str = z.string();
+      if (f.maxLength) str = str.max(f.maxLength);
+      if ("pattern" in f && f.pattern) str = str.regex(new RegExp(f.pattern));
+      s = str;
+      break;
+    }
+    case "number": {
+      let num = z.number();
+      if (f.min !== undefined) num = num.min(f.min);
+      if (f.max !== undefined) num = num.max(f.max);
+      s = num;
+      break;
+    }
+    case "select":
+      s = z.enum(f.options.map(o => o.value) as [string, ...string[]]);
+      break;
+    case "multi-select":
+      s = z.array(z.enum(f.options.map(o => o.value) as [string, ...string[]]));
+      if (f.max) s = (s as z.ZodArray<z.ZodEnum<[string, ...string[]]>>).max(f.max);
+      break;
+    case "date":
+      s = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+      break;
+    case "file":
+      s = z.array(z.instanceof(File));
+      break;
+    case "user-picker":
+    case "ci-picker":
+      s = z.string().min(1);                              // ID
+      break;
+    case "checkbox":
+      s = z.boolean();
+      break;
+  }
+  if (!("required" in f) || !f.required) s = s.optional();
+  return s;
+}
+```
+
+Renderer setup (informačné):
+
+```tsx
+// @sdm/design-system/forms/JsonSchemaForm.tsx
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { schemaToZod } from "@sdm/domain/forms/schemaToZod";
+
+export function JsonSchemaForm({ schema, onSubmit }: Props) {
+  const zodSchema = useMemo(() => schemaToZod(schema), [schema]);
+  const form = useForm({ resolver: zodResolver(zodSchema), mode: "onBlur" });
+  // render fields per kind, propagate form.register / form.control
+}
+```
+
+Žiadna external knižnica `zod-from-json-schema`. Naša schema (`DynamicFormSchema`)
+je menší, doménový subset — vlastný 60-LOC bridge je predvídateľnejší.
 
 ## Dôsledky
 
@@ -129,9 +216,10 @@ patrí api-analyst (`gaps.md` #3 a flag `service-catalog-form-schema`).
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `service-catalog-source` | → 01-api-analyst | Detail CA SDM Service Catalog template formátu — gap #3. Bez toho BFF normalizátor nevieme dorobiť. |
-| 2 | `conditional-fields` | → 01-api-analyst | `attrCtrl` BUI endpoint v CA SDM vie posielať dependent fields — schema musí podporovať `visibleIf` / `requiredIf` rules. |
-| 3 | `dynamic-form-i18n` | → 07-design-system | Labels — či BFF posiela hotové localized stringy alebo kľúče. |
-| 4 | `pick-component-source` | → 01-api-analyst | `user-picker` a `ci-picker` potrebujú backend search endpointy. CA SDM má `/caisd-rest/agt`, `/cnt`, `/nr` — pravdepodobne stačí, treba potvrdiť format. |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 0 | `form-runtime-library` | (vlastné) | React Hook Form 7 + Zod 3. | `[resolved-in-round-2]` — 06 stack pick. |
+| 1 | `service-catalog-source` | → 01-api-analyst | Detail CA SDM Service Catalog template formátu — gap #3. | open (inherent API gap) |
+| 2 | `conditional-fields` | → 01-api-analyst | `attrCtrl` BUI endpoint v CA SDM — schema musí podporovať `visibleIf` / `requiredIf`. | open (inherent API gap) |
+| 3 | `dynamic-form-i18n` | → 07-design-system | Labels — BFF posiela hotové localized stringy alebo kľúče. | open (07 + 04 detail) |
+| 4 | `pick-component-source` | → 01-api-analyst | `user-picker` a `ci-picker` backend search endpointy. | open (inherent API gap) |

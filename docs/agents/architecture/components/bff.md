@@ -1,8 +1,80 @@
 # Komponenty — BFF (Backend for Frontend)
 
-> C4 Level 3 dekompozícia BFF tieru. BFF je samostatný server proces (Node.js
-> alebo iný — finálnu voľbu robí 06 Tech Stack), ktorý sedí medzi prehliadačmi
-> dvoch SPA a CA SDM 17.4. Plný dôvod existencie BFF je v `decision-records/01-bff.md`.
+> C4 Level 3 dekompozícia BFF tieru. BFF je samostatný server proces na
+> **Node.js 22 LTS + Hono 4 + TypeScript 5.7 strict** (rozhodnutie v r2 — ADR-01).
+> Sedí medzi prehliadačmi dvoch SPA a CA SDM 17.4. Plný dôvod existencie BFF
+> je v `decision-records/01-bff.md`.
+
+## Changelog (round 2)
+
+- Doplnená sekcia §2.0 **Runtime stack** s konkrétnymi dependency.
+- §2.2 Session manager: **Redis 7 (production) / in-memory `Map` (dev)** —
+  zhodne s rozhodnutím v ADR-01 a 05 `auth-flow.md` § Variant A.
+- §2.5 Platform / Audit logger doplnený o **pino 9 JSON stdout** destinácia
+  + odkaz na 05 `audit-and-compliance.md` taxonómiu (~40 eventov v 5
+  kategóriách).
+- §3 BFF route inventory: doplnená cache TTL pre `/me` (session).
+- Pridaná sekcia §0 **Startup flow** (entry point, graceful shutdown).
+- Otvorené závislosti uzavreté / aktualizované per peer výstupy.
+
+## 0. Startup flow (Hono + Node 22)
+
+```ts
+// apps/bff/src/index.ts (informačné — Phase C scaffolding)
+import { Hono } from "hono";
+import { serve } from "@hono/node-server";
+import { logger } from "hono/logger";
+import { secureHeaders } from "hono/secure-headers";
+import { cors } from "hono/cors";
+import pino from "pino";
+import { loadConfig } from "./config";
+import { createSessionStore } from "./session/store";
+import { registerAuthRoutes } from "./auth/routes";
+import { registerApiRoutes } from "./api/routes";
+import { registerAggregatorRoutes } from "./aggregator/routes";
+import { registerPlatformRoutes } from "./platform/routes";
+import { auditMiddleware } from "./audit/middleware";
+import { csrfMiddleware } from "./security/csrf";
+
+async function bootstrap() {
+  const config = await loadConfig();                       // BFF-side config.json
+  const log = pino({
+    level: config.logLevel ?? "info",
+    redact: ["req.headers.authorization", "req.headers.cookie", "*.password"],
+  });
+  const sessionStore = await createSessionStore(config);    // Redis or in-memory
+
+  const app = new Hono();
+
+  app.use("*", secureHeaders());
+  app.use("*", logger());
+  app.use("/api/*", csrfMiddleware());
+  app.use("*", auditMiddleware(log));                      // emits structured events
+
+  registerPlatformRoutes(app, { config, sessionStore, log });
+  registerAuthRoutes(app, { config, sessionStore, log });
+  registerApiRoutes(app, { config, sessionStore, log });
+  registerAggregatorRoutes(app, { config, sessionStore, log });
+
+  const server = serve({ fetch: app.fetch, port: config.port ?? 8080 });
+  log.info({ port: config.port ?? 8080 }, "bff: started");
+
+  // Graceful shutdown — drain in-flight requests + close session store
+  for (const sig of ["SIGINT", "SIGTERM"]) {
+    process.on(sig, async () => {
+      log.info({ sig }, "bff: shutting down");
+      server.close();
+      await sessionStore.close();
+      process.exit(0);
+    });
+  }
+}
+
+bootstrap().catch((err) => {
+  console.error("bff: bootstrap failed", err);
+  process.exit(1);
+});
+```
 
 ## 1. Component diagram
 
@@ -81,6 +153,26 @@ flowchart TB
 
 ## 2. Komponenty — zodpovednosti
 
+### 2.0 Runtime stack (r2 fix)
+
+| Vrstva | Konkrétne |
+|---|---|
+| Runtime | **Node.js 22 LTS** (per 08 `pm-runtime.md`) |
+| Jazyk | **TypeScript 5.7 strict** (per 08 `repo-bootstrap.md`) |
+| HTTP framework | **Hono 4** (ADR-01 §3) |
+| Logger | **pino 9** — JSON stdout, `redact` pre auth/secrets |
+| Session store | **Redis 7** (production) / **in-memory `Map`** (dev) |
+| Redis client | **ioredis 5** |
+| Validation | **Zod 3** + **`@hono/zod-validator`** middleware |
+| Dev runner | **tsx 4** watch mode |
+| Prod runner | `node --enable-source-maps dist/index.js` po `tsc --build` |
+| Test runner | **Vitest** + **MSW Node** (per 09 `test-strategy.md`) |
+| Health probes | Hono `/health` + `/ready` routes |
+| Multipart upload | `hono` body parser + Node streams; žiadny `busboy` wrapper v MVP |
+
+Verzie alignované s 06 `libraries.md` (kde aplikovateľné — FE má ekvivalenty)
+a 08 `repo-bootstrap.md` (Node 22 LTS, pnpm 9).
+
 ### 2.1 HTTP Gateway
 
 **Účel**: vstupný bod pre obe SPA. Jediný "front door" BFF procesu.
@@ -112,7 +204,25 @@ flowchart TB
 - Session payload: `{ userId, accessKey, accessKeyExpiresAt, activeTenantId,
   userProfileCache, lastSeenAt }`.
 - Idle timeout: 30 min (konfigurovateľné). Absolute timeout: 8 h.
-- Persistence: cez `Session store` (in-memory / Redis — DevOps).
+- **Persistence (r2 fix)**:
+  - **Production**: Redis 7 cez `ioredis`. Key pattern: `sdm:session:<sessionId>`,
+    TTL = absolute timeout (8 h). Hash storage pre granulárny update
+    (`HSET` na `lastSeenAt` bez prepisu celého payloadu).
+  - **Dev**: in-memory `Map<sessionId, SessionPayload>` so `setTimeout`-based
+    TTL cleanup. **Žiadny external dependency v dev** — `pnpm dev` beží
+    bez Redis-u.
+  - Storage adapter interface (`packages/bff-internal/session-store.ts`):
+    ```ts
+    interface SessionStore {
+      create(id: string, payload: SessionPayload, ttlSec: number): Promise<void>;
+      get(id: string): Promise<SessionPayload | null>;
+      touch(id: string, lastSeenAt: number): Promise<void>;
+      destroy(id: string): Promise<void>;
+      close(): Promise<void>;
+    }
+    ```
+  - `createSessionStore(config)` factory zvolí Redis vs. in-memory podľa
+    `config.session.driver` (`"redis"` / `"memory"`).
 
 #### CA SDM Access Key broker
 - `POST /caisd-rest/rest_access` s Basic Auth (z IdP-mapped credentials) alebo
@@ -210,14 +320,36 @@ duplicitná logika. BFF to robí na server-side fan-outom (parallel).
   `GET /caisd-rest/sevrty?size=1` per api-analyst/`gaps.md` #17).
 
 #### Audit logger
-- Format: JSON line per request:
+- **Engine**: `pino` 9, JSON Lines on stdout. **Žiadny vlastný serializer.**
+- **Destinácia (r2 fix)**: **stdout** → log shipper (filebeat / vector /
+  promtail per 08) → **ELK alebo Loki** (08 voľba). **SIEM connector
+  (Splunk / QRadar / Sentinel) je post-MVP** — kontrakt eventov je
+  destination-agnostic.
+- **Event taxonomia (autoritatívne — 05 `audit-and-compliance.md` § 2)**:
+  ~40 eventov v 5 kategóriách:
+  - `auth.*` (login, logout, session, MFA) — ~10 eventov
+  - `authz.*` (permission decisions, RBAC denies) — ~7 eventov
+  - `sensitive.*` (cross-tenant, admin, impersonation) — ~8 eventov
+  - `security.*` (rate-limit, CSP violations, suspicious) — ~6 eventov
+  - `data.*` (CRUD on regulated entities) — ~9 eventov
+
+  Sampling per `audit-and-compliance.md` § 3.
+
+- **Format** (per-request + auditEvent payload):
   ```json
-  {"ts":"2026-05-15T10:33:21Z","level":"info","requestId":"...",
-   "correlationId":"...","userId":"u-..","tenantId":"t-..",
-   "method":"GET","path":"/api/incidents","status":200,"latencyMs":127}
+  {
+    "ts":"2026-05-15T10:33:21Z","level":"info",
+    "requestId":"...","correlationId":"01J...",
+    "userId":"u-..","tenantId":"t-..",
+    "method":"GET","path":"/api/incidents","status":200,"latencyMs":127,
+    "auditEvent":{"category":"data","name":"data.incident.read","sensitivity":"normal"}
+  }
   ```
-- Žiadne PII (mená, emaily); len pseudonymizované ID.
-- Stdout — DevOps agent zoberie a forwardne do log collectora (ADR-09).
+- Žiadne PII (mená, emaily); len pseudonymizované ID. `pino` `redact`
+  config + business-layer scrubber pred emit.
+- Retention per `security/audit-and-compliance.md` § 5 (1 rok min pre
+  auth/authz/sensitive/security; 3 roky pre data; 90 dní reverse proxy
+  access log).
 
 ## 3. BFF route inventory (high-level)
 
@@ -228,7 +360,7 @@ duplicitná logika. BFF to robí na server-side fan-outom (parallel).
 | `POST /auth/login` | SSO redirect start | Auth | none |
 | `GET /auth/callback` | SSO callback | Auth | none |
 | `POST /auth/logout` | Destroy session | Auth | none |
-| `GET /me` | User profile + session info | Auth | session |
+| `GET /me` | User profile + session info | Auth | session-lifetime (no HTTP cache, BFF reads from session store) |
 | `GET /me/tenants` | User tenants | Aggregator | 5 min |
 | `POST /me/active-tenant` | Switch active tenant | Auth | none |
 | `GET /api/queue` | UI queue | Aggregator | 30 s |
@@ -249,11 +381,11 @@ v refinement loope.
 
 ## Otvorené závislosti
 
-| # | Flag | Smer | Popis |
-|---|---|---|---|
-| 1 | `bff-technology` | → 06-tech-stack-selector | Konkrétna voľba (Node.js + Fastify / Hono / NestJS / Bun / iné). Architecture poskytuje boundary; Tech Stack vyberie implementáciu. |
-| 2 | `csrf-strategy` | → 05-security | Double-submit cookie vs. synchronizer token vs. SameSite=Strict + Origin check. Security agent rozhodne. |
-| 3 | `rate-limit-policy` | → 05-security, 09-qa | Per-session limity (žiadne abuse), per-tenant limity (defenzívne pre CA SDM). MVP: konzervatívne defaults, Security finalizuje. |
-| 4 | `soap-adapter-scope` | → 01-api-analyst, 06-tech-stack | Ktoré konkrétne SOAP operácie majú whitelist v MVP. api-analyst/`soap-fallback.md` má katalóg; vyžaduje finálne potvrdenie pre MVP scope. |
-| 5 | `attachment-streaming` | → 06-tech-stack, 08-devex-devops | Upload streaming (mimo multer buffer-everything) — ak Node.js, treba HTTP/2 alebo streaming multipart parser. Tech Stack rozhodne. |
-| 6 | `aggregator-cache-store` | → 08-devex-devops | `Reference data cache` je in-process v MVP, Redis v v1. DevOps potvrdí. |
+| # | Flag | Smer | Popis | Status |
+|---|---|---|---|---|
+| 1 | `bff-technology` | (vlastné) | Hono 4 + Node 22 LTS + TS 5.7. | `[resolved-in-round-2]` |
+| 2 | `csrf-strategy` | → 05-security | 05 v `owasp-mitigations.md` + `multi-tenancy-security.md` zaviedol Origin/Referer check + SameSite=Lax. Double-submit token sa nepoužije v MVP. | `[resolved-in-round-2]` (cross-ref na 05) |
+| 3 | `rate-limit-policy` | → 05-security, 09-qa | Per-session limity, defenzívne per-tenant. | open (operatívne — 08 + 05 finalizuje threshold) |
+| 4 | `soap-adapter-scope` | → 01-api-analyst | Katalóg SOAP operácií. | open (inherent API gap) |
+| 5 | `attachment-streaming` | → 06-tech-stack | Hono `c.req.parseBody({ all: true })` + Node `stream/web` pre passthrough do CA SDM. Žiadny `multer`-class buffer-everything pattern. | `[resolved-in-round-2]` (Hono streams) |
+| 6 | `aggregator-cache-store` | → 08-devex-devops | MVP: in-process `node-lru-cache` (TTL 5–15 min); v1: Redis cluster ak BFF skáluje horizontally. | `[resolved-in-round-2]` architecturally; v1 topology vlastní 08. |
