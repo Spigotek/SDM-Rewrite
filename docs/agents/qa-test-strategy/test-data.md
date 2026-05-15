@@ -1,5 +1,15 @@
 # Test Data Management — SDM-Rewrite
 
+## Changelog (round 2)
+
+- r2: žiadna zmena vo factory taxonomy ani per-journey fixture štruktúre.
+- Závislosti uzavreté: 06 r2 factory library (`@faker-js/faker@9.x` seeded),
+  06 r2 schema validator (`zod@3.x`), 04 r2 tenant context (`X-Tenant` header
+  → `Tenant` domain entity je dostatočné; žiadny `TenantContext` composite
+  v MVP).
+- Self-flagy: realistic SK + EN sample texts pre i18n testy + backup fixture
+  z reálnej CA SDM inštancie — pretrvávajú do post-conv (po sprístupnení staging).
+
 > Stratégia pre fixtury, faktory a seedy testovacích dát. Cieľ:
 > **deterministické**, **reprodukovateľné**, **kompozičné** dáta naprieč
 > unit / integration / E2E.
@@ -8,15 +18,15 @@
 
 1. **Faktóry, nie ad-hoc literály.** Každý test, ktorý potrebuje `Incident`, ho vytvorí cez `makeIncident({ overrides })`.
 2. **Sane defaults.** Default faktóry produkuje **validný** záznam — test prepíše len atribúty relevantné pre tento test.
-3. **Seedovaný RNG.** UUID, datumy, IDs sú deterministic per test cez seedovaný generator. Žiaden `Math.random()`.
+3. **Seedovaný RNG.** UUID, datumy, IDs sú deterministic per test cez `@faker-js/faker@9.x` so `faker.seed(42)`. Žiaden `Math.random()`.
 4. **Žiadny shared state medzi testami.** Fixture-y sú **imutabilné** objekty alebo factory funkcie — nie mutating proxy.
-5. **Schémy sú zdroj pravdy.** Faktóry produkujú dáta kompatibilné s `docs/agents/api-analyst/schemas/*.ts`. Schema drift = factory drift.
+5. **Schémy sú zdroj pravdy.** Faktóry produkujú dáta kompatibilné s `docs/agents/api-analyst/schemas/*.ts` validované cez `zod@3.x`. Schema drift = factory drift.
 6. **Realistický slovník.** Mená person (`Lucia`, `Anna`, `Marek`, ...) z `02-ux-persona-analyst/personas.md`, tenant názvy `Acme HQ`, `Acme East`, `Acme West`.
 
 ## 2. Faktóry — taxonómia
 
-Lokácia: `packages/api-client/src/__mocks__/fixtures/` (zdieľaná medzi
-MSW handlers a všetkými test layers).
+Lokácia: `packages/api-mocks/src/fixtures/` (zdieľaná medzi MSW handlers a
+všetkými test layers, per 08 r2 `mock-strategy.md` + 04 r2 monorepo-layout).
 
 ### 2.1 Primitive factories (samostatné, bez závislostí)
 
@@ -66,6 +76,7 @@ makeKBArticle({ status?, language?, visibility?, tenant?, body? }) => KBArticle
 makeCI({ name?, type?, attributes?, relationships?, tenant?, sharedOwnership? }) => CI
 makeAttachment({ size?, mimeType?, parentTicketId? }) => Attachment
 makeServiceCatalogItem({ name?, dynamicFields?, autoApprove? }) => ServiceCatalogItem
+makeAuditEvent({ category?, action?, actor?, result?, ... }) => AuditEvent
 ```
 
 **Príklad — makeIncident default:**
@@ -100,6 +111,7 @@ function makeIncident(overrides: Partial<Incident> = {}): Incident {
 makeQueue(items: number, opts?) => Incident[]        // pre workspace queue testy
 makeRelationshipGraph(nodes: number, opts?) => CIRelationship[]  // pre CMDB graph testy
 makeApprovalChain(steps: number) => ApprovalTask[]   // pre change approval testy
+makeCrossTabSessions(tenants: TenantId[]) => Session[]  // pre cross-tab tenant tests
 ```
 
 **Príklad — `makeQueue(12)` pre `workspace-incident-triage`:**
@@ -118,7 +130,7 @@ const queue = makeQueue(12, {
 Každý journey má vlastný fixture set (composes z primitív):
 
 ```
-fixtures/
+packages/api-mocks/src/fixtures/
 ├── journeys/
 │   ├── portal-incident-broken-laptop.ts
 │   ├── portal-request-software.ts
@@ -147,7 +159,8 @@ fixtures/
     ├── changes.ts
     ├── kb-articles.ts
     ├── cis.ts
-    └── attachments.ts
+    ├── attachments.ts
+    └── audit-events.ts
 ```
 
 Súbor `journeys/<journey-id>.ts` exportuje:
@@ -163,15 +176,17 @@ export const alternateFlows = {
 
 ## 4. Cross-tenant fixture matrix
 
-Špeciálne fixture-y pre multi-tenancy testy:
+Špeciálne fixture-y pre multi-tenancy testy (per 05 multi-tenancy-security
+L1-L15 + acceptance-criteria §4.2):
 
 | Fixture set | Popis | Použité v |
 |---|---|---|
-| `crossTenantUsers` | User s rolami v 2–3 tenantoch | C1, C2, C3, C4 v `acceptance-criteria.md` |
+| `crossTenantUsers` | User s rolami v 2–3 tenantoch | C1, C2, C3, C4 v `acceptance-criteria.md`; všetky `@security:tenant-*` vectors |
 | `crossTenantIncidents` | Tickety v každom tenante (10 v HQ, 5 v East, 3 v West) | tenant izolácia test, switch test |
-| `serviceProviderContext` | User s SP rolou + 5 managed tenants | service-provider impersonation tests (post-MVP) |
-| `crossTenantCI` | CI shared between HQ + East | `workspace-cmdb-cross-tenant-shared` |
-| `crossTenantChangeCalendar` | Changes scheduled v rôznych tenantoch overlapping | `workspace-change-cross-tenant-conflict` |
+| `serviceProviderContext` | User s SP rolou + 5 managed tenants | `@security:cross-tenant-view-sp` (#12), post-MVP per-tenant impersonation tests |
+| `crossTenantCI` | CI shared between HQ + East | `workspace-cmdb-cross-tenant-shared` (#18) |
+| `crossTenantChangeCalendar` | Changes scheduled v rôznych tenantoch overlapping | `workspace-change-cross-tenant-conflict` (#12) |
+| `crossTenantAttachment` | Attachment v T1, request z T2 user | `@security:cross-tenant-attachment` (#18) — 404 expected |
 
 ## 5. Time freezing
 
@@ -198,13 +213,14 @@ Pre journeys s explicitným kontextom času:
 
 - **Žiadne fixture súbory > 200 riadkov.** Veľká fixture = neukrytá testovacia logika.
 - **Žiadny `JSON.parse(JSON.stringify(...))` deep clone v teste** — použiť factory s overridom.
-- **Žiadne fixture súbory v `__tests__/`** (test-local) — všetky fixture v `__mocks__/fixtures/`.
+- **Žiadne fixture súbory v `__tests__/`** (test-local) — všetky fixture v `packages/api-mocks/src/fixtures/`.
 - **Žiadne mock data hardcoded v MSW handler** — handler delegate na factory.
 - **Žiadne dáta zo skutočnej CA SDM inštancie** v repe (compliance + GDPR).
 
 ## 7. Faker / random — kedy je OK
 
-Pre **property-based testing** (state machines) áno, ale **vždy seeded**:
+Pre **property-based testing** (state machines via `fast-check@3.x`) áno, ale
+**vždy seeded**:
 
 ```ts
 import { faker } from "@faker-js/faker";
@@ -259,24 +275,24 @@ export const alternateFlows = {
 Súbor `tools/test-fixture-validator.ts` v CI:
 
 1. Pre každý factory funkcia spustí jeden call s default args.
-2. Validuje output proti zod schéme odvodenej z `docs/agents/api-analyst/schemas/<modul>.ts`.
+2. Validuje output proti `zod@3.x` schéme odvodenej z `docs/agents/api-analyst/schemas/<modul>.ts`.
 3. Fail → factory neaktuálna voči API analyst output.
 
 Toto je **per PR CI step**, ktorý chytí drift skôr než sa rozšíri.
 
 ## Otvorené závislosti
 
-- `[06-tech-stack-selector]` Voľba faktória knižnice. Návrh: light-weight
-  custom faktóry, `@faker-js/faker` (seeded) pre property-based testy. Final
-  voľba v round 2 po stack rozhodnutí.
-- `[01-api-analyst]` Schema validator (zod / valibot / class-validator) —
-  závisí od finálnej voľby v `api-client`. Test-fixture-validator (§9)
-  použije tú istú voľbu.
-- `[04-architecture]` Tenant kontext fixture — predpokladáme, že `Tenant`
-  doménovej entity je dostatočné. Ak Architecture pridá `TenantContext`
-  composite (s active role + permissions snapshot), faktóry doplníme.
+- `[06-tech-stack-selector]` Voľba faktória knižnice — `[resolved-in-round-2]`
+  (`@faker-js/faker@9.x` so seed=42 + light-weight custom factories v
+  `packages/api-mocks/src/fixtures/primitives/`).
+- `[01-api-analyst]` Schema validator — `[resolved-in-round-2]` (`zod@3.x`
+  zdielané s `api-client` per 06 r2 libraries §3).
+- `[04-architecture]` Tenant kontext fixture — `[resolved-in-round-2]`.
+  `Tenant` doménovej entity je dostatočné (per ADR-11: `X-Tenant` header,
+  server-side authority v session; žiadny `TenantContext` composite v MVP).
 - `[09-qa]` "Realistický slovník" pre random text content (popis incidentu,
-  KB body) — momentálne stub strings. Round 2: doplniť SK + EN sample
-  texts (realistic length, žiadne lorem ipsum) pre i18n testy.
+  KB body) — momentálne stub strings. Round 2 → post-conv: doplniť SK + EN
+  sample texts (realistic length, žiadne lorem ipsum) pre i18n testy.
+  Self-flag.
 - `[09-qa]` Backup fixture sady (po sprístupnení reálneho CA SDM) —
-  record-and-anonymize prístup pre staging E2E. Self-flag.
+  record-and-anonymize prístup pre staging E2E. Self-flag pre post-conv.

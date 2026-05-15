@@ -1,5 +1,14 @@
 # Flaky Test Policy — SDM-Rewrite
 
+## Changelog (round 2)
+
+- r2: žiadna zmena v retry rules ani quarantine workflow.
+- Závislosti na 08 r2 vyriešené: flaky detection bot, `flaky-quarantine.txt`
+  file format, lint pravidlo pre povinný `beforeEach`/`afterEach` reset —
+  všetko `[resolved-in-round-2]` per 08 r2 `ci-cd.md` + `pm-hooks.md`.
+- Self-flag (module owner mapping) ostáva — kalibrácia po prvých 4 týždňoch
+  implementačnej fázy.
+
 > Flaky test = test, ktorý prejde alebo padne **na rovnakom kóde** s
 > nenulovou pravdepodobnosťou. **Žiadny test nesmie byť tolerovaný ako
 > flaky bez akcie** — buď sa rieši, alebo karanténuje, alebo maže.
@@ -21,9 +30,12 @@ PR branches).
 | Unit | **0** | Žiadny retry. Flaky unit = bug v teste alebo v kóde. |
 | Contract | **0** | Žiadny retry. Determinizmus garantovaný (MSW). |
 | Component | **0** | Žiadny retry. Real DOM, ale deterministic data + LATENCY = 0. |
-| Integration | **1** | Jediný retry pre rare async timing edge cases. Po retry: ak ešte failne, real fail. |
+| Integration (per-app) | **1** | Jediný retry pre rare async timing edge cases. Po retry: ak ešte failne, real fail. |
+| Integration (BFF) | **1** | Rovnaký retry policy ako per-app integration. BFF session in-memory store môže mať race conditions s rapid test seriovania — retry povolený. |
+| Contract (BFF vs. CA SDM) | **0** | Determinizmus garantovaný (MSW + Zod schema validation). |
 | **E2E** | **2** | Real browser → real timing variability. Max 2 retries per test per beh. |
 | Lighthouse | **3 runs (median)** | Štandard LHCI — median sa použije. |
+| BFF perf smoke | **3 runs (median per percentile)** | Per-test variabilita; median p50/p95 sa použije. |
 | a11y axe | **0** | Determinic check, žiaden retry. |
 
 **Reportovanie**: každý retry generuje warning v CI log + zápis v
@@ -60,13 +72,14 @@ Postupné kontrolovanie pri vyšetrovaní flaky testu:
 | 1 | Asynchrónny race? | `await` chýba, `setTimeout` v teste | Použiť `findBy*` / `waitFor` namiesto `getBy*` |
 | 2 | Time-dependent assertion? | Test používa `Date.now()` / `new Date()` | Mock cez `vi.useFakeTimers()` / fixed clock |
 | 3 | Animation timing? | GSAP / CSS animation prebieha | Disable animations v test env (CSS `@media (prefers-reduced-motion: reduce)` alebo `transition: none` global override) |
-| 4 | Random data? | `Math.random()`, neseeded UUIDs | Use seeded RNG faktóriu (test-data.md §3) |
+| 4 | Random data? | `Math.random()`, neseeded UUIDs | Use seeded RNG faktóriu (`@faker-js/faker` so `seed(42)` — viď `test-data.md` §3) |
 | 5 | DOM cleanup? | Test polluje DOM medzi run-mi | `afterEach(cleanup)` |
 | 6 | MSW handler order? | Handler nainštalovaný cez race | `server.use()` v `beforeEach`, nie inline v teste |
 | 7 | Network latency? | E2E test používa skutočný network | Použiť MSW v Playwright route fixture |
 | 8 | Viewport / resize? | Test predpokladá konkrétnu šírku | Set viewport explicitne v `test.use({ viewport })` |
 | 9 | localStorage / cookie polution? | Test depend na cleanup | `test.beforeEach(({ context }) => context.clearCookies())` |
 | 10 | Parallel test interaction? | Testy zdieľajú DB / fixture súbor | Per-test isolation, žiadne mutating shared state |
+| 11 | BFF session store race? | BFF integration test má rapid login/logout cycle | Per-test fresh session store (`createInMemorySessionStore()` per test) |
 
 ## 5. Anti-patterns — ako sa flaky testy vyrábajú (a NEROBIŤ)
 
@@ -85,12 +98,13 @@ Každý test layer musí:
 | Hook | Ack |
 |---|---|
 | `beforeAll` | Žiadny global mutating side-effect okrem MSW server start. |
-| `beforeEach` | Reset MSW handlers (`server.resetHandlers()`), reset localStorage, reset fake timers. |
-| `afterEach` | DOM cleanup (`cleanup()` z RTL ekv.), close any modal/drawer left open. |
+| `beforeEach` | Reset MSW handlers (`server.resetHandlers()`), reset localStorage, reset fake timers, **clear audit log sink** (`clearAuditLog()` z `@sdm/api-mocks/audit`). |
+| `afterEach` | DOM cleanup (`cleanup()` z RTL), close any modal/drawer left open. |
 | `afterAll` | MSW server close. |
 
-CI overuje cez **lint pravidlo** (`eslint-plugin-test-hygiene` custom rule —
-TBD pre 08), že každý `*.test.ts` má aspoň `beforeEach` + `afterEach` resetting.
+CI overuje cez **lint pravidlo** `eslint-plugin-test-hygiene` (custom rule
+implementovaná v 08 r2 `repo-bootstrap.md`), že každý `*.test.ts` má aspoň
+`beforeEach` + `afterEach` resetting.
 
 ## 7. CI reporting
 
@@ -124,12 +138,11 @@ príslušného owner-a (last committer + designated module owner).
 
 ## Otvorené závislosti
 
-- `[08-devex-devops]` Flaky detection bot — implementácia (GitHub Actions
-  + JSON history file? alebo external service?). QA dodala policy, infra
-  realizuje. Self-flag pre DevOps.
+- `[08-devex-devops]` Flaky detection bot — `[resolved-in-round-2]` per 08 r2
+  `ci-cd.md` (GitHub Actions workflow + JSON history file v artifact storage).
 - `[08-devex-devops]` `flaky-quarantine.txt` file format + lint rule pre
-  povinné `beforeEach`/`afterEach` — bude finalizované počas implementačnej
-  fázy.
+  povinné `beforeEach`/`afterEach` — `[resolved-in-round-2]` per 08 r2
+  `repo-bootstrap.md` (`eslint-plugin-test-hygiene` config).
 - `[09-qa]` Owner mapovanie (kto je "module owner" pre flaky test
   responsibility) — Závisí od finálnej team structure. Default: last committer.
-  Self-flag, kalibrácia po prvých 4 týždňoch.
+  Self-flag, kalibrácia po prvých 4 týždňoch implementačnej fázy.
