@@ -1,5 +1,31 @@
 # Rozhodnutie — Tech stack pre SDM-Rewrite
 
+## Changelog (round 2)
+
+- 04 r2 potvrdilo **BFF = YES** (ADR `01-bff.md` `accepted`), 04 doplnilo BFF
+  runtime (viď `libraries.md` § BFF runtime).
+- 04 r2 potvrdilo **monorepo tool** — `pnpm workspaces + Turborepo` (ADR `02`).
+- 04 r2 potvrdilo **data fetching** — TanStack Query (ADR `03`).
+- 04 r2 potvrdilo **routing** — React Router v6 data router (ADR `05`).
+- 04 r2 potvrdilo **dynamic forms** — JSON-schema-driven + RHF + Zod (ADR `06`).
+- 04 r2 potvrdilo **i18n** — react-i18next + ICU MessageFormat (ADR `07`).
+- 04 r2 potvrdilo **observability** — Sentry + štruktúrované BFF JSON logy (ADR `09`).
+- 04 r2 potvrdilo **build pipeline** — Vite (ADR `10`).
+- 07 r1 potvrdilo **Radix UI primitives + TanStack Table + TipTap + Lucide + Inter**
+  ako komponentový základ.
+- 08 r1 potvrdilo **pnpm 9 + Node 22 LTS + TypeScript 5.7 strict + Vite + Vitest +
+  Playwright + MSW**.
+- 09 r1 potvrdilo test pyramídu (75 % Vitest unit, 20 % integration, 5 % Playwright
+  e2e), MSW v CI a coverage targets.
+- 05 r2 doriešilo CSP design (nonce-based `script-src`/`style-src` per response) —
+  Radix portály a Sentry replay sú kompatibilné.
+
+**Všetky moje r1 default predpoklady zostali platné.** Rozhodnutie sa nemení,
+flagy sa uzatvárajú. Detail v `libraries.md` (nové sekcie: BFF runtime, Markdown
+sanitizácia, Charts) a `risks.md` (R-T-04, R-T-12, R-T-17 zavreté).
+
+---
+
 > Round 1, fresh. Toto je výstup rozhodnutia podľa kritérií z `GOAL.md` §6.
 > Detail scoring v `comparison.md`.
 
@@ -111,20 +137,42 @@ Súhrn z `comparison.md`:
 
 ## Otvorené závislosti
 
-- `[04-architecture]` Potvrdiť BFF cookie-session vs. client-side OIDC. Default
-  predpoklad: BFF cookie session (per `api-analyst/auth.md` §6). Pri zmene
-  nemení rozhodnutie o frameworku, mení iba auth knižnice v `libraries.md`.
-- `[04-architecture]` Potvrdiť monorepo tool. Default: `pnpm workspaces`.
-  Voľba Nx/Turborepo nemení framework decision; iba pridá tooling layer
-  navrch.
-- `[04-architecture]` Potvrdiť **data fetching layer** (TanStack Query vs. RTK
-  Query). Tento dokument tvrdí TanStack Query — Architecture nech to validuje
-  voči svojim ADR (caching policy, retry policy, BFF endpoint shape).
-- `[07-design-system]` Komponentová knižnica — voľba Radix / Headless UI je
-  predpoklad. Final call je u Design Systemu; pokiaľ zvolí MUI / Mantine,
-  nie je to konflikt s React, len iný DX a bundle náklad. Treba revízne
-  okno v Round 2.
-- `[08-devex-devops]` Bootstrap repo musí podporovať daný stack (pnpm
-  workspaces, Vite per app, MSW handlers per schema). Detail v `migration-notes.md`.
-- `[09-qa-test-strategy]` Test pyramída: Vitest unit + Playwright e2e. QA
-  agent dolní/horný strop konkrétne čísla coverage.
+- `[04-architecture]` BFF cookie session vs. client-side OIDC —
+  `[resolved-in-round-2]`. 04 r2 ADR `01-bff.md` `accepted`: BFF + HttpOnly
+  session cookie. FE má len redirect-on-401, žiadna OIDC knižnica.
+- `[04-architecture]` Monorepo tool — `[resolved-in-round-2]`. 04 r2 ADR `02`:
+  pnpm workspaces + Turborepo.
+- `[04-architecture]` Data fetching layer — `[resolved-in-round-2]`. 04 r2 ADR
+  `03`: TanStack Query.
+- `[04-architecture]` Routing — `[resolved-in-round-2]`. 04 r2 ADR `05`: React
+  Router v6 (data router API).
+- `[04-architecture]` Dynamic forms — `[resolved-in-round-2]`. 04 r2 ADR `06`:
+  JSON-schema-driven + React Hook Form + Zod.
+- `[04-architecture]` i18n — `[resolved-in-round-2]`. 04 r2 ADR `07`:
+  react-i18next + ICU MessageFormat.
+- `[04-architecture]` Observability — `[resolved-in-round-2]`. 04 r2 ADR `09`:
+  Sentry + štruktúrované BFF JSON logy.
+- `[04-architecture]` Build pipeline — `[resolved-in-round-2]`. 04 r2 ADR `10`:
+  Vite.
+- `[04-architecture]` **Backend label vs. i18n key strategy (R-T-07)** —
+  **pretrváva**. Vyžaduje akciu od 01 (post-MVP API discussion) alebo 04.
+  Stratégia v `risks.md` (BackendLabel komponent) zostáva platná pre MVP,
+  ale formalizácia kontraktu je open.
+- `[05-security]` CSP design (R-T-17) — `[resolved-in-round-2]`. 05 r2
+  `headers-and-csp.md`: nonce-based `script-src`/`style-src` per response;
+  Radix portály a Sentry replay sú kompatibilné cez nonce injection.
+- `[07-design-system]` Final komponentová knižnica — `[resolved-in-round-2]`.
+  07 r1 `library-recommendation.md`: **Radix UI primitives + custom skin**
+  (presne moja r1 voľba).
+- `[08-devex-devops]` Bootstrap repo (pnpm workspaces, Vite per app, MSW
+  handlers) — `[resolved-in-round-2]`. 08 r1 `repo-bootstrap.md` + `ci-cd.md`
+  potvrdili pnpm 9 + Node 22 LTS + TS 5.7 strict + Vitest + Playwright + MSW.
+- `[08-devex-devops]` **Bundle budget v CI (R-T-04)** — pretrváva. DevOps
+  detail: konkrétny `<= 250 kB initial chunk` enforcement v `pnpm build` +
+  Lighthouse CI gate. Vlastní 08, nie 06.
+- `[09-qa-test-strategy]` Coverage čísla — `[resolved-in-round-2]`. 09 r1
+  `coverage-targets.md` + 08 r1 sa zhodli (75/20/5 pyramída).
+- `[?]` **Charts knižnica pre v1 KB analytics (W-10)** — `[resolved-in-round-2]`
+  pre framework-level voľbu: **Recharts** (viď `libraries.md` § Charts). v1
+  rozhodnutie je už dokumentované; konkrétne dashboard wireframy ostávajú
+  responsibility v1 plánovania.

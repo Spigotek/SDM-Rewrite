@@ -1,5 +1,18 @@
 # Migration notes — pre prípadný neskorší prechod
 
+## Changelog (round 2)
+
+- Žiadna zmena obsahu. Stack-resilience princípy zostávajú platné (doménový
+  kód oddelený od framework kódu; žiadny CSS-in-JS; Zod schémy ako zdieľaný
+  kontrakt FE+BFF; žiadny `dangerouslySetInnerHTML`; žiadny `any` v
+  produkčnom kóde).
+- Pridanie BFF runtime (Hono — viď `libraries.md` § 0) nemení stack-resilience
+  predpoklady: BFF je tenký proxy + aggregátor s **rovnakou** Zod schémou
+  ako FE, takže výmena BFF runtime (Hono → Fastify → Bun) je low-effort
+  migrácia (HTTP route registration prepis, žiadny business logic move).
+
+---
+
 > Round 1, fresh. High-level notes pre prípad, že by sme v budúcnosti potrebovali
 > zmeniť framework alebo kľúčové knižnice. Nie je to plán — je to *escape hatch*
 > dokumentácia pre stack-resilience.
@@ -133,7 +146,11 @@ Tieto pravidlá nie sú framework-špecifické; sú o **dobre tvarovanom kóde**
 
 ## Otvorené závislosti
 
-- `[04-architecture]` Confirm monorepo layout (`apps/` + `packages/`) — predpoklad
-  je per `GOAL.md` §9. Migrácia notes predpokladajú túto štruktúru.
-- `[?]` Long-term: kedy zvážiť SSR / RSC? Otvorené pre Product Owner — toto
-  rozhodnutie nie je technické, je strategické (SEO, perf na verejných stránkach).
+- `[04-architecture]` Monorepo layout (`apps/` + `packages/`) —
+  `[resolved-in-round-2]`. 04 r2 `monorepo-layout.md` + ADR
+  `02-monorepo-tool.md`: pnpm workspaces + Turborepo s `apps/` + `packages/`
+  layout. Migrácia notes (najmä §1 princípy) zostávajú platné.
+- `[?]` Long-term: kedy zvážiť SSR / RSC — **pretrváva** ako strategické
+  rozhodnutie (Product Owner). Mimo MVP scope. Indikátory v §10
+  (SEO requirement, alebo TTI tlak ktorý SPA nevie splniť) trigger-ujú
+  re-vízu.

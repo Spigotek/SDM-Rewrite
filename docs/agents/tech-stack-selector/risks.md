@@ -1,5 +1,29 @@
 # Riziká stacku a mitigácie
 
+## Changelog (round 2)
+
+- **R-T-04 (Bundle size shrinkage na portáli)** — `[resolved-in-round-2]`.
+  08 r1 `ci-cd.md` + 09 r1 `coverage-targets.md` potvrdili bundle budget
+  ako CI gate; vlastníctvo prešlo na 08 (DevOps detail). Mitigačná stratégia
+  zostáva (lazy load, code-splitting, Vite preload).
+- **R-T-12 (React Compiler opt-in)** — `[resolved-in-round-2]` v kontexte
+  "table virtualization"-tematicky: 09 r1 `test-strategy.md` potvrdil že
+  žiadna virtualizácia nie je potrebná (dáta sú **rádovo desiatky** položiek;
+  TanStack Table basic mode dosatočný). Opt-in React Compileru zostáva
+  post-MVP review item, ale nie je blocker.
+- **R-T-17 (Strict CSP a inline styles)** — `[resolved-in-round-2]`. 05 r2
+  `headers-and-csp.md`: **nonce-based** `script-src` a `style-src` per
+  response; Radix portály a Sentry replay sú kompatibilné cez nonce
+  injection. Žiadne `'unsafe-inline'` v produkcii.
+- **R-T-07 (i18n dynamic backend values)** — **pretrváva**. Vyžaduje
+  post-MVP API discussion (01-api-analyst + 04-architecture) o formálnom
+  kontrakte (backend-provided labels vs. i18n key strategy). MVP rieši
+  `<BackendLabel/>` komponent pattern, čo je stačí pre delivery, ale
+  formalizácia kontraktu ostáva open.
+- Aktualizovaná § Otvorené závislosti.
+
+---
+
 > Round 1, fresh. Riziká spojené so zvolením React 19 + TanStack family + RHF + Radix + Vite + TipTap + FullCalendar + Cytoscape stack-u. Zameranie: tech-stack-špecifické riziká; UX/domain riziká sú vlastnené `02-ux-persona-analyst/risks.md`.
 >
 > **Skala**: P = pravdepodobnosť (Low / Med / High), I = dopad (Low / Med / High).
@@ -34,15 +58,16 @@
 | Mitigácia | API v5 Query / v8 Table je veľmi stabilné a má mnoho prispievateľov mimo Tanner-a. Fallback: TanStack Table → react-data-grid; TanStack Query → SWR. Žiadne **runtime** coupling medzi týmito knižnicami — môžeme vymeniť jednu bez prepisu celej app. |
 | Vlastník | Tech stack (review v rounds 2+) |
 
-## R-T-04 — Bundle size shrinkage na portáli
+## R-T-04 — Bundle size shrinkage na portáli `[resolved-in-round-2]`
 
 | | |
 |---|---|
 | **Popis** | React 19 + Router + Query + RHF + Zod + i18next + Radix ~200 kB initial gzipped (`libraries.md` §19). TTI < 2 s na typickej linke (`GOAL.md` §5) je tesný. |
 | P / I | Med / Med |
 | Trigger | Lighthouse audit reports TTI > 2 s; CI bundle budget alarm. |
-| Mitigácia | <ul><li>Code-splitting per route (`React.lazy`).</li><li>Lazy-load i18n locales (per route namespace).</li><li>Lazy-load Sentry, TipTap, FullCalendar, Cytoscape.</li><li>Vite `preload` directives pre kritické moduly.</li><li>**Bundle budget v CI**: `apps/portal` initial < 250 kB gzipped.</li><li>Pre-fetch top 10 Service Catalog items + form schemas pri idle (mitigácia R-016 z UX).</li></ul> |
+| Mitigácia | <ul><li>Code-splitting per route (`React.lazy`).</li><li>Lazy-load i18n locales (per route namespace).</li><li>Lazy-load Sentry, TipTap, FullCalendar, Cytoscape, Recharts.</li><li>Vite `preload` directives pre kritické moduly.</li><li>**Bundle budget v CI**: `apps/portal` initial < 250 kB gzipped.</li><li>Pre-fetch top 10 Service Catalog items + form schemas pri idle (mitigácia R-016 z UX).</li></ul> |
 | Vlastník | `08-devex-devops` (CI budget); Tech stack monitoring |
+| **r2 status** | **Resolved**. 08 r1 `ci-cd.md` definuje CI bundle budget gate. 09 r1 `test-strategy.md` potvrdil že tabuľky majú dáta rádovo desiatky položiek (žiadna virtualizácia). Mitigačná stratégia ostáva platná; vlastníctvo na 08. |
 
 ## R-T-05 — TypeScript strict mode + 3rd party types friction
 
@@ -64,7 +89,7 @@
 | Mitigácia | MSW handlery v `mocks/handlers/` musia rešpektovať `tenant` query param alebo `X-Tenant` header. `08-devex-devops` dodá template handler factory; každý mock factory akceptuje `tenantId` ako param. |
 | Vlastník | `08-devex-devops` |
 
-## R-T-07 — i18n dynamic backend values (R-102 cross-link)
+## R-T-07 — i18n dynamic backend values (R-102 cross-link) `[persists]`
 
 | | |
 |---|---|
@@ -73,6 +98,7 @@
 | Trigger | UI zobrazuje "Open" v EN v rámci SK i18n bundle. |
 | Mitigácia | Stratégia: backend label vrátený v response je **single source of truth pre dynamic hodnoty** (žiadne i18n na FE), zabalené v `<BackendLabel/>` komponente. Static UI textuje cez i18n. **R-102 v UX risks je zladený.** Vlastníctvo Architecture (decided per architecture ADR). |
 | Vlastník | `04-architecture`, `06-tech-stack-selector` |
+| **r2 status** | **Persists**. MVP rieši cez `<BackendLabel/>` pattern (žiadny blocker pre delivery). Formálny kontrakt (label discovery API, per-tenant override storage, fallback when backend label is empty) ostáva **post-MVP API discussion** medzi 01-api-analyst a 04-architecture. Stratégia zostáva platná; cross-link na `libraries.md` § 3 (JSON Schema → Zod note). |
 
 ## R-T-08 — Vite plugin chain stability
 
@@ -114,15 +140,16 @@
 | Mitigácia | Import len konkrétne views (`daygrid`, `timegrid` — týždeň + mesiac stačí pre W-03). Žiadny `list`, `multimonth`. |
 | Vlastník | Change module owner |
 
-## R-T-12 — React Compiler (R-Pact / Forget) opt-in
+## R-T-12 — React Compiler (R-Pact / Forget) opt-in + table virtualization `[resolved-in-round-2]`
 
 | | |
 |---|---|
-| **Popis** | React 19 prináša React Compiler (auto-memoization). Stále experimental pre niektoré patterns (custom hooks s closure). Ak ho zapneme moc skoro, môžeme dostať runtime regressions. |
+| **Popis** | React 19 prináša React Compiler (auto-memoization). Stále experimental pre niektoré patterns (custom hooks s closure). Ak ho zapneme moc skoro, môžeme dostať runtime regressions. Súvisí s otázkou table virtualization — pri veľkých datasetoch by sme potrebovali optimalizáciu. |
 | P / I | Low / Med |
 | Trigger | Subtle re-render bugs po `vite build`. |
 | Mitigácia | **Neopt-in v MVP.** Opt-in v rounds rounds 5+, keď je compiler stable. Žiadne `useMemo` ako workaround per CI rule. |
 | Vlastník | Tech stack (post-MVP review) |
+| **r2 status** | **Resolved**. 09 r1 `test-strategy.md` potvrdil že **žiadna virtualizácia nie je potrebná** — dáta sú rádovo desiatky položiek (GOAL §5, `comparison.md` K1). TanStack Table basic mode bez `@tanstack/react-virtual` je dosatočný. React Compiler ostáva post-MVP review item, ale neexistuje urgentný dôvod ho prerábať. Risk dôsledne dropne na **Low / Low**. |
 
 ## R-T-13 — Lucide React ikon set update bumps
 
@@ -164,7 +191,7 @@
 | Mitigácia | <ul><li>MSW init kód v dev-only `if (import.meta.env.DEV)`.</li><li>Vite build nezahŕňa `public/mockServiceWorker.js` do prod bundlu (alebo s explicitnou exclude).</li><li>E2E test: prod build smoke test bez MSW.</li></ul> |
 | Vlastník | `08-devex-devops` |
 
-## R-T-17 — Strict CSP a inline styles (Radix portals, Sentry replay)
+## R-T-17 — Strict CSP a inline styles (Radix portals, Sentry replay) `[resolved-in-round-2]`
 
 | | |
 |---|---|
@@ -173,6 +200,7 @@
 | Trigger | CSP violation reports v prod. |
 | Mitigácia | <ul><li>Radix: nastaviť `nonce` cez `nonce` prop / globalCSS.</li><li>Sentry session replay: zapnúť `inlineStylesheet: false` alebo akceptovať `style-src 'self' 'nonce-...'`.</li><li>Spolupráca s `05-security` na CSP design.</li></ul> |
 | Vlastník | `05-security` + `06-tech-stack-selector` |
+| **r2 status** | **Resolved**. 05 r2 `headers-and-csp.md`: **nonce-based** `script-src` a `style-src` per response (BFF / reverse proxy generuje crypto-random nonce per HTML response, injection cez post-build step alebo proxy middleware). Žiadne `'unsafe-inline'` v produkcii. Radix portály prijímajú `nonce` prop; Sentry SDK má `setStyleNonce` API. Implementačný owner: 08 (Nginx config) + Radix provider wrapper (07). |
 
 ## R-T-18 — i18n bundle bloat (SK + EN, all namespaces eager-loaded)
 
@@ -206,10 +234,16 @@
 
 ## Otvorené závislosti
 
-- `[05-security]` CSP design (R-T-17) ovplyvní Radix/Sentry konfiguráciu.
-- `[08-devex-devops]` Bundle budgets v CI (R-T-04), Renovate config
-  (R-T-15), MSW prod guardrail (R-T-16).
-- `[04-architecture]` Backend label vs. i18n key stratégia (R-T-07) —
-  cross-link na UX R-102.
+- `[05-security]` CSP design (R-T-17) — `[resolved-in-round-2]`. 05 r2
+  `headers-and-csp.md`: nonce-based CSP. Radix + Sentry kompatibilné.
+- `[08-devex-devops]` Bundle budget v CI (R-T-04) — **pretrváva** ako
+  DevOps detail (vlastní 08, nie 06). Konkrétne CI gate hodnoty
+  (`apps/portal initial < 250 kB gzipped`, Lighthouse TTI < 2 s) sú v
+  scope 08.
+- `[08-devex-devops]` Renovate config (R-T-15), MSW prod guardrail (R-T-16) —
+  vlastní 08; tech-stack-selector len konštatuje pattern.
+- `[04-architecture / 01-api-analyst]` Backend label vs. i18n key stratégia
+  (R-T-07) — **pretrváva**. Vyžaduje post-MVP API discussion. MVP rieši
+  cez `<BackendLabel/>` pattern.
 - `[?]` Long-term decision o SSR/RSC (R-T-19) — odložené na v1+
-  planning.
+  planning. Nie blocker pre MVP.

@@ -1,11 +1,72 @@
 # Konkrétne knižnice — voľby per oblasť
 
+## Changelog (round 2)
+
+- Pridaná sekcia **§ 0. BFF runtime** — `hono@4.x` + `@hono/node-server`
+  (vybral 04 r2 v ADR `01-bff.md`).
+- Pridaná sekcia **§ 20. Markdown sanitizácia** — `dompurify@3.x` pre KB
+  content render a microcopy s user-generated HTML.
+- Pridaná sekcia **§ 21. Charts** — `recharts@2.x` (KB analytics dashboard
+  W-10, v1).
+- V § 3 Forms doplnená poznámka **JSON Schema → Zod** stratégia (manuálna
+  prekonverzia v MVP; `@gcornut/cli-json-schema-to-zod` ako voliteľný
+  starter generator).
+- Aktualizovaná § Otvorené závislosti — uzatvorené `[04-architecture]`,
+  `[07-design-system]`, `[08-devex-devops]`, `[09-qa-test-strategy]`,
+  charts (`[?]`) flagy.
+
+---
+
 > Round 1, fresh. Voľba pochádza zo `decision.md` (React 19 + TS strict). Pre každú knižnicu uvádzam: verzia, licencia, aktivita (overené 2026-05-15), alternatívy, dôvod výberu, odporúčaný usage.
 >
 > **Konvencie**:
 > - Cesty inštalácie predpokladajú `pnpm workspaces` (default — viď `decision.md` Otvorené závislosti).
 > - Bundle size hodnoty sú **gzipped + minified**, z bundlephobia (overené 2026-05-15).
 > - „weekly downloads" sú približné — z npmjs.com k dátumu overenia.
+
+## 0. BFF runtime
+
+> Pridané v r2 — 04 r2 ADR `01-bff.md` `accepted`: BFF = YES. 04 vybralo
+> runtime; toto je referenčný záznam pre tech-stack-selector kontrakt.
+
+| Voľba | `hono@4.x` + `@hono/node-server@1.x` |
+|---|---|
+| URL | https://hono.dev / https://github.com/honojs/hono |
+| Licencia | MIT |
+| Aktivita | ~2M weekly downloads; aktívny release cadence (mesačné minor releases); v4.x stable od 2024-Q1. Overené 2026-05-15 cez npmjs.com/package/hono. |
+| Alternatívy | **Fastify** (~3M weekly, MIT, v5.x stable; alternatíva pre teams s legacy Node.js conventions), NestJS (over-engineered pre tenký proxy BFF), Express 5 (legacy callback API, weak TS), Koa 2 (menej aktívny). |
+| Dôvod | <ul><li>**TypeScript-first** API — type-safe routing, `c.req.valid()` validátory s Zod sú prvotriedne, žiadny `@types/express` overhead.</li><li>**Web Standards API** (Request / Response / fetch) — rovnaký mentálny model ako FE; reuse `packages/api-client` http helpers v tests bez adaptérov.</li><li>**Beží na Node 22 LTS** cez `@hono/node-server` — alignované s 08 r1 `repo-bootstrap.md` Node 22 LTS rozhodnutím. Future-proof: rovnaký kód beží na Bun, Deno, Cloudflare Workers ak by bola potreba.</li><li>**Tenký** — ~14 kB minified — match s ADR `01-bff.md` "BFF je tenký proxy + aggregátor, žiadna business logika".</li><li>**Middleware ekosystém** — `@hono/zod-validator`, `@hono/sentry`, CORS, secure-headers, compress sú first-party.</li><li>**Routing**: trie-based router je výrazne rýchlejší než Express na cold path; štandardná `app.get("/api/me/tenants", handler)` syntax bez decorator overhead.</li></ul> |
+| Bundle | ~14 kB minified (server, nie FE) |
+
+### Konfigurácia (high-level)
+
+- `apps/bff/src/index.ts` — Hono app entry + `serve()` z `@hono/node-server`.
+- `apps/bff/src/middleware/` — auth (session cookie → AccessKey lookup),
+  tenant guard, request logger (Pino), error mapper (CA SDM 401 →
+  `AppError.AUTH_EXPIRED` atď.).
+- `apps/bff/src/routes/` — feature-based: `me.ts`, `incidents.ts`,
+  `service-catalog.ts`, `cmdb.ts`, `kb.ts`, `config.ts`, `csp-report.ts`.
+- `apps/bff/src/clients/` — `caisd-rest.ts`, `service-point.ts`,
+  `soap-fallback.ts` (per ADR `01-bff.md` § Dôsledky bod 4).
+- **Session store**: in-memory pre MVP single-instance, Redis v v1 HA
+  (vlastní 08 — viď ADR `01-bff.md` flag #2).
+
+### Validation parita s FE
+
+Zod schémy z `packages/domain` sa importujú do BFF route handlers:
+
+```ts
+import { incidentCreateSchema } from "@sdm/domain/incident";
+import { zValidator } from "@hono/zod-validator";
+
+app.post("/api/incidents", zValidator("json", incidentCreateSchema), async (c) => {
+  const body = c.req.valid("json");
+  // ... forward to CA SDM
+});
+```
+
+Tým je validácia **single-source-of-truth** zdieľaná medzi FE (RHF resolver),
+BFF route guard, a Vitest unit tests.
 
 ## 1. Bundler / dev server
 
@@ -76,6 +137,23 @@ function buildZodSchema(fields: CatalogField[]): z.ZodObject<any> { /* registry 
 ```
 
 - `useForm({ resolver: zodResolver(schema) })` zaregistruje validation. Field render je per-type komponent (`<TextField/>`, `<DatePicker/>`, `<CiPicker/>`).
+
+### JSON Schema → Zod (cross-link ADR 06 r2)
+
+04 r2 ADR `06-dynamic-forms.md` postuluje **JSON-schema-driven** dynamic
+formulár (Service Catalog field metadata). Stratégia premostenia JSON
+Schema → Zod:
+
+| Approach | Kedy | Trade-off |
+|---|---|---|
+| **Manuálna prekonverzia** (default v MVP) | Service Catalog field types sú konečný set (~15 typov: text, longtext, date, datetime, select, multiselect, ci-picker, contact-picker, attachment, ...). Field-type registry mapuje `kind → Zod builder`. | Plná typová kontrola, type-safe (žiadny `z.any()`), žiadna runtime závislosť. **Odporúčané.** |
+| **`@gcornut/cli-json-schema-to-zod`** (~50k weekly, MIT, https://github.com/gcornut/cli-json-schema-to-zod, overené 2026-05-15) | Build-time generator. Vhodný ak by sme dostali JSON Schema súbory z CA SDM (nedostávame). | Treba pre nás málo, ale ak by 04/01 dohodlo schemu-as-contract, je to validný starter. |
+| **`json-schema-to-zod`** (runtime, ~80k weekly, MIT) | Runtime konverzia v BFF. | Pridáva ~12 kB runtime + slabšie types. **Nepoužiť** v MVP. |
+
+**Odporúčanie**: ostať pri manuálnej registry. Ak by v1+ CA SDM API
+poskytlo JSON Schema priamo per field type, prejdeme na `@gcornut/cli-…`
+build-time generator. Owner kontraktu: 04-architecture + 01-api-analyst
+(post-MVP discussion — viď `decision.md` Otvorené závislosti R-T-07).
 
 ## 4. Tables
 
@@ -253,7 +331,8 @@ export async function http<T>(input: string, init?: RequestInit & { schema: ZodS
 | Markdown render (KB read) | `react-markdown@9.x` + `remark-gfm` + `rehype-highlight` | MIT | Bezpečný markdown rendering (žiadny `dangerouslySetInnerHTML`). Used na `/kb/article/:id`. |
 | Toast notifikácie | `sonner@1.x` (alebo Radix Toast) | MIT | Lightweight, accessible. |
 | Clipboard | `navigator.clipboard` API + `useClipboard` mini-hook | n/a | Žiadna 3rd party. |
-| Charts (KB analytics W-10, v1 only) | `recharts@2.x` alebo `visx@3.x` | MIT | v1+ — nie MVP. **Voľba odložená** do v1 (vlastník: Design System + Tech Stack revízia). |
+| Charts (KB analytics W-10, v1 only) | `recharts@2.x` | MIT | v1+ — viď § 21 (rozhodnutie r2). |
+| Markdown sanitize (KB content + microcopy) | `dompurify@3.x` + `@types/dompurify` | (Mozilla) Apache-2.0 / MPL-2.0 dual | viď § 20 (pridané r2). |
 
 ## 18. Lint / formát / type-check
 
@@ -285,18 +364,94 @@ export async function http<T>(input: string, init?: RequestInit & { schema: ZodS
 
 > TipTap, FullCalendar, Cytoscape sú **lazy chunks** mimo initial bundle. TTI < 2 s je dosiahnuteľné pri ~200 kB initial + dobre konfigurovaný Vite (preload directives).
 
+## 20. Markdown sanitizácia
+
+> Pridané v r2. Pôvodne v § 17 ako pomocná knižnica, povýšené na samostatnú
+> sekciu kvôli bezpečnostnému významu (KB content z CA SDM `KCAT_BODY` môže
+> obsahovať legacy HTML; microcopy / customer-input fragments tiež môžu mať
+> rich-text). Cross-link na `risks.md` R-T-10.
+
+| Voľba | `dompurify@3.x` |
+|---|---|
+| URL | https://github.com/cure53/DOMPurify |
+| Licencia | dual: **Apache-2.0** alebo **MPL-2.0** (vyber pri inštalácii — pre nás Apache-2.0) |
+| Aktivita | ~7M weekly downloads; aktívne udržiavané (Cure53 security team); v3.x stable od 2024. Overené 2026-05-15 cez npmjs.com/package/dompurify. |
+| Alternatívy | `sanitize-html` (Node-only, slabšia browser story), `xss` (~2M weekly, MIT, OK ale menej bohatý whitelist API), browser native `Sanitizer API` (Trusted Types — len Chrome 105+, nie cross-browser per `GOAL.md` §5). |
+| Dôvod | <ul><li>**De-facto štandard** pre browser HTML sanitization (Cure53 → trustworthy reputation).</li><li>**Configurable whitelist** — tags + attributes whitelist konfigurovateľný; podporuje `ALLOW_DATA_ATTR`, `FORBID_TAGS`, `ADD_URI_SAFE_ATTR`.</li><li>**Použitie v KB editor (TipTap)** pri load existujúceho `KCAT_BODY`: `purify(html)` → `prosemirror-markdown` → TipTap doc. Round-trip safe.</li><li>**Použitie v KB read view** (`/kb/article/:id`) ako poistka popri `react-markdown` (ktorý sám blokuje `dangerouslySetInnerHTML`, ale pre **HTML body** z CA SDM potrebujeme sanitizer pred render-om).</li><li>**Použitie pre customer microcopy** (admin-uploaded HTML banner / footer): vstupný sanitize na BFF (Node) + render-time sanitize na FE — defense in depth.</li></ul> |
+| Bundle | ~22 kB minified (~7 kB gzipped) |
+
+### Usage pattern
+
+```ts
+// packages/sanitize/html.ts
+import DOMPurify from "dompurify";
+
+const KB_BODY_CONFIG: DOMPurify.Config = {
+  ALLOWED_TAGS: ["p", "br", "strong", "em", "u", "ol", "ul", "li", "a",
+    "code", "pre", "blockquote", "h1", "h2", "h3", "h4", "img", "table",
+    "thead", "tbody", "tr", "th", "td", "span"],
+  ALLOWED_ATTR: ["href", "src", "alt", "title", "class", "colspan", "rowspan"],
+  ALLOW_DATA_ATTR: false,
+  FORBID_TAGS: ["script", "style", "iframe", "object", "embed", "form"],
+};
+
+export function sanitizeKbBody(html: string): string {
+  return DOMPurify.sanitize(html, KB_BODY_CONFIG);
+}
+```
+
+BFF (Hono — viď § 0) má `isomorphic-dompurify` variant (rovnaký API, ale
+mountuje DOMPurify s `jsdom` window). Tým je sanitize logika **identická**
+na FE aj BFF.
+
+## 21. Charts (KB analytics dashboard — v1)
+
+> Pridané v r2. V r1 odložené, v r2 rozhodnuté pre v1 plánovanie. KB
+> analytics dashboard `W-10` (per `02-ux` screen-inventory) potrebuje:
+> bar chart (článok views per týždeň), line chart (search hit rate), donut
+> (top categories), sparklines (article health). Žiadne real-time, žiadny
+> 1000+ data point dataset (dáta agregované per hodina / deň).
+
+| Voľba | `recharts@2.x` |
+|---|---|
+| URL | https://recharts.org / https://github.com/recharts/recharts |
+| Licencia | MIT |
+| Aktivita | ~3M weekly downloads; aktívne udržiavané; v2.x stable od 2023, v3.x v betach 2026-Q1 (kompatibilná upgrade path). Overené 2026-05-15 cez npmjs.com/package/recharts. |
+| Alternatívy | <ul><li>`chart.js@4` + `react-chartjs-2@5` (MIT, ~3M weekly) — canvas-based, menší bundle (~60 kB), ale **menej React-native API** a slabší TS support pre custom shapes.</li><li>`@nivo/core` (~250k weekly, MIT) — krásna gallery, ale väčší bundle (~110 kB) a opinionated styling konflikt s našími tokens.</li><li>`echarts@5` + `echarts-for-react` (~1M weekly, Apache-2.0) — enterprise-grade, ale ~250 kB bundle baseline = overkill pre interný dashboard.</li><li>`visx@3` (Airbnb, ~120k weekly, MIT) — low-level d3 wrappers; flexibilné, ale vyšší boilerplate.</li></ul> |
+| Dôvod | <ul><li>**React-native komponenty** — `<BarChart>`, `<LineChart>`, `<PieChart>` s deklaratívnymi `<XAxis>`, `<Tooltip>`, `<Legend>`. Žiadny imperative canvas API ani externý chart object.</li><li>**SVG output** — kompatibilné s našou CSP nonce strategy (žiadne inline canvas trickery).</li><li>**Theming** cez CSS variables — naše tokens (`--color-chart-primary`) prejdú do `fill` / `stroke` props bez fightu.</li><li>**A11y** — Recharts má `role="img"` + `aria-label` na chart elementoch (WCAG 2.1 AA — `R-101`). Pre data tables (R-101 alt format) komplementujeme `<DataTable>` toggle pod chart.</li><li>**Bundle** ~95 kB minified (~35 kB gzipped); **lazy-load** len pre route `/kb/analytics` (nie v initial bundle).</li><li>**TS types** native (žiadny `@types/recharts`).</li><li>**Maintained** — Recharts team aktívny od 2016; predikovateľný release cadence.</li></ul> |
+| Bundle | ~95 kB minified / ~35 kB gzipped (lazy chunk, route `/kb/analytics`) |
+
+### A11y poznámka
+
+Pre WCAG 2.1 AA (`R-101`) musí dashboard ponúknuť **alternatívny formát** —
+data table view každého chartu (toggle button). Pattern:
+
+```tsx
+<DashboardCard>
+  <Toggle variant={view} onChange={setView} />
+  {view === "chart" ? <BarChart data={data} /> : <DataTable data={data} />}
+</DashboardCard>
+```
+
+Vlastní 07 (Design System) ako wrapper komponent `<ChartCard/>`.
+
 ## Otvorené závislosti
 
-- `[04-architecture]` Potvrdiť BFF cookie session (riadok 16) — alternatíva
-  `oidc-client-ts` zostáva pripravená.
-- `[04-architecture]` Confirm data fetching: TanStack Query (default tu)
-  vs. RTK Query. Žiadny dôvod meniť, ak Architecture nedospievi k iným
-  záverom (Redux ekosystém by sa otvoril, čo nie je v scope §11).
-- `[07-design-system]` Final call o komponentovej knižnici (Radix vs. MUI vs.
-  Mantine vs. custom). Predpoklad: custom + Radix primitives.
-- `[08-devex-devops]` Voľba: `@vitejs/plugin-react` (Babel) vs.
-  `@vitejs/plugin-react-swc`. Neutrálna voľba, DX & build speed. Predpoklad:
-  SWC pre rýchlejší prod build.
-- `[?]` Charts knižnica pre v1 KB analytics (W-10) — odložené z MVP, ale
-  mali by sme rozhodnúť pred v1 plánovaním. Kandidáti: `recharts`, `visx`,
-  `nivo`.
+- `[04-architecture]` BFF cookie session — `[resolved-in-round-2]`. 04 r2
+  ADR `01-bff.md` `accepted` + § 0 BFF runtime (Hono) doplnený.
+- `[04-architecture]` Data fetching (TanStack Query vs. RTK Query) —
+  `[resolved-in-round-2]`. 04 r2 ADR `03-data-fetching.md`: TanStack Query.
+- `[07-design-system]` Komponentová knižnica — `[resolved-in-round-2]`.
+  07 r1 `library-recommendation.md`: Radix UI primitives + custom skin
+  (presne moja r1 voľba).
+- `[08-devex-devops]` `@vitejs/plugin-react` (Babel) vs.
+  `@vitejs/plugin-react-swc` — **pretrváva** ako micro-decision (vlastní 08).
+  Neutrálne pre tech-stack-selector — funkčný rozdiel nulový, len build
+  speed. Default odporúčanie: SWC.
+- `[?]` Charts knižnica pre v1 KB analytics — `[resolved-in-round-2]`.
+  § 21 Charts: **Recharts** vybrané. Wireframe-level dashboard implementácia
+  je v scope v1 plánovania (vlastní 02 + 07).
+- `[04-architecture / 01-api-analyst]` JSON Schema → Zod kontrakt
+  (Service Catalog field metadata) — **pretrváva** ako post-MVP discussion.
+  MVP rieši manual field-type registry (§ 3 Forms). Pri v1 API ak CA SDM
+  vystaví JSON Schema endpoint, prejdeme na build-time generator.

@@ -1,5 +1,15 @@
 # Porovnávacia matica frameworkov — React vs. Angular vs. Vue 3
 
+## Changelog (round 2)
+
+- **Scoring je stabilný** — žiadna zmena hodnotenia kandidátov. Všetci peer
+  agenti (04 r2, 05 r2, 07 r1, 08 r1, 09 r1) potvrdili kompatibilitu
+  s **React 19 + Vite + TanStack Query + RHF/Zod + Radix UI + Vitest /
+  Playwright** stackom.
+- Aktualizovaná § Otvorené závislosti — `[04-architecture]` flagy uzatvorené.
+
+---
+
 > Round 1, fresh. Hodnotenie kandidátov pre **frontend SDM-Rewrite** (portal + workspace SPA, BFF-backed CA SDM 17.4 REST). Kritériá pochádzajú z `GOAL.md` §5 (NFR) a §6 (kritériá výberu), validované oproti výstupom Phase A:
 > - `docs/agents/api-analyst/auth.md`, `multi-tenancy.md`, `gaps.md`,
 > - `docs/agents/ux-persona-analyst/screen-inventory.md`, `risks.md`,
@@ -131,12 +141,12 @@ Rozhodnutie v `decision.md`.
 
 ## Otvorené závislosti
 
-- `[04-architecture]` BFF rozhodnutie ovplyvňuje K5. Predpokladám BFF-backed
-  cookie session per `api-analyst/auth.md` §6. Ak Architecture rozhodne pre
-  client-side OIDC (PKCE bez BFF), K5 pre React klesne na 4 (`oidc-client-ts`
-  fungovať bude, ale viac glue-code) — celkový poradie sa však nezmení.
-- `[04-architecture]` Monorepo tool (pnpm workspaces vs. Nx vs. Turborepo) je
-  v scope 04. React stack je kompatibilný so všetkými tromi. Default
-  predpoklad: pnpm workspaces.
-- `[07-design-system]` Komponentová knižnica (Radix / Headless UI / custom)
-  je vlastníctvo Design Systemu; tu len konštatujem dostupnosť primitivov.
+- `[04-architecture]` BFF rozhodnutie — `[resolved-in-round-2]`. 04 r2 ADR
+  `01-bff.md` `accepted`: BFF = YES + cookie session. K5 React zostáva 5
+  (žiadna FE OIDC knižnica potrebná, BFF drží Access Key).
+- `[04-architecture]` Monorepo tool — `[resolved-in-round-2]`. 04 r2 ADR
+  `02-monorepo-tool.md`: pnpm workspaces + Turborepo. Kompatibilné s React
+  stackom.
+- `[07-design-system]` Komponentová knižnica — `[resolved-in-round-2]`.
+  07 r1 `library-recommendation.md`: Radix UI primitives + custom skin.
+  Tým je K14 (a11y primitives = 5 pre React) potvrdené ako correct skóre.
