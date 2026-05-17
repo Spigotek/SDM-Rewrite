@@ -72,45 +72,122 @@ export interface Tenant {
   isActive: boolean;
 }
 
-export type RoleCode =
-  | "ADMINISTRATOR"
-  | "CONFIG_ADMINISTRATOR"
-  | "CONFIG_ANALYST"
-  | "CONFIG_VIEWER"
-  | "CHANGE_MANAGER"
-  | "SERVICE_DESK_ADMINISTRATOR"
-  | "SERVICE_DESK_MANAGER"
-  | "SYSTEM_ADMINISTRATOR"
-  | "LEVEL_1_ANALYST"
-  | "LEVEL_2_ANALYST"
-  | "INCIDENT_MANAGER"
-  | "PROBLEM_MANAGER";
+/**
+ * UI rola — front-end konsoliduje CA SDM Access Type + Functional Access na
+ * 7 (+ 1 sub-typ) UI rolí per `docs/agents/security/rbac.md` §2. CA SDM
+ * internal názvy (`Analyst Level 1`, `Change Manager`, …) mapuje BFF na túto
+ * enumeráciu pri /me response.
+ *
+ *  - `requester` — interný self-service user (portal).
+ *  - `requester_external` — externý zákazník; rovnaké screen/action práva ako
+ *    `requester`, BFF aplikuje `restricted_share_flag` filter (rbac.md §2 nota).
+ *  - `agent_l1`, `agent_l2`, `change_manager`, `kb_editor`, `cmdb_owner` —
+ *    workspace persony.
+ *  - `sp_admin` — service-provider admin (cross-tenant scope).
+ */
+export type UIRole =
+  | "requester"
+  | "requester_external"
+  | "agent_l1"
+  | "agent_l2"
+  | "change_manager"
+  | "kb_editor"
+  | "cmdb_owner"
+  | "sp_admin";
 
 /**
- * Permission enum — odvodený z CACF Functional Access matrix (PDF s. 2520).
- * Granularita: <modul>_<accessLevel>. UI ho používa pre conditional rendering.
+ * Permission keys — dot-notation per rbac.md §6. Granularita:
+ * `<modul>.<action>[.<scope>]`. UI ich používa pre conditional rendering;
+ * BFF re-validuje na každej mutácii (rbac.md §1 princíp 4).
  */
 export type Permission =
-  | "ADMINISTRATION_VIEW"
-  | "ADMINISTRATION_MODIFY"
-  | "CI_VIEW"
-  | "CI_MODIFY"
-  | "INCIDENT_VIEW"
-  | "INCIDENT_MODIFY"
-  | "PROBLEM_VIEW"
-  | "PROBLEM_MODIFY"
-  | "REQUEST_VIEW"
-  | "REQUEST_MODIFY"
-  | "CHANGE_VIEW"
-  | "CHANGE_MODIFY"
-  | "CHANGE_APPROVE"
-  | "KB_VIEW"
-  | "KB_MODIFY"
-  | "KB_PUBLISH";
+  // App-level access
+  | "app.portal.access"
+  | "app.workspace.access"
+  // Catalog / generic ticket
+  | "ticket.create.own"
+  | "ticket.read.own"
+  | "catalog.browse"
+  | "catalog.request"
+  // Incident (rbac.md §6.1)
+  | "incident.create"
+  | "incident.read.own"
+  | "incident.read.queue"
+  | "incident.read.all"
+  | "incident.update.fields"
+  | "incident.transition.status"
+  | "incident.assign"
+  | "incident.escalate"
+  | "incident.link.problem"
+  | "incident.attach.add"
+  | "incident.comment.private"
+  | "incident.comment.public"
+  | "incident.close"
+  | "incident.reopen"
+  | "incident.bulk"
+  | "incident.delete"
+  // Request (rbac.md §6.2)
+  | "request.create"
+  | "request.read.own"
+  | "request.read.queue"
+  | "request.approve"
+  | "request.fulfill"
+  | "request.reject"
+  | "request.cancel.own"
+  // Problem (rbac.md §6.3)
+  | "problem.create"
+  | "problem.read"
+  | "problem.update.rca"
+  | "problem.link.incidents"
+  | "problem.mark.known-error"
+  | "problem.close"
+  | "problem.spawn.kb"
+  // Change (rbac.md §6.4)
+  | "change.create"
+  | "change.read"
+  | "change.update.plan"
+  | "change.schedule"
+  | "change.submit.cab"
+  | "cab.approve"
+  | "cab.approve.emergency"
+  | "cab.reject"
+  | "change.read.calendar"
+  | "change.read.calendar.cross-tenant"
+  | "change.close"
+  // Knowledge (rbac.md §6.5)
+  | "kb.read.public"
+  | "kb.read.internal"
+  | "kb.search"
+  | "kb.rate"
+  | "kb.create.draft"
+  | "kb.write"
+  | "kb.submit.review"
+  | "kb.approve"
+  | "kb.archive"
+  | "kb.manage"
+  | "kb.analytics"
+  | "kb.taxonomy"
+  // CMDB (rbac.md §6.6)
+  | "ci.read"
+  | "ci.read.relationships"
+  | "ci.search"
+  | "ci.impact"
+  | "ci.create"
+  | "ci.update"
+  | "ci.read.cross-tenant"
+  // Admin / tenant / reports (rbac.md §6.7)
+  | "tenant.admin"
+  | "tenant.admin.list"
+  | "tenant.admin.update"
+  | "tenant.admin.roles"
+  | "audit.read"
+  | "audit.export"
+  | "reports.read"
+  | "reports.export";
 
 export interface Role {
   id: RoleId;
-  code: RoleCode;
+  code: UIRole;
   displayName: string;
   permissions: readonly Permission[];
 }
@@ -876,7 +953,7 @@ export interface UiKbSearchResponse {
 export interface UiTenantSwitcherEntry {
   tenant: Tenant;
   roleCount: number;
-  primaryRole: RoleCode;
+  primaryRole: UIRole;
   isDefault: boolean;
   isActive: boolean;
   lastVisitedAt: IsoTimestamp | null;

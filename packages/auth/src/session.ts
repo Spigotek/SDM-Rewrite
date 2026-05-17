@@ -1,4 +1,4 @@
-import type { ContactId, Permission, RoleCode, TenantId, UserId } from "@sdm/domain";
+import type { ContactId, Permission, TenantId, UIRole, UserId } from "@sdm/domain";
 
 export interface Session {
   readonly userId: UserId;
@@ -7,7 +7,7 @@ export interface Session {
   readonly email: string;
   readonly tenantId: TenantId;
   readonly tenants: ReadonlyArray<{ id: TenantId; name: string }>;
-  readonly roles: readonly RoleCode[];
+  readonly roles: readonly UIRole[];
   readonly permissions: readonly Permission[];
   readonly expiresAt: string;
 }
