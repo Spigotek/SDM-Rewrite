@@ -7,11 +7,21 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "echo \"(no tests yet)\" && exit 0",
+    "test": "vitest run",
     "build": "echo \"(source-only package — no build)\" && exit 0",
     "clean": "rimraf .turbo *.tsbuildinfo"
   },
   "dependencies": {
-    "@sdm/api-client": "workspace:*"
+    "@sdm/api-client": "workspace:*",
+    "@sdm/domain": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   }
 }
