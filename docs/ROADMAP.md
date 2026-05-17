@@ -18,11 +18,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** PR #5 — Chunk E.2 (RBAC mapping). Phase E.1 dopravená priamym pushom `aa574a2` na main (mimo PR-flow, dokumentované v PR #5).
+- **Last merged:** Chunk E.3 (SPA App Shell + bootstrap). Predchádzajúce: PR #5 — Chunk E.2 (RBAC mapping). Phase E.1 dopravená priamym pushom `aa574a2` na main (mimo PR-flow, dokumentované v PR #5).
 - **In flight:** —
-- **Next up:** Phase E.3 — SPA App Shell + bootstrap.
+- **Next up:** Phase F.1 — BFF Auth module (SSO callback, session manager, CA SDM access key broker).
 
-Posledná revízia tohto dokumentu: po merge PR #5 (2026-05-17).
+Posledná revízia tohto dokumentu: po merge Chunk E.3 (2026-05-17).
 
 ---
 
@@ -75,11 +75,15 @@ Posledná revízia tohto dokumentu: po merge PR #5 (2026-05-17).
   - `@sdm/api-mocks` users — re-seed na nové UI role + 4 noví používatelia (kb_editor, cmdb_owner, requester, sp_admin)
 - **Done-when:** 170/170 testov zelených; `<Can>` × každá rola × 10 kľúčových permissions/screens kombinácie verifikované
 
-#### E.3 — SPA App Shell + bootstrap
+#### E.3 — SPA App Shell + bootstrap ✅ DONE
 
 - **Inputs:** `docs/agents/architecture/monorepo-layout.md` §apps, `docs/agents/ux-persona-analyst/wireframes/shared/`, `docs/agents/devex-devops/runtime-config.md`
-- **Outputs:** `apps/{portal,workspace}/src/{shell,bootstrap}/*` — App Shell, error boundary, session provider, config fetch (`/config` endpoint), tenant switcher prvotriedne v navigácii
-- **Done-when:** SPA sa rendruje s mocked session + tenant switch funguje (žiadny feature obsah, len skeleton)
+- **Outputs:**
+  - `apps/{portal,workspace}/src/bootstrap/{config,session}.ts` — `/config` loader (mini shape, full `RuntimeConfig` per `runtime-config.md` odložené do F.4) + `/me` + `/me/tenants` aggregator → typed `Session` (roles + permissions derived via `getPermissionsForRole`)
+  - `apps/{portal,workspace}/src/shell/{app-shell,error-boundary,session-context,top-bar,tenant-switcher,styles.css}` — top bar, brand, tenant dropdown (P0 per shared wireframe), user pill, React `ErrorBoundary`
+  - SPA-owned active tenant (localStorage + `X-CA-SDM-Tenant` header injection) — mirroruje reálne BFF tenant context správanie; obchádza MSW SW Set-Cookie limit
+  - `tools/browser-test/scenarios/{smoke-portal,smoke-workspace,mocks-tenant-isolation,mocks-mutation-roundtrip,auth-session-cookie}.spec.ts` — re-aligned na nový shell (testid `top-bar` / `active-tenant` / `tenant-display` / `tenant-row-<id>`)
+- **Done-when:** 170 unit testov + 5 browser-test scenárov pass; `pnpm typecheck`/`lint`/`build` zelené; tenant switch end-to-end overený (Acme → Globex) pre portal aj workspace
 
 ### Phase F — BFF real implementation 🔜 (~5 chunks)
 

@@ -9,7 +9,7 @@ import { test, expect } from "../fixtures/isolated-context";
 // for the mock-layer test.
 test("/auth/login + /auth/logout contract (MSW handlers)", async ({ isolatedPage }) => {
   await isolatedPage.goto("/");
-  await expect(isolatedPage.getByTestId("mocks-flag")).toHaveText(/Mocks: on/);
+  await expect(isolatedPage.getByTestId("top-bar")).toBeVisible({ timeout: 15_000 });
 
   const result = await isolatedPage.evaluate(async () => {
     const login = await fetch("/auth/login", {
