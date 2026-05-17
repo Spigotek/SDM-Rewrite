@@ -1,4 +1,11 @@
-import { roleId, userId, type RoleAssignment, type TenantId, type User } from "@sdm/domain";
+import {
+  roleId,
+  userId,
+  type RoleAssignment,
+  type TenantId,
+  type UIRole,
+  type User,
+} from "@sdm/domain";
 import { TENANT_ACME, TENANT_GLOBEX } from "./tenants";
 
 interface UserSeed {
@@ -9,7 +16,7 @@ interface UserSeed {
   email: string;
   jobTitle: string;
   defaultTenant: TenantId;
-  roles: { tenant: TenantId; role: string }[];
+  roles: { tenant: TenantId; role: UIRole }[];
 }
 
 const seeds: readonly UserSeed[] = [
@@ -22,8 +29,8 @@ const seeds: readonly UserSeed[] = [
     jobTitle: "L1 Analyst",
     defaultTenant: TENANT_ACME,
     roles: [
-      { tenant: TENANT_ACME, role: "LEVEL_1_ANALYST" },
-      { tenant: TENANT_GLOBEX, role: "LEVEL_1_ANALYST" },
+      { tenant: TENANT_ACME, role: "agent_l1" },
+      { tenant: TENANT_GLOBEX, role: "agent_l1" },
     ],
   },
   {
@@ -32,12 +39,10 @@ const seeds: readonly UserSeed[] = [
     firstName: "Marek",
     lastName: "Manager",
     email: "marek.manager@acme-corp.example",
-    jobTitle: "Incident Manager",
+    jobTitle: "Incident & Problem Manager",
     defaultTenant: TENANT_ACME,
-    roles: [
-      { tenant: TENANT_ACME, role: "INCIDENT_MANAGER" },
-      { tenant: TENANT_ACME, role: "PROBLEM_MANAGER" },
-    ],
+    // Per rbac.md §2: "Analyst Level 2 + Problem Manager" konsoliduje na agent_l2.
+    roles: [{ tenant: TENANT_ACME, role: "agent_l2" }],
   },
   {
     id: "user-3",
@@ -47,7 +52,7 @@ const seeds: readonly UserSeed[] = [
     email: "cyril.change@acme-corp.example",
     jobTitle: "Change Manager",
     defaultTenant: TENANT_ACME,
-    roles: [{ tenant: TENANT_ACME, role: "CHANGE_MANAGER" }],
+    roles: [{ tenant: TENANT_ACME, role: "change_manager" }],
   },
   {
     id: "user-4",
@@ -57,7 +62,8 @@ const seeds: readonly UserSeed[] = [
     email: "gabriela@globex.example",
     jobTitle: "Service Desk Manager",
     defaultTenant: TENANT_GLOBEX,
-    roles: [{ tenant: TENANT_GLOBEX, role: "SERVICE_DESK_MANAGER" }],
+    // Service Desk Manager nemá vlastnú UI rolu — mapuje sa na agent_l2 (full ticket ops).
+    roles: [{ tenant: TENANT_GLOBEX, role: "agent_l2" }],
   },
   {
     id: "user-5",
@@ -67,7 +73,7 @@ const seeds: readonly UserSeed[] = [
     email: "lucia.l2@globex.example",
     jobTitle: "L2 Analyst",
     defaultTenant: TENANT_GLOBEX,
-    roles: [{ tenant: TENANT_GLOBEX, role: "LEVEL_2_ANALYST" }],
+    roles: [{ tenant: TENANT_GLOBEX, role: "agent_l2" }],
   },
   {
     id: "user-6",
@@ -77,7 +83,50 @@ const seeds: readonly UserSeed[] = [
     email: "peter.problem@globex.example",
     jobTitle: "Problem Manager",
     defaultTenant: TENANT_GLOBEX,
-    roles: [{ tenant: TENANT_GLOBEX, role: "PROBLEM_MANAGER" }],
+    roles: [{ tenant: TENANT_GLOBEX, role: "agent_l2" }],
+  },
+  {
+    id: "user-7",
+    username: "jana.kb",
+    firstName: "Jana",
+    lastName: "Knowledge",
+    email: "jana.kb@acme-corp.example",
+    jobTitle: "Knowledge Editor",
+    defaultTenant: TENANT_ACME,
+    roles: [{ tenant: TENANT_ACME, role: "kb_editor" }],
+  },
+  {
+    id: "user-8",
+    username: "robert.cmdb",
+    firstName: "Robert",
+    lastName: "Cmdb",
+    email: "robert.cmdb@acme-corp.example",
+    jobTitle: "Configuration Manager",
+    defaultTenant: TENANT_ACME,
+    roles: [{ tenant: TENANT_ACME, role: "cmdb_owner" }],
+  },
+  {
+    id: "user-9",
+    username: "lucia.requester",
+    firstName: "Lucia",
+    lastName: "Requester",
+    email: "lucia.requester@acme-corp.example",
+    jobTitle: "Employee",
+    defaultTenant: TENANT_ACME,
+    roles: [{ tenant: TENANT_ACME, role: "requester" }],
+  },
+  {
+    id: "user-10",
+    username: "sp.admin",
+    firstName: "Service",
+    lastName: "Provider",
+    email: "sp.admin@service-provider.example",
+    jobTitle: "Service Provider Admin",
+    defaultTenant: TENANT_ACME,
+    roles: [
+      { tenant: TENANT_ACME, role: "sp_admin" },
+      { tenant: TENANT_GLOBEX, role: "sp_admin" },
+    ],
   },
 ];
 

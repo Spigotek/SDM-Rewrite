@@ -18,11 +18,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** PR #4 `6e5af17` — Primary libraries (Phase D).
-- **In flight:** Phase E.1 — `@sdm/api-mocks` MSW handlers (PR open).
-- **Next up:** Phase E.2 — Reálne RBAC mapping.
+- **Last merged:** PR #5 — Chunk E.2 (RBAC mapping). Phase E.1 dopravená priamym pushom `aa574a2` na main (mimo PR-flow, dokumentované v PR #5).
+- **In flight:** —
+- **Next up:** Phase E.3 — SPA App Shell + bootstrap.
 
-Posledná revízia tohto dokumentu: po merge PR #4 a otvorení PR pre E.1 (2026-05-17).
+Posledná revízia tohto dokumentu: po merge PR #5 (2026-05-17).
 
 ---
 
@@ -58,18 +58,22 @@ Posledná revízia tohto dokumentu: po merge PR #4 a otvorení PR pre E.1 (2026-
 
 > Cieľ fázy: `pnpm dev` otvorí použiteľné portál + workspace UI **bez bežiaceho BFF**.
 
-#### E.1 — `@sdm/api-mocks` MSW handlers ⏳ IN-FLIGHT
+#### E.1 — `@sdm/api-mocks` MSW handlers ✅ DONE (commit `aa574a2`)
 
 - **Inputs:** `docs/agents/devex-devops/mock-strategy.md`, `docs/agents/api-analyst/endpoints.md` + `schemas/*`
 - **Outputs:** `packages/api-mocks/src/handlers/{auth,users,tenants,incidents,requests,problems,changes,knowledge,cmdb,audit,config}.ts` (BFF layer, paths v `/api/*` + `/me/*` + `/auth/*` + `/config`), deterministic fixtures (~300 záznamov, faker seed 42/43), in-memory store, `browser.ts` + `node.ts` worker bootstraps, `apps/{portal,workspace}/{public/mockServiceWorker.js,src/mocks/browser.ts}` + conditional `main.tsx` bootstrap pri `VITE_USE_MOCKS=true`
 - **Done-when:** `VITE_USE_MOCKS=true pnpm dev` otvorí SPA bez BFF, MSW intercept-uje `/api/*` a `/me/*`; nové vitest test-y pre handler shapes (28 testov, tenant scope + pagination + filtre)
 - **Scope deviation vs mock-strategy.md:** upstream `/caisd-rest/*` mocky (pre BFF integration testy) sa **odkladajú do Phase F** — bez bežiaceho BFF nie sú v práve teraz použité; chunk si zachoval 10 handler modulov, ale len BFF vrstvu. `@mswjs/data` vynechané — plain in-memory arrays pre 300 fixture-rekordov bez nákladu na typovú integráciu
 
-#### E.2 — Reálne RBAC mapping
+#### E.2 — Reálne RBAC mapping ✅ DONE (PR #5)
 
-- **Inputs:** `docs/agents/security/rbac.md` (7 rolí × 25 obrazoviek matrix)
-- **Outputs:** nahrad `packages/domain/src/permissions.ts` stub authoritative mapping + per-screen guard helpers (`canViewQueue`, `canApproveChange`, ...)
-- **Done-when:** `<Can>` testy pokrývajú každú rolu × klúčové obrazovky kombinácie
+- **Inputs:** `docs/agents/security/rbac.md` (8 UI rolí × 31 obrazoviek matrix, round 2)
+- **Outputs:**
+  - `@sdm/domain` model — `UIRole` (8 hodnôt vrátane `requester_external` subtype), `Permission` ~70 dot-notation kľúčov
+  - `@sdm/domain` permissions.ts — `ROLE_PERMISSIONS` map, 31-screen visibility tabuľka, multi-role aggregation, 20 per-screen / per-action guard helpers
+  - `@sdm/auth` — `<Can>`, `<RouteGuard>`, nový `<ScreenGuard>` (view/edit mode + multi-role aggregation)
+  - `@sdm/api-mocks` users — re-seed na nové UI role + 4 noví používatelia (kb_editor, cmdb_owner, requester, sp_admin)
+- **Done-when:** 170/170 testov zelených; `<Can>` × každá rola × 10 kľúčových permissions/screens kombinácie verifikované
 
 #### E.3 — SPA App Shell + bootstrap
 
