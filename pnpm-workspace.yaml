@@ -10,3 +10,4 @@ packages:
   - "tools/boundaries-check"
   - "tools/scaffold"
   - "tools/pm-hooks"
+  - "tools/browser-test"

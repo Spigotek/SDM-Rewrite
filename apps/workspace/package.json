@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@sdm/api-client": "workspace:*",
+    "@sdm/api-mocks": "workspace:*",
     "@sdm/auth": "workspace:*",
     "@sdm/design-system": "workspace:*",
     "@sdm/domain": "workspace:*",

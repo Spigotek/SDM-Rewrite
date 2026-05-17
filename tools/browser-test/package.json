@@ -1,0 +1,17 @@
+{
+  "name": "@sdm/browser-test",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "run": "tsx runner.ts",
+    "clean": "tsx lib/prune.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "install-browsers": "playwright install chromium"
+  },
+  "dependencies": {
+    "@playwright/test": "1.49.1",
+    "tsx": "4.19.2"
+  }
+}

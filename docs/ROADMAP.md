@@ -18,11 +18,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** PR #3 `dbfa484` — Bootstrap (Phase C). PR #4 (Phase D) **čaká na merge**.
-- **In flight:** Phase D — Primary libraries (PR #4 open, CI green).
-- **Next up:** Phase E.1 — `@sdm/api-mocks` MSW handlers.
+- **Last merged:** PR #4 `6e5af17` — Primary libraries (Phase D).
+- **In flight:** Phase E.1 — `@sdm/api-mocks` MSW handlers (PR open).
+- **Next up:** Phase E.2 — Reálne RBAC mapping.
 
-Posledná revízia tohto dokumentu: po merge PR #3 a otvorení PR #4 (2026-05-17).
+Posledná revízia tohto dokumentu: po merge PR #4 a otvorení PR pre E.1 (2026-05-17).
 
 ---
 
@@ -44,7 +44,7 @@ Posledná revízia tohto dokumentu: po merge PR #3 a otvorení PR #4 (2026-05-17
 - **Done-when:** `pnpm install/typecheck/lint/build` zelené, `hadolint`/`actionlint`/`helm lint` čisté, BFF prod smoke (`/health`)
 - **Merge:** PR #3
 
-### Phase D — Primary libraries ⏳ IN-FLIGHT (PR #4)
+### Phase D — Primary libraries ✅ DONE (PR #4)
 
 - **Inputs:** `docs/agents/domain-modeller/model.ts`, `docs/agents/architecture/decision-records/08-error-handling.md`, `docs/agents/security/auth-flow.md` §session shape
 - **Outputs:**
@@ -58,11 +58,12 @@ Posledná revízia tohto dokumentu: po merge PR #3 a otvorení PR #4 (2026-05-17
 
 > Cieľ fázy: `pnpm dev` otvorí použiteľné portál + workspace UI **bez bežiaceho BFF**.
 
-#### E.1 — `@sdm/api-mocks` MSW handlers
+#### E.1 — `@sdm/api-mocks` MSW handlers ⏳ IN-FLIGHT
 
 - **Inputs:** `docs/agents/devex-devops/mock-strategy.md`, `docs/agents/api-analyst/endpoints.md` + `schemas/*`
-- **Outputs:** `packages/api-mocks/src/handlers/{auth,me,incident,request,problem,change,kb,cmdb,catalog,activity}.ts`, fixture data, browser/server worker bootstraps
-- **Done-when:** `VITE_USE_MOCKS=true pnpm dev` otvorí SPA bez BFF, MSW intercept-uje `/api/*`; nové vitest test-y pre handler shapes
+- **Outputs:** `packages/api-mocks/src/handlers/{auth,users,tenants,incidents,requests,problems,changes,knowledge,cmdb,audit,config}.ts` (BFF layer, paths v `/api/*` + `/me/*` + `/auth/*` + `/config`), deterministic fixtures (~300 záznamov, faker seed 42/43), in-memory store, `browser.ts` + `node.ts` worker bootstraps, `apps/{portal,workspace}/{public/mockServiceWorker.js,src/mocks/browser.ts}` + conditional `main.tsx` bootstrap pri `VITE_USE_MOCKS=true`
+- **Done-when:** `VITE_USE_MOCKS=true pnpm dev` otvorí SPA bez BFF, MSW intercept-uje `/api/*` a `/me/*`; nové vitest test-y pre handler shapes (28 testov, tenant scope + pagination + filtre)
+- **Scope deviation vs mock-strategy.md:** upstream `/caisd-rest/*` mocky (pre BFF integration testy) sa **odkladajú do Phase F** — bez bežiaceho BFF nie sú v práve teraz použité; chunk si zachoval 10 handler modulov, ale len BFF vrstvu. `@mswjs/data` vynechané — plain in-memory arrays pre 300 fixture-rekordov bez nákladu na typovú integráciu
 
 #### E.2 — Reálne RBAC mapping
 
