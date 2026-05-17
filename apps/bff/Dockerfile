@@ -34,7 +34,7 @@ COPY tools tools
 # Stub build is a no-op today; in chunk 2 this runs `pnpm --filter @sdm/bff build`
 # which produces dist/index.js via tsup.
 RUN pnpm --filter @sdm/bff build \
-    && pnpm --filter @sdm/bff deploy --legacy --prod /out
+    && pnpm --filter @sdm/bff deploy --prod /out
 
 # ----- runtime ---------------------------------------------------------------
 FROM node:${NODE_VERSION}-alpine AS runtime
