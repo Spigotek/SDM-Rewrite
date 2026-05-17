@@ -7,7 +7,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "echo \"(no tests yet)\" && exit 0",
+    "test": "vitest run",
     "build": "echo \"(source-only package — no build)\" && exit 0",
     "clean": "rimraf .turbo *.tsbuildinfo"
   }
