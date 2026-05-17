@@ -13,3 +13,5 @@ docs/onboarding.md
 docs/ca-service-management-17-4.pdf
 .agents/runs
 deploy/helm/sdm/charts
+deploy/helm/sdm/templates
+deploy/helm/sdm/Chart.lock

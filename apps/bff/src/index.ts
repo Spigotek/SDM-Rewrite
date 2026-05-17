@@ -1,23 +1,40 @@
-import { createServer } from "node:http";
+import { serve } from "@hono/node-server";
+import { Hono } from "hono";
+import { logger } from "hono/logger";
+import { secureHeaders } from "hono/secure-headers";
+import pino from "pino";
+
+const log = pino({
+  level: process.env.PM_LOG_LEVEL ?? "info",
+  redact: ["req.headers.authorization", "req.headers.cookie", "*.password"],
+});
 
 const port = Number(process.env.BFF_PORT ?? 5174);
 
-const server = createServer((req, res) => {
-  if (req.url === "/health" || req.url === "/healthz") {
-    res.writeHead(200, { "content-type": "application/json" });
-    res.end(JSON.stringify({ status: "ok", service: "@sdm/bff", stub: true }));
-    return;
-  }
-  res.writeHead(404, { "content-type": "application/json" });
-  res.end(JSON.stringify({ error: "not_found" }));
+const app = new Hono();
+
+app.use("*", secureHeaders());
+app.use(
+  "*",
+  logger((msg) => log.info(msg)),
+);
+
+app.get("/health", (c) => c.json({ status: "ok", service: "@sdm/bff", stub: true }));
+app.get("/healthz", (c) => c.json({ status: "ok", service: "@sdm/bff", stub: true }));
+app.get("/readyz", (c) => c.json({ status: "ready", checks: { sessionStore: "in-memory" } }));
+
+app.notFound((c) => c.json({ error: "not_found" }, 404));
+app.onError((err, c) => {
+  log.error({ err }, "unhandled error");
+  return c.json({ error: "internal_error" }, 500);
 });
 
-server.listen(port, () => {
-  console.log(`[bff stub] listening on :${port}`);
+const server = serve({ fetch: app.fetch, port }, ({ port: bound }) => {
+  log.info({ port: bound }, "bff: started");
 });
 
 const shutdown = (signal: NodeJS.Signals) => {
-  console.log(`[bff stub] ${signal} received — shutting down`);
+  log.info({ signal }, "bff: shutting down");
   server.close(() => process.exit(0));
 };
 process.on("SIGTERM", shutdown);

@@ -3,13 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "./src/index.ts",
   "scripts": {
-    "dev": "echo \"(stub — vite dev server in chunk 2)\" && exit 0",
+    "dev": "vite --port 5173 --strictPort",
+    "preview": "vite preview --port 5173",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "echo \"(no tests yet)\" && exit 0",
-    "build": "echo \"(stub — vite build in chunk 2)\" && exit 0",
+    "test": "echo \"(no tests yet — chunk 3)\" && exit 0",
+    "build": "vite build",
     "clean": "rimraf dist .vite .turbo *.tsbuildinfo"
   },
   "dependencies": {
@@ -17,6 +17,14 @@
     "@sdm/auth": "workspace:*",
     "@sdm/design-system": "workspace:*",
     "@sdm/domain": "workspace:*",
-    "@sdm/i18n": "workspace:*"
+    "@sdm/i18n": "workspace:*",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "@vitejs/plugin-react": "4.3.4",
+    "vite": "6.0.6"
   }
 }

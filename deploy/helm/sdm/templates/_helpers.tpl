@@ -1,13 +1,7 @@
-{{/*
-Expand the name of the chart.
-*/}}
 {{- define "sdm.name" -}}
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/*
-Create a default fully qualified app name.
-*/}}
 {{- define "sdm.fullname" -}}
 {{- if .Values.fullnameOverride -}}
 {{- .Values.fullnameOverride | trunc 63 | trimSuffix "-" -}}
@@ -21,17 +15,22 @@ Create a default fully qualified app name.
 {{- end -}}
 {{- end -}}
 
-{{- define "sdm.bff.fullname" -}}
-{{- printf "%s-bff" (include "sdm.fullname" .) | trunc 63 | trimSuffix "-" -}}
-{{- end -}}
-
 {{- define "sdm.chart" -}}
 {{- printf "%s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" -}}
 {{- end -}}
 
-{{/*
-Common labels applied to every object.
-*/}}
+{{/* Per-component fullnames */}}
+{{- define "sdm.bff.fullname" -}}
+{{- printf "%s-bff" (include "sdm.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- define "sdm.portal.fullname" -}}
+{{- printf "%s-portal" (include "sdm.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+{{- define "sdm.workspace.fullname" -}}
+{{- printf "%s-workspace" (include "sdm.fullname" .) | trunc 63 | trimSuffix "-" -}}
+{{- end -}}
+
+{{/* Common label set */}}
 {{- define "sdm.labels" -}}
 helm.sh/chart: {{ include "sdm.chart" . }}
 {{ include "sdm.selectorLabels" . }}
@@ -49,23 +48,43 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{ include "sdm.labels" . }}
 app.kubernetes.io/component: bff
 {{- end -}}
-
 {{- define "sdm.bff.selectorLabels" -}}
 {{ include "sdm.selectorLabels" . }}
 app.kubernetes.io/component: bff
 {{- end -}}
 
-{{/*
-Image reference assembly. Falls back to Chart.appVersion when image.tag is empty.
-*/}}
-{{- define "sdm.image" -}}
-{{- $tag := default .Chart.AppVersion .Values.image.tag -}}
-{{- printf "%s/%s:%s" .Values.image.registry .Values.image.repository $tag -}}
+{{- define "sdm.portal.labels" -}}
+{{ include "sdm.labels" . }}
+app.kubernetes.io/component: portal
+{{- end -}}
+{{- define "sdm.portal.selectorLabels" -}}
+{{ include "sdm.selectorLabels" . }}
+app.kubernetes.io/component: portal
 {{- end -}}
 
-{{/*
-ServiceAccount name resolver.
-*/}}
+{{- define "sdm.workspace.labels" -}}
+{{ include "sdm.labels" . }}
+app.kubernetes.io/component: workspace
+{{- end -}}
+{{- define "sdm.workspace.selectorLabels" -}}
+{{ include "sdm.selectorLabels" . }}
+app.kubernetes.io/component: workspace
+{{- end -}}
+
+{{/* Image refs — registry from .Values.image, repo+tag per-component. */}}
+{{- define "sdm.bff.image" -}}
+{{- $tag := default .Chart.AppVersion (default .Values.image.tag .Values.bff.image.tag) -}}
+{{- printf "%s/%s:%s" .Values.image.registry .Values.bff.image.repository $tag -}}
+{{- end -}}
+{{- define "sdm.portal.image" -}}
+{{- $tag := default .Chart.AppVersion (default .Values.image.tag .Values.portal.image.tag) -}}
+{{- printf "%s/%s:%s" .Values.image.registry .Values.portal.image.repository $tag -}}
+{{- end -}}
+{{- define "sdm.workspace.image" -}}
+{{- $tag := default .Chart.AppVersion (default .Values.image.tag .Values.workspace.image.tag) -}}
+{{- printf "%s/%s:%s" .Values.image.registry .Values.workspace.image.repository $tag -}}
+{{- end -}}
+
 {{- define "sdm.bff.serviceAccountName" -}}
 {{- if .Values.bff.serviceAccount.create -}}
 {{- default (include "sdm.bff.fullname" .) .Values.bff.serviceAccount.name -}}

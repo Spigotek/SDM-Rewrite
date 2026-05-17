@@ -33,7 +33,7 @@ spec:
         {{- toYaml .Values.bff.podSecurityContext | nindent 8 }}
       containers:
         - name: bff
-          image: {{ include "sdm.image" . }}
+          image: {{ include "sdm.bff.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           securityContext:
             {{- toYaml .Values.bff.securityContext | nindent 12 }}

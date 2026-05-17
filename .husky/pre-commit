@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+# Devcontainer beží s pnpm v PATH. Host dev (nvm) sa loadne tu.
+if [ -z "$(command -v pnpm 2>/dev/null)" ] && [ -s "$HOME/.nvm/nvm.sh" ]; then
+  # shellcheck source=/dev/null
+  . "$HOME/.nvm/nvm.sh" >/dev/null 2>&1
+  nvm use --silent >/dev/null 2>&1 || true
+fi
+
+if ! command -v pnpm >/dev/null 2>&1; then
+  echo "[husky] pnpm not in PATH — install Node 22 + pnpm or open devcontainer." >&2
+  echo "[husky] skipping lint-staged (commit will proceed unchecked)." >&2
+  exit 0
+fi
+
+pnpm exec lint-staged
