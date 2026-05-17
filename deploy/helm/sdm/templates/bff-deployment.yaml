@@ -1,0 +1,82 @@
+{{- if .Values.bff.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sdm.bff.fullname" . }}
+  labels:
+    {{- include "sdm.bff.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.bff.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "sdm.bff.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sdm.bff.selectorLabels" . | nindent 8 }}
+        {{- with .Values.bff.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include (print $.Template.BasePath "/bff-configmap.yaml") . | sha256sum }}
+        checksum/secret: {{ include (print $.Template.BasePath "/bff-secret.yaml") . | sha256sum }}
+        {{- with .Values.bff.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "sdm.bff.serviceAccountName" . }}
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+        {{- toYaml .Values.bff.podSecurityContext | nindent 8 }}
+      containers:
+        - name: bff
+          image: {{ include "sdm.bff.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.bff.securityContext | nindent 12 }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.bff.port }}
+              protocol: TCP
+          env:
+            {{- range $k, $v := .Values.bff.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          envFrom:
+            {{- if .Values.bff.envFromConfigMap }}
+            - configMapRef:
+                name: {{ include "sdm.bff.fullname" . }}-config
+            {{- end }}
+            {{- if .Values.bff.envFromSecret }}
+            - secretRef:
+                name: {{ include "sdm.bff.fullname" . }}-secret
+            {{- end }}
+          livenessProbe:
+            {{- toYaml .Values.bff.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.bff.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.bff.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      {{- with .Values.bff.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.bff.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.bff.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+{{- end }}

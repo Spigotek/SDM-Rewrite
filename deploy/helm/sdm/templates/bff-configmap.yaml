@@ -1,0 +1,12 @@
+{{- if .Values.bff.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "sdm.bff.fullname" . }}-config
+  labels:
+    {{- include "sdm.bff.labels" . | nindent 4 }}
+data:
+  {{- range $k, $v := .Values.bff.config }}
+  {{ $k }}: {{ $v | quote }}
+  {{- end }}
+{{- end }}

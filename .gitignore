@@ -3,14 +3,42 @@
 
 # Node
 node_modules/
+.pnpm-store/
+
+# Turborepo
+.turbo/
+
+# Build
 dist/
 build/
-*.log
+.vite/
+*.tsbuildinfo
+
+# Test
+coverage/
+playwright-report/
+test-results/
 
 # Environment
 .env
 .env.local
+.env.*.local
+!.env.example
+
+# Editor
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# Logs
+*.log
 
 # PM runtime state (per beh, generuje sa za behu, neverzionovať)
 .agents/runs/
 .agents/state.json
+.agents/.current-run-id
+
+# Helm
+deploy/helm/sdm/charts/
+deploy/helm/sdm/Chart.lock

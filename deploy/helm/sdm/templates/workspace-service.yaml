@@ -1,0 +1,21 @@
+{{- if .Values.workspace.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sdm.workspace.fullname" . }}
+  labels:
+    {{- include "sdm.workspace.labels" . | nindent 4 }}
+  {{- with .Values.workspace.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.workspace.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.workspace.service.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "sdm.workspace.selectorLabels" . | nindent 4 }}
+{{- end }}

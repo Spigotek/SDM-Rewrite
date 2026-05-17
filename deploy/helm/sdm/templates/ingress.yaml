@@ -1,0 +1,49 @@
+{{- if .Values.ingress.enabled }}
+{{- $root := . -}}
+{{- $bffSvc := include "sdm.bff.fullname" . -}}
+{{- $portalSvc := include "sdm.portal.fullname" . -}}
+{{- $workspaceSvc := include "sdm.workspace.fullname" . -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "sdm.fullname" . }}
+  labels:
+    {{- include "sdm.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- with .Values.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.ingress.hosts }}
+    {{- $spaSvc := "" }}
+    {{- if eq .service "portal" }}{{ $spaSvc = $portalSvc }}{{ end }}
+    {{- if eq .service "workspace" }}{{ $spaSvc = $workspaceSvc }}{{ end }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range $root.Values.ingress.bffPathPrefixes }}
+          - path: {{ . }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $bffSvc }}
+                port:
+                  name: http
+          {{- end }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $spaSvc }}
+                port:
+                  name: http
+    {{- end }}
+{{- end }}

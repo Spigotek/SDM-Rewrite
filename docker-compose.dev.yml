@@ -1,0 +1,42 @@
+services:
+  dev:
+    build:
+      context: ./.devcontainer
+      dockerfile: Dockerfile
+    container_name: sdm-rewrite-dev
+    init: true
+    user: node
+    working_dir: /workspace
+    volumes:
+      - .:/workspace:cached
+      - sdm-pnpm-store:/home/node/.local/share/pnpm/store
+      - sdm-node-modules:/workspace/node_modules
+    environment:
+      - NODE_ENV=development
+      - SHELL=/bin/bash
+    ports:
+      - "5173:5173" # portal (Vite)
+      - "5174:5174" # bff (Hono)
+      - "5175:5175" # workspace (Vite)
+    depends_on:
+      - redis
+    networks:
+      - sdm-dev
+    command: sleep infinity
+
+  redis:
+    image: redis:7.4-alpine
+    container_name: sdm-rewrite-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - sdm-dev
+
+volumes:
+  sdm-pnpm-store:
+  sdm-node-modules:
+
+networks:
+  sdm-dev:
+    driver: bridge

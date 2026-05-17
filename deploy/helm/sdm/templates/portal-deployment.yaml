@@ -1,0 +1,43 @@
+{{- if .Values.portal.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sdm.portal.fullname" . }}
+  labels:
+    {{- include "sdm.portal.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.portal.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "sdm.portal.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sdm.portal.selectorLabels" . | nindent 8 }}
+        {{- with .Values.portal.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.portal.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: portal
+          image: {{ include "sdm.portal.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.portal.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.portal.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.portal.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.portal.resources | nindent 12 }}
+{{- end }}

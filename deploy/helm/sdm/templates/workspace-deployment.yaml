@@ -1,0 +1,43 @@
+{{- if .Values.workspace.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "sdm.workspace.fullname" . }}
+  labels:
+    {{- include "sdm.workspace.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.workspace.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "sdm.workspace.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "sdm.workspace.selectorLabels" . | nindent 8 }}
+        {{- with .Values.workspace.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      {{- with .Values.workspace.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- with .Values.image.pullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: workspace
+          image: {{ include "sdm.workspace.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.workspace.port }}
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .Values.workspace.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.workspace.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.workspace.resources | nindent 12 }}
+{{- end }}

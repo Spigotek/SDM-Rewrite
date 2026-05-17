@@ -1,0 +1,17 @@
+node_modules
+dist
+.vite
+.turbo
+coverage
+pnpm-lock.yaml
+*.tsbuildinfo
+docs/agents
+docs/spec
+docs/system-overview.md
+docs/dev-handbook.md
+docs/onboarding.md
+docs/ca-service-management-17-4.pdf
+.agents/runs
+deploy/helm/sdm/charts
+deploy/helm/sdm/templates
+deploy/helm/sdm/Chart.lock

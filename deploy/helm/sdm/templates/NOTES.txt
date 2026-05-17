@@ -1,0 +1,24 @@
+SDM-Rewrite {{ .Chart.AppVersion }} has been deployed.
+
+Release name: {{ .Release.Name }}
+Namespace:    {{ .Release.Namespace }}
+
+BFF service:
+  {{ include "sdm.bff.fullname" . }}.{{ .Release.Namespace }}.svc.cluster.local:{{ .Values.bff.service.port }}
+
+To check status:
+  kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }}
+
+{{- if .Values.ingress.enabled }}
+
+Ingress hosts:
+  {{- range .Values.ingress.hosts }}
+  - http{{ if (gt (len $.Values.ingress.tls) 0) }}s{{ end }}://{{ .host }} → {{ .service }} (with {{ join ", " $.Values.ingress.bffPathPrefixes }} → bff)
+  {{- end }}
+{{- else }}
+
+Ingress is disabled — for local access:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "sdm.bff.fullname" . }} 5174:{{ .Values.bff.service.port }}
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "sdm.portal.fullname" . }} 5173:{{ .Values.portal.service.port }}
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "sdm.workspace.fullname" . }} 5175:{{ .Values.workspace.service.port }}
+{{- end }}
