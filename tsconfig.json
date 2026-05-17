@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "files": [],
+  "references": [
+    { "path": "./apps/portal" },
+    { "path": "./apps/workspace" },
+    { "path": "./apps/bff" },
+    { "path": "./apps/pm" },
+    { "path": "./packages/api-client" },
+    { "path": "./packages/api-types" },
+    { "path": "./packages/domain" },
+    { "path": "./packages/design-system" },
+    { "path": "./packages/auth" },
+    { "path": "./packages/i18n" },
+    { "path": "./packages/utils" },
+    { "path": "./packages/api-mocks" }
+  ]
+}

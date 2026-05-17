@@ -1,0 +1,108 @@
+# Default values for sdm chart. Override per environment.
+
+nameOverride: ""
+fullnameOverride: ""
+
+image:
+  registry: ghcr.io
+  repository: spigotek/sdm-bff
+  tag: ""  # defaults to .Chart.AppVersion when empty
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+
+bff:
+  enabled: true
+  replicaCount: 1
+  port: 5174
+
+  env:
+    NODE_ENV: production
+    BFF_PORT: "5174"
+    BFF_SESSION_STORE_MODE: in-memory      # in-memory | redis
+    BFF_CA_SDM_USE_MOCKS: "false"
+    PM_LOG_LEVEL: info
+
+  envFromConfigMap: true
+  envFromSecret: true
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+  livenessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 10
+    periodSeconds: 30
+    timeoutSeconds: 3
+    failureThreshold: 3
+
+  readinessProbe:
+    httpGet:
+      path: /health
+      port: http
+    initialDelaySeconds: 3
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+
+  service:
+    type: ClusterIP
+    port: 80
+    annotations: {}
+
+  ingress:
+    enabled: false
+    className: ""
+    annotations: {}
+    hosts:
+      - host: sdm.example.org
+        paths:
+          - path: /api
+            pathType: Prefix
+          - path: /auth
+            pathType: Prefix
+          - path: /me
+            pathType: Prefix
+    tls: []
+
+  config:
+    # Mounted via ConfigMap. JSON-ish key/value pairs surfaced as env vars.
+    CA_SDM_BASE_URL: ""
+    CORRELATION_HEADER: X-Correlation-ID
+    TENANT_HEADER: X-CA-SDM-Tenant
+
+  secret:
+    # Surfaced via Secret. Set via --set-file or sealed-secrets.
+    BFF_REDIS_URL: ""
+    CA_SDM_ACCESS_KEY: ""
+
+  serviceAccount:
+    create: true
+    name: ""
+    annotations: {}
+
+  podAnnotations: {}
+  podLabels: {}
+
+  podSecurityContext:
+    fsGroup: 1000
+    runAsNonRoot: true
+
+  securityContext:
+    allowPrivilegeEscalation: false
+    readOnlyRootFilesystem: true
+    runAsNonRoot: true
+    runAsUser: 1000
+    capabilities:
+      drop:
+        - ALL
+
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}

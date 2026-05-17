@@ -1,0 +1,14 @@
+{
+  "name": "@sdm/tsconfig",
+  "version": "0.1.0",
+  "private": true,
+  "main": "./tsconfig.json",
+  "files": ["tsconfig.json"],
+  "scripts": {
+    "typecheck": "echo \"(no ts here)\" && exit 0",
+    "lint": "echo \"(no js here)\" && exit 0",
+    "test": "echo \"(no tests yet)\" && exit 0",
+    "build": "echo \"(config-only package — no build)\" && exit 0",
+    "clean": "rimraf .turbo"
+  }
+}

@@ -1,0 +1,35 @@
+{{- if and .Values.bff.enabled .Values.bff.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "sdm.bff.fullname" . }}
+  labels:
+    {{- include "sdm.bff.labels" . | nindent 4 }}
+  {{- with .Values.bff.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.bff.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- with .Values.bff.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    {{- range .Values.bff.ingress.hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          {{- range .paths }}
+          - path: {{ .path }}
+            pathType: {{ .pathType }}
+            backend:
+              service:
+                name: {{ include "sdm.bff.fullname" $ }}
+                port:
+                  name: http
+          {{- end }}
+    {{- end }}
+{{- end }}

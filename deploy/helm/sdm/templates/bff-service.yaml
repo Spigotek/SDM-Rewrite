@@ -1,0 +1,21 @@
+{{- if .Values.bff.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sdm.bff.fullname" . }}
+  labels:
+    {{- include "sdm.bff.labels" . | nindent 4 }}
+  {{- with .Values.bff.service.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.bff.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.bff.service.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "sdm.bff.selectorLabels" . | nindent 4 }}
+{{- end }}

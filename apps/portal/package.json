@@ -1,0 +1,22 @@
+{
+  "name": "@sdm/portal",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "echo \"(stub — vite dev server in chunk 2)\" && exit 0",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "echo \"(no tests yet)\" && exit 0",
+    "build": "echo \"(stub — vite build in chunk 2)\" && exit 0",
+    "clean": "rimraf dist .vite .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@sdm/api-client": "workspace:*",
+    "@sdm/auth": "workspace:*",
+    "@sdm/design-system": "workspace:*",
+    "@sdm/domain": "workspace:*",
+    "@sdm/i18n": "workspace:*"
+  }
+}

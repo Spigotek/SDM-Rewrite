@@ -1,0 +1,20 @@
+apiVersion: v2
+name: sdm
+description: SDM-Rewrite — analytical SPA portal/workspace + BFF (Hono) for CA Service Management 17.4 replacement.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+home: https://github.com/Spigotek/SDM-Rewrite
+sources:
+  - https://github.com/Spigotek/SDM-Rewrite
+maintainers:
+  - name: Spigotek
+    email: dusan.lago@soimco.sk
+keywords:
+  - sdm
+  - service-management
+  - bff
+  - hono
+  - on-prem
+icon: https://raw.githubusercontent.com/Spigotek/SDM-Rewrite/main/docs/logo.svg
+kubeVersion: ">=1.26.0-0"

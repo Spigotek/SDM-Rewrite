@@ -1,0 +1,12 @@
+packages:
+  - "apps/portal"
+  - "apps/workspace"
+  - "apps/bff"
+  - "apps/pm"
+  - "packages/*"
+  - "tools/eslint-config"
+  - "tools/tsconfig-base"
+  - "tools/i18n-check"
+  - "tools/boundaries-check"
+  - "tools/scaffold"
+  - "tools/pm-hooks"

@@ -1,0 +1,22 @@
+{
+  "name": "@sdm/bff",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "scripts": {
+    "dev": "node --import tsx/esm src/index.ts",
+    "start": "node --import tsx/esm src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src",
+    "test": "echo \"(no tests yet)\" && exit 0",
+    "build": "echo \"(stub — tsup bundle in chunk 2)\" && exit 0",
+    "clean": "rimraf dist .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@sdm/api-client": "workspace:*",
+    "@sdm/auth": "workspace:*",
+    "@sdm/domain": "workspace:*",
+    "tsx": "4.19.2"
+  }
+}
