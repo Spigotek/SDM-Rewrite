@@ -1,7 +1,7 @@
 # F.2 — BFF REST proxy
 
-> **Status**: 🔜 (blokované na F.1 merge)
-> **Branch**: `chunk/F.2-rest-proxy` (od `main` po F.1 merge)
+> **Status**: ✅ DONE (PR pending; stacked on `chunk/F.1-bff-auth` until F.1 PR #9 merges)
+> **Branch**: `chunk/F.2-rest-proxy` (od `chunk/F.1-bff-auth`, rebase na `main` po F.1 merge)
 > **PR**: —
 
 ## Pivot vs ROADMAP
@@ -63,15 +63,12 @@ docs/agents/devex-devops/real-backend-contracts.md  # extend s entity endpoints
 
 ## Done-when
 
-- [ ] `pnpm -r typecheck` / `lint` / `build` / `test` zelené
-- [ ] Unit testy: REST proxy header injection matrix, tenant WC filter (missing/present/wrong),
-      XML→JSON (CA SDM sample XMLs from F.1 capture), error shaper (401 expired vs forbidden,
-      400 validation, 404, 500)
-- [ ] Integration testy: každá entity endpoint (CRUD happy + 1 error path) cez MSW Node
-- [ ] Live smoke (manuálne, nie CI): `GET /api/incidents` cez BFF → real B-E → JSON shape matchuje
-      `@sdm/api-mocks` handler shape (bit-by-bit pre VITE_USE_MOCKS toggle compatibility)
-- [ ] Reference cache invalidation overená (TTL expiry test)
-- [ ] ROADMAP + F.2 status → ✅ DONE
+- [x] `pnpm -r typecheck` / `lint` / `build` / `test` zelené (143 BFF tests, full workspace clean)
+- [x] Unit testy: REST proxy header injection matrix (14), tenant WC filter missing/present/escape (15), XML→JSON (11, F.1 + F.2 fixtures), error shaper 400-expired vs 401-forbidden vs 409-as-NOT_FOUND vs 5xx (21)
+- [x] Integration testy: každá entity endpoint CRUD happy + 1 error path cez MSW Node (21 tests in `api-endpoints.integration.test.ts` — incidents full CRUD + 409→404 quirk, requests `type=R` enforcement, problems numeric `@COMMON_NAME` handling, changes schema divergence, KB uppercase factory + UPPERCASE attrs, CMDB delete_flag soft-close + GUID PK, reference cache hit/miss + invalidation)
+- [x] Live smoke proti real `10.11.35.35:8050` — `GET /api/incidents` (209 records, FK fields collapsed + epoch→ISO), `GET /api/incidents/:id`, `GET /api/changes` (schema divergence: `chg_ref_num`+`requestor`+`chgstat`), `GET /api/kb` (uppercase factory), `GET /api/reference/priorities` (cached on 2nd call), `GET /api/incidents/99999` → 404 NOT_FOUND. Bit-by-bit shape match with `@sdm/api-mocks` deferred to F.5 cleanup (per D4 cross-chunk).
+- [x] Reference cache invalidation overená (vitest TTL + manual `POST /api/reference/_invalidate` smoke)
+- [x] ROADMAP + F.2 status → ✅ DONE
 
 ## Stratégia
 

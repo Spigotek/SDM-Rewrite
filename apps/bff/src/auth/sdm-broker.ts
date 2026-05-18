@@ -1,6 +1,9 @@
 import { XMLParser } from "fast-xml-parser";
 import type { Logger } from "pino";
-import { AppErrorException, type AppErrorCode } from "./errors";
+import { assertSdmOk } from "../api/error-shaper";
+import { SDM_XML_PARSER_OPTIONS } from "../api/xml-json";
+import { SdmHttpClient, type RawSdmResponse } from "../api/http-client";
+import { AppErrorException } from "./errors";
 
 /**
  * CA SDM 17.4 REST broker.
@@ -53,31 +56,23 @@ export interface SdmBrokerDeps {
   readonly now: () => number; // unix ms
 }
 
-const XML_PARSER = new XMLParser({
-  ignoreAttributes: false,
-  attributeNamePrefix: "@",
-  processEntities: false,
-  parseTagValue: false,
-  parseAttributeValue: false,
-  trimValues: true,
-});
-
-const RETRYABLE_FETCH_ERRORS = new Set([
-  "ECONNREFUSED",
-  "ECONNRESET",
-  "ETIMEDOUT",
-  "EAI_AGAIN",
-  "ENETUNREACH",
-]);
+const XML_PARSER = new XMLParser(SDM_XML_PARSER_OPTIONS);
 
 export class SdmBroker {
-  private readonly cfg: SdmBrokerConfig;
   private readonly deps: SdmBrokerDeps;
+  private readonly client: SdmHttpClient;
   private readonly basicAuthHeader: string;
 
   constructor(cfg: SdmBrokerConfig, deps: SdmBrokerDeps) {
-    this.cfg = cfg;
     this.deps = deps;
+    this.client = new SdmHttpClient(
+      {
+        baseUrl: cfg.baseUrl,
+        requestTimeoutMs: cfg.requestTimeoutMs,
+        maxRetries: cfg.maxRetries,
+      },
+      { fetch: deps.fetch, log: deps.log },
+    );
     const b64 = Buffer.from(`${cfg.basicAuthUser}:${cfg.basicAuthPass}`, "utf8").toString("base64");
     this.basicAuthHeader = `Basic ${b64}`;
   }
@@ -91,7 +86,7 @@ export class SdmBroker {
       ? `Basic ${Buffer.from(`${overrideCreds.user}:${overrideCreds.pass}`, "utf8").toString("base64")}`
       : this.basicAuthHeader;
 
-    const res = await this.requestRaw({
+    const res = await this.client.request({
       method: "POST",
       path: "/rest_access",
       headers: {
@@ -164,7 +159,7 @@ export class SdmBroker {
    */
   async revoke(accessKey: string, accessKeyId: string, correlationId?: string): Promise<void> {
     try {
-      const res = await this.requestRaw({
+      const res = await this.client.request({
         method: "DELETE",
         path: `/rest_access/${encodeURIComponent(accessKeyId)}`,
         headers: {
@@ -193,7 +188,7 @@ export class SdmBroker {
   async lookupContact(accessKey: string, userid: string): Promise<SdmContact> {
     const wc = `userid=${encodeSdmString(userid)}`;
     const path = `/cnt?WC=${encodeURIComponent(wc)}`;
-    const res = await this.requestRaw({
+    const res = await this.client.request({
       method: "GET",
       path,
       headers: {
@@ -244,7 +239,7 @@ export class SdmBroker {
   async listContactRoles(accessKey: string, contactRawId: string): Promise<SdmContactRole[]> {
     const wc = `contact=${contactRawId}`; // already U'...' with embedded quotes
     const path = `/cnt_role?WC=${encodeURIComponent(wc)}`;
-    const res = await this.requestRaw({
+    const res = await this.client.request({
       method: "GET",
       path,
       headers: {
@@ -294,91 +289,9 @@ export class SdmBroker {
 
   // ---------------------------------------------------------------------------
 
-  private assertReadOk(res: RawResponse, op: string): void {
-    if (res.status === 200) return;
-    if (res.status === 400 && /Invalid REST Access Key/i.test(res.text)) {
-      throw new AppErrorException({
-        code: "AUTH_EXPIRED",
-        httpStatus: 401,
-        message: "CA SDM access key expired or invalid",
-        details: { op, sdmStatus: res.status },
-      });
-    }
-    if (res.status === 401) {
-      throw new AppErrorException({
-        code: "AUTH_FORBIDDEN",
-        httpStatus: 403,
-        message: "CA SDM denied the request",
-        details: { op, sdmStatus: res.status, sdmBody: res.text.slice(0, 200) },
-      });
-    }
-    if (res.status === 404) {
-      throw new AppErrorException({
-        code: "NOT_FOUND",
-        httpStatus: 404,
-        message: `CA SDM ${op}: not found`,
-      });
-    }
-    if (res.status >= 500) {
-      throw new AppErrorException({
-        code: "BACKEND_UNAVAILABLE",
-        httpStatus: 503,
-        message: `CA SDM ${op} failed (HTTP ${res.status})`,
-      });
-    }
-    throw new AppErrorException({
-      code: "UNKNOWN",
-      httpStatus: 502,
-      message: `CA SDM ${op} unexpected status ${res.status}`,
-      details: { sdmBody: res.text.slice(0, 200) },
-    });
+  private assertReadOk(res: RawSdmResponse, op: string): void {
+    assertSdmOk({ status: res.status, text: res.text, headers: res.headers, op }, [200]);
   }
-
-  private async requestRaw(req: {
-    method: string;
-    path: string;
-    headers: Record<string, string>;
-    body?: string;
-  }): Promise<RawResponse> {
-    const url = `${this.cfg.baseUrl}${req.path}`;
-    let attempt = 0;
-    let lastErr: unknown;
-    while (attempt <= this.cfg.maxRetries) {
-      attempt += 1;
-      const controller = new AbortController();
-      const timer = setTimeout(() => controller.abort(), this.cfg.requestTimeoutMs);
-      try {
-        const init: RequestInit = {
-          method: req.method,
-          headers: req.headers,
-          signal: controller.signal,
-        };
-        if (req.body !== undefined) init.body = req.body;
-        const res = await this.deps.fetch(url, init);
-        const text = await res.text();
-        return { status: res.status, text, headers: res.headers };
-      } catch (err) {
-        lastErr = err;
-        if (!isRetryableFetchError(err) || attempt > this.cfg.maxRetries) break;
-        const backoffMs = 100 * 2 ** (attempt - 1);
-        await sleep(backoffMs);
-      } finally {
-        clearTimeout(timer);
-      }
-    }
-    throw new AppErrorException({
-      code: classifyNetworkError(lastErr),
-      httpStatus: 502,
-      message: `CA SDM request failed: ${stringifyErr(lastErr)}`,
-      details: { url, method: req.method },
-    });
-  }
-}
-
-interface RawResponse {
-  status: number;
-  text: string;
-  headers: Headers;
 }
 
 interface RawCnt {
@@ -419,27 +332,4 @@ function toSdmContact(raw: RawCnt): SdmContact {
 /** Encode a string for use inside a CA SDM WC clause: wrap in single quotes, URL-encode them. */
 function encodeSdmString(s: string): string {
   return `'${s.replace(/'/g, "''")}'`;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function isRetryableFetchError(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
-  const code = (err as { code?: unknown }).code;
-  if (typeof code === "string" && RETRYABLE_FETCH_ERRORS.has(code)) return true;
-  const name = (err as { name?: unknown }).name;
-  return name === "AbortError" || name === "TypeError";
-}
-
-function classifyNetworkError(err: unknown): AppErrorCode {
-  if (!err || typeof err !== "object") return "NETWORK";
-  const name = (err as { name?: unknown }).name;
-  return name === "AbortError" ? "BACKEND_UNAVAILABLE" : "NETWORK";
-}
-
-function stringifyErr(err: unknown): string {
-  if (err instanceof Error) return err.message;
-  return String(err);
 }
