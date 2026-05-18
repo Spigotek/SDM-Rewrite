@@ -2,8 +2,9 @@ import { test, expect } from "../fixtures/isolated-context";
 
 test("tenant header switches the dataset (acme vs globex)", async ({ isolatedPage }) => {
   await isolatedPage.goto("/");
-  await expect(isolatedPage.getByTestId("mocks-flag")).toHaveText(/Mocks: on/);
-  await expect(isolatedPage.getByTestId("incidents-summary")).toBeVisible({ timeout: 15_000 });
+  // Wait for the shell to mount + MSW worker to be active (E.3 shell signal).
+  await expect(isolatedPage.getByTestId("top-bar")).toBeVisible({ timeout: 15_000 });
+  await expect(isolatedPage.getByTestId("active-tenant")).toBeVisible({ timeout: 15_000 });
 
   // Fetch through the page's JS context so the service worker (MSW) intercepts.
   const tenant = process.env["SDM_BROWSER_TEST_TENANT"] ?? "acme-corp";
