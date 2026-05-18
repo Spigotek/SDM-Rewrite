@@ -9,8 +9,11 @@
 **Pre nový chat session (po `/clear` alebo kompakcii):**
 
 1. Prečítaj sekciu [Aktuálny stav](#aktuálny-stav) — vieš kde si.
-2. Prečítaj `Inputs` najbližšieho `🔜 NEXT` chunku — vieš čo robíš.
-3. Pracuj proti `Outputs` a `Done-when` kritériám — vieš kedy si hotový.
+2. **Ak má chunk per-chunk plán** v `docs/plans/<Phase>.<N>.md` (Phase F+), prečítaj ten — má Inputs/Outputs/Stratégiu pre `/clear` workflow. Žiadne ďalšie pre-loading.
+3. Inak prečítaj `Inputs` najbližšieho `🔜 NEXT` chunku v tomto dokumente — vieš čo robíš.
+4. Pracuj proti `Outputs` a `Done-when` kritériám — vieš kedy si hotový.
+
+Per-chunk plány (od Phase F) sú v `docs/plans/`. Index: [docs/plans/README.md](./plans/README.md).
 
 **Princíp vrstvenia:** každý chunk má explicit `Inputs` (čo treba prečítať) a `Outputs`
 (čo bude existovať po merge). Žiadne implicitné vedomosti z prechádzajúcich chat
@@ -87,14 +90,16 @@ Posledná revízia tohto dokumentu: po merge Chunk E.3 (2026-05-17).
 
 ### Phase F — BFF real implementation 🔜 (~5 chunks)
 
-> Cieľ fázy: SPA prepneme z MSW na bežiaci BFF. End-to-end loop funguje.
+> Cieľ fázy: SPA prepneme z MSW na bežiaci BFF. End-to-end loop funguje proti reálnemu CA SDM
+> backend-u (`10.11.35.35:8050` v dev). Detailný plán + cross-chunk rozhodnutia: [docs/plans/F.md](./plans/F.md).
 
-- **F.1 Auth module** — SSO callback (OIDC), session manager (Redis + in-memory adapter), CA SDM access key broker. Inputs: `docs/agents/security/auth-flow.md`, `docs/agents/architecture/components/bff.md` §2.1-2.2.
-- **F.2 REST proxy** — tenant scoping, `X-Role` injection, XML→JSON adapter, error shaper. Inputs: `bff.md` §2.3, `endpoints.md`.
-- **F.3 Aggregator endpoints** — `/me/tenants` fan-out, queue handler (multi-factory), ticket-detail aggregation. Inputs: `bff.md` §2.4, `ux-persona-analyst/wireframes/`.
-- **F.4 Platform** — pino audit logger, `/config` endpoint, `/health` + `/readyz` proper checks, CSRF middleware. Inputs: `bff.md` §2.5, `security/audit-and-compliance.md`.
-- **F.5 Cleanup MSW vs BFF** — env switch `VITE_USE_MOCKS`, dokument failover.
-- **Done-when:** SPA proti BFF (`BFF_CA_SDM_USE_MOCKS=true` upstream mock) — full loop bez MSW v browseri.
+- **F.1 Auth module** — Basic Auth → access_key broker, in-memory session store, `/auth/*`, `/me` canonical shape, CSRF Origin check. Plán: [F.1.md](./plans/F.1.md).
+- **F.2 REST proxy** — tenant scoping, `X-Role` injection, XML→JSON, error shaper, MVP entity endpoints. Plán: [F.2.md](./plans/F.2.md).
+- **F.3 Aggregator endpoints** — `/me/tenants` fan-out, queue handler, ticket-detail aggregation. Plán: [F.3.md](./plans/F.3.md).
+- **F.4 Platform** — pino audit taxonómia, `/config` full shape, `/readyz` CA SDM ping, CSRF audit. Plán: [F.4.md](./plans/F.4.md).
+- **F.5 Cleanup MSW vs BFF** — SPA prepnutie na BFF, `/me` shape align, login form, idle modal, heartbeat, cross-tab sync, failover docs. Plán: [F.5.md](./plans/F.5.md).
+- **Scope-out (deferred z F.x):** Redis session store, OIDC SSO (čaká na corp IdP), SAML, CI neighborhood BFS, bulk MFA step-up.
+- **Done-when:** SPA proti BFF (`VITE_USE_MOCKS=false`) — full login → queue → ticket → logout loop, oba módy MSW/BFF funkčné, audit eventy emit-ujú.
 
 ### Phase G — Cross-cutting concerns 🔜 (~5 chunks)
 
