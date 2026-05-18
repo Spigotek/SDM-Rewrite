@@ -2,7 +2,7 @@
 
 > **Status**: ✅ DONE (2026-05-18)
 > **Branch**: `chunk/F.1-bff-auth` (od `main`)
-> **PR**: pending push
+> **PR**: [#9](https://github.com/Spigotek/SDM-Rewrite/pull/9)
 
 ## Pivot vs ROADMAP
 

@@ -22,7 +22,7 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Last merged:** Chunk E.3 (SPA App Shell + bootstrap). Predchádzajúce: PR #5 — Chunk E.2 (RBAC mapping). Phase E.1 dopravená priamym pushom `aa574a2` na main (mimo PR-flow, dokumentované v PR #5).
-- **In flight:** Phase F.1 — BFF Auth module (PR pending — branch `chunk/F.1-bff-auth`).
+- **In flight:** Phase F.1 — BFF Auth module (PR #9 — review pending).
 - **Next up:** Phase F.2 — REST proxy (tenant scoping, error shaper, MVP entity endpoints).
 
 Posledná revízia tohto dokumentu: po implementácii Chunk F.1 (2026-05-18).
