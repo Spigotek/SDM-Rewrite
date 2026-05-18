@@ -1,8 +1,8 @@
 # F.1 — BFF Auth module
 
-> **Status**: 🔜 NEXT
+> **Status**: ✅ DONE (2026-05-18)
 > **Branch**: `chunk/F.1-bff-auth` (od `main`)
-> **PR**: —
+> **PR**: pending push
 
 ## Pivot vs ROADMAP
 
@@ -66,17 +66,36 @@ docs/agents/devex-devops/real-backend-contracts.md   # captured real B-E respons
 
 ## Done-when
 
-- [ ] `pnpm -r typecheck` / `lint` / `build` / `test` zelené
-- [ ] BFF unit testy: SessionStore CRUD + TTL expiry, CSRF Origin matrix, cookies parse/set,
-      SDM broker happy + 401 expired + 401 forbidden + 500 network
-- [ ] Integration test (vitest + Hono `app.fetch` + MSW Node): full `POST /auth/login` →
-      `GET /me` → `POST /me/active-tenant` → `POST /auth/logout` flow
-- [ ] **Live smoke** proti `10.11.35.35:8050`: `pnpm --filter @sdm/bff dev` + curl-script v
-      `docs/agents/devex-devops/real-backend-contracts.md` produkuje valid access_key + zruší ho
-- [ ] `/me` response shape matchuje `auth-flow.md §4.5` (vrátane `csrfToken`, `featureFlags={}`
-      stub, `session.idleTimeoutSec`)
-- [ ] ROADMAP toggle F.1 → ✅ DONE, status hlavičky v `F.1.md` aktualizovaný
-- [ ] Plans pre F.2-F.5 si nevyžiadali úpravu (alebo úpravy commited v tom istom PR)
+- [x] `pnpm -r typecheck` / `lint` / `build` / `test` zelené (61 BFF + 28 api-mocks + 90 auth)
+- [x] BFF unit testy: SessionStore CRUD + TTL expiry, CSRF Origin matrix, cookies parse/set,
+      SDM broker happy + AUTH_EXPIRED (HTTP 400 sic) + AUTH_INVALID_CREDENTIALS + AUTH_FORBIDDEN + 5xx
+- [x] Integration test (vitest + Hono `app.fetch` + MSW Node): full `POST /auth/login` →
+      `GET /me` → `POST /me/active-tenant` → `POST /auth/heartbeat` → `POST /auth/logout` flow
+- [x] **Live smoke** proti `10.11.35.35:8050`: BFF dev produces valid access_key, /me returns
+      sp_admin (via access_type fallback for vueuser), logout revokes access_key, post-logout /me 401.
+      Reference: `docs/agents/devex-devops/real-backend-contracts.md` §11
+- [x] `/me` response shape matchuje `auth-flow.md §4.5` (vrátane `csrfToken: ""` stub per D5
+      Origin/Referer strategy, `featureFlags={}` stub, `session.idleTimeoutSec`)
+- [x] ROADMAP toggle F.1 → ✅ DONE, status hlavičky v `F.1.md` aktualizovaný
+- [x] Plans pre F.2-F.5 si nevyžiadali úpravu (žiadne F.x interface changes)
+
+## Implementation notes (post-merge)
+
+- **AUTH_EXPIRED kontrakt prekvapenie** — real CA SDM 17.4 vracia `HTTP 400` (sic) s telom
+  obsahujúcim `Invalid REST Access Key` namiesto očakávaného 401. SDM broker preto rozlišuje:
+  401 na `/rest_access` = `AUTH_INVALID_CREDENTIALS`, 400 + "Invalid REST Access Key" = `AUTH_EXPIRED`,
+  401 na non-bootstrap = `AUTH_FORBIDDEN` (defensive default; nie empiricky verifikované).
+  Detail: `docs/agents/devex-devops/real-backend-contracts.md` §8.
+- **`cnt_role.role` FK chýba v body** — real B-E silently dropuje `role` cudzí kľúč aj keď je
+  v `X-Obj-Attrs`. F.1 broker akceptuje limitáciu a fallne na `access_type=Administration → sp_admin`
+  mapping pre vueuser. Plný role-mapping cez `UI_ROLE_MAPPING_JSON` pôjde keď bude real cnt_role data.
+- **Bootstrap je XML-only** — `Content-Type: application/json` na `/rest_access` → 400. Broker posiela
+  `<rest_access/>` s `application/xml`. Reads idú `application/json` (B-E vracia `@`-prefix XML attrs).
+- **CSRF strategy** — Origin/Referer check (per bff.md csrf-strategy `[resolved-in-round-2]`).
+  Žiadny double-submit token. `/me.csrfToken` je `""` stub pre §4.5 shape parity; F.5 rozhodne,
+  či field dropnúť alebo nechať empty.
+- **Single-tenant fallback** — real B-E inštancia má `tenant` collection prázdnu. F.1 vytvára
+  fiktívny `tenantId="default"` v session. Multi-tenant fan-out ide do F.3 keď bude relevantné.
 
 ## Stratégia — paralelný research + scaffolding, potom sekvenčná integrácia
 

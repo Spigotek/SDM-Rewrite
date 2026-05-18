@@ -22,10 +22,10 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Last merged:** Chunk E.3 (SPA App Shell + bootstrap). Predchádzajúce: PR #5 — Chunk E.2 (RBAC mapping). Phase E.1 dopravená priamym pushom `aa574a2` na main (mimo PR-flow, dokumentované v PR #5).
-- **In flight:** —
-- **Next up:** Phase F.1 — BFF Auth module (SSO callback, session manager, CA SDM access key broker).
+- **In flight:** Phase F.1 — BFF Auth module (PR pending — branch `chunk/F.1-bff-auth`).
+- **Next up:** Phase F.2 — REST proxy (tenant scoping, error shaper, MVP entity endpoints).
 
-Posledná revízia tohto dokumentu: po merge Chunk E.3 (2026-05-17).
+Posledná revízia tohto dokumentu: po implementácii Chunk F.1 (2026-05-18).
 
 ---
 
@@ -93,7 +93,7 @@ Posledná revízia tohto dokumentu: po merge Chunk E.3 (2026-05-17).
 > Cieľ fázy: SPA prepneme z MSW na bežiaci BFF. End-to-end loop funguje proti reálnemu CA SDM
 > backend-u (`10.11.35.35:8050` v dev). Detailný plán + cross-chunk rozhodnutia: [docs/plans/F.md](./plans/F.md).
 
-- **F.1 Auth module** — Basic Auth → access_key broker, in-memory session store, `/auth/*`, `/me` canonical shape, CSRF Origin check. Plán: [F.1.md](./plans/F.1.md).
+- **F.1 Auth module ✅ DONE** — Basic Auth → access_key broker, in-memory session store, `/auth/*`, `/me` canonical shape, CSRF Origin check. Live smoke proti real `10.11.35.35:8050` zelený. Plán: [F.1.md](./plans/F.1.md).
 - **F.2 REST proxy** — tenant scoping, `X-Role` injection, XML→JSON, error shaper, MVP entity endpoints. Plán: [F.2.md](./plans/F.2.md).
 - **F.3 Aggregator endpoints** — `/me/tenants` fan-out, queue handler, ticket-detail aggregation. Plán: [F.3.md](./plans/F.3.md).
 - **F.4 Platform** — pino audit taxonómia, `/config` full shape, `/readyz` CA SDM ping, CSRF audit. Plán: [F.4.md](./plans/F.4.md).
