@@ -22,10 +22,10 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Last merged:** Chunk E.3 (SPA App Shell + bootstrap). Predchádzajúce: PR #5 — Chunk E.2 (RBAC mapping). Phase E.1 dopravená priamym pushom `aa574a2` na main (mimo PR-flow, dokumentované v PR #5).
-- **In flight:** Phase F.1 — BFF Auth module (PR #9 — review pending).
-- **Next up:** Phase F.2 — REST proxy (tenant scoping, error shaper, MVP entity endpoints).
+- **In flight:** Phase F.2 — REST proxy (tenant scoping, error shaper, MVP entity endpoints, reference cache). PR pending. F.1 PR #9 still open for review.
+- **Next up:** Phase F.3 — Aggregator endpoints (`/me/tenants` fan-out, queue handler, ticket-detail).
 
-Posledná revízia tohto dokumentu: po implementácii Chunk F.1 (2026-05-18).
+Posledná revízia tohto dokumentu: po implementácii Chunk F.2 (2026-05-18).
 
 ---
 
@@ -94,7 +94,7 @@ Posledná revízia tohto dokumentu: po implementácii Chunk F.1 (2026-05-18).
 > backend-u (`10.11.35.35:8050` v dev). Detailný plán + cross-chunk rozhodnutia: [docs/plans/F.md](./plans/F.md).
 
 - **F.1 Auth module ✅ DONE** — Basic Auth → access_key broker, in-memory session store, `/auth/*`, `/me` canonical shape, CSRF Origin check. Live smoke proti real `10.11.35.35:8050` zelený. Plán: [F.1.md](./plans/F.1.md).
-- **F.2 REST proxy** — tenant scoping, `X-Role` injection, XML→JSON, error shaper, MVP entity endpoints. Plán: [F.2.md](./plans/F.2.md).
+- **F.2 REST proxy ✅ DONE** — shared `SdmHttpClient`, error shaper (HTTP 400 + "Invalid REST Access Key" → AUTH_EXPIRED, HTTP 409 + "Invalid number of rows (0) affected" → NOT_FOUND, JSON+XML error bodies), tenant scoping (single-tenant placeholder skip per `real-backend-contracts.md` §6), XML→JSON adapter (`fast-xml-parser` w/ shared options), and 7 entity proxies covering `in`/`cr`/`pr`/`chg`/`KD`/`nr` + reference factories (TTL 15 min in-memory cache). Live smoke proti real `10.11.35.35:8050` zelený (list / detail / cache / schema-divergent `chg` / uppercase `KD` / 404 error path). Plán: [F.2.md](./plans/F.2.md).
 - **F.3 Aggregator endpoints** — `/me/tenants` fan-out, queue handler, ticket-detail aggregation. Plán: [F.3.md](./plans/F.3.md).
 - **F.4 Platform** — pino audit taxonómia, `/config` full shape, `/readyz` CA SDM ping, CSRF audit. Plán: [F.4.md](./plans/F.4.md).
 - **F.5 Cleanup MSW vs BFF** — SPA prepnutie na BFF, `/me` shape align, login form, idle modal, heartbeat, cross-tab sync, failover docs. Plán: [F.5.md](./plans/F.5.md).

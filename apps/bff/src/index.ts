@@ -4,7 +4,10 @@ import { logger as honoLogger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import pino from "pino";
 import { registerMeRoutes } from "./aggregator/me";
-import { correlationMiddleware } from "./auth/correlation";
+import { SdmHttpClient } from "./api/http-client";
+import { registerApiRoutes, createApiRoutesState } from "./api/routes";
+import { correlationMiddleware, getCorrelationId } from "./auth/correlation";
+import { AppErrorException, toAppErrorBody } from "./auth/errors";
 import { registerAuthRoutes } from "./auth/routes";
 import { SdmBroker } from "./auth/sdm-broker";
 import { loadConfig } from "./config/load";
@@ -43,10 +46,45 @@ export function buildApp(deps: BuildAppDeps): Hono {
   registerAuthRoutes(app, deps);
   registerMeRoutes(app, { config: deps.config, sessionStore: deps.sessionStore, log: deps.log });
 
+  const apiClient = new SdmHttpClient(
+    {
+      baseUrl: deps.config.casdm.baseUrl,
+      requestTimeoutMs: deps.config.casdm.requestTimeoutMs,
+      maxRetries: 2,
+    },
+    { fetch: globalThis.fetch, log: deps.log },
+  );
+  registerApiRoutes(
+    app,
+    {
+      client: apiClient,
+      sessionStore: deps.sessionStore,
+      config: deps.config,
+      log: deps.log,
+    },
+    createApiRoutesState(),
+  );
+
   app.notFound((c) => c.json({ error: "not_found" }, 404));
   app.onError((err, c) => {
-    deps.log.error({ err, event: "http.unhandled_error" }, "unhandled error");
-    return c.json({ error: "internal_error" }, 500);
+    const correlationId = getCorrelationId(c);
+    if (err instanceof AppErrorException) {
+      deps.log.warn(
+        { event: "http.app_error", code: err.code, correlationId, details: err.details },
+        err.message,
+      );
+      return c.json(
+        toAppErrorBody({
+          code: err.code,
+          message: err.message,
+          httpStatus: err.httpStatus,
+          correlationId,
+        }),
+        err.httpStatus as never,
+      );
+    }
+    deps.log.error({ err, event: "http.unhandled_error", correlationId }, "unhandled error");
+    return c.json({ error: "internal_error", correlationId }, 500);
   });
 
   return app;
