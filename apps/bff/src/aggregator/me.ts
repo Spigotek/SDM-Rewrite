@@ -4,6 +4,7 @@ import type { Logger } from "pino";
 import { z } from "zod";
 import { getPermissionsForRole, type Permission } from "@sdm/domain";
 import type { RuntimeConfig } from "../config/schema";
+import { AUDIT_EVENTS, type AuditEmitter } from "../platform/audit";
 import { getSessionCookie } from "../security/cookies";
 import type { SessionPayload, SessionStore } from "../session/types";
 import { toAppErrorBody } from "../auth/errors";
@@ -12,6 +13,7 @@ export interface MeRouteDeps {
   readonly config: RuntimeConfig;
   readonly sessionStore: SessionStore;
   readonly log: Logger;
+  readonly audit: AuditEmitter;
 }
 
 const ActiveTenantSchema = z.object({
@@ -122,9 +124,17 @@ export function registerMeRoutes(app: Hono, deps: MeRouteDeps): void {
 
     const allowed = payload.tenants.find((t) => t.id === body.tenantId);
     if (!allowed) {
-      deps.log.warn(
-        { event: "auth.tenant.forbidden", tenantId: body.tenantId, correlationId },
-        "tenant switch denied",
+      deps.audit(
+        c,
+        {
+          category: "authz",
+          event: AUDIT_EVENTS.authz.TENANT_SWITCH_DENIED,
+          result: "denied",
+          resultCode: 403,
+          reason: "tenant_not_in_allowed_list",
+          tenant: { sourceTenantId: payload.activeTenantId, targetTenantId: body.tenantId },
+        },
+        payload,
       );
       return c.json(
         toAppErrorBody({
@@ -142,14 +152,17 @@ export function registerMeRoutes(app: Hono, deps: MeRouteDeps): void {
       cookieVersion: payload.cookieVersion + 1,
       lastSeenAt: Date.now(),
     });
-    deps.log.info(
+    deps.audit(
+      c,
       {
-        event: "auth.tenant.switched",
-        fromTenantId: payload.activeTenantId,
-        toTenantId: allowed.id,
-        correlationId,
+        category: "authz",
+        event: AUDIT_EVENTS.authz.TENANT_SWITCH_SUCCESS,
+        result: "success",
+        resultCode: 200,
+        tenant: { sourceTenantId: payload.activeTenantId, targetTenantId: allowed.id },
+        details: { newRoleId: allowed.roles[0]?.id ?? null },
       },
-      "tenant switched",
+      payload,
     );
 
     return c.json(

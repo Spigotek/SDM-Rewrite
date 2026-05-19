@@ -41,5 +41,5 @@ Prečítaj plán + Inputs, povedz krátky plán a začni.
 | [F.1.md](./F.1.md) | Auth module            | 🔜     |
 | [F.2.md](./F.2.md) | REST proxy             | 🔜     |
 | [F.3.md](./F.3.md) | Aggregator endpoints   | ✅     |
-| [F.4.md](./F.4.md) | Platform               | 🔜     |
+| [F.4.md](./F.4.md) | Platform               | ✅     |
 | [F.5.md](./F.5.md) | Cleanup MSW vs BFF     | 🔜     |
