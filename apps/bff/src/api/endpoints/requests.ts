@@ -43,6 +43,10 @@ export interface RequestUpdateFe {
   readonly assigneeId?: string;
 }
 
+export function mapRequestRow(raw: Record<string, unknown>): RequestRowFe {
+  return mapRow(raw);
+}
+
 function mapRow(raw: Record<string, unknown>): RequestRowFe {
   const top = liftAttrs(raw);
   return {

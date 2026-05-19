@@ -4,6 +4,7 @@ import { logger as honoLogger } from "hono/logger";
 import { secureHeaders } from "hono/secure-headers";
 import pino from "pino";
 import { registerMeRoutes } from "./aggregator/me";
+import { createAggregatorState, registerAggregatorRoutes } from "./aggregator/routes";
 import { SdmHttpClient } from "./api/http-client";
 import { registerApiRoutes, createApiRoutesState } from "./api/routes";
 import { correlationMiddleware, getCorrelationId } from "./auth/correlation";
@@ -54,16 +55,14 @@ export function buildApp(deps: BuildAppDeps): Hono {
     },
     { fetch: globalThis.fetch, log: deps.log },
   );
-  registerApiRoutes(
-    app,
-    {
-      client: apiClient,
-      sessionStore: deps.sessionStore,
-      config: deps.config,
-      log: deps.log,
-    },
-    createApiRoutesState(),
-  );
+  const restProxyDeps = {
+    client: apiClient,
+    sessionStore: deps.sessionStore,
+    config: deps.config,
+    log: deps.log,
+  };
+  registerApiRoutes(app, restProxyDeps, createApiRoutesState());
+  registerAggregatorRoutes(app, restProxyDeps, createAggregatorState());
 
   app.notFound((c) => c.json({ error: "not_found" }, 404));
   app.onError((err, c) => {

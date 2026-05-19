@@ -65,6 +65,9 @@ importers:
       '@sdm/api-client':
         specifier: workspace:*
         version: link:../../packages/api-client
+      '@sdm/api-types':
+        specifier: workspace:*
+        version: link:../../packages/api-types
       '@sdm/auth':
         specifier: workspace:*
         version: link:../../packages/auth

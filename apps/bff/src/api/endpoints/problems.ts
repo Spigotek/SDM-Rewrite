@@ -46,6 +46,10 @@ export interface ProblemUpdateFe {
   readonly assigneeId?: string;
 }
 
+export function mapProblemRow(raw: Record<string, unknown>): ProblemRowFe {
+  return mapRow(raw);
+}
+
 function mapRow(raw: Record<string, unknown>): ProblemRowFe {
   const top = liftAttrs(raw);
   return {
