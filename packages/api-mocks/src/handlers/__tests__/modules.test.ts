@@ -155,14 +155,28 @@ describe("audit handlers", () => {
 });
 
 describe("config handler", () => {
-  it("GET /config returns stable runtime shape", async () => {
+  it("GET /config returns canonical RuntimeConfig shape", async () => {
     const res = await fetch(`${BASE}/config`);
     expect(res.status).toBe(200);
     const body = (await res.json()) as {
       apiBaseUrl: string;
+      apiBasePath: string;
+      auth: { mode: string; bffOrigin: string; restAccessKeyEndpoint?: string };
+      tenants: { defaultMode: string; tenantContextHeader: string; allowSwitching: boolean };
       features: Record<string, boolean>;
+      observability: { rumEnabled?: boolean };
+      meta: { appVersion: string; buildId: string; deployedAt: string };
     };
-    expect(body.apiBaseUrl).toBe("/api");
-    expect(body.features.enableTenantSwitcher).toBe(true);
+    expect(body.apiBaseUrl).toBe("http://localhost:5173");
+    expect(body.apiBasePath).toBe("/api");
+    expect(body.auth.mode).toBe("rest-access-key");
+    expect(body.auth.bffOrigin).toBe("http://localhost:5174");
+    expect(body.tenants.defaultMode).toBe("user-profile");
+    expect(body.tenants.tenantContextHeader).toBe("X-CA-SDM-Tenant");
+    expect(body.tenants.allowSwitching).toBe(true);
+    expect(body.features.kbEditor).toBe(true);
+    expect(body.features.bulkOperations).toBe(false);
+    expect(body.meta.appVersion).toBe("0.0.0-mock");
+    expect(body.meta.buildId).toBe("mock");
   });
 });
