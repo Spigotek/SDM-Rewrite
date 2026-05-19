@@ -48,6 +48,10 @@ export interface IncidentUpdateFe {
   readonly assigneeId?: string;
 }
 
+export function mapIncidentRow(raw: Record<string, unknown>): IncidentRowFe {
+  return mapRow(raw);
+}
+
 function mapRow(raw: Record<string, unknown>): IncidentRowFe {
   const top = liftAttrs(raw);
   const active = (raw["active"] as CaSdmFk | undefined)?.["@COMMON_NAME"];

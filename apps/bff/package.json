@@ -16,6 +16,7 @@
   "dependencies": {
     "@hono/node-server": "1.13.7",
     "@sdm/api-client": "workspace:*",
+    "@sdm/api-types": "workspace:*",
     "@sdm/auth": "workspace:*",
     "@sdm/domain": "workspace:*",
     "fast-xml-parser": "^4.5.0",

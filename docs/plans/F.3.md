@@ -1,8 +1,7 @@
 # F.3 — BFF Aggregator endpoints
 
-> **Status**: 🔜 (blokované na F.2 merge)
-> **Branch**: `chunk/F.3-aggregator` (od `main` po F.2 merge)
-> **PR**: —
+> **Status**: ⏳ IN-FLIGHT (impl complete, smoke deferred to manual run)
+> **Branch**: `chunk/F.3-aggregator` > **PR**: pending
 
 ## Pivot vs ROADMAP
 
@@ -50,14 +49,14 @@ apps/bff/src/tests/aggregator/
 
 ## Done-when
 
-- [ ] Unit testy pre shapery (raw → UI typ)
-- [ ] Integration testy: queue fan-out s 3 paralelnými calls, merge invariant (priority desc,
-      lastActivityAt desc), pagination cross-factory
-- [ ] Ticket-detail s missing parts (linked changes empty, no attachments) — žiadny crash
-- [ ] Cache hit/miss telemetry log (pino)
-- [ ] Live smoke proti real B-E: queue endpoint vráti ≥ 1 incident + 1 request + 1 problem ak
-      sú v test data
-- [ ] ROADMAP + F.3 status → ✅ DONE
+- [x] Unit testy pre shapery (raw → UI typ) — `tests/aggregator/shapers/{ui-queue-item,ui-ticket-detail}.test.ts`
+- [x] Integration testy: queue fan-out s 3 paralelnými calls, merge invariant (priority desc,
+      lastActivityAt desc), pagination cross-factory — `tests/aggregator/queue.test.ts`
+- [x] Ticket-detail s missing parts (linked/attachments/activity = `_unsupported: true`) — žiadny crash
+- [x] Cache hit/miss telemetry log (pino) — `aggregator.queue.{hit,miss}` + `aggregator.ticket_detail.{hit,miss}`
+- [ ] **Live smoke deferred** — `scripts/smoke-f3.sh` pripravený, treba ho spustiť z VPN-prístupnej
+      siete (CA SDM 17.4 na `10.11.35.35:8050` z dev stroja zatiaľ unreachable). Run po merge.
+- [x] ROADMAP + F.3 status → ⏳ IN-FLIGHT (→ ✅ DONE po PR merge)
 
 ## Stratégia
 
@@ -71,14 +70,21 @@ Main thread, žiadne subagenty (logika je sekvenčne závislá od F.2 RestProxy 
 
 ## Open questions / risks
 
-- **Activity log pagination**: ticket-detail include first page activity. Subsequent pages →
-  samostatný endpoint `GET /api/tickets/:type/:id/activity?page=N`? Riešenie: áno, pridať do F.3
-  ak je triviálne.
+- **Linked tickets / attachments / activity log factory mená nie sú v `real-backend-contracts.md`.**
+  F.3 vystavuje shape s `_unsupported: true` na týchto blokoch a empty arrays. Pred ich oživením
+  potrebný samostatný B-E probe chunk (kandidáti: `lrel_*`, `cr_lrel`, `attmnt`, `act_log`,
+  `cnotes`) → §22+ doplniť do `real-backend-contracts.md`. Bez tejto evidencie F.3 ticket-detail
+  ostáva MVP stub.
+- **Activity log pagination**: pôvodne plánované do F.3 ak triviálne — odložené spolu s
+  linked/attachments do post-discovery chunku (`/api/tickets/:type/:id/activity?page=N` ostane
+  ako budúci endpoint, MVP detail vracia activity.hasMore=false).
 - **`X-Obj-Attrs` trimming**: CA SDM podporuje header na trim fields. Performance optimization —
   ak baseline timing > 500 ms, pridať trim. Inak neskôr (G.4 Performance budgets).
-- **Cache invalidation**: queue 30s TTL je acceptable per `bff.md §2.4`. Ale pri tenant switch
-  treba flush. Implementácia: cache key obsahuje `tenantId` + `userId`; tenant switch v F.1
-  emituje `auth.tenant.switched` event → cache invalidator počúva? V MVP TTL stačí, no aktívna
-  invalidácia. Audit.
+- **Cache invalidation = TTL-only v MVP** (carry-over A vyriešený): queue 30 s, /me/tenants 5 min,
+  ticket-detail 60 s. Cache key obsahuje `(tenantId, userId, ...)`. Aktívna invalidácia
+  (audit event hookup `auth.tenant.switched` → cache invalidator) ide do F.4 audit event bus.
 - **Multi-tenant fan-out**: ak user má v session 2+ tenantov, queue **vždy** scopuje na
   `session.activeTenantId`. Žiadny "all tenants" view v MVP.
+- **Cross-factory true pagination**: queue fan-out pulluje fixný buffer 100 per faktorinu;
+  pri `total > 100` vystavujeme `hasMore: true`. Skutočná deep-pagination cross-factory
+  (balancovaný puling so znalosťou per-factory weightu) je post-MVP — v F.3 doc-comment.
