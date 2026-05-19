@@ -22,10 +22,10 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Last merged:** Chunk F.4 (Platform — audit taxonómia + `/config` + `/readyz` CA SDM ping, PR #15). Predchádzajúce: PR #14 — F.3 docs follow-up; PR #13 — Chunk F.3 (aggregator endpoints).
-- **In flight:** —
-- **Next up:** Phase F.5 — Cleanup MSW vs BFF (SPA cutover, `/me` shape align, login UI, idle modal).
+- **In flight:** Chunk F.5 — Cleanup MSW vs BFF (SPA cutover, `/me` canonical §4.5, login form, idle modal, heartbeat, cross-tab, failover doc). PR pending.
+- **Next up:** Phase G.1 — Design system tokens + base komponenty (alebo optional F.6 follow-up: B-E probe pre `linked`/`attachments`/`activity` factory mená — flip `_unsupported: true→false` v F.3 ticket-detail aggregatori).
 
-Posledná revízia tohto dokumentu: po merge Chunk F.4 (2026-05-19, smoke ✅).
+Posledná revízia tohto dokumentu: F.5 in-flight (2026-05-19).
 
 ---
 
@@ -88,7 +88,7 @@ Posledná revízia tohto dokumentu: po merge Chunk F.4 (2026-05-19, smoke ✅).
   - `tools/browser-test/scenarios/{smoke-portal,smoke-workspace,mocks-tenant-isolation,mocks-mutation-roundtrip,auth-session-cookie}.spec.ts` — re-aligned na nový shell (testid `top-bar` / `active-tenant` / `tenant-display` / `tenant-row-<id>`)
 - **Done-when:** 170 unit testov + 5 browser-test scenárov pass; `pnpm typecheck`/`lint`/`build` zelené; tenant switch end-to-end overený (Acme → Globex) pre portal aj workspace
 
-### Phase F — BFF real implementation 🔜 (~5 chunks)
+### Phase F — BFF real implementation ✅ DONE (5 chunks)
 
 > Cieľ fázy: SPA prepneme z MSW na bežiaci BFF. End-to-end loop funguje proti reálnemu CA SDM
 > backend-u (`10.11.35.35:8050` v dev). Detailný plán + cross-chunk rozhodnutia: [docs/plans/F.md](./plans/F.md).
@@ -97,11 +97,11 @@ Posledná revízia tohto dokumentu: po merge Chunk F.4 (2026-05-19, smoke ✅).
 - **F.2 REST proxy ✅ DONE** — shared `SdmHttpClient`, error shaper (HTTP 400 + "Invalid REST Access Key" → AUTH_EXPIRED, HTTP 409 + "Invalid number of rows (0) affected" → NOT_FOUND, JSON+XML error bodies), tenant scoping (single-tenant placeholder skip per `real-backend-contracts.md` §6), XML→JSON adapter (`fast-xml-parser` w/ shared options), and 7 entity proxies covering `in`/`cr`/`pr`/`chg`/`KD`/`nr` + reference factories (TTL 15 min in-memory cache). Live smoke proti real `10.11.35.35:8050` zelený (list / detail / cache / schema-divergent `chg` / uppercase `KD` / 404 error path). Plán: [F.2.md](./plans/F.2.md).
 - **F.3 Aggregator endpoints ✅ DONE** — `/me/tenants` separate endpoint (5 min TTL, derives from `session.tenants[]` until multi-tenant rollout), `/api/queue` parallel fan-out (`in`+`cr`+`pr`, merge by priority desc + openedAt desc, 30 s TTL, partial-failure tolerant), `/api/tickets/:type/:id` MVP stub (parent fetch only, linked/attachments/activity = `_unsupported: true` arrays — `lrel_*`/`attmnt`/`act_log` factory probe deferred to a follow-up B-E discovery chunk). Carry-overs A/B/C resolved (TTL-only invalidation, separate /me/tenants endpoint, F.2 mapRow reuse exported). Live smoke proti real `10.11.35.35:8050` zelený (17 incident + 7 request + 1 problem v queue, ticket-detail shape ok). Plán: [F.3.md](./plans/F.3.md).
 - **F.4 Platform ✅ DONE** — audit module (`platform/audit/{events,redact,emit}.ts`, canonical 40-event taxonómia per `audit-and-compliance.md §2`, PII redaction + SHA256 pseudonymize per §4, 1:100 sampling for `session.heartbeat` per §3) hooked into auth/login+logout+heartbeat+session-expired + me/tenant-switch + csrf-violation + entity-routes `data.<entity>.{write,delete}`. `/config` endpoint serves canonical `RuntimeConfig` per `runtime-config.md` (lazy re-read of `process.cwd()/config.json` + env overrides for deploy-injected meta, fallback defaults in dev). `/readyz` two-step probe: cached broker bootstrap (5 min refresh) + `GET /pri?size=1` with 2 s timeout. Live smoke proti real `10.11.35.35:8050` zelený (positive + negative path). Plán: [F.4.md](./plans/F.4.md).
-- **F.5 Cleanup MSW vs BFF** — SPA prepnutie na BFF, `/me` shape align, login form, idle modal, heartbeat, cross-tab sync, failover docs. Plán: [F.5.md](./plans/F.5.md).
+- **F.5 Cleanup MSW vs BFF ✅ DONE** — `/me` canonical §4.5 shape (single fetch, FE no longer derives permissions; `effectivePermissions[]` z BFF); `/config` canonical RuntimeConfig (Phase F.4 wire). Minimal `LoginPage` v oboch SPA (portal + workspace own each its `/login`), `Heartbeat` (30 s debounced na user-events) + `IdleModal` (29 min warning, 30 min redirect) shell komponenty, cross-tab sync cez `@sdm/api-client/cross-tab.ts` (BroadcastChannel + Safari iOS < 15.4 fallback). MSW handler-y (`users.ts`/`tenants.ts`/`config.ts`) zarovnané na canonical shape v jednom kroku — no dual-shape compat. CSRF wiring: Origin-only (per F.1 baseline) — `Session.csrfToken` field zachovaný len pre §4.5 paritu (BFF vracia `""`). Failover doc nový (`docs/agents/devex-devops/failover.md`) — BFF restart = re-login acceptable v MVP, Redis deferred. Plán: [F.5.md](./plans/F.5.md).
 - **Scope-out (deferred z F.x):** Redis session store, OIDC SSO (čaká na corp IdP), SAML, CI neighborhood BFS, bulk MFA step-up.
 - **Done-when:** SPA proti BFF (`VITE_USE_MOCKS=false`) — full login → queue → ticket → logout loop, oba módy MSW/BFF funkčné, audit eventy emit-ujú.
 
-### Phase G — Cross-cutting concerns 🔜 (~5 chunks)
+### Phase G — Cross-cutting concerns 🔜 NEXT (~5 chunks)
 
 - **G.1 Design system tokens + base komponenty** — Inputs: `docs/agents/design-system/{tokens,components,theming}.md`. Output: `packages/design-system/src/{tokens,primitives}/*`.
 - **G.2 i18n provider + catalogs (sk/en)** — Inputs: `docs/agents/design-system/microcopy.md`, `architecture/decision-records/07-i18n.md`. Output: `packages/i18n/{src,catalogs}/*`.

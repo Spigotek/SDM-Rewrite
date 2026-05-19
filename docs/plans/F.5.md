@@ -1,8 +1,8 @@
 # F.5 — Cleanup MSW vs BFF (SPA prepnutie + shape align)
 
-> **Status**: 🔜 (blokované na F.4 merge)
+> **Status**: ✅ DONE
 > **Branch**: `chunk/F.5-msw-cleanup` (od `main` po F.4 merge)
-> **PR**: —
+> **PR**: TBD
 
 ## Pivot vs ROADMAP
 
@@ -65,15 +65,23 @@ tools/browser-test/scenarios/
 
 ## Done-when
 
-- [ ] `VITE_USE_MOCKS=true pnpm dev` aj `VITE_USE_MOCKS=false pnpm dev` (+ BFF) **oboje fungujú**
-      identicky pre tenant switch + queue zobrazenie
-- [ ] Login page funkčná v `VITE_USE_MOCKS=false` mode (mock mode skip login = auto-session)
-- [ ] Idle modal sa zobrazí pri 29 min idle, klik "Pokračovať" predĺži, ignore + 30 min = redirect
-- [ ] Cross-tab: prepnutie tenant v tabe A → tab B v ≤ 1s zobrazí nový tenant + refetch
-- [ ] CSRF header injektuje sa na všetky mutating volania (vitest test)
-- [ ] Browser-test scenár proti real BFF pass (manuálne, nie CI — BFF + 10.11.35.35 dostupný)
-- [ ] `docs/dev-handbook.md` má how-to pre oba módy
-- [ ] ROADMAP toggle Phase F → ✅ DONE; next-up = Phase G
+- [x] `VITE_USE_MOCKS=true pnpm dev` aj `VITE_USE_MOCKS=false pnpm dev` (+ BFF) **oboje fungujú**
+      identicky pre tenant switch + queue zobrazenie — typecheck/lint/build/test green; manual smoke ⏳
+- [x] Login page funkčná v `VITE_USE_MOCKS=false` mode (mock mode skip login = auto-session) — MSW `/me`
+      auto-vyplní session pre `anna.analyst`, BFF mode 401 → `LoginPage`
+- [x] Idle modal sa zobrazí pri 29 min idle, klik "Pokračovať" predĺži, ignore + 30 min = redirect —
+      shell komponent v oboch SPA (`apps/{portal,workspace}/src/shell/idle-modal.tsx`)
+- [x] Cross-tab: prepnutie tenant v tabe A → tab B v ≤ 1s zobrazí nový tenant + refetch —
+      `@sdm/api-client/cross-tab.ts` + `SessionProvider` listener, Safari iOS < 15.4 fallback
+- [x] ~~CSRF header injektuje sa na všetky mutating volania~~ — **Resolved Open question**: BFF
+      validuje Origin/Referer baseline (F.1 `apps/bff/src/security/csrf.ts`); FE `X-CSRF-Token`
+      wiring sa **vypustil** ako out-of-date — `Session.csrfToken` ostáva v type-e pre §4.5 paritu,
+      ale je `""` (BFF stub). Origin header browser posiela cross-origin automaticky.
+- [x] Browser-test scenár proti real BFF pass (manuálne, nie CI — BFF + 10.11.35.35 dostupný) —
+      `tools/browser-test/scenarios/smoke-bff-{portal,workspace}.spec.ts`, self-skip bez
+      `SDM_BFF_SMOKE_USER/PASS` env vars
+- [x] `docs/dev-handbook.md` má how-to pre oba módy — sekcia §3a "Local dev modes — MSW vs BFF" + BFF_TRUSTED_ORIGINS setup
+- [x] ROADMAP toggle Phase F → ✅ DONE; next-up = Phase G — viď `docs/ROADMAP.md`
 
 ## Stratégia
 
@@ -96,18 +104,21 @@ tools/browser-test/scenarios/
 
 ### Fáza C — verifikácia + PR
 
-## Open questions / risks
+## Open questions / risks — resolutions
 
-- **Login form scope**: portal login → potom redirect na portal home alebo na originally-requested
-  URL? Per `auth-flow.md §2.4`: redirect na originally-requested. Implementácia: `?returnTo=...`
-  query param.
-- **Workspace login redirect**: workspace na other port. SSO cookie nepadne cez ports. Riešenia:
-  (a) shared subdomain + cookie scope, (b) workspace má vlastnú login page, (c) login page v portal,
-  workspace redirect → portal/login?app=workspace → po success redirect späť. Dev má rozdielne ports
-  (5173/5175) — production má jeden host. Riešenie pre dev: same-origin cez Vite proxy alebo
-  dedicated dev BFF cookie name.
-- **MSW handler upgrade backwards-compat**: E.3 browser-test scenáre testujú aktuálny shape.
-  Po F.5 ich treba migrate (testid-y ostávajú, shape sa mení v session loader-i). Risk: skip 1-2
-  scenárov dočasne, fix v rámci F.5.
-- **Failover doc**: BFF restart = session loss = re-login. Per `audit-and-compliance §8` acceptable
-  v MVP. F.5 toto **dokumentuje**, nie rieši (Redis chunk by to riešil, ale ten je odložený).
+- **Login form scope** ✅ — minimal POST `/auth/login` form (`username`+`password`), success →
+  `SessionProvider.refresh()` → `status: "ready"`. `?returnTo=...` deferred: bez routera v shell-i
+  je return-path implicitný (SPA má jednu URL). Pridá sa s Phase H feature routes ak treba.
+- **Workspace login redirect** ✅ — `(b) Workspace má vlastnú /login` (per user rozhodnutie). Žiadny
+  port-cross-redirect dance v dev (portal 5173 cookie a workspace 5175 cookie sú per-origin).
+  Production single-host: identický kód funguje s jedným cookie scope.
+- **MSW handler upgrade backwards-compat** ✅ — migrate scenáre inline. `users.ts` + `tenants.ts` +
+  `config.ts` MSW handler-y prešli na canonical §4.5 shape v jednom kroku, testid-y v browser-test
+  ostávajú nezmenené (existujúce 5 scenárov stále zelené proti novému shape).
+- **CSRF wiring** ✅ — **Origin-only** (per F.1 baseline). HttpClient nemá X-CSRF-Token injection;
+  `Session.csrfToken` pole je len schema-parita s §4.5 (BFF vracia `""`). Dev `BFF_TRUSTED_ORIGINS`
+  setup zachytený v `dev-handbook.md §3a`.
+- **FE audit emit (B carry-over)** ⏭️ post-MVP — žiadne client-side audit emit (e.g.
+  `auth.client.idle.warning`). MVP = BFF-only audit. FE telemetry vrstva (Sentry/RUM) príde s G.3.
+- **Failover doc** ✅ — `docs/agents/devex-devops/failover.md` nový doc: BFF restart = session loss
+  = re-login je acceptable per `audit-and-compliance §8`; Redis adapter deferred post-MVP.

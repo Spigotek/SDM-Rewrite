@@ -2,7 +2,7 @@ import { useSession } from "./session-context";
 import { TenantSwitcher } from "./tenant-switcher";
 
 export function TopBar({ appName }: { appName: string }) {
-  const { session, status } = useSession();
+  const { session, status, logout } = useSession();
   return (
     <header className="sdm-top-bar" data-testid="top-bar">
       <div className="sdm-brand">
@@ -20,6 +20,14 @@ export function TopBar({ appName }: { appName: string }) {
               {session.roles.length > 0 ? session.roles.join(", ") : "no roles"}
             </span>
           </div>
+          <button
+            type="button"
+            className="sdm-logout-button"
+            onClick={() => void logout()}
+            data-testid="logout-button"
+          >
+            Odhlásiť
+          </button>
         </>
       )}
     </header>
