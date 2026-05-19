@@ -1,8 +1,8 @@
 # F.4 — BFF Platform (audit, config, health, CSRF refinement)
 
-> **Status**: 🔜 (paralelizovateľné s F.3, ale odporúča sa po F.3 merge pre stabilný integration surface)
-> **Branch**: `chunk/F.4-platform` (od `main` po F.3 merge alebo paralelne)
-> **PR**: —
+> **Status**: ✅ DONE
+> **Branch**: `chunk/F.4-platform` (od `main` po F.3 merge)
+> **PR**: pending
 
 ## Pivot vs ROADMAP
 
@@ -55,36 +55,48 @@ apps/bff/src/tests/platform/
 
 ## Done-when
 
-- [ ] Audit eventy emit-ujú sa na: `auth.login.{success,failure}`, `auth.logout`, `auth.session.expired`,
-      `auth.tenant.switched`, `authz.permission.denied`, `security.csrf.rejected`, `data.<entity>.{read,write,delete}`
-- [ ] `/config` endpoint vracia plný shape per `runtime-config.md` (cache no-store, hot-reload pri file change)
-- [ ] `/readyz` ping CA SDM s timeout 2s; ak fail → `503` + structured reason
-- [ ] Vitest + integration testy zelené
-- [ ] Live smoke: `curl /readyz` → 200 keď real B-E up, 503 keď down (simulujem cez network namespace alebo bad URL)
-- [ ] ROADMAP + F.4 status → ✅ DONE
+- [x] Audit eventy: `auth.login.{success,failure}`, `auth.logout`, `auth.session.heartbeat`
+      (sampled 1:100), `auth.session.{idle,absolute}.expired`, `authz.tenant.switch.{success,denied}`,
+      `security.csrf.violation`, `data.<entity>.{write,delete}` (reads = 0 % sampling per §3,
+      reverse proxy handle-uje). `authz.permission.denied` framework-ready (no RBAC at BFF MVP).
+- [x] `/config` vracia plný `RuntimeConfig` shape per `runtime-config.md` s
+      `Cache-Control: no-store`. Lazy re-read na každý GET (žiadny chokidar watcher v MVP per
+      Open questions). Env overrides pre `meta.*` + `auth.bffOrigin` (deploy-injected).
+- [x] `/readyz` 2-step probe: cached broker bootstrap (5 min refresh threshold) + `GET /pri?size=1`
+      s 2 s timeout. 200 ready / 503 not_ready + structured `checks` + `reason`.
+- [x] Vitest + integration testy zelené (27 nových platform testov, repo total 192 BFF testov).
+- [x] Live smoke `scripts/smoke-f4.sh` zelený: /config + /readyz (200 ready) proti real
+      `10.11.35.35:8050`, negative path overený s wrong creds (503 + reason).
+- [x] ROADMAP + F.4 status → ✅ DONE
 
-## Stratégia
+## Stratégia (executed)
 
-### Fáza A — 3 paralelné subagenty
+Main-thread sequenced (per F.4 retrospective — riziko subagent merge konfliktov na shared
+touchpoints `auth/routes.ts`, `security/csrf.ts`, `index.ts` bolo neúmerné času ušetrenému
+paralelizmom). Poradie:
 
-| #   | Subagent          | Cieľ                                                                                                                             |
-| --- | ----------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| A1  | `general-purpose` | Audit module — events.ts taxonómia (extract z audit-and-compliance.md), emit.ts helper, unit testy + hook do existujúcich routes |
-| A2  | `general-purpose` | Config module — full RuntimeConfig Zod schema (from runtime-config.md), file-watcher loader, endpoint handler, testy             |
-| A3  | `general-purpose` | Health module — readyz CA SDM ping logic, timeout, structured response, testy                                                    |
+1. Audit modul (`events.ts` taxonómia + `redact.ts` PII scrubbing + `emit.ts` Hono-context-aware helper)
+2. Hook emits do existing routes (auth/me/csrf/entity-routes — `audit?: AuditEmitter` ako optional
+   field na shared deps interfaces, wired in `buildApp`)
+3. Config modul (Zod schema + file loader + env overrides + endpoint handler)
+4. Health modul (cached broker bootstrap + `/pri?size=1` probe s 2 s timeout)
+5. Wire all v `index.ts`, register order: secureHeaders → correlation → logger → CSRF (with audit)
+   → health → config → auth → me → api → aggregator
 
-### Fáza B — main thread
-
-Integrácia subagent outputov: middleware order, register all routes, end-to-end test.
-
-## Open questions / risks
+## Open questions / risks (resolved)
 
 - **Audit retention**: per `audit-and-compliance.md §5` 1 rok pre auth/authz/security, 3 roky pre
   data. F.4 emituje len stdout (pino) — log shipper konfiguráciu vlastní 08-devex-devops v
   separate chunku (kandidát: G.3 Observability). F.4 deklaruje **kontrakt**, neimplementuje retention.
-- **PII redaction**: pino `redact` config už v F.1 stub-e. F.4 musí pridať: emails, full names,
-  IP addresses (keep last octet hashed). Test-overiteľné v `audit-emit.test.ts`.
-- **`/config` runtime reload**: file-watcher (chokidar?) má overhead. Alternative: lazy re-read
-  na každý GET /config (cheap, no watcher). Odporúčanie: lazy re-read v MVP, watcher post-MVP.
-- **Sampling**: per `audit-and-compliance.md §3` niektoré eventy sú 100%, iné 10%. F.4 implementuje
-  config-driven sampling rate per event name.
+- **PII redaction**: implemented v `platform/audit/redact.ts` — hard-redact (passwords, tokens,
+  cookies, access keys, sid raw) + SHA256 pseudonymize (email, recordId, sessionId) + userAgent
+  truncate to 200 chars. Test `audit-redact.test.ts` overuje "no banned substring v serialised line".
+  IP redaction (last octet hash) odložené — IP zachytávame ako `unknown` v MVP keď nie je
+  reverse-proxy header (X-Forwarded-For prvé políčko sa berie).
+- **`/config` runtime reload**: lazy re-read na každý GET — žiadny chokidar watcher (per MVP
+  recommendation; ENOENT fallback to defaults v dev, fail-loud v prod cez `BFF_REQUIRE_CONFIG_FILE=true`).
+- **Sampling**: `samplingRate(eventName)` v `events.ts`; aktuálne hardcoded (session.heartbeat = 0.01,
+  rest = 1.0). Config-driven sampling rate per event name → ak treba (G.3 Observability chunk).
+- **`authz.permission.denied`** — Done-when wording mentions it, ale BFF v MVP nemá RBAC enforce
+  (FE permission checks). Event name + framework ready; emit site príde keď BFF dostane explicit
+  RBAC middleware (post-MVP). Marker v `events.ts AUDIT_EVENTS.authz.PERMISSION_DENIED`.

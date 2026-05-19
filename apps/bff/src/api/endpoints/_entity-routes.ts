@@ -1,5 +1,6 @@
 import type { Hono } from "hono";
 import { AppErrorException } from "../../auth/errors";
+import { AUDIT_EVENTS } from "../../platform/audit";
 import { paginationToCaSdm, proxyToSdm, readCollection, type RestProxyDeps } from "../rest-proxy";
 import { encodePkPathSegment, toCaSdmXmlBody } from "./_shape";
 
@@ -99,6 +100,17 @@ export function registerEntityRoutes<TRow, TCreate, TUpdate>(
     const raw = (result.body as Record<string, unknown>)?.[config.factory];
     const out =
       raw && typeof raw === "object" ? config.mapRow(raw as Record<string, unknown>) : result.body;
+    deps.audit?.(
+      c,
+      {
+        category: "data",
+        event: AUDIT_EVENTS.data.write(config.factory),
+        result: "success",
+        resultCode: 201,
+        details: { op: "create", recordId: extractCreatedId(raw) },
+      },
+      result.session,
+    );
     return c.json(out as never, 201);
   });
 
@@ -118,6 +130,17 @@ export function registerEntityRoutes<TRow, TCreate, TUpdate>(
     const raw = (result.body as Record<string, unknown>)?.[config.factory];
     const out =
       raw && typeof raw === "object" ? config.mapRow(raw as Record<string, unknown>) : result.body;
+    deps.audit?.(
+      c,
+      {
+        category: "data",
+        event: AUDIT_EVENTS.data.write(config.factory),
+        result: "success",
+        resultCode: 200,
+        details: { op: "update", recordId: id },
+      },
+      result.session,
+    );
     return c.json(out as never);
   });
 
@@ -137,7 +160,24 @@ export function registerEntityRoutes<TRow, TCreate, TUpdate>(
         op: `DELETE ${config.route}/:id (soft-close)`,
         successStatuses: [200],
       });
+      deps.audit?.(
+        c,
+        {
+          category: "data",
+          event: AUDIT_EVENTS.data.delete(config.factory),
+          result: "success",
+          resultCode: 200,
+          details: { op: "soft-close", recordId: id, kind: config.softClose.kind },
+        },
+        result.session,
+      );
       return c.json({ id, softClose: config.softClose.kind, status: result.status }, 200);
     });
   }
+}
+
+function extractCreatedId(raw: unknown): string | null {
+  if (!raw || typeof raw !== "object") return null;
+  const id = (raw as Record<string, unknown>)["@id"];
+  return id !== undefined ? String(id) : null;
 }

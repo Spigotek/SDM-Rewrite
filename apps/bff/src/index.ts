@@ -13,6 +13,9 @@ import { registerAuthRoutes } from "./auth/routes";
 import { SdmBroker } from "./auth/sdm-broker";
 import { loadConfig } from "./config/load";
 import type { RuntimeConfig } from "./config/schema";
+import { createAuditEmitter } from "./platform/audit";
+import { registerConfigRoute } from "./platform/config";
+import { registerHealthRoutes } from "./platform/health";
 import { csrfMiddleware } from "./security/csrf";
 import { createSessionStore } from "./session";
 import type { SessionStore } from "./session/types";
@@ -26,6 +29,7 @@ export interface BuildAppDeps {
 
 export function buildApp(deps: BuildAppDeps): Hono {
   const app = new Hono();
+  const audit = createAuditEmitter({ log: deps.log });
 
   app.use("*", secureHeaders());
   app.use("*", correlationMiddleware());
@@ -33,19 +37,10 @@ export function buildApp(deps: BuildAppDeps): Hono {
     "*",
     honoLogger((msg) => deps.log.info({ event: "http.request" }, msg)),
   );
-  app.use("*", csrfMiddleware({ trustedOrigins: deps.config.bff.trustedOrigins, log: deps.log }));
-
-  app.get("/health", (c) => c.json({ status: "ok", service: "@sdm/bff" }));
-  app.get("/healthz", (c) => c.json({ status: "ok", service: "@sdm/bff" }));
-  app.get("/readyz", (c) =>
-    c.json({
-      status: "ready",
-      checks: { sessionStore: deps.config.session.driver },
-    }),
+  app.use(
+    "*",
+    csrfMiddleware({ trustedOrigins: deps.config.bff.trustedOrigins, log: deps.log, audit }),
   );
-
-  registerAuthRoutes(app, deps);
-  registerMeRoutes(app, { config: deps.config, sessionStore: deps.sessionStore, log: deps.log });
 
   const apiClient = new SdmHttpClient(
     {
@@ -55,11 +50,24 @@ export function buildApp(deps: BuildAppDeps): Hono {
     },
     { fetch: globalThis.fetch, log: deps.log },
   );
+
+  registerHealthRoutes(app, { broker: deps.broker, client: apiClient, log: deps.log });
+  registerConfigRoute(app, { log: deps.log });
+
+  registerAuthRoutes(app, { ...deps, audit });
+  registerMeRoutes(app, {
+    config: deps.config,
+    sessionStore: deps.sessionStore,
+    log: deps.log,
+    audit,
+  });
+
   const restProxyDeps = {
     client: apiClient,
     sessionStore: deps.sessionStore,
     config: deps.config,
     log: deps.log,
+    audit,
   };
   registerApiRoutes(app, restProxyDeps, createApiRoutesState());
   registerAggregatorRoutes(app, restProxyDeps, createAggregatorState());

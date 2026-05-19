@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk F.3 (aggregator endpoints — `/me/tenants` + `/api/queue` + ticket-detail MVP stub, PR #13). Predchádzajúce: PR #11 — Chunk F.2 (REST proxy).
-- **In flight:** Phase F.4 — Platform (audit taxonómia, `/config` full, `/readyz` CA SDM ping).
-- **Next up:** Phase F.5 — Cleanup MSW vs BFF (SPA cutover, /me shape align, login UI, idle modal).
+- **Last merged:** Chunk F.4 (Platform — audit taxonómia + `/config` + `/readyz` CA SDM ping, PR #15). Predchádzajúce: PR #14 — F.3 docs follow-up; PR #13 — Chunk F.3 (aggregator endpoints).
+- **In flight:** —
+- **Next up:** Phase F.5 — Cleanup MSW vs BFF (SPA cutover, `/me` shape align, login UI, idle modal).
 
-Posledná revízia tohto dokumentu: po merge Chunk F.3 (2026-05-19, smoke ✅).
+Posledná revízia tohto dokumentu: po merge Chunk F.4 (2026-05-19, smoke ✅).
 
 ---
 
@@ -96,7 +96,7 @@ Posledná revízia tohto dokumentu: po merge Chunk F.3 (2026-05-19, smoke ✅).
 - **F.1 Auth module ✅ DONE** — Basic Auth → access_key broker, in-memory session store, `/auth/*`, `/me` canonical shape, CSRF Origin check. Live smoke proti real `10.11.35.35:8050` zelený. Plán: [F.1.md](./plans/F.1.md).
 - **F.2 REST proxy ✅ DONE** — shared `SdmHttpClient`, error shaper (HTTP 400 + "Invalid REST Access Key" → AUTH_EXPIRED, HTTP 409 + "Invalid number of rows (0) affected" → NOT_FOUND, JSON+XML error bodies), tenant scoping (single-tenant placeholder skip per `real-backend-contracts.md` §6), XML→JSON adapter (`fast-xml-parser` w/ shared options), and 7 entity proxies covering `in`/`cr`/`pr`/`chg`/`KD`/`nr` + reference factories (TTL 15 min in-memory cache). Live smoke proti real `10.11.35.35:8050` zelený (list / detail / cache / schema-divergent `chg` / uppercase `KD` / 404 error path). Plán: [F.2.md](./plans/F.2.md).
 - **F.3 Aggregator endpoints ✅ DONE** — `/me/tenants` separate endpoint (5 min TTL, derives from `session.tenants[]` until multi-tenant rollout), `/api/queue` parallel fan-out (`in`+`cr`+`pr`, merge by priority desc + openedAt desc, 30 s TTL, partial-failure tolerant), `/api/tickets/:type/:id` MVP stub (parent fetch only, linked/attachments/activity = `_unsupported: true` arrays — `lrel_*`/`attmnt`/`act_log` factory probe deferred to a follow-up B-E discovery chunk). Carry-overs A/B/C resolved (TTL-only invalidation, separate /me/tenants endpoint, F.2 mapRow reuse exported). Live smoke proti real `10.11.35.35:8050` zelený (17 incident + 7 request + 1 problem v queue, ticket-detail shape ok). Plán: [F.3.md](./plans/F.3.md).
-- **F.4 Platform** — pino audit taxonómia, `/config` full shape, `/readyz` CA SDM ping, CSRF audit. Plán: [F.4.md](./plans/F.4.md).
+- **F.4 Platform ✅ DONE** — audit module (`platform/audit/{events,redact,emit}.ts`, canonical 40-event taxonómia per `audit-and-compliance.md §2`, PII redaction + SHA256 pseudonymize per §4, 1:100 sampling for `session.heartbeat` per §3) hooked into auth/login+logout+heartbeat+session-expired + me/tenant-switch + csrf-violation + entity-routes `data.<entity>.{write,delete}`. `/config` endpoint serves canonical `RuntimeConfig` per `runtime-config.md` (lazy re-read of `process.cwd()/config.json` + env overrides for deploy-injected meta, fallback defaults in dev). `/readyz` two-step probe: cached broker bootstrap (5 min refresh) + `GET /pri?size=1` with 2 s timeout. Live smoke proti real `10.11.35.35:8050` zelený (positive + negative path). Plán: [F.4.md](./plans/F.4.md).
 - **F.5 Cleanup MSW vs BFF** — SPA prepnutie na BFF, `/me` shape align, login form, idle modal, heartbeat, cross-tab sync, failover docs. Plán: [F.5.md](./plans/F.5.md).
 - **Scope-out (deferred z F.x):** Redis session store, OIDC SSO (čaká na corp IdP), SAML, CI neighborhood BFS, bulk MFA step-up.
 - **Done-when:** SPA proti BFF (`VITE_USE_MOCKS=false`) — full login → queue → ticket → logout loop, oba módy MSW/BFF funkčné, audit eventy emit-ujú.

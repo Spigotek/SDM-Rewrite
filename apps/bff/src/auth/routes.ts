@@ -8,6 +8,7 @@ import {
   tenantId as toTenantId,
   userId as toUserId,
 } from "@sdm/domain";
+import { AUDIT_EVENTS, type AuditEmitter } from "../platform/audit";
 import type { RuntimeConfig } from "../config/schema";
 import { clearSessionCookie, getSessionCookie, setSessionCookie } from "../security/cookies";
 import type { CookieConfig } from "../security/cookies";
@@ -22,6 +23,7 @@ export interface AuthRouteDeps {
   readonly sessionStore: SessionStore;
   readonly broker: SdmBroker;
   readonly log: Logger;
+  readonly audit: AuditEmitter;
 }
 
 const LoginSchema = z.object({
@@ -112,15 +114,16 @@ export function registerAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
       await deps.sessionStore.create(sid, payload, deps.config.session.absoluteSec);
       setSessionCookie(c, sid, cookieCfg);
 
-      deps.log.info(
+      deps.audit(
+        c,
         {
-          event: "auth.login.success",
-          userId: contact.userid,
-          contactId: contact.id,
-          uiRoles,
-          correlationId,
+          category: "auth",
+          event: AUDIT_EVENTS.auth.LOGIN_SUCCESS,
+          result: "success",
+          resultCode: 200,
+          details: { uiRoles },
         },
-        "login success",
+        payload,
       );
 
       return c.json(
@@ -136,6 +139,13 @@ export function registerAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
         200,
       );
     } catch (err) {
+      deps.audit(c, {
+        category: "auth",
+        event: AUDIT_EVENTS.auth.LOGIN_FAILURE,
+        result: "failure",
+        reason: err instanceof AppErrorException ? err.code : "unknown",
+        actor: { userId: body.username },
+      });
       return handleAuthError(c, err, correlationId, deps.log, "auth.login.failed");
     }
   });
@@ -143,15 +153,26 @@ export function registerAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
   app.post("/auth/logout", async (c) => {
     const correlationId = c.get("correlationId");
     const sid = getSessionCookie(c, deps.config.session.cookieName);
+    let outgoing: SessionPayload | null = null;
     if (sid) {
       const payload = await deps.sessionStore.get(sid);
+      outgoing = payload;
       if (payload) {
         await deps.broker.revoke(payload.accessKey, payload.accessKeyId, correlationId);
       }
       await deps.sessionStore.destroy(sid);
     }
     clearSessionCookie(c, cookieCfg);
-    deps.log.info({ event: "auth.logout", correlationId, hadSession: Boolean(sid) }, "logout");
+    deps.audit(
+      c,
+      {
+        category: "auth",
+        event: AUDIT_EVENTS.auth.LOGOUT,
+        result: "success",
+        details: { hadSession: Boolean(sid) },
+      },
+      outgoing ?? undefined,
+    );
     return c.json({ ok: true }, 200);
   });
 
@@ -164,13 +185,44 @@ export function registerAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
     const nowMs = Date.now();
     if (nowMs > payload.absoluteExpiresAt) {
       await deps.sessionStore.destroy(sid);
+      deps.audit(
+        c,
+        {
+          category: "auth",
+          event: AUDIT_EVENTS.auth.SESSION_ABSOLUTE_EXPIRED,
+          result: "failure",
+          reason: "absolute_timeout",
+        },
+        payload,
+      );
       return unauthorized(c, correlationId, "absolute_timeout");
     }
     if (nowMs - payload.lastSeenAt > deps.config.session.idleSec * 1000) {
       await deps.sessionStore.destroy(sid);
+      deps.audit(
+        c,
+        {
+          category: "auth",
+          event: AUDIT_EVENTS.auth.SESSION_IDLE_EXPIRED,
+          result: "failure",
+          reason: "idle_timeout",
+          details: { idleSeconds: Math.floor((nowMs - payload.lastSeenAt) / 1000) },
+        },
+        payload,
+      );
       return unauthorized(c, correlationId, "idle_timeout");
     }
     await deps.sessionStore.touch(sid, nowMs);
+    deps.audit(
+      c,
+      {
+        category: "auth",
+        event: AUDIT_EVENTS.auth.SESSION_HEARTBEAT,
+        result: "success",
+        details: { idleSeconds: Math.floor((nowMs - payload.lastSeenAt) / 1000) },
+      },
+      payload,
+    );
     c.status(204);
     return c.body(null);
   });

@@ -2,6 +2,7 @@ import type { Context } from "hono";
 import type { Logger } from "pino";
 import { getCorrelationId } from "../auth/correlation";
 import type { RuntimeConfig } from "../config/schema";
+import type { AuditEmitter } from "../platform/audit";
 import { requireActiveSession } from "../session/load";
 import type { SessionPayload, SessionStore } from "../session/types";
 import { classifySdmResponse } from "./error-shaper";
@@ -33,6 +34,8 @@ export interface RestProxyDeps {
   readonly sessionStore: SessionStore;
   readonly config: RuntimeConfig;
   readonly log: Logger;
+  /** Optional audit hook — `_entity-routes.ts` calls it on mutating success. */
+  readonly audit?: AuditEmitter;
 }
 
 export interface ProxyRequest {
