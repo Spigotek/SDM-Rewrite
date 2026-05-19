@@ -1,7 +1,8 @@
 # F.3 — BFF Aggregator endpoints
 
-> **Status**: ⏳ IN-FLIGHT (impl complete, smoke deferred to manual run)
-> **Branch**: `chunk/F.3-aggregator` > **PR**: pending
+> **Status**: ✅ DONE
+> **Branch**: `chunk/F.3-aggregator` (merged)
+> **PR**: #13 (squash + delete-branch, commit `c12a602`)
 
 ## Pivot vs ROADMAP
 
@@ -54,9 +55,11 @@ apps/bff/src/tests/aggregator/
       lastActivityAt desc), pagination cross-factory — `tests/aggregator/queue.test.ts`
 - [x] Ticket-detail s missing parts (linked/attachments/activity = `_unsupported: true`) — žiadny crash
 - [x] Cache hit/miss telemetry log (pino) — `aggregator.queue.{hit,miss}` + `aggregator.ticket_detail.{hit,miss}`
-- [ ] **Live smoke deferred** — `scripts/smoke-f3.sh` pripravený, treba ho spustiť z VPN-prístupnej
-      siete (CA SDM 17.4 na `10.11.35.35:8050` z dev stroja zatiaľ unreachable). Run po merge.
-- [x] ROADMAP + F.3 status → ⏳ IN-FLIGHT (→ ✅ DONE po PR merge)
+- [x] **Live smoke proti real B-E** (2026-05-19, `scripts/smoke-f3.sh` proti `10.11.35.35:8050`):
+      `/me/tenants` ok (sp_admin/Administration), `/api/queue` vrátil **17 incident + 7 request +
+      1 problem** (≥1 z každého ticketType — splnené), `/api/tickets/incident/2800` ok s
+      `_unsupported: true` markerami na linked/attachments/activity.
+- [x] ROADMAP + F.3 status → ✅ DONE
 
 ## Stratégia
 

@@ -25,7 +25,8 @@ say() { printf '\n== %s ==\n' "$1"; }
 
 say "login → /auth/login (Basic Auth → access_key broker)"
 curl -fsS -c "$COOKIE_JAR" -H 'Content-Type: application/json' \
-  --data "{\"userId\":\"$SDM_USER\",\"password\":\"$SDM_PASS\"}" \
+  -H "Origin: $BFF_BASE" \
+  --data "{\"username\":\"$SDM_USER\",\"password\":\"$SDM_PASS\"}" \
   "$BFF_BASE/auth/login" | head -c 400; echo
 
 say "/me/tenants"
@@ -46,7 +47,7 @@ say "/api/tickets/incident/2800 (known incident from F.1+F.2 captures)"
 curl -fsS -b "$COOKIE_JAR" "$BFF_BASE/api/tickets/incident/2800" | python3 -m json.tool | head -40
 
 say "logout"
-curl -fsS -b "$COOKIE_JAR" -X POST "$BFF_BASE/auth/logout" -o /dev/null -w 'logout status=%{http_code}\n'
+curl -fsS -b "$COOKIE_JAR" -X POST -H "Origin: $BFF_BASE" "$BFF_BASE/auth/logout" -o /dev/null -w 'logout status=%{http_code}\n'
 
 echo
 echo "OK — F.3 smoke complete. If any block returned non-zero or the queue is missing a ticket type, capture the diff in the PR before merging."
