@@ -77,7 +77,6 @@ export function TenantSwitcher() {
                     {isActive ? "●" : "○"}
                   </span>
                   <span className="sdm-tenant-name">{t.name}</span>
-                  {t.code && <span className="sdm-tenant-code">{t.code}</span>}
                 </button>
               </li>
             );

@@ -299,6 +299,75 @@ gh pr create --title "feat(<modul>): <description>" --body "..."
 Required status checks musia byť zelené (lint, typecheck, test, coverage, build,
 a11y, security-audit). Aspoň 1 review approval.
 
+## 3a. Local dev modes — MSW vs BFF
+
+SDM-Rewrite SPAs (`portal`, `workspace`) run in **two** local dev modes. The
+switch is the `VITE_USE_MOCKS` env var read by `main.tsx`. Both modes consume
+the canonical `/me` §4.5 shape so the runtime code is identical — the only
+difference is who answers `/api/*`, `/auth/*`, `/me`, `/config`.
+
+### Mode A: `VITE_USE_MOCKS=true` (default, no BFF needed)
+
+```
+pnpm --filter @sdm/portal dev       # http://localhost:5173
+pnpm --filter @sdm/workspace dev    # http://localhost:5175
+```
+
+`@sdm/api-mocks` MSW worker starts in the browser and intercepts every
+backend call. `/me` auto-returns the seeded default user (`anna.analyst`,
+`agent_l1` in both ACME + Globex per `packages/api-mocks/src/fixtures/users.ts`).
+No login is required — the SPA lands on the home page.
+
+### Mode B: `VITE_USE_MOCKS=false` (live BFF)
+
+```
+pnpm --filter @sdm/bff dev          # http://localhost:5174
+VITE_USE_MOCKS=false pnpm --filter @sdm/portal dev
+VITE_USE_MOCKS=false pnpm --filter @sdm/workspace dev
+```
+
+The Vite dev server proxies `/api`, `/auth`, `/me` to the BFF (`server.proxy`
+in `apps/{portal,workspace}/vite.config.ts`), so the browser sees same-origin
+calls and the BFF cookie sticks. The BFF talks to real CA SDM at the configured
+upstream (default `10.11.35.35:8050` per `[01-api-analyst]` discovery).
+
+In Mode B the SPA shows the **login form** until `/auth/login` succeeds —
+credentials are validated against CA SDM `POST /caisd-rest/rest_access` (F.1).
+
+### CSRF — `BFF_TRUSTED_ORIGINS`
+
+BFF protects mutating routes with an Origin / Referer check
+(`apps/bff/src/security/csrf.ts`) per F.1 baseline — no double-submit token,
+no `X-CSRF-Token` on the wire. The browser attaches `Origin` automatically on
+cross-origin fetches; for same-origin (via Vite proxy in dev, or single-host
+in prod) the BFF allows the request unconditionally.
+
+Configure `BFF_TRUSTED_ORIGINS` to the set of origins the BFF will accept on
+same-origin requests where Origin is absent (typically GET → mutating
+preflight). In Vite-proxy dev the proxy sets `changeOrigin: true`, so the BFF
+sees its own origin (`http://localhost:5174`); no extra config needed. In
+production deploys with separate FE/BFF hostnames, list both:
+
+```
+# .env.bff (dev)
+BFF_TRUSTED_ORIGINS=http://localhost:5174,http://localhost:5173,http://localhost:5175
+
+# .env.bff (prod single-host)
+BFF_TRUSTED_ORIGINS=https://sdm.example.org
+
+# .env.bff (prod split-host)
+BFF_TRUSTED_ORIGINS=https://sdm.example.org,https://portal.example.org,https://workspace.example.org
+```
+
+### Live BFF smoke tests
+
+`tools/browser-test/scenarios/smoke-bff-{portal,workspace}.spec.ts` exercise
+the login → /me → logout cycle against a real BFF. They self-skip unless
+`SDM_BFF_SMOKE_USER` and `SDM_BFF_SMOKE_PASS` are set. Credentials never live
+in the repo — pass them via env at run time. See
+[`docs/agents/devex-devops/failover.md`](agents/devex-devops/failover.md) for
+the BFF restart / re-login behaviour these tests cover.
+
 ## 4. Test strategy
 
 Pyramída 75 / 20 / 5 (unit / contract+integration / e2e):

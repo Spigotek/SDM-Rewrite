@@ -1,10 +1,10 @@
-// Session bootstrap — combines BFF /me + /me/tenants into a single Session.
-// Real BFF will likely consolidate both into /me (per components/bff.md §2.4);
-// E.3 keeps two fetches because that's what @sdm/api-mocks already exposes.
+// Session bootstrap — single /me fetch returning canonical §4.5 shape.
+// Per F.5 D4: BFF embeds `tenants[]` and computes `effectivePermissions[]`,
+// so the FE no longer fans out to `/me/tenants` nor derives permissions via
+// `getPermissionsForRole`. The MSW handler mirrors the BFF shape.
 
 import {
   contactId as toContactId,
-  getPermissionsForRole,
   tenantId as toTenantId,
   userId as toUserId,
   type Permission,
@@ -16,65 +16,41 @@ import type { Session } from "@sdm/auth";
 interface MeResponse {
   user: {
     id: string;
-    username: string;
-    firstName: string;
-    lastName: string;
-    fullName: string;
-    email: string | null;
-    jobTitle: string | null;
+    userId: string;
+    email: string;
+    displayName: string;
+    avatarUrl?: string | null;
   };
-  session: {
-    activeTenantId: string;
-    expiresAt: string;
-  };
-}
-
-interface MeTenantsResponse {
   tenants: Array<{
     id: string;
     name: string;
-    code: string | null;
-    roles: string[];
-    isDefault: boolean;
+    isServiceProvider: boolean;
+    roles: Array<{ id: string; name: string; uiRole: string }>;
   }>;
-}
-
-const UI_ROLES: readonly UIRole[] = [
-  "requester",
-  "requester_external",
-  "agent_l1",
-  "agent_l2",
-  "change_manager",
-  "kb_editor",
-  "cmdb_owner",
-  "sp_admin",
-];
-
-function parseUIRole(roleId: string): UIRole | null {
-  const stripped = roleId.startsWith("role:") ? roleId.slice("role:".length) : roleId;
-  return (UI_ROLES as readonly string[]).includes(stripped) ? (stripped as UIRole) : null;
-}
-
-function aggregatePermissions(roles: readonly UIRole[]): readonly Permission[] {
-  const set = new Set<Permission>();
-  for (const role of roles) {
-    for (const permission of getPermissionsForRole(role)) {
-      set.add(permission);
-    }
-  }
-  return Array.from(set);
+  activeTenant: {
+    id: string;
+    activeRoleId: string;
+    effectivePermissions: string[];
+  };
+  uiRole: string;
+  app: "portal" | "workspace";
+  csrfToken: string;
+  featureFlags: Record<string, boolean>;
+  i18n: { locale: "sk" | "en"; tz: string };
+  session: { idleTimeoutSec: number; absoluteExpiresAt: string };
 }
 
 export interface SessionLoadResult {
   readonly session: Session;
-  readonly tenants: ReadonlyArray<{ id: TenantId; name: string; code: string | null }>;
+  readonly tenants: ReadonlyArray<{ id: TenantId; name: string }>;
 }
 
-// Active tenant header — BFF reads X-CA-SDM-Tenant from every request; SPA is
-// authoritative for the active tenant id across page loads. We persist the
-// switch in localStorage so a hard refresh keeps the user on the chosen tenant.
-const ACTIVE_TENANT_STORAGE_KEY = "sdm.active-tenant";
-const TENANT_HEADER = "X-CA-SDM-Tenant";
+// Active tenant header — SPA keeps the last switch in localStorage so a hard
+// refresh re-attaches the same `X-CA-SDM-Tenant` value. BFF validates against
+// `session.activeTenantId` (per auth-flow.md §4.3) — the header is a hint, not
+// authoritative. MSW reads it for tenant scoping in mock mode.
+export const ACTIVE_TENANT_STORAGE_KEY = "sdm.active-tenant";
+export const TENANT_HEADER = "X-CA-SDM-Tenant";
 
 function readStoredActiveTenant(): string | null {
   try {
@@ -97,57 +73,115 @@ function tenantHeaders(): Record<string, string> {
   return stored ? { [TENANT_HEADER]: stored } : {};
 }
 
+export class UnauthorizedError extends Error {
+  constructor(public readonly reason?: string) {
+    super(reason ? `unauthorized: ${reason}` : "unauthorized");
+    this.name = "UnauthorizedError";
+  }
+}
+
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
+    credentials: "include",
     headers: { ...tenantHeaders(), ...(init?.headers ?? {}) },
   });
+  if (response.status === 401) {
+    const body = (await response.json().catch(() => null)) as { reason?: string } | null;
+    throw new UnauthorizedError(body?.reason);
+  }
   if (!response.ok) {
     throw new Error(`[session] ${path} HTTP ${response.status}`);
   }
   return (await response.json()) as T;
 }
 
-export async function loadSession(): Promise<SessionLoadResult> {
-  const [me, tenantsResp] = await Promise.all([
-    fetchJson<MeResponse>("/me"),
-    fetchJson<MeTenantsResponse>("/me/tenants"),
-  ]);
+export async function login(username: string, password: string): Promise<void> {
+  const response = await fetch("/auth/login", {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, password }),
+  });
+  if (response.status === 401 || response.status === 400) {
+    const body = (await response.json().catch(() => null)) as { message?: string } | null;
+    throw new UnauthorizedError(body?.message ?? "invalid credentials");
+  }
+  if (!response.ok) {
+    throw new Error(`[session] login HTTP ${response.status}`);
+  }
+}
 
-  const activeTenantId = toTenantId(me.session.activeTenantId);
-  const activeTenantInfo = tenantsResp.tenants.find((t) => t.id === me.session.activeTenantId);
-  const activeRoles: readonly UIRole[] = activeTenantInfo
-    ? activeTenantInfo.roles.map(parseUIRole).filter((r): r is UIRole => r !== null)
+export async function logout(): Promise<void> {
+  try {
+    await fetch("/auth/logout", { method: "POST", credentials: "include" });
+  } catch {
+    // Logout is best-effort — server may already have torn down the session.
+  }
+  try {
+    window.localStorage.removeItem(ACTIVE_TENANT_STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+const UI_ROLES: readonly UIRole[] = [
+  "requester",
+  "requester_external",
+  "agent_l1",
+  "agent_l2",
+  "change_manager",
+  "kb_editor",
+  "cmdb_owner",
+  "sp_admin",
+];
+
+function parseUIRole(raw: string): UIRole | null {
+  return (UI_ROLES as readonly string[]).includes(raw) ? (raw as UIRole) : null;
+}
+
+export async function loadSession(): Promise<SessionLoadResult> {
+  const me = await fetchJson<MeResponse>("/me");
+
+  const activeTenant = me.tenants.find((t) => t.id === me.activeTenant.id);
+  const activeRoles: readonly UIRole[] = activeTenant
+    ? activeTenant.roles.map((r) => parseUIRole(r.uiRole)).filter((r): r is UIRole => r !== null)
     : [];
+  const permissions = me.activeTenant.effectivePermissions as readonly Permission[];
+  const uiRole = parseUIRole(me.uiRole) ?? activeRoles[0] ?? "requester";
 
   const session: Session = {
-    userId: toUserId(me.user.id),
+    userId: toUserId(me.user.userId),
     contactId: toContactId(me.user.id),
-    displayName: me.user.fullName,
-    email: me.user.email ?? "",
-    tenantId: activeTenantId,
-    tenants: tenantsResp.tenants.map((t) => ({
-      id: toTenantId(t.id),
-      name: t.name,
-    })),
+    displayName: me.user.displayName,
+    email: me.user.email,
+    avatarUrl: me.user.avatarUrl ?? null,
+    tenantId: toTenantId(me.activeTenant.id),
+    tenants: me.tenants.map((t) => ({ id: toTenantId(t.id), name: t.name })),
     roles: activeRoles,
-    permissions: aggregatePermissions(activeRoles),
-    expiresAt: me.session.expiresAt,
+    permissions,
+    uiRole,
+    activeRoleId: me.activeTenant.activeRoleId,
+    app: me.app,
+    csrfToken: me.csrfToken,
+    idleTimeoutSec: me.session.idleTimeoutSec,
+    absoluteExpiresAt: me.session.absoluteExpiresAt,
+    featureFlags: me.featureFlags,
+    i18n: me.i18n,
   };
+
+  writeStoredActiveTenant(me.activeTenant.id);
 
   return {
     session,
-    tenants: tenantsResp.tenants.map((t) => ({
-      id: toTenantId(t.id),
-      name: t.name,
-      code: t.code,
-    })),
+    tenants: me.tenants.map((t) => ({ id: toTenantId(t.id), name: t.name })),
   };
 }
 
 export async function switchActiveTenant(tenantId: TenantId): Promise<void> {
   const response = await fetch("/me/active-tenant", {
     method: "POST",
+    credentials: "include",
     headers: { "Content-Type": "application/json", ...tenantHeaders() },
     body: JSON.stringify({ tenantId }),
   });
