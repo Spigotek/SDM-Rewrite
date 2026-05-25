@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk G.5 (Self-host Inter + JetBrains Mono woff2, PR #20). Predchádzajúce: PR #19 — G.1 Design system tokens + 12 base komponentov; PR #18 — F.6 Ticket-detail B-E probe.
-- **In flight:** Chunk G.2 — i18n provider + sk/en catalogs (PR TBD).
-- **Next up:** Chunk G.3 — `@sentry/react` + correlation ID propagation.
+- **Last merged:** Chunk G.2 (i18n provider + sk/en catalogs, PR #21). Predchádzajúce: PR #20 — G.5 Self-host fonts; PR #19 — G.1 Design system tokens.
+- **In flight:** —
+- **Next up:** Chunk G.3 — `@sentry/react` + correlation ID propagation. Plán: [G.3.md](./plans/G.3.md).
 
-Posledná revízia tohto dokumentu: G.2 implementation done (2026-05-25).
+Posledná revízia tohto dokumentu: G.2 merged (2026-05-25).
 
 ---
 
