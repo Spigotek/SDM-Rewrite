@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk G.2 (i18n provider + sk/en catalogs, PR #21). Predchádzajúce: PR #20 — G.5 Self-host fonts; PR #19 — G.1 Design system tokens.
-- **In flight:** Chunk G.3 — `@sentry/react` + correlation ID propagation. Plán: [G.3.md](./plans/G.3.md).
-- **Next up:** Chunk G.4 — LHCI + size-limit + manualChunks tuning. Plán: [G.4.md](./plans/G.4.md) (TBD).
+- **Last merged:** Chunk G.3 (Sentry FE init + ULID correlation ID + ErrorBoundary wiring, PR #22). Predchádzajúce: PR #21 — G.2 i18n; PR #20 — G.5 Self-host fonts.
+- **In flight:** —
+- **Next up:** Chunk G.4 — LHCI + size-limit + manualChunks tuning (last G chunk). Plán: [G.4.md](./plans/G.4.md).
 
-Posledná revízia tohto dokumentu: G.3 open (2026-05-25).
+Posledná revízia tohto dokumentu: G.3 merged (2026-05-25).
 
 ---
 
