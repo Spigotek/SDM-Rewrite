@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk F.6 (Ticket-detail B-E probe — activity log + attachments wired, linked stays `_unsupported: true` per §24 verdict, PR #18). Predchádzajúce: PR #17 — F.5 Cleanup MSW vs BFF; PR #15 — F.4 Platform.
-- **In flight:** Chunk G.1 — Design system tokens + 12 base komponentov (PR TBD).
-- **Next up:** Phase G.5 — Self-host Inter + JetBrains Mono woff2 (per `theming.md`).
+- **Last merged:** Chunk G.1 (Design system tokens + 12 base komponentov, PR #19). Predchádzajúce: PR #18 — F.6 Ticket-detail B-E probe; PR #17 — F.5 Cleanup MSW vs BFF.
+- **In flight:** —
+- **Next up:** Chunk G.5 — Self-host Inter + JetBrains Mono woff2 (per `theming.md`). Plán: [G.5.md](./plans/G.5.md).
 
-Posledná revízia tohto dokumentu: G.1 in-flight (2026-05-25).
+Posledná revízia tohto dokumentu: G.1 merged (2026-05-25).
 
 ---
 
@@ -104,7 +104,7 @@ Posledná revízia tohto dokumentu: G.1 in-flight (2026-05-25).
 
 ### Phase G — Cross-cutting concerns ⏳ IN-FLIGHT (~5 chunks)
 
-- **G.1 Design system tokens + base komponenty ✅ DONE** — `@sdm/design-system` plne naplnený: `tokens.css` (typography, light/dark/hc colors, spacing, radius, shadow, motion, z-index, breakpoints, layout, borders), `reset.css`, FOUC-safe inline script v `apps/{portal,workspace}/index.html`, 12 base komponentov (Icon, Button, IconButton, Link, Badge, StatusBadge, PriorityBadge, Card, TextField, TextArea, Select, Checkbox) — každý s CSS Module + 3+ vitest tests + `data-component` attr (39 testov spolu). Forms `Select`/`Checkbox` na Radix primitives, `Icon` na lucide-react. Shell login + top-bar v portal aj workspace teraz konzumujú `Button` + `Card` z `@sdm/design-system`. Plán: [G.1.md](./plans/G.1.md).
+- **G.1 Design system tokens + base komponenty ✅ DONE** — `@sdm/design-system` plne naplnený: `tokens.css` (typography, light/dark/hc colors, spacing, radius, shadow, motion, z-index, breakpoints, layout, borders), `reset.css`, FOUC-safe inline script v `apps/{portal,workspace}/index.html`, 12 base komponentov (Icon, Button, IconButton, Link, Badge, StatusBadge, PriorityBadge, Card, TextField, TextArea, Select, Checkbox) — každý s CSS Module + 3+ vitest tests + `data-component` attr (39 testov spolu). Forms `Select`/`Checkbox` na Radix primitives, `Icon` na lucide-react. Shell login + top-bar v portal aj workspace teraz konzumujú `Button` + `Card` z `@sdm/design-system`. Bundle delta +31 KB gzip (Radix Select/Checkbox) deferred to G.4 manualChunks + size-limit budgets. Plán: [G.1.md](./plans/G.1.md), PR #19.
 - **G.2 i18n provider + catalogs (sk/en)** — Inputs: `docs/agents/design-system/microcopy.md`, `architecture/decision-records/07-i18n.md`. Output: `packages/i18n/{src,catalogs}/*`.
 - **G.3 Observability** — Sentry SDK init + correlation ID propagation, BFF audit log shipping. Inputs: `security/audit-and-compliance.md`.
 - **G.4 Performance budgets** — LHCI, size-limit, manualChunks tuning. Inputs: `qa-test-strategy/performance.md`.
