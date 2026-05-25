@@ -1,3 +1,4 @@
+import { Button } from "@sdm/design-system";
 import { useSession } from "./session-context";
 import { TenantSwitcher } from "./tenant-switcher";
 
@@ -20,14 +21,14 @@ export function TopBar({ appName }: { appName: string }) {
               {session.roles.length > 0 ? session.roles.join(", ") : "no roles"}
             </span>
           </div>
-          <button
-            type="button"
-            className="sdm-logout-button"
+          <Button
+            variant="secondary"
+            size="sm"
             onClick={() => void logout()}
             data-testid="logout-button"
           >
             Odhlásiť
-          </button>
+          </Button>
         </>
       )}
     </header>

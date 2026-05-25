@@ -4,8 +4,29 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SDM Portal</title>
+    <script>
+      (function () {
+        try {
+          var k = "sdm.theme";
+          var s = localStorage.getItem(k);
+          var t;
+          if (s === "dark" || s === "light" || s === "hc") {
+            t = s;
+          } else if (matchMedia("(prefers-contrast: more)").matches) {
+            t = "hc";
+          } else if (matchMedia("(prefers-color-scheme: dark)").matches) {
+            t = "dark";
+          } else {
+            t = "light";
+          }
+          document.documentElement.setAttribute("data-theme", t);
+        } catch (e) {
+          document.documentElement.setAttribute("data-theme", "light");
+        }
+      })();
+    </script>
   </head>
-  <body>
+  <body data-density="comfortable">
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

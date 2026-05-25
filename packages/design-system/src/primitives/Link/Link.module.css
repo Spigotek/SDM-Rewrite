@@ -1,0 +1,33 @@
+.link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  border-radius: var(--radius-xs);
+  transition: color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.link:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
+
+.default {
+  color: var(--color-text-link);
+}
+
+.default:hover {
+  color: var(--color-brand-bg-hover);
+}
+
+.subtle {
+  color: var(--color-text-body);
+  text-decoration: none;
+}
+
+.subtle:hover {
+  text-decoration: underline;
+}
+
+.code {
+  font-family: var(--font-family-mono);
+  color: var(--color-text-link);
+}

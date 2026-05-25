@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Button, Card } from "@sdm/design-system";
 
 export function LoginPage({
   appName,
@@ -30,47 +31,51 @@ export function LoginPage({
 
   return (
     <section className="sdm-login-page" data-testid="login-page">
-      <form className="sdm-login-form" onSubmit={handleSubmit} aria-labelledby="login-title">
-        <h1 id="login-title">{appName}</h1>
-        <p className="sdm-login-hint">Prihláste sa do Service Desk-u.</p>
-        <label className="sdm-login-field">
-          <span>Používateľské meno</span>
-          <input
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            autoComplete="username"
-            required
-            disabled={busy}
-            data-testid="login-username"
-          />
-        </label>
-        <label className="sdm-login-field">
-          <span>Heslo</span>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            autoComplete="current-password"
-            required
-            disabled={busy}
-            data-testid="login-password"
-          />
-        </label>
-        {error && (
-          <p role="alert" className="sdm-login-error" data-testid="login-error">
-            {error}
-          </p>
-        )}
-        <button
-          type="submit"
-          className="sdm-login-submit"
-          disabled={busy}
-          data-testid="login-submit"
-        >
-          {busy ? "Prihlasujem…" : "Prihlásiť"}
-        </button>
-      </form>
+      <Card variant="surface" className="sdm-login-card">
+        <form className="sdm-login-form" onSubmit={handleSubmit} aria-labelledby="login-title">
+          <h1 id="login-title">{appName}</h1>
+          <p className="sdm-login-hint">Prihláste sa do Service Desk-u.</p>
+          <label className="sdm-login-field">
+            <span>Používateľské meno</span>
+            <input
+              type="text"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              autoComplete="username"
+              required
+              disabled={busy}
+              data-testid="login-username"
+            />
+          </label>
+          <label className="sdm-login-field">
+            <span>Heslo</span>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              autoComplete="current-password"
+              required
+              disabled={busy}
+              data-testid="login-password"
+            />
+          </label>
+          {error && (
+            <p role="alert" className="sdm-login-error" data-testid="login-error">
+              {error}
+            </p>
+          )}
+          <Button
+            type="submit"
+            variant="primary"
+            size="md"
+            loading={busy}
+            fullWidth
+            data-testid="login-submit"
+          >
+            {busy ? "Prihlasujem…" : "Prihlásiť"}
+          </Button>
+        </form>
+      </Card>
     </section>
   );
 }
