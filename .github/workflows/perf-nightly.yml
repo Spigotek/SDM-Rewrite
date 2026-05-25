@@ -1,0 +1,73 @@
+name: perf-nightly
+
+# Full Lighthouse CI sweep — runs nightly + on every `main` push. Per G.4
+# this is informational only (no rolling-baseline mechanism yet — deferred
+# post-MVP per `performance.md §6`). The per-PR `ci.yml` job runs the same
+# scopes but uses the per-app `lighthouserc.json` blocking subset.
+#
+# When Phase H wires React Router and adds per-route entries to the
+# `_url_todo_phase_h` arrays in each lighthouserc.json, expand the sweep
+# scope here.
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: perf-nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22.11.0"
+  PNPM_VERSION: "9.12.0"
+
+jobs:
+  lhci-full-sweep:
+    name: Full LHCI sweep (all routes)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chrome for Lighthouse
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      # The `*-all` scopes are placeholders today — `lhci-collect.sh` resolves
+      # them to the same lighthouserc.json as `*-critical`, so the sweep runs
+      # only the routes that exist in Phase G. Phase H will fork
+      # lighthouserc-all.json with the full route list once React Router lands.
+      - name: LHCI sweep — portal (all routes that exist)
+        continue-on-error: true
+        run: ./scripts/lhci-collect.sh portal-all
+
+      - name: LHCI sweep — workspace (all routes that exist)
+        continue-on-error: true
+        run: ./scripts/lhci-collect.sh workspace-all
+
+      - name: Upload Lighthouse reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-reports
+          path: |
+            apps/portal/.lighthouseci/
+            apps/workspace/.lighthouseci/
+          retention-days: 14

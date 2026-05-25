@@ -86,6 +86,49 @@ jobs:
         if: steps.sentry_flag.outputs.enabled != 'true'
         run: pnpm build
 
+      # G.4 — bundle size budgets enforced per `performance.md §3`. Reads
+      # `apps/{portal,workspace}/.size-limit.json` against the dist artifacts
+      # written by the build step above. Blocking gate: any chunk exceeding
+      # its declared `limit` fails CI. To diagnose locally run
+      # `pnpm --filter @sdm/<app> size:why`.
+      - name: size-limit (portal)
+        run: pnpm --filter @sdm/portal size
+
+      - name: size-limit (workspace)
+        run: pnpm --filter @sdm/workspace size
+
+      # G.4 — Lighthouse CI on the static-dist artifact. Blocking assertions
+      # (CLS + accessibility + best-practices) are kept conservative because
+      # the Phase G no-router shell halts at `/config 404`; numeric timing
+      # assertions are at `warn` level until Phase H wires React Router and
+      # the bootstrap can complete in CI. Per `performance.md §1` portal
+      # uses mobile form factor, workspace desktop.
+      - name: Install Chrome for Lighthouse
+        id: setup-chrome
+        uses: browser-actions/setup-chrome@v1
+        with:
+          chrome-version: stable
+
+      - name: LHCI — portal (mobile, blocking on CLS + a11y + best-practices)
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: ./scripts/lhci-collect.sh portal-critical
+
+      - name: LHCI — workspace (desktop, blocking on CLS + a11y + best-practices)
+        env:
+          CHROME_PATH: ${{ steps.setup-chrome.outputs.chrome-path }}
+        run: ./scripts/lhci-collect.sh workspace-critical
+
+      - name: Upload bundle stats artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bundle-stats
+          path: |
+            apps/portal/dist/stats.html
+            apps/workspace/dist/stats.html
+          retention-days: 14
+
   helm-lint:
     name: helm chart lint + template
     runs-on: ubuntu-latest

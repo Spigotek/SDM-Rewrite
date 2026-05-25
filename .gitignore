@@ -20,6 +20,9 @@ playwright-report/
 test-results/
 .playwright/
 
+# Lighthouse CI artifacts (G.4)
+.lighthouseci/
+
 # Environment
 .env
 .env.local

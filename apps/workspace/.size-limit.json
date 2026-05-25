@@ -1,0 +1,44 @@
+[
+  {
+    "name": "Workspace — initial JS (entry + eagerly-loaded vendor chunks)",
+    "path": [
+      "dist/assets/index-*.js",
+      "dist/assets/vendor-react-*.js",
+      "dist/assets/vendor-i18n-*.js",
+      "dist/assets/vendor-ds-*.js",
+      "dist/assets/vendor-observability-*.js"
+    ],
+    "limit": "350 KB",
+    "gzip": true
+  },
+  {
+    "name": "Workspace — initial CSS",
+    "path": "dist/assets/index-*.css",
+    "limit": "60 KB",
+    "gzip": true
+  },
+  {
+    "name": "Workspace — vendor-react chunk",
+    "path": "dist/assets/vendor-react-*.js",
+    "limit": "70 KB",
+    "gzip": true
+  },
+  {
+    "name": "Workspace — vendor-i18n chunk",
+    "path": "dist/assets/vendor-i18n-*.js",
+    "limit": "35 KB",
+    "gzip": true
+  },
+  {
+    "name": "Workspace — vendor-ds chunk",
+    "path": "dist/assets/vendor-ds-*.js",
+    "limit": "35 KB",
+    "gzip": true
+  },
+  {
+    "name": "Workspace — vendor-observability chunk",
+    "path": "dist/assets/vendor-observability-*.js",
+    "limit": "45 KB",
+    "gzip": true
+  }
+]
