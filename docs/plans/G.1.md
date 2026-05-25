@@ -1,8 +1,8 @@
 # G.1 — Design tokens + base components
 
-> **Status**: ✅ DONE (PR TBD pending review)
-> **Branch**: `chunk/G.1-design-tokens` (od fresh `main` po F.6 merge)
-> **PR**: TBD
+> **Status**: ✅ DONE
+> **Branch**: `chunk/G.1-design-tokens` (merged + deleted)
+> **PR**: #19 (squash-merged 2026-05-25)
 > **Cieľ**: naplniť `packages/design-system/` stub kompletnou token sadou
 > (tokens.css + CSS Custom Properties + light/dark/hc theming) + 12 base
 > komponentov (Button, IconButton, Link, Icon, Badge, StatusBadge, PriorityBadge,
