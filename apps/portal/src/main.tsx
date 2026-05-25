@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "@sdm/design-system/tokens.css";
 import "@sdm/design-system/reset.css";
 import "@sdm/design-system/fonts.css";
+import { I18nProvider, bootstrapI18n } from "@sdm/i18n";
 import App from "./App";
 import { loadConfig } from "./bootstrap/config";
 
@@ -12,14 +13,16 @@ async function bootstrap(): Promise<void> {
     await startMockWorker({ quiet: false });
   }
 
-  await loadConfig();
+  await Promise.all([loadConfig(), bootstrapI18n({ app: "portal" })]);
 
   const rootEl = document.getElementById("root");
   if (!rootEl) throw new Error("[portal] root element #root not found in index.html");
 
   createRoot(rootEl).render(
     <StrictMode>
-      <App />
+      <I18nProvider>
+        <App />
+      </I18nProvider>
     </StrictMode>,
   );
 }

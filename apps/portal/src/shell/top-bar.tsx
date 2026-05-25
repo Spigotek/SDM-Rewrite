@@ -1,8 +1,11 @@
 import { Button } from "@sdm/design-system";
+import { useTranslation } from "@sdm/i18n";
+import { LanguageSwitcher } from "./language-switcher";
 import { useSession } from "./session-context";
 import { TenantSwitcher } from "./tenant-switcher";
 
 export function TopBar({ appName }: { appName: string }) {
+  const { t } = useTranslation();
   const { session, status, logout } = useSession();
   return (
     <header className="sdm-top-bar" data-testid="top-bar">
@@ -18,16 +21,17 @@ export function TopBar({ appName }: { appName: string }) {
           <div className="sdm-user-pill" data-testid="user-pill">
             <span className="sdm-user-name">{session.displayName}</span>
             <span className="sdm-user-roles">
-              {session.roles.length > 0 ? session.roles.join(", ") : "no roles"}
+              {session.roles.length > 0 ? session.roles.join(", ") : t("meta.noRoles")}
             </span>
           </div>
+          <LanguageSwitcher />
           <Button
             variant="secondary"
             size="sm"
             onClick={() => void logout()}
             data-testid="logout-button"
           >
-            Odhlásiť
+            {t("actions.signOut")}
           </Button>
         </>
       )}

@@ -1,0 +1,32 @@
+{
+  "appName": "SDM Workspace",
+  "shell": {
+    "loginHint": "Prihlás sa do agentskej konzoly.",
+    "username": "Používateľské meno",
+    "password": "Heslo",
+    "userMenuLabel": "Menu agenta"
+  },
+  "queue": {
+    "title": "Queue",
+    "filters": "Filtre",
+    "resetFilters": "Resetovať filtre",
+    "savedViews": "Uložené pohľady",
+    "empty": "Žiadne tickety v queue. Užiš si chvíľu alebo si daj kávu."
+  },
+  "actions": {
+    "take": "Prevziať",
+    "escalate": "Eskalovať",
+    "resolve": "Vyriešiť",
+    "reopen": "Otvoriť znova",
+    "watch": "Sledovať"
+  },
+  "composer": {
+    "publicReply": "Odpoveď požiadavateľovi",
+    "internalNote": "Interná poznámka",
+    "workLog": "Záznam práce"
+  },
+  "sla": {
+    "breached": "SLA prekročená",
+    "atRisk": "Riziko prekročenia"
+  }
+}

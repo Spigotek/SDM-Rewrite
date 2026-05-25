@@ -44,6 +44,9 @@ jobs:
           restore-keys: |
             turbo-${{ runner.os }}-
 
+      - name: i18n key parity (SK ↔ EN)
+        run: pnpm i18n:check
+
       - name: Lint
         run: pnpm -r lint
 

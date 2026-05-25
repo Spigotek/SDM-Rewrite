@@ -1,0 +1,28 @@
+{
+  "appName": "SDM Portál",
+  "shell": {
+    "loginHint": "Prihlás sa do Service Desk-u.",
+    "username": "Používateľské meno",
+    "password": "Heslo",
+    "userMenuLabel": "Menu používateľa"
+  },
+  "nav": {
+    "home": "Domov",
+    "myTickets": "Moje tickety",
+    "catalog": "Katalóg služieb",
+    "knowledge": "Pomoc"
+  },
+  "catalog": {
+    "reportProblem": "Nahlásiť problém",
+    "requestSomething": "Požiadať o niečo",
+    "browseAll": "Prezri všetky služby"
+  },
+  "greeting": "Ahoj, {name} 👋",
+  "empty": {
+    "myTickets": "Zatiaľ žiadne tickety. Keď niečo budeš potrebovať, nahlás problém alebo požiadaj o niečo.",
+    "notifications": "Žiadne nové notifikácie. Tu sa budú zobrazovať aktualizácie tvojich ticketov."
+  },
+  "feedback": {
+    "submitted": "Ticket #{id} odoslaný. Helpdesk to dostane okamžite."
+  }
+}

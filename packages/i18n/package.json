@@ -4,14 +4,34 @@
   "private": true,
   "type": "module",
   "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./catalogs/*": "./catalogs/*"
+  },
   "scripts": {
     "typecheck": "tsc --noEmit",
     "lint": "eslint src",
-    "test": "echo \"(no tests yet)\" && exit 0",
+    "test": "vitest run",
     "build": "echo \"(source-only package — no build)\" && exit 0",
     "clean": "rimraf .turbo *.tsbuildinfo"
   },
   "dependencies": {
-    "@sdm/utils": "workspace:*"
+    "@sdm/utils": "workspace:*",
+    "date-fns": "3.6.0",
+    "i18next": "23.16.8",
+    "i18next-icu": "2.4.3",
+    "intl-messageformat": "11.2.7",
+    "react-i18next": "15.7.0"
+  },
+  "peerDependencies": {
+    "react": "19.0.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "6.6.3",
+    "@testing-library/react": "16.1.0",
+    "@types/react": "19.0.2",
+    "@types/react-dom": "19.0.2",
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
   }
 }

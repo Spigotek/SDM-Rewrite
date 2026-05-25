@@ -1,0 +1,74 @@
+{
+  "actions": {
+    "submit": "Odoslať",
+    "save": "Uložiť",
+    "cancel": "Zrušiť",
+    "confirm": "Potvrdiť",
+    "delete": "Odstrániť",
+    "edit": "Upraviť",
+    "create": "Vytvoriť",
+    "search": "Hľadať",
+    "refresh": "Obnoviť",
+    "retry": "Skúsiť znova",
+    "signIn": "Prihlásiť sa",
+    "signOut": "Odhlásiť sa",
+    "signingIn": "Prihlasujem…",
+    "switchTenant": "Prepnúť tenant",
+    "continue": "Pokračovať"
+  },
+  "status": {
+    "new": "Nový",
+    "open": "Otvorený",
+    "inProgress": "V riešení",
+    "hold": "Pozastavený",
+    "pendingApproval": "Čaká na schválenie",
+    "resolved": "Vyriešený",
+    "closed": "Zatvorený",
+    "reopened": "Znova otvorený",
+    "cancelled": "Zrušený"
+  },
+  "priority": {
+    "critical": "Kritická",
+    "high": "Vysoká",
+    "medium": "Stredná",
+    "low": "Nízka"
+  },
+  "meta": {
+    "loading": "Načítavam…",
+    "noRoles": "bez rolí"
+  },
+  "errors": {
+    "sessionExpired": "Tvoja relácia vypršala. Prihlás sa znova.",
+    "permissionDenied": "Nemáš prístup k tomuto záznamu v tenante {tenant}. Skontroluj rolu s administrátorom.",
+    "notFound": "Hľadaný záznam sa nenašiel. Možno bol zmazaný alebo si zlú URL.",
+    "serverError": "Server teraz neodpovedá. Skús to o chvíľu.",
+    "networkOffline": "Nemáš pripojenie.",
+    "sessionLoadFailed": "Reláciu sa nepodarilo načítať: {detail}",
+    "loginFailed": "Prihlásenie zlyhalo.",
+    "loginCredentialsRequired": "Vyplň meno aj heslo.",
+    "renderCrashed": "Niečo sa pokazilo"
+  },
+  "validation": {
+    "required": "Toto pole je povinné.",
+    "tooShort": "Vyplň aspoň {min} znakov.",
+    "tooLong": "Maximum {max} znakov ({current}).",
+    "email": "Email musí obsahovať @ a doménu."
+  },
+  "session": {
+    "idleTitle": "Relácia čoskoro vyprší",
+    "idleBody": "Tvoja relácia vyprší o {count, plural, one {# sekundu} few {# sekundy} other {# sekúnd}}. Chceš pokračovať?"
+  },
+  "plurals": {
+    "tickets": "{count, plural, =0 {žiadne tickety} one {1 ticket} few {# tickety} other {# ticketov}}"
+  },
+  "time": {
+    "justNow": "Pred chvíľou",
+    "yesterday": "Včera",
+    "today": "Dnes"
+  },
+  "language": {
+    "label": "Jazyk",
+    "sk": "Slovenčina",
+    "en": "Angličtina"
+  }
+}

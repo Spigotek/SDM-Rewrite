@@ -22,10 +22,10 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Last merged:** Chunk G.5 (Self-host Inter + JetBrains Mono woff2, PR #20). Predchádzajúce: PR #19 — G.1 Design system tokens + 12 base komponentov; PR #18 — F.6 Ticket-detail B-E probe.
-- **In flight:** —
-- **Next up:** Chunk G.2 — i18n provider + sk/en catalogs. Plán: [G.2.md](./plans/G.2.md).
+- **In flight:** Chunk G.2 — i18n provider + sk/en catalogs (PR TBD).
+- **Next up:** Chunk G.3 — `@sentry/react` + correlation ID propagation.
 
-Posledná revízia tohto dokumentu: G.5 merged (2026-05-25).
+Posledná revízia tohto dokumentu: G.2 implementation done (2026-05-25).
 
 ---
 
@@ -105,7 +105,7 @@ Posledná revízia tohto dokumentu: G.5 merged (2026-05-25).
 ### Phase G — Cross-cutting concerns ⏳ IN-FLIGHT (~5 chunks)
 
 - **G.1 Design system tokens + base komponenty ✅ DONE** — `@sdm/design-system` plne naplnený: `tokens.css` (typography, light/dark/hc colors, spacing, radius, shadow, motion, z-index, breakpoints, layout, borders), `reset.css`, FOUC-safe inline script v `apps/{portal,workspace}/index.html`, 12 base komponentov (Icon, Button, IconButton, Link, Badge, StatusBadge, PriorityBadge, Card, TextField, TextArea, Select, Checkbox) — každý s CSS Module + 3+ vitest tests + `data-component` attr (39 testov spolu). Forms `Select`/`Checkbox` na Radix primitives, `Icon` na lucide-react. Shell login + top-bar v portal aj workspace teraz konzumujú `Button` + `Card` z `@sdm/design-system`. Bundle delta +31 KB gzip (Radix Select/Checkbox) deferred to G.4 manualChunks + size-limit budgets. Plán: [G.1.md](./plans/G.1.md), PR #19.
-- **G.2 i18n provider + catalogs (sk/en)** — Inputs: `docs/agents/design-system/microcopy.md`, `architecture/decision-records/07-i18n.md`. Output: `packages/i18n/{src,catalogs}/*`.
+- **G.2 i18n provider + catalogs (sk/en) ✅ DONE** — `@sdm/i18n` plne naplnený: `i18next@23 + react-i18next@15 + i18next-icu + intl-messageformat@11` adapter. Catalogs JSON: `shared/{sk,en}.json` (52 keys: actions, status, priority, meta, errors, validation, session, plurals, time, language), `portal/{sk,en}.json` (16 keys: shell, nav, catalog, greeting, empty, feedback), `workspace/{sk,en}.json` (20 keys: shell, queue, actions, composer, sla) — 88 keys spolu, 100% SK ↔ EN parity. Public API: `I18nProvider`, `bootstrapI18n`, `changeLocale`, `useTranslation`, `useLocale`, `useDynamic`, `Trans`, `dynamic`, `formatDate`, `formatNumber`, `formatRelative`, `detectLocale`/`persistLocale`. ICU MessageFormat overené pre SK 3+exact-form plurals (`=0`, `one`, `few`, `other`) v `plurals.test.ts`. Locale persisted v `localStorage.sdm.locale`, `<html lang>` updated on switch (FOUC-safe — bootstrap je await-ed pred React render). Shell migrované: `login-page` + `idle-modal` + `tenant-switcher` + `top-bar` + `app-shell` v oboch SPA cez `useTranslation()`; žiadne hardcoded SK strings v `apps/{portal,workspace}/src/shell/*`. `LanguageSwitcher` v topbar — SK/EN dropdown s lazy-load druhého locale. Bundle delta: +28.6 KB gzip (portal index 91.5 → 120.1 KB gzip), catalogs chunked per-locale. CI gate `pnpm i18n:check` (pure-Node stdlib script v `tools/i18n-check/src/cli.js`) blokuje merge pri SK ↔ EN drift. Plán: [G.2.md](./plans/G.2.md), PR TBD.
 - **G.3 Observability** — Sentry SDK init + correlation ID propagation, BFF audit log shipping. Inputs: `security/audit-and-compliance.md`.
 - **G.4 Performance budgets** — LHCI, size-limit, manualChunks tuning. Inputs: `qa-test-strategy/performance.md`.
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
