@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk G.1 (Design system tokens + 12 base komponentov, PR #19). Predchádzajúce: PR #18 — F.6 Ticket-detail B-E probe; PR #17 — F.5 Cleanup MSW vs BFF.
+- **Last merged:** Chunk G.5 (Self-host Inter + JetBrains Mono woff2, PR TBD). Predchádzajúce: PR #19 — G.1 Design system tokens + 12 base komponentov; PR #18 — F.6 Ticket-detail B-E probe.
 - **In flight:** —
-- **Next up:** Chunk G.5 — Self-host Inter + JetBrains Mono woff2 (per `theming.md`). Plán: [G.5.md](./plans/G.5.md).
+- **Next up:** Chunk G.2 — i18n provider + sk/en catalogs. Plán: [G.2.md](./plans/G.2.md).
 
-Posledná revízia tohto dokumentu: G.1 merged (2026-05-25).
+Posledná revízia tohto dokumentu: G.5 merged (2026-05-25).
 
 ---
 
@@ -108,7 +108,7 @@ Posledná revízia tohto dokumentu: G.1 merged (2026-05-25).
 - **G.2 i18n provider + catalogs (sk/en)** — Inputs: `docs/agents/design-system/microcopy.md`, `architecture/decision-records/07-i18n.md`. Output: `packages/i18n/{src,catalogs}/*`.
 - **G.3 Observability** — Sentry SDK init + correlation ID propagation, BFF audit log shipping. Inputs: `security/audit-and-compliance.md`.
 - **G.4 Performance budgets** — LHCI, size-limit, manualChunks tuning. Inputs: `qa-test-strategy/performance.md`.
-- **G.5 Self-host fonts** — Inter + JetBrains Mono woff2 v `apps/{portal,workspace}/public/fonts/`. Inputs: `design-system/theming.md`.
+- **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
 ### Phase H — Feature modules 🔜 (najdlhšia, MVP scope)
