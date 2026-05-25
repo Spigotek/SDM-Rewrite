@@ -1,7 +1,8 @@
 # G.4 — Performance budgets (LHCI + size-limit + manualChunks)
 
-> **Status**: ⏳ IN REVIEW (PR otvorený — last G chunk)
-> **Branch**: `chunk/G.4-perf-budgets` > **PR**: TBD (parent agent doplní pri merge)
+> **Status**: ✅ DONE
+> **Branch**: `chunk/G.4-perf-budgets` (merged + deleted)
+> **PR**: #23 (squash-merged 2026-05-25)
 > **Cieľ**: zaviazať Lighthouse CI proti per-route thresholds z `performance.md §2`,
 > `size-limit` budgets z §3 (portal 180 KB / workspace 350 KB initial JS),
 > `manualChunks` tuning vo Vite configu pre route-level code split. Performance
