@@ -1,8 +1,8 @@
 # F.6 — Ticket-detail B-E probe (linked / attachments / activity)
 
-> **Status**: ⏳ IN-FLIGHT (PR pending)
-> **Branch**: `chunk/F.6-ticket-detail-probe` (od fresh `main` po F.5 merge)
-> **PR**: TBD (linked po `gh pr create`)
+> **Status**: ✅ DONE
+> **Branch**: `chunk/F.6-ticket-detail-probe` (merged + deleted)
+> **PR**: #18 (squash-merged 2026-05-25)
 >
 > **Outcome**: activity log + attachments flipped to `_unsupported: false` (real B-E
 > shapes wired); linked tickets stay `_unsupported: true` — `real-backend-contracts.md §24`
@@ -82,7 +82,7 @@ docs/plans/F.6.md                                    # tento súbor → Status D
   (covered by reverse-proxy access log)". F.4 audit taxonomy už neeviduje read events;
   F.6 nezavedie nové.
 - [x] F.5 PR #17 merged (squash --admin --delete-branch) ⇒ branch od fresh `main`.
-- [ ] ROADMAP toggle: F.6 → ✅ DONE (po PR merge).
+- [x] ROADMAP toggle: F.6 → ✅ DONE (po PR #18 merge).
 
 ## Stratégia
 
