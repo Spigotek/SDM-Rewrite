@@ -19,10 +19,12 @@
     "@sdm/design-system": "workspace:*",
     "@sdm/domain": "workspace:*",
     "@sdm/i18n": "workspace:*",
+    "@sentry/react": "8.55.2",
     "react": "19.0.0",
     "react-dom": "19.0.0"
   },
   "devDependencies": {
+    "@sentry/vite-plugin": "2.23.1",
     "@types/react": "19.0.2",
     "@types/react-dom": "19.0.2",
     "@vitejs/plugin-react": "4.3.4",

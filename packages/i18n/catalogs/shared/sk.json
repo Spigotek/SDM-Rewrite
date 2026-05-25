@@ -46,7 +46,10 @@
     "sessionLoadFailed": "Reláciu sa nepodarilo načítať: {detail}",
     "loginFailed": "Prihlásenie zlyhalo.",
     "loginCredentialsRequired": "Vyplň meno aj heslo.",
-    "renderCrashed": "Niečo sa pokazilo"
+    "renderCrashed": "Niečo sa pokazilo",
+    "boundaryTitle": "Niečo sa pokazilo",
+    "boundaryBody": "Skús obnoviť stránku. Ak to pokračuje, kontaktuj podporu.",
+    "boundaryRefresh": "Obnoviť stránku"
   },
   "validation": {
     "required": "Toto pole je povinné.",

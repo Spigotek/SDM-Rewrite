@@ -8,9 +8,10 @@ import {
   useState,
 } from "react";
 import type { ReactNode } from "react";
+import * as Sentry from "@sentry/react";
 import type { Session } from "@sdm/auth";
 import type { TenantId } from "@sdm/domain";
-import { createCrossTabChannel, type CrossTabChannel } from "@sdm/api-client";
+import { createCrossTabChannel, pseudonymize, type CrossTabChannel } from "@sdm/api-client";
 import {
   loadSession,
   login as doLogin,
@@ -99,6 +100,29 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     window.addEventListener("sdm:session-lost", onSessionLost);
     return () => window.removeEventListener("sdm:session-lost", onSessionLost);
   }, []);
+
+  // Sentry user context per ADR-09 §1 — never raw userId / email / displayName.
+  // Salt = active tenant ID so the same person across tenants does NOT collide
+  // (resists cross-tenant correlation). When the session drops we clear the
+  // user so subsequent anonymous errors aren't tagged with the last identity.
+  useEffect(() => {
+    if (!session) {
+      Sentry.setUser(null);
+      Sentry.setTag("tenantId", undefined);
+      Sentry.setTag("locale", undefined);
+      return;
+    }
+    let cancelled = false;
+    void pseudonymize(session.userId, session.tenantId).then((pseudId) => {
+      if (cancelled) return;
+      Sentry.setUser({ id: pseudId });
+      Sentry.setTag("tenantId", session.tenantId);
+      Sentry.setTag("locale", session.i18n.locale);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   const switchTenant = useCallback(
     async (tenantId: TenantId) => {

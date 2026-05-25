@@ -46,7 +46,10 @@
     "sessionLoadFailed": "Failed to load session: {detail}",
     "loginFailed": "Sign-in failed.",
     "loginCredentialsRequired": "Enter both username and password.",
-    "renderCrashed": "Something went wrong"
+    "renderCrashed": "Something went wrong",
+    "boundaryTitle": "Something went wrong",
+    "boundaryBody": "Try refreshing the page. If the problem persists, contact support.",
+    "boundaryRefresh": "Refresh page"
   },
   "validation": {
     "required": "This field is required.",

@@ -24,6 +24,8 @@ export const configHandlers = [
         changeCalendar: false,
         reportingWidgets: false,
       },
+      // G.3 — `sentryDsn` deliberately omitted in mock mode so `initSentry`
+      // no-ops and no events leave the page during MSW dev / fixture runs.
       observability: {
         rumEnabled: false,
       },

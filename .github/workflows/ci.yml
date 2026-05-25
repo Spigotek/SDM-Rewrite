@@ -56,7 +56,34 @@ jobs:
       - name: Test
         run: pnpm -r test
 
-      - name: Build
+      # G.3 — source maps upload is gated on the SENTRY_AUTH_TOKEN secret. We
+      # detect the secret via a Bash step (GitHub forbids `if: secrets.X != ''`
+      # at the expression level) and emit a job-step output that the build step
+      # consumes. When the secret is absent we still run `pnpm build` without
+      # any Sentry plugin activity — fork PRs + first-bootstrap CI stay green.
+      - name: Detect Sentry secret availability
+        id: sentry_flag
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+        run: |
+          if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build (with Sentry source maps upload)
+        if: steps.sentry_flag.outputs.enabled == 'true'
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT_PORTAL: ${{ secrets.SENTRY_PROJECT_PORTAL }}
+          SENTRY_PROJECT_WORKSPACE: ${{ secrets.SENTRY_PROJECT_WORKSPACE }}
+          SENTRY_RELEASE: ${{ github.sha }}
+        run: pnpm build
+
+      - name: Build (no Sentry upload)
+        if: steps.sentry_flag.outputs.enabled != 'true'
         run: pnpm build
 
   helm-lint:
