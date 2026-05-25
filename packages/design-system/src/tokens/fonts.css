@@ -1,7 +1,65 @@
 /**
- * Font face placeholder — G.5 will replace these declarations with self-hosted
- * `@font-face` rules pointing to `apps/{portal,workspace}/public/fonts/*.woff2`.
+ * Self-hosted font faces — Inter Variable + JetBrains Mono Variable.
  *
- * For G.1 the typography stack falls back to `system-ui` so portal/workspace
- * render without external font requests; no CDN call is issued.
+ * Files live in `apps/{portal,workspace}/public/fonts/` and are served from
+ * `/fonts/*.woff2` by Vite (dev) and the production static host. No CDN call
+ * is issued — on-prem deploy requirement per
+ * `docs/agents/design-system/library-recommendation.md §Self-hosted assets`.
+ *
+ * Subsets: `latin` (always loaded) + `latin-ext` (lazy via `unicode-range`,
+ * triggered by SK/CZ/PL diacritics — ľ ĺ č ď ť ň ř etc.). Unicode ranges are
+ * the canonical Google Fonts / fontsource definitions.
+ *
+ * Variable axis: Inter weight 100–900, JetBrains Mono weight 100–800. The
+ * `tokens.css` typography stack (`--font-family-{sans,mono,display}`) keeps
+ * the system-ui fallback chain so missing files degrade gracefully.
+ *
+ * `font-display: swap` — FOUT acceptable, FOIT forbidden per
+ * `docs/agents/qa-test-strategy/performance.md §9`.
  */
+
+/* ── Inter Variable — latin ──────────────────────────────────────── */
+@font-face {
+  font-family: "Inter Variable";
+  src: url("/fonts/inter-variable-latin.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ── Inter Variable — latin-ext (SK / CZ / PL diacritics) ────────── */
+@font-face {
+  font-family: "Inter Variable";
+  src: url("/fonts/inter-variable-latin-ext.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* ── JetBrains Mono Variable — latin ─────────────────────────────── */
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  src: url("/fonts/jetbrains-mono-variable-latin.woff2") format("woff2-variations");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+    U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+/* ── JetBrains Mono Variable — latin-ext ─────────────────────────── */
+@font-face {
+  font-family: "JetBrains Mono Variable";
+  src: url("/fonts/jetbrains-mono-variable-latin-ext.woff2") format("woff2-variations");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+    U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113,
+    U+2C60-2C7F, U+A720-A7FF;
+}

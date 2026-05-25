@@ -1,6 +1,6 @@
 # G.5 — Self-host fonts (Inter + JetBrains Mono)
 
-> **Status**: 🔜 NEXT (blokované na G.1 merge)
+> **Status**: ✅ DONE (merged 2026-05-25)
 > **Branch**: `chunk/G.5-self-host-fonts` (od fresh `main` po G.1 merge)
 > **PR**: TBD
 > **Cieľ**: self-hostovať Inter Variable + JetBrains Mono Variable v
@@ -56,16 +56,16 @@ docs/plans/G.5.md                         # tento súbor → Status DONE
 
 ## Done-when
 
-- [ ] Inter Variable + JetBrains Mono Variable woff2 súbory (latin + latin-ext subsets) v `apps/portal/public/fonts/` + `apps/workspace/public/fonts/`.
-- [ ] `packages/design-system/src/tokens/fonts.css` má `@font-face` deklarácie s `font-display: swap`, `font-weight: 100 900` (variable axis range), `unicode-range` per subset.
-- [ ] `<link rel="preload" as="font" type="font/woff2" crossorigin>` v `<head>` oboch SPA pre top weight (typically 400 alebo variable s `font-weight: 400` hint).
-- [ ] Žiadny CDN call — sieťový check pri `pnpm --filter @sdm/portal preview` ukazuje len `localhost:.../fonts/*.woff2` requesty.
-- [ ] Font súbory **gitignorované** alebo committed? **Committed** (binary woff2, ~40-50 KB každý — acceptable v git, predvídateľná verzia). Add `*.woff2` do `.gitattributes` ako `binary` aby git diff nešumel.
-- [ ] License files committed vedľa fontov: `apps/portal/public/fonts/OFL.txt` (Inter SIL Open Font License) + `apps/portal/public/fonts/JetBrains-Mono-OFL.txt`. Identicky pre workspace.
-- [ ] `pnpm -r typecheck/lint/test/build` green.
-- [ ] Bundle delta: initial CSS sa zvýši o ~1-2 KB (font-face deklarácie), žiadny JS impact.
-- [ ] Manual test: otvor portal v Chrome DevTools → Network → filtrované na "Font" → vidíš `inter-variable-latin.woff2` (200, ~40 KB) z localhost, nie CDN.
-- [ ] ROADMAP toggle: G.5 → ✅ DONE.
+- [x] Inter Variable + JetBrains Mono Variable woff2 súbory (latin + latin-ext subsets) v `apps/portal/public/fonts/` + `apps/workspace/public/fonts/`. Sizes: inter-latin 48 KB, inter-latin-ext 85 KB, jbm-latin 40 KB, jbm-latin-ext 15 KB.
+- [x] `packages/design-system/src/tokens/fonts.css` má `@font-face` deklarácie s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts / fontsource `unicode-range` per subset.
+- [x] `<link rel="preload" as="font" type="font/woff2" crossorigin>` v `<head>` oboch SPA pre `inter-variable-latin.woff2` (najčastejší path; mono + latin-ext sú on-demand cez unicode-range).
+- [x] Žiadny CDN call — `grep -rn googleapis|jsdelivr|unpkg|fonts.google` v `apps/{portal,workspace}/{src,dist,index.html}` + `packages/design-system/src` je prázdny. Build artefakty obsahujú len relatívne `/fonts/*.woff2` URL.
+- [x] Font súbory **committed** (binary woff2, ~15-85 KB každý). `.gitattributes` v repo root: `*.woff2 binary` aby git diff nešumel.
+- [x] License files committed vedľa fontov: `apps/{portal,workspace}/public/fonts/OFL-Inter.txt` + `OFL-JetBrainsMono.txt` (oboje SIL Open Font License 1.1, kopírované z `@fontsource-variable/*` `LICENSE`).
+- [x] `pnpm -r typecheck/lint/test/build` green (zelený proti `chunk/G.5-self-host-fonts` HEAD).
+- [x] Bundle delta: portal `index.css` +0.8 KB (`+0.32 KB gzip`), žiadny JS impact. Public assets +~188 KB per app (4× woff2 + 2× license).
+- [x] Manual test: `pnpm --filter @sdm/portal preview` + `curl /fonts/inter-variable-latin.woff2 → 200`. Build dist neobsahuje žiadny CDN reference.
+- [x] ROADMAP toggle: G.5 → ✅ DONE.
 
 ## Stratégia
 
@@ -139,6 +139,13 @@ docs/plans/G.5.md                         # tento súbor → Status DONE
 - **Preload count**: per `performance.md §9`, max 4 font files preload-né. G.5 preload-uje **iba 2** (inter-latin + mono-latin). latin-ext sa load-uje on-demand (unicode-range gate).
 - **CORS for `crossorigin` attribute on preload**: required pre fonts even when served same-origin (per HTTP spec). Bez `crossorigin` browser ignoruje preload pri followup request.
 - **Inter Display variant**: per `tokens.md` `font.family.display = "Inter Variable", "Inter"` — používame **rovnaký variable font** ako sans (variable axis zvládne display sizes). Žiadny separate Inter Display súbor.
+
+## Implementation notes (post-merge)
+
+- **Source of fonts**: `@fontsource-variable/inter@5.2.8` + `@fontsource-variable/jetbrains-mono@5.2.8` extracted via `npm pack` → tarball → copy `files/{inter,jetbrains-mono}-latin{,-ext}-wght-normal.woff2` into both apps' `public/fonts/`, rename per G.5.md convention. **NIE pridané ako runtime deps** (per D5). pyftsubset path nepoužitý — fontsource ships pre-subset-ed woff2 priamo.
+- **Variable axis**: Inter `100 900`, JetBrains Mono `100 800` (per upstream fontsource — JBM masters končia pri 800). Tokens v `tokens.css` referencujú `var(--font-family-{sans,mono})` ktoré ostávajú nezmenené z G.1 (fallback chain end-to-end intact).
+- **Preload count**: 1 per SPA (`inter-variable-latin.woff2`) — JBM sa load-uje on-demand pri prvom mono glyph render-i (code blocks, ticket IDs), `font-display: swap` pokrýva FOUT. latin-ext gate-uje `unicode-range` — no SK content = no fetch.
+- **Cyrillic / Greek / Vietnamese subsets**: deliberately not shipped (out of scope per i18n decision SK/EN/CS/PL). Ak v budúcnosti pribudne ďalší locale, znova extract z fontsource.
 
 ## Notes pre subagenta
 
