@@ -1,8 +1,8 @@
 # G.2 — i18n provider + sk/en catalogs
 
-> **Status**: ✅ DONE (implementation complete; PR TBD)
-> **Branch**: `chunk/G.2-i18n` (od fresh `main` po G.5 merge)
-> **PR**: TBD
+> **Status**: ✅ DONE
+> **Branch**: `chunk/G.2-i18n` (merged + deleted)
+> **PR**: #21 (squash-merged 2026-05-25)
 > **Cieľ**: naplniť `packages/i18n/` stub kompletným i18n adaptérom nad
 > `i18next + react-i18next + i18next-icu`. Vytvoriť SK + EN catalogs pre shared
 > labels (akcie, statusy, errors) + per-app catalogs (portal, workspace).
