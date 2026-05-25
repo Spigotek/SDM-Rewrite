@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { tenantId } from "@sdm/domain";
 import { HttpClient, CORRELATION_ID_HEADER, TENANT_ID_HEADER } from "./http";
+import { isUlid } from "./correlation";
 import { isAppError } from "./errors";
 
 const okResponse = (body: unknown, status = 200) =>
@@ -82,6 +83,19 @@ describe("HttpClient", () => {
     expect(init.body).toBe(JSON.stringify({ title: "boom" }));
     const headers = init.headers as Record<string, string>;
     expect(headers["Content-Type"]).toBe("application/json");
+  });
+
+  it("default correlation generator emits a ULID", async () => {
+    const fetchSpy = vi.fn().mockResolvedValue(okResponse({}));
+    const client = new HttpClient({
+      baseUrl: "https://bff.test",
+      fetchImpl: fetchSpy as unknown as typeof fetch,
+    });
+    await client.get("/x");
+    const headers = (fetchSpy.mock.calls[0]?.[1] as RequestInit).headers as Record<string, string>;
+    const id = headers[CORRELATION_ID_HEADER];
+    expect(id).toBeDefined();
+    expect(isUlid(id as string)).toBe(true);
   });
 
   it("returns undefined for 204 No Content", async () => {

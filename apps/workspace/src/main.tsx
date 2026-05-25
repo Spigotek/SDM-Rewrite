@@ -6,6 +6,7 @@ import "@sdm/design-system/fonts.css";
 import { I18nProvider, bootstrapI18n } from "@sdm/i18n";
 import App from "./App";
 import { loadConfig } from "./bootstrap/config";
+import { initSentry } from "./bootstrap/sentry";
 
 async function bootstrap(): Promise<void> {
   if (import.meta.env.VITE_USE_MOCKS === "true") {
@@ -13,7 +14,10 @@ async function bootstrap(): Promise<void> {
     await startMockWorker({ quiet: false });
   }
 
-  await Promise.all([loadConfig(), bootstrapI18n({ app: "workspace" })]);
+  const [config] = await Promise.all([loadConfig(), bootstrapI18n({ app: "workspace" })]);
+  // Sentry init runs BEFORE React render so render-time throws are captured.
+  // No-op when DSN is missing (mock mode / dev without a Sentry project).
+  initSentry({ observability: config.observability, appVersion: config.meta.appVersion });
 
   const rootEl = document.getElementById("root");
   if (!rootEl) throw new Error("[workspace] root element #root not found in index.html");

@@ -1,34 +1,34 @@
-import { Component } from "react";
-import type { ErrorInfo, ReactNode } from "react";
+import type { ReactNode } from "react";
+import * as Sentry from "@sentry/react";
+import { useTranslation } from "@sdm/i18n";
 
-interface Props {
-  readonly children: ReactNode;
+/**
+ * Top-level render error boundary wired to Sentry.
+ *
+ * `Sentry.ErrorBoundary` swallows the throw, fires `captureException` (with
+ * the deep PII strip applied via `initSentry`'s `beforeSend`), and renders
+ * the fallback element. When Sentry isn't initialised (mock mode / missing
+ * DSN) the boundary still works — Sentry.ErrorBoundary degrades to a plain
+ * React error boundary that logs to console.
+ */
+
+function ErrorFallback() {
+  const { t } = useTranslation();
+  return (
+    <div role="alert" data-testid="error-boundary" className="sdm-error-screen">
+      <h1>{t("errors.boundaryTitle")}</h1>
+      <p>{t("errors.boundaryBody")}</p>
+      <button type="button" onClick={() => window.location.reload()}>
+        {t("errors.boundaryRefresh")}
+      </button>
+    </div>
+  );
 }
 
-interface State {
-  readonly error: Error | null;
-}
-
-export class ErrorBoundary extends Component<Props, State> {
-  override state: State = { error: null };
-
-  static getDerivedStateFromError(error: Error): State {
-    return { error };
-  }
-
-  override componentDidCatch(error: Error, info: ErrorInfo): void {
-    console.error("[workspace] uncaught render error", error, info);
-  }
-
-  override render(): ReactNode {
-    if (this.state.error) {
-      return (
-        <div role="alert" data-testid="error-boundary" className="sdm-error-screen">
-          <h1>Something went wrong</h1>
-          <pre>{this.state.error.message}</pre>
-        </div>
-      );
-    }
-    return this.props.children;
-  }
+export function ErrorBoundary({ children }: { readonly children: ReactNode }) {
+  return (
+    <Sentry.ErrorBoundary fallback={<ErrorFallback />} showDialog={false}>
+      {children}
+    </Sentry.ErrorBoundary>
+  );
 }

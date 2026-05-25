@@ -1,4 +1,5 @@
 import type { TenantId } from "@sdm/domain";
+import { createCorrelationId } from "./correlation";
 import { AppError, fromStatus } from "./errors";
 
 export interface HttpClientOptions {
@@ -20,10 +21,10 @@ export interface RequestOptions {
 const CORRELATION_HEADER = "X-Correlation-ID";
 const TENANT_HEADER = "X-CA-SDM-Tenant";
 
-const defaultCorrelationId = (): string =>
-  typeof globalThis.crypto?.randomUUID === "function"
-    ? globalThis.crypto.randomUUID()
-    : `cid-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+// ULID (Crockford base32, 26 chars) per ADR-09 §Otvorené závislosti r2 — lex-
+// sortable so log triage can group requests by emission time without an
+// external join. BFF echoes any incoming header back (`auth/correlation.ts`).
+const defaultCorrelationId = (): string => createCorrelationId();
 
 export class HttpClient {
   private readonly baseUrl: string;

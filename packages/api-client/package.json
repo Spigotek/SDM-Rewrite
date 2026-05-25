@@ -14,6 +14,7 @@
   "dependencies": {
     "@sdm/api-types": "workspace:*",
     "@sdm/domain": "workspace:*",
-    "@sdm/utils": "workspace:*"
+    "@sdm/utils": "workspace:*",
+    "ulid": "2.4.0"
   }
 }

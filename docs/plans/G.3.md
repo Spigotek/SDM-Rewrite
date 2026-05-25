@@ -1,8 +1,7 @@
 # G.3 — Observability (Sentry + correlation ID)
 
-> **Status**: 🔜 NEXT (blokované na G.2 merge)
-> **Branch**: `chunk/G.3-observability` (od fresh `main` po G.2 merge)
-> **PR**: TBD
+> **Status**: ⏳ IN-FLIGHT (PR open)
+> **Branch**: `chunk/G.3-observability` > **PR**: TBD (parent agent doplní URL po `gh pr create`)
 > **Cieľ**: doplniť `@sentry/react` na FE side (portal + workspace), zaviazať
 > cez bootstrap config DSN (env-driven), GDPR-friendly `beforeSend` filter
 > (žiadne PII), source maps upload v CI. Verify end-to-end correlation ID flow:
