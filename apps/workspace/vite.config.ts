@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
+import { visualizer } from "rollup-plugin-visualizer";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -28,6 +29,18 @@ export default defineConfig(({ mode }) => {
     );
   }
 
+  // `rollup-plugin-visualizer` emits `dist/stats.html` with per-chunk gzip +
+  // brotli sizes so each PR carries an attachable bundle report. The plugin
+  // runs in build mode only; dev server is unaffected.
+  plugins.push(
+    visualizer({
+      filename: "dist/stats.html",
+      gzipSize: true,
+      brotliSize: true,
+      template: "treemap",
+    }) as PluginOption,
+  );
+
   return {
     plugins,
     server: {
@@ -50,7 +63,33 @@ export default defineConfig(({ mode }) => {
       sourcemap: "hidden",
       rollupOptions: {
         output: {
-          manualChunks: { react: ["react", "react-dom"] },
+          // Vendor split per G.4 — predictable file names for HTTP cache
+          // and per-vendor size-limit budgets. Groups follow
+          // `performance.md §3 baseline` (React 44 KB, Radix 15-35 KB,
+          // i18next 25 KB, Sentry 26 KB). The pattern matches paths inside
+          // pnpm's `node_modules/.pnpm/<pkg>@<ver>/...` layout.
+          manualChunks(id) {
+            if (!id.includes("node_modules")) return undefined;
+            if (/[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:@sentry[\\/])/.test(id)) {
+              return "vendor-observability";
+            }
+            if (/[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:@radix-ui[\\/]|lucide-react)/.test(id)) {
+              return "vendor-ds";
+            }
+            if (
+              /[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:i18next|react-i18next|intl-messageformat|@formatjs[\\/])/.test(
+                id,
+              )
+            ) {
+              return "vendor-i18n";
+            }
+            if (
+              /[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:react|react-dom|scheduler)[@\\/]/.test(id)
+            ) {
+              return "vendor-react";
+            }
+            return undefined;
+          },
         },
       },
     },
