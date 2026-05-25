@@ -791,3 +791,200 @@ Numbered checklist mirroring §10, scoped to the REST-proxy and entity endpoints
 - `webservice_array_max_length` (the per-request `size` cap) — not probed. Default is 250 per CA SDM docs; the BFF should default to a smaller page size (e.g. 25) and reject FE requests beyond a known safe limit.
 - `chg` schema beyond what was projected — change_category, approval workflow, scheduled dates: not probed. F.2 endpoints/changes.ts can stub these as optional fields until specific FE feature demands surface.
 - Attachment / multipart endpoints (`/caisd-rest/lrel_attachments_requests`, etc.) — out of scope for F.2 (deferred to F.3 per F.2 plan §Open questions).
+
+---
+
+> **F.6 addendum (captured 2026-05-25, vueuser)** — §22-§24 extend the §12-21 entity captures with the **BREL/BLREL** navigation that the ticket-detail aggregator (`apps/bff/src/aggregator/ticket-detail.ts`) needs to flip `_unsupported: false` for activity log, attachments, and linked tickets. Probe driver: `tools/sdm-probe/probe-ticket-detail.sh`; raw responses at `/tmp/sdm-probe-F.6/`.
+
+## 22. Activity log (`act_log` BREL)
+
+### 22.1 BREL path is the same on every ticket factory
+
+```
+GET /caisd-rest/in/{id}/act_log
+GET /caisd-rest/cr/{id}/act_log
+GET /caisd-rest/pr/{id}/act_log
+GET /caisd-rest/chg/{id}/act_log
+```
+
+- `in`, `cr`, `pr` resolve to the **`alg`** factory; the collection wrapper is `collection_alg`, inner array key `alg`.
+- `chg` resolves to the **`chgalg`** factory; the collection wrapper is `collection_chgalg`, inner array key `chgalg`.
+- Both row shapes are **identical** — same set of attributes, same FK projections.
+- Response is always `BREL` typed (`@TYPE: "BREL"`).
+- Empty collection returns `{"collection_alg": {"@COUNT": 0, "@START": 0, "@TOTAL_COUNT": 0, "@TYPE": "BREL"}}` — the inner array key is **omitted entirely** (do not expect `"alg": []`).
+
+### 22.2 Required `X-Obj-Attrs` projection
+
+The bare BREL response only includes FK projections (`@id`, `@COMMON_NAME`, `link`) — none of the activity body. Use:
+
+```
+X-Obj-Attrs: type,description,time_stamp,analyst,internal,action_desc
+```
+
+### 22.3 Row attribute mapping (alg / chgalg)
+
+| CA SDM attr | Type | UI mapping |
+|---|---|---|
+| `@id` | integer | `UiActivityEntry.id` (stringify) |
+| `description` | string | `UiActivityEntry.text` |
+| `time_stamp` | epoch seconds | `UiActivityEntry.createdAt` (ISO-8601 via `epochSecToIso`) |
+| `analyst` | FK → `cnt` | `UiActivityEntry.author` (FkRef) |
+| `type` | FK → `aty` | drives `UiActivityEntry.kind` (see 22.4) |
+| `internal` | 0 / 1 | overrides `kind` (see 22.4) |
+| `action_desc` | string | fallback for `text` when `description` is empty |
+| `@COMMON_NAME` | string | display label, NOT mapped (use `description`) |
+
+### 22.4 `kind` derivation rule
+
+`UiActivityEntry.kind` is a closed enum `"public" | "internal" | "system"`. Map:
+
+1. **`internal === 1`** → `"internal"` (private analyst note — never visible to customer).
+2. **`type.@REL_ATTR === "LOG"`** (activity type id `5601`, COMMON_NAME `"Log Comment"`) AND `internal !== 1` → `"public"` (user/analyst-authored comment).
+3. **Anything else** → `"system"` (transfer, status change, escalate, attach-doc, etc. — see `aty` catalog dump at §22.6).
+
+### 22.5 Pagination
+
+- `@TOTAL_COUNT` is the authoritative count. Use `?size=100` for MVP; surface `hasMore = total > 100` on the UI shape.
+- `start=N&size=M` works (1-based, per §19.1).
+- Default page size when omitted is 25 (CA SDM global default).
+
+### 22.6 `aty` (activity type) catalog excerpt
+
+Probed on this instance (total 92 entries):
+
+| @id  | REL_ATTR | COMMON_NAME |
+|------|----------|-------------|
+| 5600 | TR | Transfer |
+| 5601 | LOG | Log Comment |
+| 5602 | INIT | Initial |
+| 5603 | ESC | Escalate |
+| 5604 | RS | Research |
+| 5605 | CB | Callback |
+| 5606 | CL | Close |
+| 5607 | ST | Update Status |
+| 5608 | FLD | Field Update |
+| 5616 | DETACHCHG | Detach Change |
+| 5617 | ATTACHCHG | Attach Change |
+| 5622 | SOLN | Log Solution |
+
+The BFF uses `REL_ATTR` (stable code), never `@COMMON_NAME` (localisable display text — same hazard as §18 conclusion 9).
+
+### 22.7 Sample response (chg/2781/act_log, 4 entries)
+
+```json
+{
+  "collection_chgalg": {
+    "@COUNT": 4, "@START": 1, "@TOTAL_COUNT": 4, "@TYPE": "BREL",
+    "chgalg": [
+      {
+        "@id": 2862,
+        "action_desc": "create a new change Software Delivery ITIL Tmpl",
+        "description": "create a new change Software Delivery ITIL Tmpl",
+        "analyst": { "@id": "U'FCF9A8AC6381AA4386C9B10EE382E10B'", "@COMMON_NAME": "System_MA_User" },
+        "type": { "@id": 5602, "@REL_ATTR": "INIT", "@COMMON_NAME": "Initial" }
+      },
+      {
+        "@id": 401204,
+        "action_desc": "log a user comment",
+        "description": "log a user comment",
+        "analyst": { "@id": "U'BDE1683C44FCCB4DAE50BA4DDB5DCBE6'", "@COMMON_NAME": "User, Vue " },
+        "internal": 0,
+        "time_stamp": 1774028216,
+        "type": { "@id": 5601, "@REL_ATTR": "LOG", "@COMMON_NAME": "Log Comment" }
+      }
+    ]
+  }
+}
+```
+
+## 23. Attachments (`attmnt` via `lrel_*` join)
+
+### 23.1 BREL path returns the lrel join, not `attmnt` directly
+
+```
+GET /caisd-rest/in/{id}/attachments   →  collection_lrel_attachments_requests
+GET /caisd-rest/cr/{id}/attachments   →  collection_lrel_attachments_requests
+GET /caisd-rest/pr/{id}/attachments   →  collection_lrel_attachments_requests
+GET /caisd-rest/chg/{id}/attachments  →  collection_lrel_attachments_changes
+```
+
+- `in/cr/pr` share `lrel_attachments_requests`. `chg` has its own `lrel_attachments_changes`.
+- The lrel row contains an `attmnt` FK with only `@id` + `@COMMON_NAME` (epoch upload timestamp) — **file metadata is not in the join projection** (dot-projection `X-Obj-Attrs: attmnt.file_name` is **silently ignored**; verified probe `cr/400288/attachments`).
+
+### 23.2 Two-step enrichment pattern (aggregator)
+
+```
+1. GET /caisd-rest/{factory}/{id}/attachments?size=50           → list of attmnt FKs
+2. For each attmnt FK, GET /caisd-rest/attmnt/{aid}             → file metadata
+   with X-Obj-Attrs: file_name,file_type,file_size,last_mod_dt,last_mod_by
+```
+
+Step 2 fan-out should be capped (max 8 concurrent per request) to stay inside the §F.4 `/readyz` 2 s upstream timeout budget. Empty step 1 (count=0) skips step 2 entirely.
+
+WC traversal `attmnt?WC=lrel_attachments_requests.cr.id=400288` returns `400 Bad where clause: Parse error … (Attr not found or not atomic)` — collapsed traversal is NOT supported on this instance.
+
+### 23.3 `attmnt` row attribute mapping
+
+| CA SDM attr | Type | UI mapping |
+|---|---|---|
+| `@id` | integer | `UiAttachmentMeta.id` (stringify) |
+| `file_name` | string | `UiAttachmentMeta.name` (raw value contains hashed prefix `<MD5>_<id>_<original>` — display as-is, FE can strip if needed) |
+| `file_type` | string | feeds `mime` derivation (see 23.4) |
+| `file_size` | integer (bytes) | `UiAttachmentMeta.sizeBytes` |
+| `last_mod_dt` | epoch seconds | `UiAttachmentMeta.uploadedAt` (ISO-8601) |
+| `last_mod_by` | FK → `cnt` | (not exposed in `UiAttachmentMeta` shape — future enrichment) |
+| `@COMMON_NAME` | numeric epoch | mirror of `last_mod_dt` from the FK projection (fallback when step 2 skipped) |
+
+### 23.4 `mime` derivation
+
+`file_type` is the **file extension** (e.g. `"jpg"`, `"pdf"`, `"docx"`), NOT a MIME type. The aggregator maps a small whitelist (jpg/png/gif/pdf/txt/csv/xml/json/zip/docx/xlsx) and falls back to `null` for unknown extensions. Compliance/security-sensitive MIME enforcement belongs to a Phase G hardening pass; F.6 only surfaces a best-effort hint for the FE icon picker.
+
+### 23.5 Pagination + cap
+
+- The lrel BREL exposes the standard `@TOTAL_COUNT` / `@START` / `@COUNT` / `link rel="next"|"all"` triplet.
+- `UiTicketDetailAttachments` has no `hasMore` field (api-types contract). MVP caps at `size=50`; tickets with >50 attachments truncate. Phase H deep-pagination is opt-in via a dedicated `/api/tickets/:type/:id/attachments?page=N` route.
+
+### 23.6 Binary download (out of F.6 scope)
+
+```
+GET /caisd-rest/attmnt/{aid}/file-resource
+```
+
+Streams the raw bytes (gzipped on disk per `file_name` suffix `.gz`). F.6 documents the path for Phase H feature work (download button) but does NOT proxy or stream — the FE shape stops at `UiAttachmentMeta`. CA SDM session affinity may apply: download must use the same `X-AccessKey` that fetched the metadata.
+
+## 24. Linked tickets — NOT EXPOSED on this CA SDM 17.4 instance
+
+Per `docs/spec/problem-management.md` the FE expects linked-ticket navigation between Incident ↔ Problem ↔ Change. Probe verdict (`/tmp/sdm-probe-F.6/`):
+
+| Candidate BREL path | in/2800 | in/2851 | cr/2851 | pr/406621 | chg/2781 |
+|---|---|---|---|---|---|
+| `/{factory}/{id}/problem` | 400 | 400 | 400 | — | — |
+| `/{factory}/{id}/rootcause` | 400 | 400 | 400 | — | — |
+| `/{factory}/{id}/change` | 400 | 400 | 400 | — | — |
+| `/{factory}/{id}/parent` | 400 | 400 | — | — | — |
+| `/{factory}/{id}/children` | 200 (cr) | 200 (cr) | 200 (cr) | 200 (cr) | — |
+| `/pr/{id}/affected_incidents` | — | — | — | 404 | — |
+| `/pr/{id}/affected_changes` | — | — | — | 404 | — |
+| `/pr/{id}/incidents` | — | — | — | 404 | — |
+| `/pr/{id}/rootcause_chg` | — | — | — | 404 | — |
+| `/chg/{id}/affected_incidents` | — | — | — | — | 404 |
+| `/chg/{id}/affected_problems` | — | — | — | — | 404 |
+| `/chg/{id}/incidents` | — | — | — | — | 404 |
+| `/chg/{id}/problems` | — | — | — | — | 404 |
+
+The only working relation is `children` (returns `collection_cr` — child cr's of the ticket); all probed sample rows returned `@TOTAL_COUNT=0`, so the semantic mapping (sibling cr's? child problems?) cannot be confirmed and the relation is not safe to surface as "linked tickets" on the FE.
+
+**Conclusion**: F.6 keeps `UiTicketDetail.linked._unsupported: true` with empty arrays. Re-opening linked-ticket navigation requires either (a) a CA SDM customisation that publishes named BREL paths for the Problem↔Incident↔Change semantic links, or (b) a server-side WC query layer that resolves linkage via `rootcause_id`/`parent_id` SREL columns. Both belong outside F.6 scope; the chunk does not block on them.
+
+### 24.1 `pr/{id}/children` (returns `collection_cr`) — left out
+
+Although the path returns 200, the empty sample data prevents verifying whether the children semantic is:
+
+- Child problems (PR→PR) — but the inner array key is `cr`, not `pr`, contradicting this.
+- Affected incidents materialised through a `crl`/`parent` SREL — plausible but unverified.
+
+A follow-up chunk should probe `pr/{id}/children` on a problem that has known affected incidents in the CA SDM web UI before wiring it into `UiTicketDetailLinked.incidents`.
+
+### 24.2 `chg/{id}/workflow` (returns `collection_wf`)
+
+Workflow is **not** a linked-ticket concept; it's the change-management workflow (approval tasks). Captured here only to document the probe result. Out of F.6 scope; belongs to a dedicated Change Management feature chunk (Phase H+).
