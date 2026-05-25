@@ -43,3 +43,6 @@ test-results/
 # Helm
 deploy/helm/sdm/charts/
 deploy/helm/sdm/Chart.lock
+
+# Claude Code session state
+.claude/scheduled_tasks.lock

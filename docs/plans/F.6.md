@@ -1,8 +1,14 @@
 # F.6 — Ticket-detail B-E probe (linked / attachments / activity)
 
-> **Status**: 🔜 NEXT (blokované na F.5 merge — PR #17)
-> **Branch**: `chunk/F.6-ticket-detail-probe` (od `main` po F.5 merge)
-> **PR**: —
+> **Status**: ⏳ IN-FLIGHT (PR pending)
+> **Branch**: `chunk/F.6-ticket-detail-probe` (od fresh `main` po F.5 merge)
+> **PR**: TBD (linked po `gh pr create`)
+>
+> **Outcome**: activity log + attachments flipped to `_unsupported: false` (real B-E
+> shapes wired); linked tickets stay `_unsupported: true` — `real-backend-contracts.md §24`
+> documents that NO BREL relation works for Problem↔Incident↔Change navigation on this
+> CA SDM 17.4 instance. Re-opening linked would require a CA SDM customisation or a
+> server-side WC query layer; out of F.6 scope.
 
 ## Pivot vs ROADMAP
 
@@ -53,24 +59,30 @@ docs/plans/F.6.md                                    # tento súbor → Status D
 
 ## Done-when
 
-- [ ] `real-backend-contracts.md` §22-§24 zachytávajú **overené** factory mená + shape pre activity log,
+- [x] `real-backend-contracts.md` §22-§24 zachytávajú **overené** factory mená + shape pre activity log,
       attachments, linked tickets pre všetky 4 ticket type-y (in, cr, pr, chg). Negative case (žiadne
-      attachments / žiadny activity log) tiež zdokumentovaný.
-- [ ] `ticket-detail.ts` paralelne fan-out-uje (parent first → potom `Promise.allSettled` na
-      activity + attachments + linked) — partial-failure tolerant (per F.3 carry-over: keď jedna
-      vetva zlyhá, vraciame ostatné s warning v audit logu, nie 500).
-- [ ] `ui-ticket-detail.ts` vracia `_unsupported: false` so skutočnými dátami. `UiTicketDetail*`
-      typy v `api-types` nemenia shape — len semantika `_unsupported` sa flipne.
-- [ ] Vitest jednotka pre nové shapery + integ test pre `/api/tickets/:type/:id` s aspoň jednou
-      vetvou s dátami a jednou bez (empty linked / no attachments / no activity).
-- [ ] Live smoke proti `10.11.35.35:8050` pre všetky 4 ticket type-y zelený — pozri F.6
-      Done-when log nižšie pre konkrétny test set.
-- [ ] MSW handler-y (opt) majú parity — `VITE_USE_MOCKS=true` mode tiež vracia nejaké
-      attachment/activity dáta aby browser-test mocks-mutation-roundtrip mohol verifikovať shape.
-- [ ] `audit-and-compliance §2` events: pridať `data.ticket.attachments.read` ak nie sú v F.4
-      taxonomy (pravdepodobne stačí re-use `data.ticket.read` per F.4 — F.6 to neznásobuje).
-- [ ] F.5 PR #17 merged ⇒ branch od freshnutého `main`.
-- [ ] ROADMAP toggle: F.6 → ✅ DONE.
+      attachments / žiadny activity log) zdokumentovaný; linked verdict = no BREL works (§24).
+- [x] `ticket-detail.ts` paralelne fan-out-uje (parent first → potom `Promise.allSettled` na
+      activity + attachments) — partial-failure tolerant: failed branch → `_unsupported: true`,
+      parent stále 200; warning v pino log s `branch=…`, error=…`.
+- [x] `ui-ticket-detail.ts` vracia `_unsupported: false` so skutočnými dátami pre activity +
+      attachments; linked stays `_unsupported: true` (per §24 verdict). `UiTicketDetail*` typy
+      v `api-types` shape unchanged — len semantika `_unsupported` sa flipne.
+- [x] Vitest jednotka pre nové shapery (`activity-log.test.ts` 6 testov, `attachments.test.ts`
+      8 testov) + integ test pre `/api/tickets/:type/:id` 9 testov pokrýva: empty branches,
+      populated alg/chgalg, two-step attmnt enrichment, branch failure → `_unsupported: true`.
+- [x] Live smoke proti `10.11.35.35:8050` pre všetky 4 ticket type-y zelený —
+      `scripts/smoke-f6.sh` re-runnable. Verified ticket IDs: `in/2800` (6 alg entries, mix
+      public/system), `cr/2851` (empty), `pr/406621` (2 alg entries, system kind), `chg/2781`
+      (4 chgalg entries, mix public/system). Cache hit ~2 ms.
+- [N/A] MSW handler-y — F.5 cleanup už zarovnal MSW na canonical `/me`, ticket-detail shape
+  neexistujúci v MSW handlers (queue iba, ticket-detail je BFF-only endpoint per F.3). FE
+  shape sa nemenila, browser-test mode passthrough.
+- [N/A] `audit-and-compliance §2` events — `data.<entity>.read` patrí pod §3 "0% sampling
+  (covered by reverse-proxy access log)". F.4 audit taxonomy už neeviduje read events;
+  F.6 nezavedie nové.
+- [x] F.5 PR #17 merged (squash --admin --delete-branch) ⇒ branch od fresh `main`.
+- [ ] ROADMAP toggle: F.6 → ✅ DONE (po PR merge).
 
 ## Stratégia
 
@@ -142,32 +154,35 @@ Hierarchia code changes:
 4. ROADMAP "Aktuálny stav" + F.6 → ✅ DONE; (opt) Phase F note "feature-complete".
 5. PR per memory PR-flow.
 
-## Open questions / risks
+## Open questions / risks — resolutions
 
-- **`act_log` vs `alg` vs `chgalg` factory name**: F.3 plan a api-analyst endpoints.md spomínajú
-  všetky tri. Probe v Fáze A musí zachytiť ktorý z nich vracia 200 na BREL navigáciu — pravdepodobne
-  `act_log` na `in/cr/pr` a `chgalg` na `chg`. Risk: ak ani jeden nefunguje na tomto instance, F.6
-  nechá activity ako `_unsupported: true` a posunie sa do follow-up chunku.
-- **Linked tickets relation mená**: pre Problem→Incident, Incident→Change existuje mnoho možných
-  BREL mien (`affected_incidents`, `caused_by_chg`, `chg_problems`, …). Pre MVP scope F.6 by mal
-  pokryť **aspoň** Problem→affected_incidents (najčastejší use-case per `spec/problem-management.md`).
-  Ostatné linked vetvy môžu ísť do post-MVP ak probe nájde >3 unsupported relácií.
-- **Attachment binary download**: `GET /caisd-rest/attmnt/{id}/file-resource` je separate endpoint
-  pre file body. F.6 vracia **iba** metadata (`UiAttachmentMeta`); ne-streamuje file body — to
-  patrí do Phase H feature work (download button). F.6 dokumentuje endpoint pre Phase H ale
-  neimplementuje BFF proxy.
-- **Activity log paginácia**: `hasMore` field je v `UiTicketDetailActivity`. Ak má ticket >100
-  activity entries, pravdepodobne treba paginovať. F.6 môže buď (a) fetch celého collection-u
-  s `?size=100` a `hasMore = total > 100` flag-om, alebo (b) zaviesť samostatný endpoint
-  `/api/tickets/:type/:id/activity?page=N`. **Recommendation**: (a) pre MVP simplicity, (b) sa
-  presunie do feature chunku ak UX požaduje deep paginate.
-- **Audit taxonomy F.4**: emit-uje sa pri `/api/tickets/:type/:id` jeden `data.ticket.read` event,
-  alebo separate per-relation (attachment list = `data.ticket.attachments.read`)? **Recommendation**:
-  jeden parent event s `details: { fetched: ["parent", "activity", "attachments", "linked"] }` —
-  granular per-relation eventy by zvýšili log volume bez compliance gain.
-- **Performance budget**: paralelný fan-out na 4 CA SDM calls pri každom ticket open. CA SDM
-  17.4 nemá rate limit dokumentovaný, ale prudent default = max 4 concurrent calls per request,
-  každý 2 s timeout (consistent s F.4 `/readyz` probe). Cache TTL pomáha amortizovať.
+- **`act_log` vs `alg` vs `chgalg` factory name** — **RESOLVED**: probe potvrdil
+  `/{factory}/{id}/act_log` funguje pre všetky 4 typy. Inner collection je `collection_alg`
+  pre `in`/`cr`/`pr` (row factory = `alg`) a `collection_chgalg` pre `chg` (row factory =
+  `chgalg`). Row attribute set je identický. Detail: real-backend-contracts.md §22.
+- **Linked tickets relation mená** — **VERDICT: NO BREL WORKS**. Probe vyskúšal: `problem`,
+  `rootcause`, `change`, `parent`, `children`, `affected_incidents`, `affected_changes`,
+  `affected_problems`, `incidents`, `problems`, `rootcause_chg`. Iba `children` vrátil 200
+  (returns `collection_cr` — nepotvrdená semantika, sample data empty). F.6 zachováva
+  `linked._unsupported: true`; flip vyžaduje CA SDM customisation alebo server-side WC layer.
+  Detail: real-backend-contracts.md §24.
+- **Attachment binary download** — confirmed out-of-scope. `/caisd-rest/attmnt/{id}/file-resource`
+  endpoint dokumentovaný v §23.6 pre Phase H pickup. F.6 vracia iba `UiAttachmentMeta`.
+- **Activity log paginácia** — **RESOLVED: option (a)**: `?size=100` + `hasMore = @TOTAL_COUNT > 100`.
+  `UiTicketDetailActivity.hasMore` flipne true pri prekročení. Deep-pagination odložený do
+  Phase H feature chunku ak FE UX požaduje.
+- **Audit taxonomy F.4** — **RESOLVED**: F.6 NEemit-uje read events. `audit-and-compliance §3`
+  hovorí `data.<entity>.read` má 0% sampling (covered by reverse-proxy access log). F.4 taxonomy
+  v `apps/bff/src/platform/audit/events.ts` exponuje iba `data.<entity>.write` + `data.<entity>.delete`
+  factories — F.6 to neznásobuje.
+- **Performance budget** — confirmed conservative defaults: parent fetch + activity (1 call) +
+  attachments lrel (1 call) + per-attmnt enrichment (max 8 parallel, capped at `size=50`).
+  Worst-case ticket = 2 + ⌈50/8⌉ × 8 = 58 calls; cache TTL=60 s amortizuje. Branch fan-out je
+  `Promise.allSettled` na 2 vetvy (activity, attachments) — partial failure = degrade to
+  `_unsupported: true`, no 500.
+- **Linked follow-up** — single bullet v `docs/plans/H.md` (Phase H seed): "Linked tickets
+  unblock requires CA SDM customisation; alternative: BFF-side WC query layer that derives
+  Problem→Incidents via `cr.rootcause_id` SREL column." Out of MVP scope.
 
 ## Notes
 
