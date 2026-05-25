@@ -1,37 +1,8 @@
-/* App Shell skeleton styles — design system (G.1) will supersede these. */
-
-:root {
-  --sdm-bg: #1e1e2e;
-  --sdm-surface: #313244;
-  --sdm-surface-hover: #45475a;
-  --sdm-border: #45475a;
-  --sdm-text: #cdd6f4;
-  --sdm-text-muted: #a6adc8;
-  --sdm-accent: #89b4fa;
-  --sdm-accent-strong: #74c7ec;
-  --sdm-success: #a6e3a1;
-  --sdm-danger: #f38ba8;
-  --sdm-shell-top-bar-height: 56px;
-}
-
-* {
-  box-sizing: border-box;
-}
-
-html,
-body,
-#root {
-  height: 100%;
-  margin: 0;
-}
-
-body {
-  background: var(--sdm-bg);
-  color: var(--sdm-text);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-}
+/**
+ * App Shell layout — uses design-system tokens (G.1) for colours, spacing,
+ * radius, shadow. Selectors below carry only layout concerns; visual styling
+ * comes from `@sdm/design-system/tokens.css`.
+ */
 
 .sdm-app-shell {
   display: flex;
@@ -42,17 +13,17 @@ body {
 .sdm-top-bar {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 0 20px;
-  height: var(--sdm-shell-top-bar-height);
-  background: var(--sdm-surface);
-  border-bottom: 1px solid var(--sdm-border);
+  gap: var(--spacing-4);
+  padding: 0 var(--spacing-5);
+  height: var(--layout-header-height);
+  background-color: var(--color-background-surface);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
 }
 
 .sdm-brand {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-2_5);
   margin-right: auto;
 }
 
@@ -60,18 +31,19 @@ body {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--sdm-accent);
-  color: var(--sdm-bg);
-  font-weight: 700;
-  width: 36px;
-  height: 28px;
-  border-radius: 6px;
-  letter-spacing: 0.5px;
+  background-color: var(--color-brand-bg);
+  color: var(--color-text-inverse);
+  font-weight: var(--font-weight-bold);
+  width: 2.25rem;
+  height: 1.75rem;
+  border-radius: var(--radius-md);
+  letter-spacing: var(--letter-spacing-wide);
 }
 
 .sdm-app-name {
-  font-weight: 600;
-  letter-spacing: 0.2px;
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-snug);
+  color: var(--color-text-primary);
 }
 
 .sdm-tenant-switcher {
@@ -79,17 +51,17 @@ body {
 }
 
 .sdm-tenant-display {
-  background: transparent;
-  color: var(--sdm-text);
-  border: 1px solid var(--sdm-border);
-  border-radius: 6px;
-  padding: 6px 12px;
+  background-color: transparent;
+  color: var(--color-text-body);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-1_5) var(--spacing-3);
   cursor: pointer;
   font: inherit;
 }
 
 .sdm-tenant-display:hover:not(:disabled) {
-  background: var(--sdm-surface-hover);
+  background-color: var(--color-background-hover);
 }
 
 .sdm-tenant-display:disabled {
@@ -99,241 +71,212 @@ body {
 
 .sdm-tenant-dropdown {
   position: absolute;
-  top: calc(100% + 4px);
+  top: calc(100% + var(--spacing-1));
   left: 0;
-  min-width: 240px;
-  background: var(--sdm-surface);
-  border: 1px solid var(--sdm-border);
-  border-radius: 8px;
+  min-width: 15rem;
+  background-color: var(--color-background-surface);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
   list-style: none;
   margin: 0;
-  padding: 4px;
-  z-index: 10;
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+  padding: var(--spacing-1);
+  z-index: var(--z-dropdown);
+  box-shadow: var(--shadow-md);
 }
 
 .sdm-tenant-row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-2);
   width: 100%;
   text-align: left;
-  background: transparent;
+  background-color: transparent;
   border: 0;
-  color: var(--sdm-text);
-  padding: 8px 10px;
-  border-radius: 6px;
+  color: var(--color-text-body);
+  padding: var(--spacing-2) var(--spacing-2_5);
+  border-radius: var(--radius-md);
   cursor: pointer;
   font: inherit;
 }
 
 .sdm-tenant-row:hover:not(:disabled) {
-  background: var(--sdm-surface-hover);
+  background-color: var(--color-background-hover);
 }
 
 .sdm-tenant-row.is-active .sdm-tenant-dot {
-  color: var(--sdm-success);
+  color: var(--color-success-fg);
 }
 
 .sdm-tenant-dot {
-  width: 14px;
+  width: 0.875rem;
   text-align: center;
-  color: var(--sdm-text-muted);
+  color: var(--color-text-tertiary);
 }
 
 .sdm-user-pill {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  padding: 4px 12px;
-  border-left: 1px solid var(--sdm-border);
+  padding: var(--spacing-1) var(--spacing-3);
+  border-left: var(--border-width-thin) solid var(--color-border-default);
 }
 
 .sdm-user-name {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-body);
 }
 
 .sdm-user-roles {
-  font-size: 11px;
-  color: var(--sdm-text-muted);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
   text-transform: uppercase;
-  letter-spacing: 0.4px;
+  letter-spacing: var(--letter-spacing-wide);
 }
 
 .sdm-content {
   flex: 1 1 auto;
-  padding: 24px;
+  padding: var(--spacing-6);
 }
 
 .sdm-error-screen {
-  padding: 32px;
-  color: var(--sdm-danger);
+  padding: var(--spacing-8);
+  color: var(--color-danger-fg);
 }
 
 .sdm-error-screen pre {
-  background: var(--sdm-surface);
-  padding: 16px;
-  border-radius: 6px;
-  color: var(--sdm-text);
+  background-color: var(--color-background-subtle);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-md);
+  color: var(--color-text-body);
   overflow-x: auto;
 }
 
 [data-testid="session-loading"],
 [data-testid="session-error"] {
-  color: var(--sdm-text-muted);
+  color: var(--color-text-tertiary);
 }
 
 .sdm-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background-color: var(--color-background-overlay);
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: var(--z-overlay);
 }
 
 .sdm-modal-dialog {
-  background: var(--sdm-surface);
-  color: var(--sdm-text);
-  border: 1px solid var(--sdm-border);
-  border-radius: 10px;
-  padding: 24px;
-  min-width: 320px;
-  max-width: 480px;
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.5);
+  background-color: var(--color-background-surface);
+  color: var(--color-text-body);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  padding: var(--spacing-6);
+  min-width: 20rem;
+  max-width: 30rem;
+  box-shadow: var(--shadow-lg);
 }
 
 .sdm-modal-title {
-  margin: 0 0 12px;
-  font-size: 18px;
-  font-weight: 600;
+  margin: 0 0 var(--spacing-3);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
 }
 
 .sdm-modal-body {
-  margin: 0 0 20px;
-  color: var(--sdm-text);
+  margin: 0 0 var(--spacing-5);
+  color: var(--color-text-body);
 }
 
 .sdm-modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
+  gap: var(--spacing-2);
 }
 
 .sdm-modal-button {
-  background: transparent;
-  color: var(--sdm-text);
-  border: 1px solid var(--sdm-border);
-  border-radius: 6px;
-  padding: 8px 16px;
+  background-color: transparent;
+  color: var(--color-text-body);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-2) var(--spacing-4);
   cursor: pointer;
   font: inherit;
 }
 
 .sdm-modal-button:hover:not(:disabled) {
-  background: var(--sdm-surface-hover);
+  background-color: var(--color-background-hover);
 }
 
 .sdm-modal-button-primary {
-  background: var(--sdm-accent);
-  color: var(--sdm-bg);
-  border-color: var(--sdm-accent);
-  font-weight: 600;
+  background-color: var(--color-brand-bg);
+  color: var(--color-text-inverse);
+  border-color: var(--color-brand-bg);
+  font-weight: var(--font-weight-semibold);
 }
 
 .sdm-modal-button-primary:hover:not(:disabled) {
-  background: var(--sdm-accent-strong);
-  border-color: var(--sdm-accent-strong);
+  background-color: var(--color-brand-bg-hover);
+  border-color: var(--color-brand-bg-hover);
 }
 
 .sdm-login-page {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: calc(100vh - 64px);
-  padding: 32px 16px;
+  min-height: calc(100vh - var(--layout-header-height));
+  padding: var(--spacing-8) var(--spacing-4);
+}
+
+.sdm-login-card {
+  width: 100%;
+  max-width: 24rem;
 }
 
 .sdm-login-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  width: 100%;
-  max-width: 360px;
-  padding: 32px;
-  border: 1px solid var(--sdm-border);
-  border-radius: 12px;
-  background: var(--sdm-surface);
+  gap: var(--spacing-4);
 }
 
 .sdm-login-form h1 {
   margin: 0;
-  font-size: 20px;
-  color: var(--sdm-text);
+  font-size: var(--font-size-xl);
+  color: var(--color-text-primary);
 }
 
 .sdm-login-hint {
-  margin: -8px 0 0 0;
-  color: var(--sdm-text-muted);
-  font-size: 14px;
+  margin: calc(var(--spacing-2) * -1) 0 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .sdm-login-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
-  color: var(--sdm-text);
+  gap: var(--spacing-1_5);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-body);
 }
 
 .sdm-login-field input {
-  padding: 8px 10px;
-  border: 1px solid var(--sdm-border);
-  border-radius: 6px;
-  background: var(--sdm-bg);
-  color: var(--sdm-text);
+  padding: var(--spacing-2) var(--spacing-2_5);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+  color: var(--color-text-body);
   font: inherit;
 }
 
-.sdm-login-field input:focus {
-  outline: 2px solid var(--sdm-accent);
-  outline-offset: 1px;
+.sdm-login-field input:focus-visible {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus-brand);
 }
 
 .sdm-login-error {
   margin: 0;
-  color: var(--sdm-danger, #f38ba8);
-  font-size: 13px;
-}
-
-.sdm-login-submit {
-  margin-top: 4px;
-  padding: 10px 14px;
-  border: 1px solid var(--sdm-accent);
-  border-radius: 6px;
-  background: var(--sdm-accent);
-  color: var(--sdm-bg);
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.sdm-login-submit:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.sdm-logout-button {
-  background: transparent;
-  color: var(--sdm-text);
-  border: 1px solid var(--sdm-border);
-  border-radius: 6px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font: inherit;
-  margin-left: 8px;
-}
-
-.sdm-logout-button:hover {
-  background: var(--sdm-surface-hover);
+  color: var(--color-danger-fg);
+  font-size: var(--font-size-sm);
 }

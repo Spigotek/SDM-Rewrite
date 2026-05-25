@@ -1,0 +1,7 @@
+/**
+ * Font face placeholder — G.5 will replace these declarations with self-hosted
+ * `@font-face` rules pointing to `apps/{portal,workspace}/public/fonts/*.woff2`.
+ *
+ * For G.1 the typography stack falls back to `system-ui` so portal/workspace
+ * render without external font requests; no CDN call is issued.
+ */

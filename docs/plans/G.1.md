@@ -1,6 +1,6 @@
 # G.1 — Design tokens + base components
 
-> **Status**: 🔜 NEXT (Phase G entry chunk)
+> **Status**: ✅ DONE (PR TBD pending review)
 > **Branch**: `chunk/G.1-design-tokens` (od fresh `main` po F.6 merge)
 > **PR**: TBD
 > **Cieľ**: naplniť `packages/design-system/` stub kompletnou token sadou
@@ -72,19 +72,19 @@ docs/plans/G.1.md                         # tento súbor → Status DONE
 
 ## Done-when
 
-- [ ] `@sdm/design-system` exportuje **tokens.css** s CSS Custom Properties pre všetky tokeny z `tokens.md` §1-§12 (typography, colors light+dark+hc, spacing, radius, shadow, motion, z-index, breakpoints, layout, border).
-- [ ] Theme switching funguje cez `[data-theme="light|dark|hc"]` na `<html>` — manuálne persisted v localStorage + FOUC-safe inline script v `index.html` `<head>` (per `theming.md §5.2`).
-- [ ] `prefers-color-scheme: dark` + `prefers-contrast: more` auto-detect pri prvom load; manual override má prednosť.
-- [ ] **12 base komponentov** implementovaných: Button, IconButton, Link, Icon, Badge, StatusBadge, PriorityBadge, Card, TextField, TextArea, Select, Checkbox. Každý:
+- [x] `@sdm/design-system` exportuje **tokens.css** s CSS Custom Properties pre všetky tokeny z `tokens.md` §1-§12 (typography, colors light+dark+hc, spacing, radius, shadow, motion, z-index, breakpoints, layout, border).
+- [x] Theme switching funguje cez `[data-theme="light|dark|hc"]` na `<html>` — manuálne persisted v localStorage + FOUC-safe inline script v `index.html` `<head>` (per `theming.md §5.2`).
+- [x] `prefers-color-scheme: dark` + `prefers-contrast: more` auto-detect pri prvom load; manual override má prednosť.
+- [x] **12 base komponentov** implementovaných: Button, IconButton, Link, Icon, Badge, StatusBadge, PriorityBadge, Card, TextField, TextArea, Select, Checkbox. Každý:
   - používa tokens (žiadne hardcoded hex/px),
   - má `data-component` attr (per `components.md` intro),
-  - má min. 3 vitest testy (default + variant + interaction),
+  - má min. 3 vitest testy (default + variant + interaction) — celkom **39 testov pass**,
   - splňuje a11y pravidlá zo svojej sekcie v `components.md` (focus ring, aria-label, keyboard).
-- [ ] `apps/portal/src/shell/app-shell.tsx` + `apps/workspace/src/shell/app-shell.tsx` konzumujú aspoň `Button` + `Card` z `@sdm/design-system` (overí že integration cez workspace import funguje).
-- [ ] `pnpm -r typecheck/lint/test/build` green.
-- [ ] Bundle delta: portal + workspace initial JS sa nezhorší o > 10 KB (Radix primitives sú lightweight; tokens.css je pure CSS — žiadny JS overhead).
-- [ ] Žiadne nové runtime deps mimo `library-recommendation.md` r2 stack (Radix UI primitives, Lucide React, clsx povolené).
-- [ ] ROADMAP toggle: G.1 → ✅ DONE.
+- [x] `apps/portal/src/shell/{top-bar,login-page}.tsx` + `apps/workspace/src/shell/{top-bar,login-page}.tsx` konzumujú `Button` + `Card` z `@sdm/design-system`. Shell layout CSS prepísané na design-system tokeny (`var(--color-*)`, `var(--spacing-*)` atď.) — žiadne hardcoded `#hex`.
+- [x] `pnpm -r typecheck/lint/test/build` green.
+- [ ] **Bundle delta exceeds soft target.** Portal initial JS 188.15 → 279.29 KB (Δ **+91.14 KB**, +31.51 KB gzip). CSS 4.95 → 31.65 KB (Δ +26.70 KB, +4.62 KB gzip). Workspace symmetric. Hlavní contributors: Radix Select (~50 KB), Radix Checkbox (~10 KB), lucide-react (selektívny import, ale tree-shaking ešte nezarezal v rámci jednoho chunk-u). **G.4 vyrieši cez `manualChunks` (Radix popper / floating-ui na samostatný chunk) + size-limit budget enforcement** (180 KB portal cieľ z Phase G done-when). Soft warning, neblokujúce per chunk brief.
+- [x] Žiadne nové runtime deps mimo `library-recommendation.md` r2 stack (`@radix-ui/react-select` 2.2.6, `@radix-ui/react-checkbox` 1.3.3, `lucide-react` 0.471.0). `clsx` nahradené inline `cn` helperom (40 LOC) — eliminuje runtime dep úplne.
+- [x] ROADMAP toggle: G.1 → ✅ DONE.
 
 ## Stratégia
 

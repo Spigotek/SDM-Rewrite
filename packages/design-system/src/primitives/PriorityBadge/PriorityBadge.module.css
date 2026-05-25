@@ -1,0 +1,26 @@
+.dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+}
+
+.dotCritical {
+  background-color: var(--color-severity-critical);
+}
+
+.dotHigh {
+  background-color: var(--color-severity-high);
+}
+
+.dotMedium {
+  background-color: var(--color-severity-medium);
+}
+
+.dotLow {
+  background-color: var(--color-severity-low);
+}
+
+.dotNone {
+  background-color: var(--color-severity-none);
+}

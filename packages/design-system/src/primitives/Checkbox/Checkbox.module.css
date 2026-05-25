@@ -1,0 +1,60 @@
+.row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-family: var(--font-family-sans);
+  cursor: pointer;
+}
+
+.row[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.root {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1rem;
+  height: 1rem;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-xs);
+  background-color: var(--color-background-surface);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.root:hover:not([data-disabled]) {
+  border-color: var(--color-border-emphasis);
+}
+
+.root[data-state="checked"],
+.root[data-state="indeterminate"] {
+  background-color: var(--color-brand-bg);
+  border-color: var(--color-brand-bg);
+  color: var(--color-text-inverse);
+}
+
+.root:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
+
+.indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: currentColor;
+}
+
+.label {
+  font-size: var(--font-size-base);
+  color: var(--color-text-body);
+}
+
+.indeterminateDash {
+  width: 0.625rem;
+  height: 2px;
+  background-color: currentColor;
+}

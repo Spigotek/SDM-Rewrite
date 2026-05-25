@@ -22,10 +22,10 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Last merged:** Chunk F.6 (Ticket-detail B-E probe — activity log + attachments wired, linked stays `_unsupported: true` per §24 verdict, PR #18). Predchádzajúce: PR #17 — F.5 Cleanup MSW vs BFF; PR #15 — F.4 Platform.
-- **In flight:** —
-- **Next up:** Phase G.1 — Design system tokens + base komponenty per `docs/agents/design-system/{tokens,components,theming}.md`.
+- **In flight:** Chunk G.1 — Design system tokens + 12 base komponentov (PR TBD).
+- **Next up:** Phase G.5 — Self-host Inter + JetBrains Mono woff2 (per `theming.md`).
 
-Posledná revízia tohto dokumentu: F.6 merged (2026-05-25).
+Posledná revízia tohto dokumentu: G.1 in-flight (2026-05-25).
 
 ---
 
@@ -102,9 +102,9 @@ Posledná revízia tohto dokumentu: F.6 merged (2026-05-25).
 - **Scope-out (deferred z F.x):** Redis session store, OIDC SSO (čaká na corp IdP), SAML, CI neighborhood BFS, bulk MFA step-up.
 - **Done-when:** SPA proti BFF (`VITE_USE_MOCKS=false`) — full login → queue → ticket → logout loop, oba módy MSW/BFF funkčné, audit eventy emit-ujú.
 
-### Phase G — Cross-cutting concerns 🔜 NEXT (~5 chunks)
+### Phase G — Cross-cutting concerns ⏳ IN-FLIGHT (~5 chunks)
 
-- **G.1 Design system tokens + base komponenty** — Inputs: `docs/agents/design-system/{tokens,components,theming}.md`. Output: `packages/design-system/src/{tokens,primitives}/*`.
+- **G.1 Design system tokens + base komponenty ✅ DONE** — `@sdm/design-system` plne naplnený: `tokens.css` (typography, light/dark/hc colors, spacing, radius, shadow, motion, z-index, breakpoints, layout, borders), `reset.css`, FOUC-safe inline script v `apps/{portal,workspace}/index.html`, 12 base komponentov (Icon, Button, IconButton, Link, Badge, StatusBadge, PriorityBadge, Card, TextField, TextArea, Select, Checkbox) — každý s CSS Module + 3+ vitest tests + `data-component` attr (39 testov spolu). Forms `Select`/`Checkbox` na Radix primitives, `Icon` na lucide-react. Shell login + top-bar v portal aj workspace teraz konzumujú `Button` + `Card` z `@sdm/design-system`. Plán: [G.1.md](./plans/G.1.md).
 - **G.2 i18n provider + catalogs (sk/en)** — Inputs: `docs/agents/design-system/microcopy.md`, `architecture/decision-records/07-i18n.md`. Output: `packages/i18n/{src,catalogs}/*`.
 - **G.3 Observability** — Sentry SDK init + correlation ID propagation, BFF audit log shipping. Inputs: `security/audit-and-compliance.md`.
 - **G.4 Performance budgets** — LHCI, size-limit, manualChunks tuning. Inputs: `qa-test-strategy/performance.md`.

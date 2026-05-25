@@ -1,5 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import "@sdm/design-system/tokens.css";
+import "@sdm/design-system/reset.css";
+import "@sdm/design-system/fonts.css";
 import App from "./App";
 import { loadConfig } from "./bootstrap/config";
 
