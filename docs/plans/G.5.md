@@ -1,8 +1,8 @@
 # G.5 — Self-host fonts (Inter + JetBrains Mono)
 
-> **Status**: ✅ DONE (merged 2026-05-25)
-> **Branch**: `chunk/G.5-self-host-fonts` (od fresh `main` po G.1 merge)
-> **PR**: TBD
+> **Status**: ✅ DONE
+> **Branch**: `chunk/G.5-self-host-fonts` (merged + deleted)
+> **PR**: #20 (squash-merged 2026-05-25)
 > **Cieľ**: self-hostovať Inter Variable + JetBrains Mono Variable v
 > `apps/{portal,workspace}/public/fonts/` (woff2 latin + latin-ext subsets),
 > aktualizovať `@font-face` deklarácie v `@sdm/design-system/tokens/fonts.css`

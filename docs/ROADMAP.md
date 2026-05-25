@@ -21,7 +21,7 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk G.5 (Self-host Inter + JetBrains Mono woff2, PR TBD). Predchádzajúce: PR #19 — G.1 Design system tokens + 12 base komponentov; PR #18 — F.6 Ticket-detail B-E probe.
+- **Last merged:** Chunk G.5 (Self-host Inter + JetBrains Mono woff2, PR #20). Predchádzajúce: PR #19 — G.1 Design system tokens + 12 base komponentov; PR #18 — F.6 Ticket-detail B-E probe.
 - **In flight:** —
 - **Next up:** Chunk G.2 — i18n provider + sk/en catalogs. Plán: [G.2.md](./plans/G.2.md).
 
