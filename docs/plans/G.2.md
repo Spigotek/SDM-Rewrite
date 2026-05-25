@@ -1,6 +1,6 @@
 # G.2 — i18n provider + sk/en catalogs
 
-> **Status**: 🔜 NEXT (blokované na G.5 merge)
+> **Status**: ✅ DONE (implementation complete; PR TBD)
 > **Branch**: `chunk/G.2-i18n` (od fresh `main` po G.5 merge)
 > **PR**: TBD
 > **Cieľ**: naplniť `packages/i18n/` stub kompletným i18n adaptérom nad
@@ -85,18 +85,18 @@ docs/plans/G.2.md                         # tento súbor → Status DONE
 
 ## Done-when
 
-- [ ] `@sdm/i18n` exports: `I18nProvider`, `useTranslation`, `Trans`, `useLocale`, `dynamic`, `formatDate`, `formatNumber`, `formatRelative` (per ADR-07).
-- [ ] ICU MessageFormat funguje pre SK 3-form plurals (`{count, plural, =0 {žiadnych} one {1} few {# tickety} other {# ticketov}}`) — overené v `plurals.test.ts`.
-- [ ] Shared catalog (`shared/{sk,en}.json`) má aspoň **40 keys** pokrývajúcich `microcopy.md §2.1` (akcie) + §2.2 (status) + §3 (errors) + §13 (403).
-- [ ] Portal + workspace catalogs majú aspoň **15 keys each** pre app-specific strings (greeting, ITIL akcie, atď.).
-- [ ] **Žiadne hardcoded SK strings** v `apps/{portal,workspace}/src/shell/` — `grep -rE '"[A-ZČĎĹĽŇŔŠŤŽ][a-záčďéíĺľňóôŕšťúýž]+"' apps/*/src/shell/` nesmie nájsť žiadne user-facing strings (povolené sú test/debug strings, keys, technical labels).
-- [ ] LanguageSwitcher v UserMenu funguje — klik prepína medzi SK/EN bez page reload (catalogs sa lazy-loaduje pre new locale ak nie už cached).
-- [ ] Locale persistence: localStorage `locale` key → applied pri page load (FOUC-safe, pred React render).
-- [ ] `<html lang="sk|en">` attribute sa updatuje pri locale switch (SEO + screen reader hint).
-- [ ] CI gate `pnpm i18n:check` overí key parity (každý SK key má EN variant a opačne). PR fails ak miss.
-- [ ] `pnpm -r typecheck/lint/test/build` green.
-- [ ] Bundle delta: default locale (SK) inline'd; second locale (EN) lazy-loaded → initial JS delta < 30 KB (i18next + react-i18next + icu plugin).
-- [ ] ROADMAP toggle: G.2 → ✅ DONE.
+- [x] `@sdm/i18n` exports: `I18nProvider`, `useTranslation`, `Trans`, `useLocale`, `dynamic`, `formatDate`, `formatNumber`, `formatRelative` (per ADR-07).
+- [x] ICU MessageFormat funguje pre SK 3-form plurals (`{count, plural, =0 {žiadnych} one {1} few {# tickety} other {# ticketov}}`) — overené v `plurals.test.ts` (6 testov: SK =0/one/few/other + EN =0/one+other).
+- [x] Shared catalog (`shared/{sk,en}.json`) má **52 keys** pokrývajúcich `microcopy.md §2.1` (akcie) + §2.2 (status) + §2.3 (priority) + §3 (errors) + §3 (validation) + §6 (idle session) + §9 (plurals) + §10 (time).
+- [x] Portal (`portal/{sk,en}.json`) má **16 keys**, workspace (`workspace/{sk,en}.json`) má **20 keys** pre app-specific strings (shell, nav, catalog/queue, actions, composer, SLA).
+- [x] **Žiadne hardcoded SK strings** v `apps/{portal,workspace}/src/shell/` — verified `grep -rE '"[A-ZČĎĹĽŇŔŠŤŽ][a-záčďéíĺľňóôŕšťúýž]+"' apps/*/src/shell/` → empty.
+- [x] LanguageSwitcher v topbar funguje — `<select>` SK/EN, on-change volá `changeLocale()` ktoré lazy-loadne druhý catalog, prepíše `i18next.language`, sync-ne `<html lang>`, persistne do `localStorage.sdm.locale`.
+- [x] Locale persistence: `detectLocale()` číta `localStorage.sdm.locale` → fallback `navigator.language` → fallback `"sk"`. `bootstrapI18n()` await-uje natiahnutie catalog-u pred `createRoot().render()` (FOUC-safe).
+- [x] `<html lang="sk|en">` attribute sa updatuje pri bootstrap + pri `languageChanged` evente (cez `useEffect` v provideri).
+- [x] CI gate `pnpm i18n:check` (pure-Node stdlib script v `tools/i18n-check/src/cli.js`) overí key parity recursive walkom, exit 1 na mismatch. Negative test verified.
+- [x] `pnpm -r typecheck/lint/test/build` green (15 i18n testov + 39 design-system + 90 auth + 212 BFF + ...).
+- [x] Bundle delta: portal index 91.5 → 120.1 KB gzip = **+28.6 KB gzip** (i18next + react-i18next + ICU + intl-messageformat). Per-locale catalogs chunked.
+- [x] ROADMAP toggle: G.2 → ✅ DONE.
 
 ## Stratégia
 

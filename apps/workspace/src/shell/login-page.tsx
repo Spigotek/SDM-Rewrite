@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Button, Card } from "@sdm/design-system";
+import { useTranslation } from "@sdm/i18n";
 
 export function LoginPage({
   appName,
@@ -8,6 +9,7 @@ export function LoginPage({
   appName: string;
   onSubmit: (username: string, password: string) => Promise<void>;
 }) {
+  const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -16,7 +18,7 @@ export function LoginPage({
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!username || !password) {
-      setError("Vyplňte meno aj heslo.");
+      setError(t("errors.loginCredentialsRequired"));
       return;
     }
     setBusy(true);
@@ -24,7 +26,7 @@ export function LoginPage({
     try {
       await onSubmit(username, password);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Prihlásenie zlyhalo.");
+      setError(err instanceof Error ? err.message : t("errors.loginFailed"));
       setBusy(false);
     }
   }
@@ -34,9 +36,9 @@ export function LoginPage({
       <Card variant="surface" className="sdm-login-card">
         <form className="sdm-login-form" onSubmit={handleSubmit} aria-labelledby="login-title">
           <h1 id="login-title">{appName}</h1>
-          <p className="sdm-login-hint">Prihláste sa do Service Desk-u.</p>
+          <p className="sdm-login-hint">{t("workspace:shell.loginHint")}</p>
           <label className="sdm-login-field">
-            <span>Používateľské meno</span>
+            <span>{t("workspace:shell.username")}</span>
             <input
               type="text"
               value={username}
@@ -48,7 +50,7 @@ export function LoginPage({
             />
           </label>
           <label className="sdm-login-field">
-            <span>Heslo</span>
+            <span>{t("workspace:shell.password")}</span>
             <input
               type="password"
               value={password}
@@ -72,7 +74,7 @@ export function LoginPage({
             fullWidth
             data-testid="login-submit"
           >
-            {busy ? "Prihlasujem…" : "Prihlásiť"}
+            {busy ? t("actions.signingIn") : t("actions.signIn")}
           </Button>
         </form>
       </Card>

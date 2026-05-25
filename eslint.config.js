@@ -5,8 +5,32 @@ import reactPlugin from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import a11y from "eslint-plugin-jsx-a11y";
 
+const NODE_GLOBALS = {
+  console: "readonly",
+  process: "readonly",
+  Buffer: "readonly",
+  __dirname: "readonly",
+  __filename: "readonly",
+  global: "readonly",
+  module: "readonly",
+  require: "readonly",
+  exports: "writable",
+  setTimeout: "readonly",
+  clearTimeout: "readonly",
+  setInterval: "readonly",
+  clearInterval: "readonly",
+};
+
 export default [
   js.configs.recommended,
+  {
+    files: ["**/*.js", "**/*.mjs", "**/*.cjs"],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      globals: NODE_GLOBALS,
+    },
+  },
   {
     files: ["**/*.{ts,tsx}"],
     languageOptions: {

@@ -1,0 +1,28 @@
+{
+  "appName": "SDM Portal",
+  "shell": {
+    "loginHint": "Sign in to Service Desk.",
+    "username": "Username",
+    "password": "Password",
+    "userMenuLabel": "User menu"
+  },
+  "nav": {
+    "home": "Home",
+    "myTickets": "My tickets",
+    "catalog": "Service catalog",
+    "knowledge": "Help"
+  },
+  "catalog": {
+    "reportProblem": "Report a problem",
+    "requestSomething": "Request something",
+    "browseAll": "Browse all services"
+  },
+  "greeting": "Hi, {name} 👋",
+  "empty": {
+    "myTickets": "No tickets yet. When you need something, report a problem or request something.",
+    "notifications": "No new notifications. Updates on your tickets will appear here."
+  },
+  "feedback": {
+    "submitted": "Ticket #{id} submitted. Helpdesk will pick it up shortly."
+  }
+}

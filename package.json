@@ -19,6 +19,7 @@
     "lint": "turbo run lint",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "i18n:check": "node tools/i18n-check/src/cli.js",
     "pm": "pnpm --filter @sdm/pm exec sdm-pm",
     "prepare": "husky || true",
     "clean": "turbo run clean && rimraf node_modules .turbo"

@@ -1,0 +1,32 @@
+{
+  "appName": "SDM Workspace",
+  "shell": {
+    "loginHint": "Sign in to the agent console.",
+    "username": "Username",
+    "password": "Password",
+    "userMenuLabel": "Agent menu"
+  },
+  "queue": {
+    "title": "Queue",
+    "filters": "Filters",
+    "resetFilters": "Reset filters",
+    "savedViews": "Saved views",
+    "empty": "Queue is empty. Take a break or grab a coffee."
+  },
+  "actions": {
+    "take": "Take",
+    "escalate": "Escalate",
+    "resolve": "Resolve",
+    "reopen": "Reopen",
+    "watch": "Watch"
+  },
+  "composer": {
+    "publicReply": "Public reply",
+    "internalNote": "Internal note",
+    "workLog": "Work log"
+  },
+  "sla": {
+    "breached": "SLA breached",
+    "atRisk": "Breach risk"
+  }
+}

@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { TenantId } from "@sdm/domain";
+import { useTranslation } from "@sdm/i18n";
 import { useSession } from "./session-context";
 
 export function TenantSwitcher() {
+  const { t } = useTranslation();
   const { session, tenants, switchTenant } = useSession();
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -58,7 +60,7 @@ export function TenantSwitcher() {
         <ul
           className="sdm-tenant-dropdown"
           role="listbox"
-          aria-label="Vyber tenant"
+          aria-label={t("actions.switchTenant")}
           data-testid="tenant-list"
         >
           {tenants.map((t) => {

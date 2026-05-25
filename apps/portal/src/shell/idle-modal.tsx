@@ -3,6 +3,7 @@
 // pri 30 min countdown vyprší a redirect na /login?reason=idle.
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "@sdm/i18n";
 
 const DEFAULT_IDLE_TIMEOUT_SEC = 30 * 60;
 const WARNING_COUNTDOWN_SEC = 60;
@@ -14,6 +15,7 @@ export interface IdleModalProps {
 }
 
 export function IdleModal({ idleTimeoutSec = DEFAULT_IDLE_TIMEOUT_SEC }: IdleModalProps) {
+  const { t } = useTranslation();
   const [showWarning, setShowWarning] = useState(false);
   const [countdown, setCountdown] = useState<number>(WARNING_COUNTDOWN_SEC);
 
@@ -118,11 +120,10 @@ export function IdleModal({ idleTimeoutSec = DEFAULT_IDLE_TIMEOUT_SEC }: IdleMod
         data-testid="idle-modal"
       >
         <h2 id="sdm-idle-modal-title" className="sdm-modal-title">
-          Relácia čoskoro vyprší
+          {t("session.idleTitle")}
         </h2>
-        <p className="sdm-modal-body">
-          Vaša relácia vyprší o <span data-testid="idle-modal-countdown">{countdown}</span> sekúnd.
-          Chcete pokračovať?
+        <p className="sdm-modal-body" data-testid="idle-modal-countdown">
+          {t("session.idleBody", { count: countdown })}
         </p>
         <div className="sdm-modal-actions">
           <button
@@ -131,7 +132,7 @@ export function IdleModal({ idleTimeoutSec = DEFAULT_IDLE_TIMEOUT_SEC }: IdleMod
             onClick={() => void handleContinue()}
             data-testid="idle-modal-continue"
           >
-            Pokračovať
+            {t("actions.continue")}
           </button>
         </div>
       </div>
