@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.7 (Workspace queue — Anna centerpiece, PR #26). Predchádzajúce: PR #25 — H.1 tenant switch; PR #24 — H.0 routing.
-- **In flight:** Phase H — Feature modules (3/17 chunks merged).
-- **Next up:** Chunk H.8 — Workspace ticket-detail (split-view, 3-tab Composer) per H.md §D2 recommended order.
+- **Last merged:** Chunk H.8 (Workspace ticket-detail — split-view, 3-tab Composer, PR #27). Predchádzajúce: PR #26 — H.7 queue; PR #25 — H.1 tenant switch.
+- **In flight:** Phase H — Feature modules (4/17 chunks merged).
+- **Next up:** Chunk H.2 — Portal home dashboard (Lucia) per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.7 DONE (2026-05-28).
+Posledná revízia tohto dokumentu: H.8 DONE (2026-05-28).
 
 ---
 
@@ -111,7 +111,11 @@ Posledná revízia tohto dokumentu: H.7 DONE (2026-05-28).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (3/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (4/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.8 Workspace ticket-detail ✅ DONE** — `/tickets/:id` agent route — `TicketDetailRoute.tsx` + 8 components: `AgentTicketHeader` (inline status/priority Combobox edit, optimistic UI), `ActionBar` (Take/Resolve/Escalate/Watch/More), `ActivityTimeline` (filter tabs All/Public/Internal/System — client-side filter na `activity.items`), `Composer` (3-tab: Public reply / Internal note / Resolution), `ContextPanel` (Requester card + CI card + Related records — empty state if `_unsupported: true`), `EscalateModal` + `ResolveModal` (Solution + Category dropdown). **TipTap deferred** per H.md §D3 — plain Textarea + markdown shorthand acceptable v MVP, v1+ wires TipTap. Composer Cmd+Enter submits. Transition actions emit existing F.4 audit (`data.incident.write` / `data.request.write`). New MSW handler `packages/api-mocks/src/handlers/ticket-detail.ts` (461 LOC) — full action endpoints (`take`/`resolve`/`escalate`/`watch`/`comment`). Activity filter tabs operate on already-loaded items (no extra BFF call). Plán: [H.8.md](./plans/H.8.md), PR #27.
+
+### Phase H scope reference (cont.)
 
 - **H.7 Workspace queue ✅ DONE** — `/queue` workspace default landing (`/` redirects), `QueueRoute.tsx` + 5 components (`QueueTable`, `FilterBar`, `QueueSidebar`, `SavedViewsManager`, `ColumnConfig`) consume F.3 aggregator `/api/queue` s filtrami (status/priority/assignee/type/customer/tenant). TanStack Table v8 basic mode (sort/filter/column config), localStorage-backed saved views via `useSyncExternalStore`. Keyboard nav `j`/`k`/`↑`/`↓`/`Enter`/`Esc` cez `react-hotkeys-hook` (introduced v H.1). Split-view URL pattern `?selected=:id` — H.7 ships placeholder right pane (H.8 fills). Pollovanie `refetchInterval: 30000` keď document visible (TQ `refetchIntervalInBackground: false`). MSW handler `packages/api-mocks/src/handlers/queue.ts` (180 LOC) — new handler s 50-line test suite. Empty state per `microcopy.md §4`. Bundle: vendor-state cap bumped 20 → 30 KB (TanStack Table v8 add-on); workspace **175.09 KB / 350 KB** (+15.7 KB vs H.1 baseline; vendor-state 23.4 KB). Tests: MSW handler + h7-workspace-queue browser spec (load → j/k → open detail → filter → save view). Plán: [H.7.md](./plans/H.7.md), PR #26.
 

@@ -1,7 +1,9 @@
 # H.8 — Workspace: ticket-detail (agent split-view)
 
-> **Status**: 🔜 (blokované na H.7 — uses split-view URL pattern)
-> **Branch**: `chunk/H.8-workspace-ticket-detail` > **Persona**: Anna, Marek
+> **Status**: ✅ DONE (2026-05-28)
+> **Branch**: `chunk/H.8-workspace-ticket-detail` (merged, deleted)
+> **PR**: #27 — merged squash via `--admin --delete-branch` > **Deviations**: TipTap deferred per plan, plain Textarea + markdown shorthand shipped. New MSW handler `ticket-detail.ts` (461 LOC) with full action endpoints (take/resolve/escalate/watch/comment).
+> **Persona**: Anna, Marek
 > **Cieľ**: route `/tickets/:id` (alebo split-view v `/queue?selected=:id`)
 > — full agent view: ticket header + composer (3 tabs: Public reply, Internal
 > note, Resolution) + activity timeline (all kinds visible) + right Context
