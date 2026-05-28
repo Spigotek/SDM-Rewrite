@@ -1,7 +1,10 @@
 # H.3 — Portal: new-incident form
 
-> **Status**: 🔜 (blokované na H.0)
-> **Branch**: `chunk/H.3-portal-new-incident` > **Persona**: Lucia
+> **Status**: ✅ DONE (2026-05-28)
+> **Branch**: `chunk/H.3-portal-new-incident` (merged, deleted)
+> **PR**: #30 — merged squash via `--admin --delete-branch` > **Bundle outcome**: portal 162.1 KB / 180 KB (+0.04 KB vs H.4); NewIncidentRoute lazy chunk 24.15 KB (RHF + zod contained).
+> **Deviations**: Attachments deferred per user default — TODO + feature follow-up logged, no BFF endpoint augmentation. Radio group inline `<fieldset role="radiogroup">` (G.1 doesn't expose Radio primitive). LHCI kept `warn` per H.0/H.4 pattern.
+> **Persona**: Lucia
 > **Cieľ**: implementovať route `/new-incident` — RHF + Zod form (summary,
 > description, priority, category, attachments) → submit `POST /api/incidents`
 > → success obrazovka s ticket ID + link na ticket detail.

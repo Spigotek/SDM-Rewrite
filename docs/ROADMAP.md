@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.4 (Portal ticket-detail — requester view, PR #29). Predchádzajúce: PR #28 — H.2 home; PR #27 — H.8 ticket-detail.
-- **In flight:** Phase H — Feature modules (6/17 chunks merged).
-- **Next up:** Chunk H.3 — Portal new-incident form per H.md §D2 recommended order.
+- **Last merged:** Chunk H.3 (Portal new-incident form, PR #30). Predchádzajúce: PR #29 — H.4 ticket-detail; PR #28 — H.2 home.
+- **In flight:** Phase H — Feature modules (7/17 chunks merged).
+- **Next up:** Chunk H.5 — Portal service catalog + new-request per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.4 DONE (2026-05-28).
+Posledná revízia tohto dokumentu: H.3 DONE (2026-05-28).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.4 DONE (2026-05-28).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (6/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (7/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.3 Portal new-incident ✅ DONE** — `/new-incident` route — RHF + Zod form (`react-hook-form@7.54.2` + `@hookform/resolvers@3.10.0` + `zod@^3.23.8`). Fields: `summary` (TextField max 100), `description` (TextArea max 5000), `priority` (inline `<fieldset role="radiogroup">` — G.1 doesn't expose Radio primitive, native radios styled), `category` (Combobox). Helper text per microcopy.md §7; inline RHF field errors via `aria-describedby`. Submit → `POST /api/incidents` → `<SuccessScreen>` s ticket ID + 3 CTAs (View ticket / Report another / Done). PendingChanges register on dirty (H.1 context blocks tenant switch with ConfirmDialog). 401 → redirect `/login`; 4xx → inline RHF errors via `setError`; 5xx → toast. **Attachments deferred** per user default — TODO comment v `NewIncidentForm.tsx:41-46` references future scope (BFF multipart endpoint + virus-scan policy + DS FileUpload primitive). Bundle: portal **162.1 KB / 180 KB** (+0.04 KB vs H.4); `NewIncidentRoute` lazy chunk 24.15 KB (RHF + zod + resolvers contained). i18n: +25 SK/EN `newIncident.*` keys (99 portal parity). Tests: browser scenario `h3-portal-new-incident.spec.ts` (2 cases — fill+submit+success + validation). Plán: [H.3.md](./plans/H.3.md), PR #30.
 
 - **H.4 Portal ticket-detail ✅ DONE** — `/tickets/:id` portal route (Lucia view) — single URL pattern s prefix-based type detection: canonical `incident:`/`request:`/`problem:`/`change:` IDs + ref-based `IN-`/`REQ-`/`PR-`/`CHG-` shorthand pre human-friendly URLs. Invalid prefix → `NotFoundElement`. `TicketDetailRoute` + 5 components: `TicketHeader` (ref + summary + StatusBadge + PriorityBadge + relative time), `TicketBody` (plain text `white-space: pre-wrap` — Markdown deferred to H.6 KB to keep bundle), `ActivityTimeline` (public + system filter, NO internal — defence-in-depth client-side filter), `AttachmentsList` (read-only chips per F.6 §23.6 deferred), `PublicComposer` (single-tab Composer, hidden when ticket closed). 404 → `NotFoundElement`, 403 → `ForbiddenElement` via RR6 error boundaries. `_unsupported: true` branches render empty states + tooltip "Táto sekcia bude dostupná čoskoro." per F.6. Comment POST reuses existing `packages/api-mocks/src/handlers/ticket-detail.ts` endpoint (H.8) — real BFF POST endpoint deferred follow-up Phase I. Bundle: portal **162.06 KB / 180 KB** (+0.13 KB vs H.2); `TicketDetailRoute` lazy chunk 2.90 KB gzip. i18n: +20 SK/EN `ticketDetail.*` keys (66 keys parity). Browser test 3 scenarios (`h4-portal-ticket-detail.spec.ts`): canonical `incident:10001` URL + comment submit + timeline update, `request:20001` type detection, garbage URL → not-found. Plán: [H.4.md](./plans/H.4.md), PR #29.
 
