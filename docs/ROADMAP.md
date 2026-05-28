@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.5 (Portal service catalog + new-request — DynamicForm, PR #31). Predchádzajúce: PR #30 — H.3 new-incident; PR #29 — H.4 ticket-detail.
-- **In flight:** Phase H — Feature modules (8/17 chunks merged).
-- **Next up:** Chunk H.6 — Portal KB search + article per H.md §D2 recommended order.
+- **Last merged:** Chunk H.6 (Portal KB search + article — read-only, PR #32). Predchádzajúce: PR #31 — H.5 catalog; PR #30 — H.3 new-incident.
+- **In flight:** Phase H — Feature modules (9/17 chunks merged) — **portal batch H.2-H.6 complete**.
+- **Next up:** Chunk H.9 — Workspace changes list + detail per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.5 DONE (2026-05-29).
+Posledná revízia tohto dokumentu: H.6 DONE (2026-05-29).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.5 DONE (2026-05-29).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (8/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (9/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.6 Portal KB search + article ✅ DONE** — `/kb` (SearchInput debounce 300 ms + results list, empty state CTA "otvor ticket s týmto popisom") + `/kb/article/:id` (ArticleHeader + ArticleBody Markdown render + HelpfulnessVote + RelatedArticles). Markdown stack: `react-markdown@9` + `remark-gfm@4` + `rehype-sanitize@6` — **lazy-loaded** ako `vendor-markdown` chunk (49.34 KB / 60 KB cap; lazy boundary inside article route → search list pays 0 KB markdown cost). Sanitization via rehype-sanitize default schema + `className: /^language-/` allowlist na `code`/`pre` (žiadny `unsafe` flag). `KbArticle.body` domain model je `KbArticleBody { blocks }` — MSW handler obsahuje `blocksToMarkdown()` server-side conversion (KB editor v1+ vlastní structured representation). MSW augmentation: GET `/api/kb` (+snippet, categoryName, helpfulCount, readTimeMin, language), GET `/api/kb/:id` (+markdown body, related[]), POST `/api/kb/articles/:id/helpfulness` (mock-only — CA SDM nemá KB feedback endpoint, tracked `[GAP-4]`). BFF beze zmeny. Bundle: portal **162.21 KB / 180 KB** (+0.05 KB vs H.5 — entry flat); KbRoute lazy 1.38 KB + KbArticleRoute lazy 1.81 KB + MarkdownRenderer stub 0.26 KB. i18n: +kb.\* SK/EN keys. Plán: [H.6.md](./plans/H.6.md), PR #32. **Portal batch (H.2-H.6) complete.**
 
 - **H.5 Portal service catalog + new-request ✅ DONE** — `/catalog` + `/catalog/:itemId` routes. `CatalogRoute.tsx` (`CategoryTiles` 4-tile grid Hardvér/Softvér/Prístupy/Iné + `FeaturedItemCard` grid) + `CatalogItemRoute.tsx` (`DynamicForm` schema-driven render). `FieldRenderer` per-type dispatch — **12 field types**: text/textarea/number/date/select/multi/radio/checkbox/file/user-picker/ci-picker/markdown-help (registry pattern per libraries.md §3 — adding new type touches union → registry → renderer only). `buildZodSchema(fields)` produces Zod from `CatalogField[]`. Submit → `POST /api/requests { catalogItemId, fields }`. BFF augmentation: new `apps/bff/src/api/endpoints/catalog.ts` (186 LOC) — `GET /api/catalog/items` + `GET /api/catalog/items/:id` (fixture-backed; CA SDM nemá native Service Catalog REST surface). MSW handlers extended: requests.ts +catalog routes, users.ts `?q=` async loadOptions pre user-picker, cmdb.ts `?q=` pre ci-picker. Fixtures `packages/api-mocks/src/fixtures/catalog.ts` — 6 items, 4 categories, všetky field types covered. Deviations: `date` field uses native `<input type="date">` (DS DatePicker R-007 pending); `markdown-help` plain text `whitespace: pre-line` (react-markdown deferred H.6); `file` placeholder + "Upload bude dostupný čoskoro" (per H.3 attachments deferral); LHCI graduation reverted (`staticDistDir` returns 404 pre `/catalog`, blocked on MSW/stub-BFF wiring per H.0 pattern). Bundle: portal **162.16 KB / 180 KB** (flat vs H.3 162.1 KB — CatalogRoute lazy 3.74 KB + CatalogItemRoute lazy 14.62 KB; RHF/Zod re-used from H.3 vendor-state). i18n: +catalog.\* keys SK/EN. Browser test `h5-portal-catalog.spec.ts`. Plán: [H.5.md](./plans/H.5.md), PR #31.
 

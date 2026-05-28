@@ -1,7 +1,10 @@
 # H.6 — Portal: KB search + article read
 
-> **Status**: 🔜 (blokované na H.0)
-> **Branch**: `chunk/H.6-portal-kb` > **Persona**: Lucia
+> **Status**: ✅ DONE (2026-05-29)
+> **Branch**: `chunk/H.6-portal-kb` (merged, deleted)
+> **PR**: #32 — merged squash via `--admin --delete-branch` > **Bundle outcome**: portal 162.21 KB / 180 KB (entry flat — vendor-markdown lazy 49.34 KB / 60 KB cap; search list 0 KB markdown cost).
+> **Deviations**: vendor-markdown cap 60 KB (not 30 KB hinted — measured stack 49.34 KB); LHCI reverted (staticDistDir 404 blocker); domain model `KbArticleBody { blocks }` ≠ markdown → MSW `blocksToMarkdown()` server-side conversion; helpfulness POST mock-only (CA SDM gap [GAP-4]).
+> **Persona**: Lucia
 > **Cieľ**: route `/kb` (search list) + `/kb/article/:id` (article read mode)
 > — read-side iba (KB editor je v1+, NIE MVP).
 
