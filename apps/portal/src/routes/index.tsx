@@ -39,7 +39,10 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        lazy: async () => ({ Component: (await import("./placeholders/home")).default }),
+        lazy: async () => {
+          const mod = await import("../features/home/HomeRoute");
+          return { Component: mod.HomeRoute, loader: mod.homeLoader };
+        },
       },
       {
         path: "new-incident",

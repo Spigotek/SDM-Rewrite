@@ -17,7 +17,31 @@
     "requestSomething": "Request something",
     "browseAll": "Browse all services"
   },
-  "greeting": "Hi, {name} 👋",
+  "home": {
+    "greeting": "Hi, {name} 👋",
+    "subgreeting": "How can I help you?",
+    "actions": {
+      "ariaLabel": "Quick actions",
+      "newIncident": {
+        "title": "Report a problem",
+        "body": "Something isn't working — laptop, access, network."
+      },
+      "newRequest": {
+        "title": "Request something",
+        "body": "Software, access, hardware."
+      }
+    },
+    "myTickets": {
+      "title": "Your active tickets",
+      "seeAll": "See all →",
+      "empty": "No tickets yet. When you need something, report a problem or request something.",
+      "error": "Couldn't load tickets. Try refreshing the page."
+    },
+    "kb": {
+      "title": "You might be looking for",
+      "seeAll": "Open help →"
+    }
+  },
   "empty": {
     "myTickets": "No tickets yet. When you need something, report a problem or request something.",
     "notifications": "No new notifications. Updates on your tickets will appear here."
@@ -26,8 +50,6 @@
     "submitted": "Ticket #{id} submitted. Helpdesk will pick it up shortly."
   },
   "placeholders": {
-    "activeTenant": "Active tenant:",
-    "home": "Feature content arrives in H.2. This is just a placeholder behind the H.0 routing infrastructure.",
     "newIncidentTitle": "Report a problem",
     "newIncident": "New incident form arrives in H.3.",
     "myTicketsTitle": "My tickets",

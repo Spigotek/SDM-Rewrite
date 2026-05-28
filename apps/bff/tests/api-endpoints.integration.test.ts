@@ -141,6 +141,68 @@ describe("/api/incidents — full CRUD + error path", () => {
     expect(body.data[0]?.status?.code).toBe("CL");
   });
 
+  it("GET /api/incidents?customer=me resolves to WC=customer=<session.contactId>", async () => {
+    let seenWc: string | null = null;
+    server.use(
+      http.get(`${BASE}/in`, ({ request }) => {
+        seenWc = new URL(request.url).searchParams.get("WC");
+        return HttpResponse.json({
+          collection_in: { "@COUNT": "0", "@START": "1", "@TOTAL_COUNT": "0" },
+        });
+      }),
+    );
+    const { app } = await buildApi();
+    const res = await app.fetch(
+      new Request("http://bff/api/incidents?customer=me&size=5", {
+        headers: { [COOKIE]: SID_COOKIE },
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(seenWc).toBe("customer=U'BDE'");
+  });
+
+  it("GET /api/incidents?customer=me AND existing filter combines clauses with AND", async () => {
+    let seenWc: string | null = null;
+    server.use(
+      http.get(`${BASE}/in`, ({ request }) => {
+        seenWc = new URL(request.url).searchParams.get("WC");
+        return HttpResponse.json({
+          collection_in: { "@COUNT": "0", "@START": "1", "@TOTAL_COUNT": "0" },
+        });
+      }),
+    );
+    const { app } = await buildApi();
+    const res = await app.fetch(
+      new Request("http://bff/api/incidents?customer=me&filter=status=OP", {
+        headers: { [COOKIE]: SID_COOKIE },
+      }),
+    );
+    expect(res.status).toBe(200);
+    expect(seenWc).toBe("status=OP AND customer=U'BDE'");
+  });
+
+  it("GET /api/incidents?customer=other-value passes through untouched", async () => {
+    let seenWc: string | null = null;
+    server.use(
+      http.get(`${BASE}/in`, ({ request }) => {
+        seenWc = new URL(request.url).searchParams.get("WC");
+        return HttpResponse.json({
+          collection_in: { "@COUNT": "0", "@START": "1", "@TOTAL_COUNT": "0" },
+        });
+      }),
+    );
+    const { app } = await buildApi();
+    const res = await app.fetch(
+      new Request("http://bff/api/incidents?customer=someoneElse", {
+        headers: { [COOKIE]: SID_COOKIE },
+      }),
+    );
+    expect(res.status).toBe(200);
+    // No WC injection: the value of `customer` is not "me", so the proxy
+    // forwards no filter at all (the FE supplied no `filter=` either).
+    expect(seenWc).toBeNull();
+  });
+
   it("GET /api/incidents/:id returns single record with FK fields collapsed", async () => {
     server.use(http.get(`${BASE}/in/2800`, () => HttpResponse.json(INCIDENT_DETAIL)));
     const { app } = await buildApi();

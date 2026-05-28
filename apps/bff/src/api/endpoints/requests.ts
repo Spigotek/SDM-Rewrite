@@ -95,6 +95,7 @@ export function registerRequestRoutes(app: Hono, deps: RestProxyDeps): void {
     defaultAttrs: DEFAULT_ATTRS,
     pkIsGuid: false,
     softClose: { kind: "status-CL" },
+    customerMeAttr: "customer",
     mapRow,
     mapCreate,
     mapUpdate,

@@ -80,6 +80,32 @@ describe("incident handlers", () => {
     expect(created.status).toBe("OP");
   });
 
+  it("GET /api/incidents?customer=me filters to incidents owned by the MSW default user", async () => {
+    // The MSW default user is `user-1` (Anna). `incidents.ts` fixture seeds
+    // requester ∈ {user-1, user-2, user-5} round-robin; user-1 lands on
+    // i % 3 === 0 — same modulus as the tenant assignment, putting all of
+    // user-1's tickets inside `globex`. The filter must return only those.
+    const res = await fetch(`${BASE}/api/incidents?customer=me&size=20`, {
+      headers: { "X-CA-SDM-Tenant": "globex" },
+    });
+    expect(res.status).toBe(200);
+    const page = (await res.json()) as Page<IncidentLite & { requesterId: string | null }>;
+    expect(page.results.length).toBeGreaterThan(0);
+    expect(page.results.every((r) => r.requesterId === "user-1")).toBe(true);
+  });
+
+  it("GET /api/incidents?customer=me returns empty page when the default user has no tickets in the tenant", async () => {
+    // Same fixture math: user-1 has zero ACME tickets, so `customer=me` under
+    // the acme tenant must return an empty page (the filter is the only
+    // difference vs. the all-acme list which has many entries).
+    const res = await fetch(`${BASE}/api/incidents?customer=me`, {
+      headers: { "X-CA-SDM-Tenant": "acme-corp" },
+    });
+    expect(res.status).toBe(200);
+    const page = (await res.json()) as Page<IncidentLite>;
+    expect(page.results.length).toBe(0);
+  });
+
   it("PATCH /api/incidents/:id updates status", async () => {
     const list = (await (
       await fetch(`${BASE}/api/incidents`, {

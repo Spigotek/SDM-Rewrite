@@ -17,7 +17,31 @@
     "requestSomething": "Požiadať o niečo",
     "browseAll": "Prezri všetky služby"
   },
-  "greeting": "Ahoj, {name} 👋",
+  "home": {
+    "greeting": "Ahoj, {name} 👋",
+    "subgreeting": "Ako ti môžem pomôcť?",
+    "actions": {
+      "ariaLabel": "Rýchle akcie",
+      "newIncident": {
+        "title": "Nahlásiť problém",
+        "body": "Niečo nefunguje — laptop, prístup, sieť."
+      },
+      "newRequest": {
+        "title": "Požiadať o niečo",
+        "body": "Softvér, prístupy, hardvér."
+      }
+    },
+    "myTickets": {
+      "title": "Tvoje aktívne tickety",
+      "seeAll": "Vidieť všetky →",
+      "empty": "Zatiaľ žiadne tickety. Keď niečo budeš potrebovať, nahlás problém alebo požiadaj o niečo.",
+      "error": "Tickety sa nepodarilo načítať. Skús stránku obnoviť."
+    },
+    "kb": {
+      "title": "Možno hľadáš toto",
+      "seeAll": "Otvoriť pomocníka →"
+    }
+  },
   "empty": {
     "myTickets": "Zatiaľ žiadne tickety. Keď niečo budeš potrebovať, nahlás problém alebo požiadaj o niečo.",
     "notifications": "Žiadne nové notifikácie. Tu sa budú zobrazovať aktualizácie tvojich ticketov."
@@ -26,8 +50,6 @@
     "submitted": "Ticket #{id} odoslaný. Helpdesk to dostane okamžite."
   },
   "placeholders": {
-    "activeTenant": "Aktívny tenant:",
-    "home": "Feature obsah dorazí v H.2. Toto je len placeholder cez H.0 routing infraštruktúru.",
     "newIncidentTitle": "Nahlásiť problém",
     "newIncident": "Formulár pre nový incident dorazí v H.3.",
     "myTicketsTitle": "Moje tickety",
