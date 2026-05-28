@@ -4,11 +4,12 @@
   "ci": {
     "collect": {
       "staticDistDir": "./dist",
-      "url": ["http://localhost/index.html", "http://localhost/catalog"],
+      "url": ["http://localhost/index.html"],
       "_url_todo_phase_h": [
         "http://localhost/new-incident",
         "http://localhost/tickets",
         "http://localhost/tickets/incident:10001",
+        "http://localhost/catalog",
         "http://localhost/catalog/item-1",
         "http://localhost/kb",
         "http://localhost/kb/article/A-1"
