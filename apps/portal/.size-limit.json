@@ -53,5 +53,11 @@
     "path": "dist/assets/vendor-state-*.js",
     "limit": "20 KB",
     "gzip": true
+  },
+  {
+    "name": "Portal — vendor-markdown chunk (lazy, /kb/article/:id only)",
+    "path": "dist/assets/vendor-markdown-*.js",
+    "limit": "60 KB",
+    "gzip": true
   }
 ]

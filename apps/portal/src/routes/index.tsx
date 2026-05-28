@@ -78,11 +78,17 @@ export const router = createBrowserRouter([
       },
       {
         path: "kb",
-        lazy: async () => ({ Component: (await import("./placeholders/kb")).default }),
+        lazy: async () => {
+          const mod = await import("../features/kb/KbRoute");
+          return { Component: mod.KbRoute };
+        },
       },
       {
         path: "kb/article/:id",
-        lazy: async () => ({ Component: (await import("./placeholders/kb-article")).default }),
+        lazy: async () => {
+          const mod = await import("../features/kb/KbArticleRoute");
+          return { Component: mod.KbArticleRoute };
+        },
       },
       { path: "*", element: <NotFoundElement /> },
     ],

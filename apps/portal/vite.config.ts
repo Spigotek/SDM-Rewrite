@@ -73,6 +73,17 @@ export default defineConfig(({ mode }) => {
             if (/[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:@sentry[\\/])/.test(id)) {
               return "vendor-observability";
             }
+            // Markdown stack — used only on `/kb/article/:id`. Grouping the
+            // three packages keeps the route chunk slim and the rest of the
+            // portal pays zero markdown cost up front. Per H.6 §Bundle
+            // awareness this stays under a 30 KB gzip budget.
+            if (
+              /[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:react-markdown|remark-gfm|rehype-sanitize|micromark|mdast-util-|hast-util-|unist-util-|unified|vfile|bail|trough|is-plain-obj|space-separated-tokens|comma-separated-tokens|hastscript|property-information|html-url-attributes|character-entities|decode-named-character-reference|devlop|ccount|escape-string-regexp|html-void-elements|longest-streak|markdown-table|estree-util-|estree-walker|zwitch|trim-lines|stringify-entities|web-namespaces)[@\\/]/.test(
+                id,
+              )
+            ) {
+              return "vendor-markdown";
+            }
             if (/[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:@radix-ui[\\/]|lucide-react)/.test(id)) {
               return "vendor-ds";
             }

@@ -12,7 +12,7 @@
         "http://localhost/catalog",
         "http://localhost/catalog/item-1",
         "http://localhost/kb",
-        "http://localhost/kb/article/A-1"
+        "http://localhost/kb/article/kb:50000"
       ],
       "numberOfRuns": 3,
       "settings": {

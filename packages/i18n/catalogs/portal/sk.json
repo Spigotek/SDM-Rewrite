@@ -55,11 +55,53 @@
     "catalogTitle": "Katalóg služieb",
     "catalog": "Browse katalógu dorazí v H.5.",
     "catalogItemTitle": "Položka katalógu {id}",
-    "catalogItem": "Detail položky katalógu dorazí v H.5.",
-    "kbTitle": "Pomoc",
-    "kb": "Vyhľadávanie KB dorazí v H.6.",
-    "kbArticleTitle": "KB článok {id}",
-    "kbArticle": "Detail KB článku dorazí v H.6."
+    "catalogItem": "Detail položky katalógu dorazí v H.5."
+  },
+  "kb": {
+    "back": "← Späť na domov",
+    "title": "Pomocník",
+    "subtitle": "Možno už mám odpoveď.",
+    "searchLabel": "Hľadať v KB",
+    "searchPlaceholder": "Napíš, čo hľadáš…",
+    "loading": "Hľadám…",
+    "error": "Pomocníka sa nepodarilo načítať. Skús stránku obnoviť.",
+    "resultCount": "{count, plural, =0 {0 výsledkov} one {1 výsledok} few {# výsledky} other {# výsledkov}}",
+    "result": {
+      "helpfulCount": "{count, plural, =0 {nikomu ešte nepomohol} one {1 človeku pomohol} few {# ľuďom pomohol} other {# ľuďom pomohol}}",
+      "readTime": "{count, plural, =0 {menej ako minúta čítania} one {1 min čítania} few {# min čítania} other {# min čítania}}",
+      "englishOnly": "Iba v angličtine"
+    },
+    "empty": {
+      "title": "Nič som nenašiel. Skús inú formuláciu.",
+      "openTicket": "Otvor ticket s týmto popisom →"
+    },
+    "article": {
+      "back": "← Späť na výsledky",
+      "loading": "Načítavam článok…",
+      "loadingBody": "Načítavam obsah…",
+      "error": "Článok sa nepodarilo načítať.",
+      "empty": "Tento článok zatiaľ nemá obsah.",
+      "category": "Kategória",
+      "updated": "Aktualizované",
+      "readTime": "Čas čítania",
+      "language": "Jazyk"
+    },
+    "helpfulness": {
+      "prompt": "Pomohol ti tento článok?",
+      "yes": "👍 Áno",
+      "no": "👎 Nie",
+      "commentLabel": "Čo by si očakával(a)? (voliteľné)",
+      "commentPlaceholder": "Krátko popíš, čo článku chýbalo.",
+      "submit": "Odoslať feedback",
+      "error": "Feedback sa nepodarilo odoslať. Skús to znova.",
+      "thanks": {
+        "up": "Vďaka, pomôže to ostatným.",
+        "down": "Vďaka za feedback, pošleme to autorovi."
+      }
+    },
+    "related": {
+      "title": "Súvisiace články"
+    }
   },
   "catalogBrowse": {
     "back": "← Späť na domov",
