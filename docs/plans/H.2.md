@@ -1,7 +1,10 @@
 # H.2 — Portal: home dashboard
 
-> **Status**: 🔜 (blokované na H.1 merge)
-> **Branch**: `chunk/H.2-portal-home` > **Persona**: Lucia (`requester`)
+> **Status**: ✅ DONE (2026-05-28)
+> **Branch**: `chunk/H.2-portal-home` (merged, deleted)
+> **PR**: #28 — merged squash via `--admin --delete-branch` > **Bundle outcome**: portal 161.93 KB / 180 KB (+2.62 KB vs H.1); HomeRoute lazy chunk 7.10 KB.
+> **Deviations**: ActionCards 2 instead of 3 (wireframe KB shortcut covered by KbSuggestions panel); no `<ListRow>`/`<Avatar>` G.1 primitives exist yet — semantic `<ul>`/`<li>` + text-only HeroGreeting used. BFF `customerMeAttr` opt-in augmentation added for `?customer=me` server-side resolution (incidents + requests).
+> **Persona**: Lucia (`requester`)
 > **Cieľ**: nahradiť H.0 placeholder na route `/` Lucia greeting + "Nahlásiť
 > problém" / "Požiadať o niečo" CTAs + recent my-tickets list + KB suggestions
 > (top 3 articles per current tenant). Mobile-first (Lucia 30% mobile per `GOAL.md §11`).
