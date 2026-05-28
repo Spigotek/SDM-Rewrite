@@ -1,0 +1,384 @@
+/**
+ * Portal Service Catalog — list view + item detail + DynamicForm.
+ *
+ * Layout follows the same single-column, mobile-first rhythm as
+ * `home.css` / `new-incident.css`. Tokens consumed: spacing-*, radius-*,
+ * color-*, font-size-*, border-width-thin.
+ */
+
+.sdm-catalog,
+.sdm-catalog-item,
+.sdm-catalog-item-success {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  padding: var(--spacing-6) var(--spacing-5);
+  max-width: 64rem;
+  margin: 0 auto;
+}
+
+.sdm-catalog-back {
+  align-self: flex-start;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+}
+
+.sdm-catalog-back:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}
+
+.sdm-catalog-heading h1,
+.sdm-catalog-item-heading h1 {
+  margin: 0;
+  font-size: var(--font-size-2xl, 1.5rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary);
+}
+
+.sdm-catalog-heading-sub,
+.sdm-catalog-item-description {
+  margin: var(--spacing-2) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+}
+
+.sdm-catalog-item-sla {
+  margin: var(--spacing-2) 0 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-catalog-section-title {
+  margin: 0;
+  font-size: var(--font-size-lg, 1.125rem);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+}
+
+/* ── Category tiles ────────────────────────────────────────────────────── */
+
+.sdm-catalog-categories {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-3);
+}
+
+@media (min-width: 480px) {
+  .sdm-catalog-categories {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 768px) {
+  .sdm-catalog-categories {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.sdm-catalog-category-tile {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised, var(--color-bg-canvas));
+  padding: var(--spacing-4);
+  cursor: pointer;
+  color: var(--color-text-primary);
+  text-align: left;
+  font: inherit;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.sdm-catalog-category-tile:hover,
+.sdm-catalog-category-tile:focus-visible {
+  border-color: var(--color-border-strong, var(--color-text-primary));
+  outline: none;
+  box-shadow: var(--shadow-focus, 0 0 0 2px var(--color-text-primary));
+}
+
+.sdm-catalog-category-tile[data-active="true"] {
+  border-color: var(--color-border-strong, var(--color-text-primary));
+  background: var(--color-surface-subtle, var(--color-bg-canvas));
+}
+
+.sdm-catalog-category-icon {
+  font-size: var(--font-size-xl, 1.25rem);
+}
+
+.sdm-catalog-category-label {
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.sdm-catalog-category-count {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* ── Featured / filtered item list ─────────────────────────────────────── */
+
+.sdm-catalog-featured {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.sdm-catalog-featured-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised, var(--color-bg-canvas));
+  color: var(--color-text-primary);
+  text-decoration: none;
+  transition:
+    border-color 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.sdm-catalog-featured-card:hover,
+.sdm-catalog-featured-card:focus-visible {
+  border-color: var(--color-border-strong, var(--color-text-primary));
+  outline: none;
+  box-shadow: var(--shadow-focus, 0 0 0 2px var(--color-text-primary));
+}
+
+.sdm-catalog-featured-icon {
+  font-size: var(--font-size-xl, 1.25rem);
+}
+
+.sdm-catalog-featured-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-catalog-featured-title {
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.sdm-catalog-featured-description {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-catalog-featured-sla {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-catalog-featured-cta {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.sdm-catalog-loading,
+.sdm-catalog-empty {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.sdm-catalog-error {
+  color: var(--color-text-danger, var(--color-text-primary));
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+/* ── DynamicForm ───────────────────────────────────────────────────────── */
+
+.sdm-catalog-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-5);
+  background: var(--color-surface-raised, var(--color-bg-canvas));
+}
+
+.sdm-catalog-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+}
+
+.sdm-catalog-form-cost {
+  border-top: var(--border-width-thin) solid var(--color-border-default);
+  padding-top: var(--spacing-3);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-catalog-form-error {
+  color: var(--color-text-danger, var(--color-text-primary));
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.sdm-catalog-form-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--spacing-3);
+  border-top: var(--border-width-thin) solid var(--color-border-default);
+  padding-top: var(--spacing-4);
+}
+
+@media (min-width: 480px) {
+  .sdm-catalog-form-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+/* ── FieldRenderer ────────────────────────────────────────────────────── */
+
+.sdm-catalog-field-radio-legend {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+  padding: 0;
+  margin: 0 0 var(--spacing-2) 0;
+}
+
+.sdm-catalog-field-required {
+  margin-left: var(--spacing-1);
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+.sdm-catalog-field-radio-group,
+.sdm-catalog-field-multi {
+  border: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-catalog-field-radio-options,
+.sdm-catalog-field-multi-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-catalog-field-radio-option,
+.sdm-catalog-field-multi-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+}
+
+.sdm-catalog-field-helper {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sdm-catalog-field-error {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+.sdm-catalog-field-checkbox {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-catalog-field-date {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-catalog-field-date-label {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+}
+
+.sdm-catalog-field-date-input {
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm, 4px);
+  background: var(--color-bg-canvas);
+  color: var(--color-text-primary);
+  font: inherit;
+}
+
+.sdm-catalog-field-date-input:focus-visible {
+  outline: none;
+  border-color: var(--color-border-strong, var(--color-text-primary));
+  box-shadow: var(--shadow-focus, 0 0 0 2px var(--color-text-primary));
+}
+
+.sdm-catalog-field-file {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-3);
+  border: var(--border-width-thin) dashed var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle, transparent);
+}
+
+.sdm-catalog-field-file-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-style: italic;
+}
+
+.sdm-catalog-field-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-catalog-field-markdown-help {
+  padding: var(--spacing-3) var(--spacing-4);
+  border-left: 3px solid var(--color-border-default);
+  background: var(--color-surface-subtle, transparent);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-catalog-field-markdown-help p {
+  margin: var(--spacing-1) 0 0;
+  color: var(--color-text-secondary);
+  white-space: pre-line;
+}
+
+/* ── Success screen ───────────────────────────────────────────────────── */
+
+.sdm-catalog-item-success-ctas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+@media (min-width: 480px) {
+  .sdm-catalog-item-success-ctas {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

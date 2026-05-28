@@ -87,4 +87,51 @@ export const requestHandlers = [
     if (!offering) return notFound("catalog offering", id, correlationIdFrom(request));
     return HttpResponse.json({ form: offering.form });
   }),
+
+  // --- H.5 Service Catalog (items + dynamic-form schema) ---
+  // The H.5 wireframe (`portal/03-service-catalog.md`) consumes the catalog as
+  // a flat list of items (no nested `offering` wrapper). Two endpoints, both
+  // tenant-scoped:
+  //   GET  /api/catalog/items          → [{ id, name, description, category,
+  //                                        sla?, cost?, featured? }, ...]
+  //   GET  /api/catalog/items/:id      → { item, fields: CatalogField[] }
+  // The legacy `/api/catalog` routes above stay for back-compat with H.0
+  // tests until they are migrated.
+  http.get("*/api/catalog/items", ({ request }) => {
+    const tenant = parseTenantFromRequest(request);
+    const url = new URL(request.url);
+    const category = url.searchParams.get("category");
+    const featuredOnly = url.searchParams.get("featured") === "true";
+    const items = store.catalog
+      .filter((c) => c.tenantId === tenant)
+      .filter((c) => (category ? c.category === category : true))
+      .filter((c) => (featuredOnly ? c.featured === true : true))
+      .map((c) => ({
+        id: c.id,
+        name: c.name,
+        description: c.description,
+        category: c.category,
+        ...(c.sla ? { sla: c.sla } : {}),
+        ...(c.cost ? { cost: c.cost } : {}),
+        ...(c.featured !== undefined ? { featured: c.featured } : {}),
+      }));
+    return HttpResponse.json({ items });
+  }),
+
+  http.get("*/api/catalog/items/:id", ({ params, request }) => {
+    const tenant = parseTenantFromRequest(request);
+    const id = String(params["id"] ?? "");
+    const offering = store.catalog.find((c) => c.id === id && c.tenantId === tenant);
+    if (!offering) return notFound("catalog item", id, correlationIdFrom(request));
+    const item = {
+      id: offering.id,
+      name: offering.name,
+      description: offering.description,
+      category: offering.category,
+      ...(offering.sla ? { sla: offering.sla } : {}),
+      ...(offering.cost ? { cost: offering.cost } : {}),
+      ...(offering.featured !== undefined ? { featured: offering.featured } : {}),
+    };
+    return HttpResponse.json({ item, fields: offering.form.fields });
+  }),
 ];

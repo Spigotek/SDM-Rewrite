@@ -161,6 +161,28 @@ export const userHandlers = [
       },
     });
   }),
+
+  // Lightweight directory search used by Service Catalog `user-picker` fields
+  // (H.5). Returns up to 20 matches sorted by display name; case-insensitive
+  // contains on either `fullName` or `email`. Tenant-scoped (only users with
+  // an assignment in the active tenant are visible).
+  http.get("*/api/users", ({ request }) => {
+    const tenant = parseTenantFromRequest(request);
+    const url = new URL(request.url);
+    const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
+    const all = store.users.filter((u) => u.roleAssignments.some((r) => r.tenantId === tenant));
+    const matches = (
+      q
+        ? all.filter(
+            (u) =>
+              u.fullName.toLowerCase().includes(q) || (u.email ?? "").toLowerCase().includes(q),
+          )
+        : all
+    )
+      .slice(0, 20)
+      .map((u) => ({ id: u.id, displayName: u.fullName, email: u.email ?? "" }));
+    return HttpResponse.json({ users: matches });
+  }),
 ];
 
 export { DEFAULT_TENANT_ID };
