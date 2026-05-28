@@ -31,6 +31,7 @@ const KNOWN_SCENARIOS: Record<string, string> = {
   "mocks.mutation-roundtrip": "scenarios/mocks-mutation-roundtrip.spec.ts",
   "auth.session-cookie": "scenarios/auth-session-cookie.spec.ts",
   "h3.portal.new-incident": "scenarios/h3-portal-new-incident.spec.ts",
+  "h6.portal.kb": "scenarios/h6-portal-kb.spec.ts",
   "ad-hoc": "ad-hoc-placeholder",
 };
 

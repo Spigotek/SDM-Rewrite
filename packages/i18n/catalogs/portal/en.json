@@ -55,11 +55,53 @@
     "catalogTitle": "Service catalog",
     "catalog": "Catalog browse arrives in H.5.",
     "catalogItemTitle": "Catalog item {id}",
-    "catalogItem": "Catalog item detail arrives in H.5.",
-    "kbTitle": "Help",
-    "kb": "KB search arrives in H.6.",
-    "kbArticleTitle": "KB article {id}",
-    "kbArticle": "KB article detail arrives in H.6."
+    "catalogItem": "Catalog item detail arrives in H.5."
+  },
+  "kb": {
+    "back": "← Back to home",
+    "title": "Help",
+    "subtitle": "Maybe we already have the answer.",
+    "searchLabel": "Search the knowledge base",
+    "searchPlaceholder": "Type what you're looking for…",
+    "loading": "Searching…",
+    "error": "Couldn't load help. Try refreshing the page.",
+    "resultCount": "{count, plural, =0 {0 results} one {1 result} other {# results}}",
+    "result": {
+      "helpfulCount": "{count, plural, =0 {hasn't helped anyone yet} one {helped 1 person} other {helped # people}}",
+      "readTime": "{count, plural, =0 {less than a minute read} one {1 min read} other {# min read}}",
+      "englishOnly": "English only"
+    },
+    "empty": {
+      "title": "Nothing found. Try different wording.",
+      "openTicket": "Open a ticket with this summary →"
+    },
+    "article": {
+      "back": "← Back to results",
+      "loading": "Loading article…",
+      "loadingBody": "Loading content…",
+      "error": "Couldn't load the article.",
+      "empty": "This article has no content yet.",
+      "category": "Category",
+      "updated": "Updated",
+      "readTime": "Read time",
+      "language": "Language"
+    },
+    "helpfulness": {
+      "prompt": "Was this article helpful?",
+      "yes": "👍 Yes",
+      "no": "👎 No",
+      "commentLabel": "What were you expecting? (optional)",
+      "commentPlaceholder": "Briefly describe what was missing.",
+      "submit": "Send feedback",
+      "error": "Couldn't send the feedback. Please try again.",
+      "thanks": {
+        "up": "Thanks — this helps others.",
+        "down": "Thanks for the feedback — we'll pass it to the author."
+      }
+    },
+    "related": {
+      "title": "Related articles"
+    }
   },
   "catalogBrowse": {
     "back": "← Back to home",
