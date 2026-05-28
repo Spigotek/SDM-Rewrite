@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.6 (Portal KB search + article — read-only, PR #32). Predchádzajúce: PR #31 — H.5 catalog; PR #30 — H.3 new-incident.
-- **In flight:** Phase H — Feature modules (9/17 chunks merged) — **portal batch H.2-H.6 complete**.
-- **Next up:** Chunk H.9 — Workspace changes list + detail per H.md §D2 recommended order.
+- **Last merged:** Chunk H.9 (Workspace changes list + detail, PR #33). Predchádzajúce: PR #32 — H.6 KB; PR #31 — H.5 catalog.
+- **In flight:** Phase H — Feature modules (10/17 chunks merged) — **portal batch H.2-H.6 complete**.
+- **Next up:** Chunk H.11 — CAB approval flow per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.6 DONE (2026-05-29).
+Posledná revízia tohto dokumentu: H.9 DONE (2026-05-29).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.6 DONE (2026-05-29).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (9/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (10/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.9 Workspace changes list + detail ✅ DONE** — `/changes` route (`ChangesRoute` + `ChangesTable` — TanStack Table re-used from H.7 pattern; columns ID/Risk/Status/Schedule/Type/Approver state) + `/changes/:id` route (`ChangeDetailRoute` + `ChangeHeader` + `ChangeTabs` s 4 tabs: `DetailTab` / `ImpactTab` / `RollbackTab` / `ApprovalsTab`). DetailTab: read-only fields (change_category, requestor, scheduled_start/end, business_window). ImpactTab: affected CIs grid + click → `/cmdb/ci/:id` (H.13). RollbackTab: markdown render `rollback_plan` cez vendor-markdown chunk lazy-loaded (`apps/workspace/vite.config.ts` rozšírený o `vendor-markdown` manualChunk per H.6 portal pattern; cap 60 KB). ApprovalsTab: read-only ApprovalChecklist — H.11 doplní actions (approve/reject/send reminder). BFF augmentation v `apps/bff/src/api/endpoints/changes.ts` (+19/-X for approval list endpoint). MSW: fixtures rozšírené (`packages/api-mocks/src/fixtures/changes.ts` +84 LOC pre approvals + rollback). Domain: `Change.approvals` shape pridaný do `packages/domain/src/model.ts`. i18n: +94 SK/EN `changes.*` keys. Browser test `h9-workspace-changes.spec.ts`. Plán: [H.9.md](./plans/H.9.md), PR #33.
 
 - **H.6 Portal KB search + article ✅ DONE** — `/kb` (SearchInput debounce 300 ms + results list, empty state CTA "otvor ticket s týmto popisom") + `/kb/article/:id` (ArticleHeader + ArticleBody Markdown render + HelpfulnessVote + RelatedArticles). Markdown stack: `react-markdown@9` + `remark-gfm@4` + `rehype-sanitize@6` — **lazy-loaded** ako `vendor-markdown` chunk (49.34 KB / 60 KB cap; lazy boundary inside article route → search list pays 0 KB markdown cost). Sanitization via rehype-sanitize default schema + `className: /^language-/` allowlist na `code`/`pre` (žiadny `unsafe` flag). `KbArticle.body` domain model je `KbArticleBody { blocks }` — MSW handler obsahuje `blocksToMarkdown()` server-side conversion (KB editor v1+ vlastní structured representation). MSW augmentation: GET `/api/kb` (+snippet, categoryName, helpfulCount, readTimeMin, language), GET `/api/kb/:id` (+markdown body, related[]), POST `/api/kb/articles/:id/helpfulness` (mock-only — CA SDM nemá KB feedback endpoint, tracked `[GAP-4]`). BFF beze zmeny. Bundle: portal **162.21 KB / 180 KB** (+0.05 KB vs H.5 — entry flat); KbRoute lazy 1.38 KB + KbArticleRoute lazy 1.81 KB + MarkdownRenderer stub 0.26 KB. i18n: +kb.\* SK/EN keys. Plán: [H.6.md](./plans/H.6.md), PR #32. **Portal batch (H.2-H.6) complete.**
 

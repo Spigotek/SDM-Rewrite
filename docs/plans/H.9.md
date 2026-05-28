@@ -1,7 +1,9 @@
 # H.9 — Workspace: changes list + change-detail
 
-> **Status**: 🔜 (blokované na H.7 pattern)
-> **Branch**: `chunk/H.9-workspace-changes` > **Persona**: Peter (`change_manager`)
+> **Status**: ✅ DONE (2026-05-29)
+> **Branch**: `chunk/H.9-workspace-changes` (merged, deleted)
+> **PR**: #33 — merged squash via `--admin --delete-branch` > **Outcome**: `ChangesTable` reuses H.7 TanStack Table pattern; 4-tab detail (Detail/Impact/Rollback/Approvals) read-only. vendor-markdown chunk lazy-loaded v workspace per H.6 portal pattern. BFF + MSW augmented for approvals list. Domain model `Change.approvals` shape added.
+> **Persona**: Peter (`change_manager`)
 > **Cieľ**: route `/changes` (list — similar to queue but for `chg` factory)
 >
 > - `/changes/:id` (change detail with tabs: Detail, Impact, Rollback,
