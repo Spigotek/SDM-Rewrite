@@ -54,8 +54,6 @@
     "newIncident": "New incident form arrives in H.3.",
     "myTicketsTitle": "My tickets",
     "myTickets": "Your ticket list arrives in H.2.",
-    "ticketDetailTitle": "Ticket {id}",
-    "ticketDetail": "Ticket detail arrives in H.4.",
     "catalogTitle": "Service catalog",
     "catalog": "Catalog browse arrives in H.5.",
     "catalogItemTitle": "Catalog item {id}",
@@ -64,5 +62,45 @@
     "kb": "KB search arrives in H.6.",
     "kbArticleTitle": "KB article {id}",
     "kbArticle": "KB article detail arrives in H.6."
+  },
+  "ticketDetail": {
+    "loading": "Loading ticket…",
+    "error": "Couldn't load the ticket. Try refreshing the page.",
+    "noSummary": "(no summary)",
+    "unsupportedTooltip": "This section will be available soon.",
+    "fields": {
+      "status": "Status",
+      "priority": "Priority",
+      "assignee": "Assignee",
+      "openedAt": "Opened"
+    },
+    "body": {
+      "empty": "No description provided."
+    },
+    "timeline": {
+      "title": "Communication",
+      "ariaLabel": "Ticket timeline",
+      "empty": "No updates yet.",
+      "unsupported": "Timeline is temporarily unavailable.",
+      "author": {
+        "public": "Requester",
+        "system": "System"
+      }
+    },
+    "attachments": {
+      "title": "Attachments",
+      "unsupported": "Attachments are temporarily unavailable.",
+      "downloadDeferred": "Download is not yet supported."
+    },
+    "composer": {
+      "title": "Add comment",
+      "ariaLabel": "Reply composer",
+      "label": "Your reply",
+      "placeholder": "Write a reply or clarification…",
+      "submit": "Send comment",
+      "cmdEnterHint": "Cmd+Enter to send",
+      "closedHint": "This ticket is closed — new comments are disabled.",
+      "error": "Couldn't send the comment. Please try again."
+    }
   }
 }
