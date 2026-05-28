@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.1 (Tenant switcher activation + cache invalidation, PR #25). Predchádzajúce: PR #24 — H.0 routing; PR #23 — G.4 LHCI/size-limit.
-- **In flight:** Phase H — Feature modules (2/17 chunks merged).
-- **Next up:** Chunk H.7 — Workspace queue (Anna centerpiece) per H.md §D2 recommended order.
+- **Last merged:** Chunk H.7 (Workspace queue — Anna centerpiece, PR #26). Predchádzajúce: PR #25 — H.1 tenant switch; PR #24 — H.0 routing.
+- **In flight:** Phase H — Feature modules (3/17 chunks merged).
+- **Next up:** Chunk H.8 — Workspace ticket-detail (split-view, 3-tab Composer) per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.1 DONE (2026-05-28).
+Posledná revízia tohto dokumentu: H.7 DONE (2026-05-28).
 
 ---
 
@@ -111,7 +111,11 @@ Posledná revízia tohto dokumentu: H.1 DONE (2026-05-28).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (2/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (3/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.7 Workspace queue ✅ DONE** — `/queue` workspace default landing (`/` redirects), `QueueRoute.tsx` + 5 components (`QueueTable`, `FilterBar`, `QueueSidebar`, `SavedViewsManager`, `ColumnConfig`) consume F.3 aggregator `/api/queue` s filtrami (status/priority/assignee/type/customer/tenant). TanStack Table v8 basic mode (sort/filter/column config), localStorage-backed saved views via `useSyncExternalStore`. Keyboard nav `j`/`k`/`↑`/`↓`/`Enter`/`Esc` cez `react-hotkeys-hook` (introduced v H.1). Split-view URL pattern `?selected=:id` — H.7 ships placeholder right pane (H.8 fills). Pollovanie `refetchInterval: 30000` keď document visible (TQ `refetchIntervalInBackground: false`). MSW handler `packages/api-mocks/src/handlers/queue.ts` (180 LOC) — new handler s 50-line test suite. Empty state per `microcopy.md §4`. Bundle: vendor-state cap bumped 20 → 30 KB (TanStack Table v8 add-on); workspace **175.09 KB / 350 KB** (+15.7 KB vs H.1 baseline; vendor-state 23.4 KB). Tests: MSW handler + h7-workspace-queue browser spec (load → j/k → open detail → filter → save view). Plán: [H.7.md](./plans/H.7.md), PR #26.
+
+### Phase H scope reference (cont.)
 
 - **H.1 Tenant switcher activation ✅ DONE** — BFF `POST /me/active-tenant` validates membership + emits `authz.tenant.switch.{success,denied}` audit + returns full `/me` shape (shared `shapeMeResponse()` helper extracted, used by `GET /me` + `POST /me/active-tenant`). FE `useActiveTenant()` TanStack Query mutation: broad cache nuke via `removeQueries({ predicate: q => q.queryKey[0] !== "me" })` + `setQueryData(["me"], session)` atomic priming. TenantSwitcher rewrite per wireframe — `single` / `compact` / `expanded` variants, env badge color (production red per `tokens.md §4`), search input pre >10 tenants, kbd shortcut `T` (`react-hotkeys-hook@5.3.2`). Pending-changes guard: minimal `dirtyForms: Set<string>` context (`shell/pending-changes.tsx`), `ConfirmDialog` blocks switch when dirty; `PendingChangesTestBridge` dev-only shim for browser-tests (tree-shaken from prod). `session-context.tsx` API: `switchTenant()` replaced with `applySwitchedSession(SessionLoadResult)` — consumes mutation response directly, no extra `/me` round-trip; cross-tab `tenant-changed` broadcast preserved. `X-CA-SDM-Tenant` client header **removed** from `@sdm/api-client/http.ts` (tenant resolves server-side from session). MSW handler `users.ts` made stateful (`Map<userId, activeTenantId>`) per MSW v2 statelessness. Bundle: portal **159.31 KB / 180 KB** (+3.99 KB vs H.0); workspace **159.43 KB / 350 KB**. Tests: 6 BFF unit/integration cases (happy, 403 ghost, 401, 400 validation, idempotent, absolute timeout) + 2 browser scenarios (`h1-tenant-switch.spec.ts`, `h1-pending-changes-guard.spec.ts`). Plán: [H.1.md](./plans/H.1.md), PR #25.
 

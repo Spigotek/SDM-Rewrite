@@ -1,7 +1,9 @@
 # H.7 — Workspace: queue
 
-> **Status**: 🔜 (blokované na H.0)
-> **Branch**: `chunk/H.7-workspace-queue` > **Persona**: Anna (`agent_l1`), Marek (`agent_l2`)
+> **Status**: ✅ DONE (2026-05-28)
+> **Branch**: `chunk/H.7-workspace-queue` (merged, deleted)
+> **PR**: #26 — merged squash via `--admin --delete-branch` > **Bundle outcome**: workspace 175.09 KB / 350 KB. Vendor-state cap bumped 20 → 30 KB (TanStack Table v8 add-on to existing TQ chunk).
+> **Persona**: Anna (`agent_l1`), Marek (`agent_l2`)
 > **Cieľ**: route `/queue` (workspace default landing) — dense `<QueueTable>`
 > z G.1 (compact density, 28-32 px rows) + filter bar + saved views + keyboard
 > navigation (j/k/Enter/Space). Split-view: row click otvorí ticket-detail
