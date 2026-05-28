@@ -40,7 +40,9 @@ export const router = createBrowserRouter([
       },
       {
         path: "queue",
-        lazy: async () => ({ Component: (await import("./placeholders/queue")).default }),
+        lazy: async () => ({
+          Component: (await import("../features/queue/QueueRoute")).default,
+        }),
       },
       {
         path: "tickets/:id",

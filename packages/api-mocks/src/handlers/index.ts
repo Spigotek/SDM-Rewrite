@@ -7,6 +7,7 @@ import { configHandlers } from "./config";
 import { incidentHandlers } from "./incidents";
 import { knowledgeHandlers } from "./knowledge";
 import { problemHandlers } from "./problems";
+import { queueHandlers } from "./queue";
 import { requestHandlers } from "./requests";
 import { tenantHandlers } from "./tenants";
 import { userHandlers } from "./users";
@@ -23,6 +24,7 @@ export const handlers: readonly RequestHandler[] = [
   ...cmdbHandlers,
   ...auditHandlers,
   ...configHandlers,
+  ...queueHandlers,
 ];
 
 export {
@@ -34,6 +36,7 @@ export {
   incidentHandlers,
   knowledgeHandlers,
   problemHandlers,
+  queueHandlers,
   requestHandlers,
   tenantHandlers,
   userHandlers,

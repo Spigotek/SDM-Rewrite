@@ -19,6 +19,7 @@
   "dependencies": {
     "@faker-js/faker": "9.3.0",
     "@sdm/api-client": "workspace:*",
+    "@sdm/api-types": "workspace:*",
     "@sdm/domain": "workspace:*",
     "msw": "2.6.6"
   },

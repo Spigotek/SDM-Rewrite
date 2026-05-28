@@ -11,7 +11,53 @@
     "filters": "Filters",
     "resetFilters": "Reset filters",
     "savedViews": "Saved views",
-    "empty": "Queue is empty. Take a break or grab a coffee."
+    "saveView": "Save view",
+    "savedViewNameLabel": "View name",
+    "savedViewNamePlaceholder": "Name this view…",
+    "searchPlaceholder": "Search queue…",
+    "resultCount": "{visible} of {total} tickets",
+    "loading": "Loading queue…",
+    "error": "Could not load queue. Try refresh.",
+    "empty": "🎉 Queue is empty. Take a break or grab a coffee.",
+    "emptyFiltered": "🔍 No tickets match these filters. Try relaxing the criteria or reset filters.",
+    "unassigned": "Unassigned",
+    "axis": {
+      "status": "Status",
+      "priority": "Priority",
+      "assignee": "Assignee",
+      "type": "Type"
+    },
+    "ticketType": {
+      "incident": "Incident",
+      "request": "Request",
+      "problem": "Problem",
+      "change": "Change"
+    },
+    "columns": {
+      "menu": "Columns",
+      "reset": "Reset to default",
+      "ref": "ID",
+      "ticketType": "Type",
+      "type": "Type",
+      "status": "Status",
+      "priority": "Priority",
+      "summary": "Summary",
+      "customer": "Requester",
+      "assignee": "Assignee",
+      "age": "Age"
+    },
+    "sidebar": {
+      "ariaLabel": "Queues and saved views",
+      "queues": "Queues",
+      "allTickets": "All tickets",
+      "noSavedViews": "No saved views yet.",
+      "deleteView": "Delete view {name}"
+    },
+    "splitPane": {
+      "ariaLabel": "Selected ticket detail",
+      "empty": "Pick a ticket from the list (click or press Enter on a selected row).",
+      "placeholder": "Full ticket detail arrives in H.8."
+    }
   },
   "actions": {
     "take": "Take",
@@ -31,7 +77,6 @@
   },
   "placeholders": {
     "activeTenant": "Active tenant:",
-    "queue": "Queue table arrives in H.7. This is just a placeholder behind the H.0 routing infrastructure.",
     "ticketDetailTitle": "Ticket {id}",
     "ticketDetail": "Split-view ticket detail arrives in H.8.",
     "changesTitle": "Changes",

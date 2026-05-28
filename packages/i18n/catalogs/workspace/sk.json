@@ -11,7 +11,53 @@
     "filters": "Filtre",
     "resetFilters": "Resetovať filtre",
     "savedViews": "Uložené pohľady",
-    "empty": "Žiadne tickety v queue. Užiš si chvíľu alebo si daj kávu."
+    "saveView": "Uložiť pohľad",
+    "savedViewNameLabel": "Názov pohľadu",
+    "savedViewNamePlaceholder": "Pomenuj pohľad…",
+    "searchPlaceholder": "Hľadať v queue…",
+    "resultCount": "{visible} z {total} ticketov",
+    "loading": "Načítavam queue…",
+    "error": "Queue sa nepodarilo načítať. Skús refresh.",
+    "empty": "🎉 Žiadne tickety v queue. Užiš si chvíľu alebo si daj kávu.",
+    "emptyFiltered": "🔍 Žiadne tickety pre tieto filtre. Skús uvoľniť kritériá alebo resetuj filtre.",
+    "unassigned": "Nepriradené",
+    "axis": {
+      "status": "Stav",
+      "priority": "Priorita",
+      "assignee": "Riešiteľ",
+      "type": "Typ"
+    },
+    "ticketType": {
+      "incident": "Incident",
+      "request": "Požiadavka",
+      "problem": "Problém",
+      "change": "Change"
+    },
+    "columns": {
+      "menu": "Stĺpce",
+      "reset": "Obnoviť predvolené",
+      "ref": "ID",
+      "ticketType": "Typ",
+      "type": "Typ",
+      "status": "Stav",
+      "priority": "Priorita",
+      "summary": "Popis",
+      "customer": "Žiadateľ",
+      "assignee": "Riešiteľ",
+      "age": "Vek"
+    },
+    "sidebar": {
+      "ariaLabel": "Queues a uložené pohľady",
+      "queues": "Queues",
+      "allTickets": "Všetky tickety",
+      "noSavedViews": "Zatiaľ žiadne uložené pohľady.",
+      "deleteView": "Zmazať pohľad {name}"
+    },
+    "splitPane": {
+      "ariaLabel": "Detail vybraného ticketu",
+      "empty": "Vyber ticket zo zoznamu (klikni alebo stlač Enter na vybranom riadku).",
+      "placeholder": "Plný detail ticketu dorazí v H.8."
+    }
   },
   "actions": {
     "take": "Prevziať",
@@ -31,7 +77,6 @@
   },
   "placeholders": {
     "activeTenant": "Aktívny tenant:",
-    "queue": "Queue tabuľka dorazí v H.7. Toto je len placeholder cez H.0 routing infraštruktúru.",
     "ticketDetailTitle": "Ticket {id}",
     "ticketDetail": "Split-view detail ticketu dorazí v H.8.",
     "changesTitle": "Changes",

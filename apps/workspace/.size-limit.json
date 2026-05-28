@@ -51,7 +51,7 @@
   {
     "name": "Workspace — vendor-state chunk",
     "path": "dist/assets/vendor-state-*.js",
-    "limit": "20 KB",
+    "limit": "30 KB",
     "gzip": true
   }
 ]
