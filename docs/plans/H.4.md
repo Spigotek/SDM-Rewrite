@@ -1,7 +1,10 @@
 # H.4 — Portal: ticket-detail (requester view)
 
-> **Status**: 🔜 (blokované na H.0)
-> **Branch**: `chunk/H.4-portal-ticket-detail` > **Persona**: Lucia
+> **Status**: ✅ DONE (2026-05-28)
+> **Branch**: `chunk/H.4-portal-ticket-detail` (merged, deleted)
+> **PR**: #29 — merged squash via `--admin --delete-branch` > **Bundle outcome**: portal 162.06 KB / 180 KB (+0.13 KB vs H.2); TicketDetailRoute lazy chunk 2.90 KB.
+> **Deviations**: Markdown deferred to H.6 (KB route) — TicketBody uses plain `pre-wrap` text. Route prefix supports both canonical `incident:` IDs + `IN-`/`REQ-`/`PR-`/`CHG-` ref shorthand. Comment POST reuses H.8 MSW handler; real BFF POST endpoint deferred follow-up Phase I.
+> **Persona**: Lucia
 > **Cieľ**: route `/tickets/:id` v portal — read-only ticket parent
 >
 > - activity timeline (public-only filtered) + comment composer (single tab

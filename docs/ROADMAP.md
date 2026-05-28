@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.2 (Portal home dashboard — Lucia, PR #28). Predchádzajúce: PR #27 — H.8 ticket-detail; PR #26 — H.7 queue.
-- **In flight:** Phase H — Feature modules (5/17 chunks merged).
-- **Next up:** Chunk H.4 — Portal ticket-detail per H.md §D2 recommended order.
+- **Last merged:** Chunk H.4 (Portal ticket-detail — requester view, PR #29). Predchádzajúce: PR #28 — H.2 home; PR #27 — H.8 ticket-detail.
+- **In flight:** Phase H — Feature modules (6/17 chunks merged).
+- **Next up:** Chunk H.3 — Portal new-incident form per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.2 DONE (2026-05-28).
+Posledná revízia tohto dokumentu: H.4 DONE (2026-05-28).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.2 DONE (2026-05-28).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (5/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (6/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.4 Portal ticket-detail ✅ DONE** — `/tickets/:id` portal route (Lucia view) — single URL pattern s prefix-based type detection: canonical `incident:`/`request:`/`problem:`/`change:` IDs + ref-based `IN-`/`REQ-`/`PR-`/`CHG-` shorthand pre human-friendly URLs. Invalid prefix → `NotFoundElement`. `TicketDetailRoute` + 5 components: `TicketHeader` (ref + summary + StatusBadge + PriorityBadge + relative time), `TicketBody` (plain text `white-space: pre-wrap` — Markdown deferred to H.6 KB to keep bundle), `ActivityTimeline` (public + system filter, NO internal — defence-in-depth client-side filter), `AttachmentsList` (read-only chips per F.6 §23.6 deferred), `PublicComposer` (single-tab Composer, hidden when ticket closed). 404 → `NotFoundElement`, 403 → `ForbiddenElement` via RR6 error boundaries. `_unsupported: true` branches render empty states + tooltip "Táto sekcia bude dostupná čoskoro." per F.6. Comment POST reuses existing `packages/api-mocks/src/handlers/ticket-detail.ts` endpoint (H.8) — real BFF POST endpoint deferred follow-up Phase I. Bundle: portal **162.06 KB / 180 KB** (+0.13 KB vs H.2); `TicketDetailRoute` lazy chunk 2.90 KB gzip. i18n: +20 SK/EN `ticketDetail.*` keys (66 keys parity). Browser test 3 scenarios (`h4-portal-ticket-detail.spec.ts`): canonical `incident:10001` URL + comment submit + timeline update, `request:20001` type detection, garbage URL → not-found. Plán: [H.4.md](./plans/H.4.md), PR #29.
 
 - **H.2 Portal home dashboard ✅ DONE** — `/` portal Lucia landing — `HomeRoute.tsx` + `homeLoader` + 4 components (`HeroGreeting`, `ActionCards`, `MyRecentTickets`, `KbSuggestions`). Loader pre-fetches `myTicketsQuery` + `kbSuggestionsQuery` cez `queryClient.ensureQueryData(...)` v `Promise.all` (no waterfall). Mobile-first responsive layout — single column < 640 px, 2-col action cards ≥ 640 px (`home.css`, CSS Grid). BFF augmentation: `_entity-routes.ts` gains `customerMeAttr` opt-in — `GET /api/incidents?customer=me` resolves server-side to `WC=customer=<session.contactId>` (incidents + requests opt in). MSW mirror v `incidents.ts` filtruje `requesterId === DEFAULT_USER_ID`. Status mapping mox: BFF `FkRef` + MSW `IncidentStatus` literal → design-system `TicketStatus` vocabulary. Bundle: portal **161.93 KB / 180 KB** (+2.62 KB vs H.1 baseline 159.31 KB); `HomeRoute` lazy chunk 7.10 KB gzip. i18n: +12 SK/EN home.\* keys; unused legacy `greeting` + `placeholders.{home,activeTenant}` removed. Tests: 3 nové BFF integration cases (customer=me happy, AND merge, untouched pass-through) + 2 MSW handler cases + 1 browser scenario (`h2-portal-home.spec.ts`). LHCI portal `/` mobile thresholds zostávajú `warn` (LHCI `staticDistDir` blokuje bootstrap — open follow-up Phase I per H.0 pattern). Deviations: ActionCards 2 (not 3 — KB shortcut covered by panel below); no `<ListRow>`/`<Avatar>` G.1 primitives shipped — semantic `<ul>`/`<li>` + text-only greeting used. Plán: [H.2.md](./plans/H.2.md), PR #28.
 
