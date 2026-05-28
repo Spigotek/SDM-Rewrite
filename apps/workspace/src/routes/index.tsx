@@ -47,7 +47,7 @@ export const router = createBrowserRouter([
       {
         path: "tickets/:id",
         lazy: async () => ({
-          Component: (await import("./placeholders/ticket-detail")).default,
+          Component: (await import("../features/tickets/TicketDetailRoute")).default,
         }),
       },
       {

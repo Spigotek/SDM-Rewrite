@@ -1,0 +1,373 @@
+/**
+ * Ticket-detail layout — agent split view per `02-ticket-detail.md`.
+ *
+ * Two columns: main pane (header + actions + timeline + composer) and the
+ * right context rail (requester / CI / linked). Both inherit the dark
+ * design-system tokens from `@sdm/design-system/tokens.css`.
+ */
+
+.sdm-ticket-detail-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 20rem;
+  gap: var(--spacing-4);
+  align-items: stretch;
+  height: 100%;
+  min-height: 0;
+}
+
+.sdm-ticket-detail-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  min-height: 0;
+  overflow: auto;
+}
+
+.sdm-ticket-state {
+  color: var(--color-text-secondary);
+  padding: var(--spacing-4);
+}
+
+.sdm-ticket-state--error {
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+/* ── Header ────────────────────────────────────────────────────────── */
+
+.sdm-ticket-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  padding-bottom: var(--spacing-3);
+}
+
+.sdm-ticket-header-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
+.sdm-ticket-header-ref {
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.sdm-ticket-header-summary {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-ticket-header-meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--spacing-3);
+}
+
+.sdm-ticket-header-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.sdm-ticket-header-label {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sdm-ticket-header-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-body);
+}
+
+/* ── Action bar ────────────────────────────────────────────────────── */
+
+.sdm-ticket-actionbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  align-items: center;
+}
+
+.sdm-ticket-actionbar-more {
+  position: relative;
+  margin-left: auto;
+}
+
+.sdm-ticket-actionbar-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + var(--spacing-1));
+  list-style: none;
+  margin: 0;
+  padding: var(--spacing-1);
+  background: var(--color-background-elevated);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  min-width: 12rem;
+  z-index: 5;
+  box-shadow: var(--shadow-md);
+}
+
+.sdm-ticket-actionbar-menu button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background: transparent;
+  border: 0;
+  padding: var(--spacing-1_5) var(--spacing-2);
+  color: var(--color-text-body);
+  font: inherit;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.sdm-ticket-actionbar-menu button:hover:not(:disabled) {
+  background: var(--color-background-hover);
+}
+
+.sdm-ticket-actionbar-menu button:disabled {
+  color: var(--color-text-tertiary);
+  cursor: not-allowed;
+}
+
+/* ── Timeline ──────────────────────────────────────────────────────── */
+
+.sdm-ticket-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-ticket-timeline-tabs {
+  display: flex;
+  gap: var(--spacing-1);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  padding-bottom: var(--spacing-1);
+}
+
+.sdm-ticket-timeline-tab {
+  background: transparent;
+  border: 0;
+  color: var(--color-text-tertiary);
+  padding: var(--spacing-1) var(--spacing-2);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.sdm-ticket-timeline-tab:hover {
+  background: var(--color-background-hover);
+}
+
+.sdm-ticket-timeline-tab[data-active] {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-background-selected);
+}
+
+.sdm-ticket-timeline-empty {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-3) 0;
+}
+
+.sdm-ticket-timeline-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-ticket-timeline-item {
+  border-left: 3px solid var(--color-border-default);
+  padding: var(--spacing-2) var(--spacing-3);
+  background: var(--color-background-subtle);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.sdm-ticket-timeline-item[data-kind="public"] {
+  border-left-color: var(--color-accent-brand, #4d9cff);
+}
+
+.sdm-ticket-timeline-item[data-kind="internal"] {
+  border-left-color: var(--color-accent-warning, #f0b429);
+}
+
+.sdm-ticket-timeline-item[data-kind="system"] {
+  border-left-color: var(--color-border-default);
+}
+
+.sdm-ticket-timeline-item-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
+.sdm-ticket-timeline-author {
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-ticket-timeline-meta {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.sdm-ticket-timeline-body {
+  margin: var(--spacing-1) 0 0 0;
+  white-space: pre-wrap;
+  color: var(--color-text-body);
+  font-size: var(--font-size-sm);
+}
+
+/* ── Composer ──────────────────────────────────────────────────────── */
+
+.sdm-ticket-composer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3);
+  background: var(--color-background-elevated);
+}
+
+.sdm-ticket-composer-tabs {
+  display: flex;
+  gap: var(--spacing-1);
+}
+
+.sdm-ticket-composer-tab {
+  background: transparent;
+  border: 0;
+  color: var(--color-text-tertiary);
+  padding: var(--spacing-1) var(--spacing-2);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.sdm-ticket-composer-tab:hover {
+  background: var(--color-background-hover);
+}
+
+.sdm-ticket-composer-tab[data-active] {
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
+  background: var(--color-background-selected);
+}
+
+.sdm-ticket-composer-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-ticket-composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+
+.sdm-ticket-composer-hint {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* ── Context panel ─────────────────────────────────────────────────── */
+
+.sdm-ticket-context {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  border-left: var(--border-width-thin) solid var(--color-border-default);
+  padding-left: var(--spacing-3);
+  min-height: 0;
+  overflow: auto;
+}
+
+.sdm-ticket-context-block {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-ticket-context-heading {
+  margin: 0;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+}
+
+.sdm-ticket-context-empty {
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-ticket-context-dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 4rem) minmax(0, 1fr);
+  gap: var(--spacing-0_5) var(--spacing-2);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-ticket-context-dl dt {
+  color: var(--color-text-tertiary);
+}
+
+.sdm-ticket-context-dl dd {
+  margin: 0;
+  color: var(--color-text-body);
+}
+
+.sdm-ticket-context-related {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-ticket-context-related a {
+  color: var(--color-text-body);
+  text-decoration: none;
+  padding: var(--spacing-0_5) var(--spacing-1);
+  border-radius: var(--radius-sm);
+}
+
+.sdm-ticket-context-related a:hover {
+  background: var(--color-background-hover);
+  text-decoration: underline;
+}
+
+.sdm-ticket-context-related-type {
+  font-family: var(--font-family-mono, monospace);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  margin-right: var(--spacing-1);
+}
