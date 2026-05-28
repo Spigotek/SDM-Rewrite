@@ -192,16 +192,102 @@
       "submit": "Vyriešiť"
     }
   },
+  "changes": {
+    "title": "Changes",
+    "loading": "Načítavam changes…",
+    "error": "Changes sa nepodarilo načítať. Skús refresh.",
+    "empty": "Žiadne changes pre tento tenant.",
+    "noSummary": "(bez popisu)",
+    "columns": {
+      "ref": "ID",
+      "risk": "Riziko",
+      "status": "Stav",
+      "schedule": "Okno",
+      "category": "Typ",
+      "approvals": "Approvers",
+      "summary": "Popis"
+    },
+    "risk": {
+      "HIGH": "Vysoké",
+      "MEDIUM": "Stredné",
+      "LOW": "Nízke"
+    },
+    "category": {
+      "STANDARD": "Standard",
+      "NORMAL": "Normal",
+      "EMERGENCY": "Emergency"
+    },
+    "statusLabel": {
+      "RFC": "RFC",
+      "APPR_PENDING": "Čaká schválenie",
+      "APPROVED": "Schválené",
+      "SCHEDULED": "Plánované",
+      "IN_PROGRESS": "V realizácii",
+      "VERIFICATION_IN_PROGRESS": "Verifikácia",
+      "VERIFIED": "Overené",
+      "REJECTED": "Zamietnuté",
+      "CL": "Uzavreté",
+      "CD": "Zrušené",
+      "EMG_RFC": "Emergency RFC",
+      "EMG_IN_PROGRESS": "Emergency v realizácii",
+      "EMG_RETROSPECTIVE": "Emergency spätné schválenie"
+    },
+    "approvalState": {
+      "PENDING": "Čaká",
+      "APPROVED": "Schválené",
+      "REJECTED": "Zamietnuté",
+      "unset": "—"
+    },
+    "approvalDecision": {
+      "PENDING": "Čaká",
+      "APPROVED": "Schválené",
+      "REJECTED": "Zamietnuté"
+    },
+    "fields": {
+      "status": "Stav",
+      "risk": "Riziko",
+      "category": "Typ",
+      "schedule": "Okno",
+      "requester": "Žiadateľ",
+      "assignee": "Implementor",
+      "unassigned": "Nepriradené",
+      "scheduledStart": "Plánovaný začiatok",
+      "scheduledEnd": "Plánovaný koniec",
+      "actualStart": "Skutočný začiatok",
+      "actualEnd": "Skutočný koniec",
+      "description": "Popis",
+      "descriptionEmpty": "(bez popisu)"
+    },
+    "tabs": {
+      "ariaLabel": "Sekcie detailu change",
+      "detail": "Detail",
+      "impact": "Impact",
+      "rollback": "Rollback",
+      "approvals": "Approvals"
+    },
+    "impact": {
+      "title": "Dotknuté CI",
+      "count": "{count, plural, one {# CI} few {# CI} many {# CI} other {# CI}}",
+      "empty": "Žiadne dotknuté CI."
+    },
+    "rollback": {
+      "title": "Rollback plán",
+      "empty": "Rollback plán nie je vyplnený. CAB schválenie bude blokované (H.11).",
+      "loading": "Načítavam rollback plán…"
+    },
+    "approvals": {
+      "title": "CAB Approvers",
+      "empty": "Žiadni CAB approveri priradení.",
+      "actionsDeferred": "Approve / Reject / Send reminder akcie dorazia v H.11.",
+      "rowAriaLabel": "{approver} — {decision}"
+    }
+  },
   "placeholders": {
     "activeTenant": "Aktívny tenant:",
     "ticketDetailTitle": "Ticket {id}",
     "ticketDetail": "Split-view detail ticketu dorazí v H.8.",
-    "changesTitle": "Changes",
-    "changes": "Zoznam changes dorazí v H.10.",
     "changesCalendarTitle": "Change kalendár",
     "changesCalendar": "Change kalendár dorazí v H.10.",
-    "changeDetailTitle": "Change {id}",
-    "changeDetail": "Detail change dorazí v H.10.",
     "problemsTitle": "Problems",
     "problems": "Zoznam problems dorazí v H.9.",
     "cmdbTitle": "CMDB",

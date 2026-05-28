@@ -53,5 +53,11 @@
     "path": "dist/assets/vendor-state-*.js",
     "limit": "30 KB",
     "gzip": true
+  },
+  {
+    "name": "Workspace — vendor-markdown chunk (lazy, /changes/:id RollbackTab only)",
+    "path": "dist/assets/vendor-markdown-*.js",
+    "limit": "60 KB",
+    "gzip": true
   }
 ]
