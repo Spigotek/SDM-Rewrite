@@ -1,6 +1,7 @@
 import type { Hono } from "hono";
 import { AppErrorException } from "../../auth/errors";
 import { AUDIT_EVENTS } from "../../platform/audit";
+import { requireActiveSession } from "../../session/load";
 import { paginationToCaSdm, proxyToSdm, readCollection, type RestProxyDeps } from "../rest-proxy";
 import { encodePkPathSegment, toCaSdmXmlBody } from "./_shape";
 
@@ -32,6 +33,15 @@ export interface EntityRouteConfig<TRow, TCreate, TUpdate> {
   readonly mapUpdate: (body: TUpdate) => Record<string, unknown>;
   /** XML element name to wrap the body in. Defaults to `factory`. */
   readonly xmlWrapper?: string;
+  /**
+   * When set, the GET list handler accepts `?customer=me` and resolves it
+   * server-side to `<attr>=U'<session.contactId>'` in the CA SDM WC filter.
+   * Used by portal "my tickets" widgets (H.2+) — the FE never has direct
+   * access to the contact GUID, so the BFF resolves the active caller from
+   * the session cookie. Setting `customerMeAttr` is the explicit opt-in;
+   * entities without it ignore the `customer` query param.
+   */
+  readonly customerMeAttr?: string;
 }
 
 export function registerEntityRoutes<TRow, TCreate, TUpdate>(
@@ -44,7 +54,8 @@ export function registerEntityRoutes<TRow, TCreate, TUpdate>(
   app.get(config.route, async (c) => {
     const url = new URL(c.req.url);
     const { start, size } = paginationToCaSdm(url.searchParams);
-    const wc = url.searchParams.get("filter") ?? "";
+    const baseWc = url.searchParams.get("filter") ?? "";
+    const wc = await resolveListWcFilter(c, deps, url.searchParams, baseWc, config);
     const search = new URLSearchParams();
     if (wc) search.set("WC", wc);
     search.set("start", String(start));
@@ -180,4 +191,28 @@ function extractCreatedId(raw: unknown): string | null {
   if (!raw || typeof raw !== "object") return null;
   const id = (raw as Record<string, unknown>)["@id"];
   return id !== undefined ? String(id) : null;
+}
+
+/**
+ * Build the final CA SDM `WC` filter for a list GET. Currently the only
+ * transformation is the `?customer=me` → `<attr>=U'<contactId>'` resolver,
+ * gated by `customerMeAttr` on the per-entity config. Any FE-supplied
+ * `filter=` value is preserved verbatim and combined with ` AND `.
+ *
+ * The resolver intentionally only fires when `customer=me`: any other
+ * `customer` value is left untouched (callers may already inject explicit
+ * contact GUIDs via `filter=`).
+ */
+async function resolveListWcFilter<TRow, TCreate, TUpdate>(
+  c: Parameters<typeof requireActiveSession>[0],
+  deps: RestProxyDeps,
+  searchParams: URLSearchParams,
+  baseWc: string,
+  config: EntityRouteConfig<TRow, TCreate, TUpdate>,
+): Promise<string> {
+  if (!config.customerMeAttr) return baseWc;
+  if (searchParams.get("customer") !== "me") return baseWc;
+  const session = await requireActiveSession(c, deps);
+  const clause = `${config.customerMeAttr}=${session.contactId}`;
+  return baseWc ? `${baseWc} AND ${clause}` : clause;
 }

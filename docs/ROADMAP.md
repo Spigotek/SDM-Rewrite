@@ -22,10 +22,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Last merged:** Chunk H.8 (Workspace ticket-detail — split-view, 3-tab Composer, PR #27). Predchádzajúce: PR #26 — H.7 queue; PR #25 — H.1 tenant switch.
-- **In flight:** Phase H — Feature modules (4/17 chunks merged).
-- **Next up:** Chunk H.2 — Portal home dashboard (Lucia) per H.md §D2 recommended order.
+- **In flight:** Phase H — Feature modules (4/17 chunks merged; H.2 in review).
+- **In review:** Chunk H.2 — Portal home dashboard (Lucia), PR # TBD.
+- **Next up:** Chunk H.3 — Portal `new-incident` form per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.8 DONE (2026-05-28).
+Posledná revízia tohto dokumentu: H.2 v review (2026-05-28).
 
 ---
 
@@ -112,6 +113,10 @@ Posledná revízia tohto dokumentu: H.8 DONE (2026-05-28).
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
 ### Phase H — Feature modules ⏳ IN-FLIGHT (4/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.2 Portal home dashboard ⏳ IN-REVIEW** — `/` portal Lucia landing — `HomeRoute.tsx` + `homeLoader` + 4 components (`HeroGreeting`, `ActionCards`, `MyRecentTickets`, `KbSuggestions`). Loader pre-fetches `myTicketsQuery` + `kbSuggestionsQuery` cez `queryClient.ensureQueryData(...)` v `Promise.all` (no waterfall). Mobile-first responsive layout — single column < 640 px, 2-col action cards ≥ 640 px (`home.css`, CSS Grid). BFF augmentation: `_entity-routes.ts` gains `customerMeAttr` opt-in — `GET /api/incidents?customer=me` resolves server-side to `WC=customer=<session.contactId>` (incidents + requests opt in). MSW mirror v `incidents.ts` filtruje `requesterId === DEFAULT_USER_ID`. Status mapping mox: BFF `FkRef` + MSW `IncidentStatus` literal → design-system `TicketStatus` vocabulary. Bundle: portal **161.93 KB / 180 KB** (+2.62 KB vs H.1 baseline 159.31 KB); `HomeRoute` lazy chunk 7.10 KB gzip. i18n: +12 SK/EN home.\* keys (greeting, subgreeting, actions.{newIncident,newRequest}.{title,body}, myTickets.{title,seeAll,empty,error}, kb.{title,seeAll}); unused legacy `greeting` + `placeholders.{home,activeTenant}` removed. Tests: 3 nové BFF integration cases (customer=me happy, AND merge, untouched pass-through) + 2 MSW handler cases + 1 browser scenario (`h2-portal-home.spec.ts`). LHCI portal `/` mobile thresholds zostávajú `warn` (LHCI `staticDistDir` blokuje bootstrap — open follow-up Phase I per H.0 pattern). Plán: [H.2.md](./plans/H.2.md), PR # TBD.
+
+### Phase H scope reference (cont.)
 
 - **H.8 Workspace ticket-detail ✅ DONE** — `/tickets/:id` agent route — `TicketDetailRoute.tsx` + 8 components: `AgentTicketHeader` (inline status/priority Combobox edit, optimistic UI), `ActionBar` (Take/Resolve/Escalate/Watch/More), `ActivityTimeline` (filter tabs All/Public/Internal/System — client-side filter na `activity.items`), `Composer` (3-tab: Public reply / Internal note / Resolution), `ContextPanel` (Requester card + CI card + Related records — empty state if `_unsupported: true`), `EscalateModal` + `ResolveModal` (Solution + Category dropdown). **TipTap deferred** per H.md §D3 — plain Textarea + markdown shorthand acceptable v MVP, v1+ wires TipTap. Composer Cmd+Enter submits. Transition actions emit existing F.4 audit (`data.incident.write` / `data.request.write`). New MSW handler `packages/api-mocks/src/handlers/ticket-detail.ts` (461 LOC) — full action endpoints (`take`/`resolve`/`escalate`/`watch`/`comment`). Activity filter tabs operate on already-loaded items (no extra BFF call). Plán: [H.8.md](./plans/H.8.md), PR #27.
 

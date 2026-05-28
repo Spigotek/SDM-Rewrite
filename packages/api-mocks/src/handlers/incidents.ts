@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import { store } from "../db";
 import { incidentId, type Incident, type IncidentStatus } from "@sdm/domain";
+import { DEFAULT_USER_ID } from "../fixtures/users";
 import { paginate, readPageParams } from "../utils/pagination";
 import { parseTenantFromRequest } from "../utils/tenant";
 import { correlationIdFrom } from "../utils/correlation";
@@ -22,11 +23,26 @@ function applyAssigneeFilter(records: Incident[], url: URL): Incident[] {
   return records.filter((i) => i.assigneeId === assignee);
 }
 
+/**
+ * `customer=me` resolves to "tickets where the active session user is the
+ * requester". Mirrors the BFF `_entity-routes.ts` resolver — the FE issues
+ * the same query in mock + live modes. MSW has no session cookie, so the
+ * resolution falls back to `DEFAULT_USER_ID` (which `users.ts` /me also
+ * returns as the active user).
+ */
+function applyCustomerMeFilter(records: Incident[], url: URL): Incident[] {
+  if (url.searchParams.get("customer") !== "me") return records;
+  return records.filter((i) => i.requesterId === DEFAULT_USER_ID);
+}
+
 export const incidentHandlers = [
   http.get("*/api/incidents", ({ request }) => {
     const tenant = parseTenantFromRequest(request);
     const url = new URL(request.url);
-    const filtered = applyAssigneeFilter(applyStatusFilter(tenantIncidents(tenant), url), url);
+    const filtered = applyCustomerMeFilter(
+      applyAssigneeFilter(applyStatusFilter(tenantIncidents(tenant), url), url),
+      url,
+    );
     const page = paginate(filtered, readPageParams(url));
     return HttpResponse.json(page);
   }),
