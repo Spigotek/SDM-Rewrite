@@ -10,6 +10,7 @@ import { problemHandlers } from "./problems";
 import { queueHandlers } from "./queue";
 import { requestHandlers } from "./requests";
 import { tenantHandlers } from "./tenants";
+import { ticketDetailHandlers } from "./ticket-detail";
 import { userHandlers } from "./users";
 
 export const handlers: readonly RequestHandler[] = [
@@ -25,6 +26,7 @@ export const handlers: readonly RequestHandler[] = [
   ...auditHandlers,
   ...configHandlers,
   ...queueHandlers,
+  ...ticketDetailHandlers,
 ];
 
 export {
@@ -39,5 +41,6 @@ export {
   queueHandlers,
   requestHandlers,
   tenantHandlers,
+  ticketDetailHandlers,
   userHandlers,
 };

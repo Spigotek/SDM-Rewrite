@@ -75,6 +75,123 @@
     "breached": "SLA prekročená",
     "atRisk": "Riziko prekročenia"
   },
+  "common": {
+    "cancel": "Zrušiť"
+  },
+  "ticketDetail": {
+    "loading": "Načítavam ticket…",
+    "error": "Ticket sa nepodarilo načítať. Skús refresh.",
+    "noSummary": "(bez popisu)",
+    "fields": {
+      "status": "Stav",
+      "priority": "Priorita",
+      "assignee": "Riešiteľ",
+      "unassigned": "Nepriradené"
+    },
+    "statusLabel": {
+      "OP": "Otvorený",
+      "WIP": "V riešení",
+      "HLD": "Pozastavený",
+      "AWU": "Čaká na používateľa",
+      "AWV": "Čaká na dodávateľa",
+      "ESC": "Eskalovaný",
+      "RES": "Vyriešený",
+      "CL": "Uzavretý",
+      "CD": "Zrušený",
+      "SUBMITTED": "Odoslaný",
+      "APPR_PENDING": "Čaká schválenie",
+      "APPROVED": "Schválený",
+      "REJECTED": "Zamietnutý",
+      "IN_PROGRESS": "V riešení",
+      "DELIVERED": "Doručené",
+      "NEW": "Nový"
+    },
+    "priorityLabel": {
+      "1": "Kritická",
+      "2": "Vysoká",
+      "3": "Stredná",
+      "4": "Nízka",
+      "5": "Plánovaná"
+    },
+    "actions": {
+      "reply": "Odpovedať",
+      "take": "Prevziať",
+      "resolve": "Vyriešiť",
+      "escalate": "Eskalovať",
+      "watch": "Sledovať",
+      "more": "Viac",
+      "copyLink": "Kopírovať odkaz",
+      "markKbCandidate": "Označiť pre KB"
+    },
+    "timeline": {
+      "ariaLabel": "Časová os ticketu",
+      "empty": "Žiadne záznamy v časovej osi.",
+      "filter": {
+        "all": "Všetko",
+        "public": "Verejné",
+        "internal": "Interné",
+        "system": "Systém"
+      },
+      "kindBadge": {
+        "public": "verejné",
+        "internal": "interné",
+        "system": "systém"
+      },
+      "author": {
+        "public": "Žiadateľ",
+        "internal": "Tím",
+        "system": "Systém"
+      }
+    },
+    "composer": {
+      "ariaLabel": "Composer odpovedí",
+      "tab": {
+        "public": "Verejná odpoveď",
+        "internal": "Interná poznámka",
+        "resolution": "Vyriešenie"
+      },
+      "placeholder": {
+        "public": "Napíš odpoveď žiadateľovi…",
+        "internal": "Interná poznámka pre tím…",
+        "resolution": "Popíš riešenie ticketu…"
+      },
+      "submit": {
+        "send": "Odoslať",
+        "resolution": "Pokračovať na vyriešenie"
+      },
+      "cmdEnterHint": "Cmd+Enter na odoslanie"
+    },
+    "context": {
+      "ariaLabel": "Kontextový panel",
+      "requester": "Žiadateľ",
+      "ci": "Konfiguračná položka",
+      "ciPlaceholder": "Bez priradenej CI (dorazí v H.11).",
+      "related": "Súvisiace záznamy",
+      "relatedEmpty": "Žiadne súvisiace záznamy.",
+      "relatedUnsupported": "Backend zatiaľ nepodporuje načítanie prepojených záznamov.",
+      "noRequester": "Bez žiadateľa.",
+      "fields": {
+        "name": "Meno",
+        "id": "ID"
+      }
+    },
+    "escalateModal": {
+      "title": "Eskalovať ticket",
+      "body": "Vyber tím a doplň poznámku — ticket sa preposlali na ďalšiu úroveň.",
+      "group": "Cieľová skupina",
+      "note": "Poznámka",
+      "notePlaceholder": "Prečo eskaluješ?",
+      "submit": "Eskalovať"
+    },
+    "resolveModal": {
+      "title": "Vyriešiť ticket",
+      "body": "Doplň riešenie a kategóriu — ticket sa prepne do stavu Vyriešený.",
+      "category": "Kategória",
+      "solution": "Riešenie",
+      "solutionPlaceholder": "Stručne popíš čo bolo urobené…",
+      "submit": "Vyriešiť"
+    }
+  },
   "placeholders": {
     "activeTenant": "Aktívny tenant:",
     "ticketDetailTitle": "Ticket {id}",

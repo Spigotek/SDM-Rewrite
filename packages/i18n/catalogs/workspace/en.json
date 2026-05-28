@@ -75,6 +75,123 @@
     "breached": "SLA breached",
     "atRisk": "Breach risk"
   },
+  "common": {
+    "cancel": "Cancel"
+  },
+  "ticketDetail": {
+    "loading": "Loading ticket…",
+    "error": "Could not load ticket. Try refresh.",
+    "noSummary": "(no summary)",
+    "fields": {
+      "status": "Status",
+      "priority": "Priority",
+      "assignee": "Assignee",
+      "unassigned": "Unassigned"
+    },
+    "statusLabel": {
+      "OP": "Open",
+      "WIP": "Work in progress",
+      "HLD": "On hold",
+      "AWU": "Awaiting user",
+      "AWV": "Awaiting vendor",
+      "ESC": "Escalated",
+      "RES": "Resolved",
+      "CL": "Closed",
+      "CD": "Cancelled",
+      "SUBMITTED": "Submitted",
+      "APPR_PENDING": "Awaiting approval",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "IN_PROGRESS": "In progress",
+      "DELIVERED": "Delivered",
+      "NEW": "New"
+    },
+    "priorityLabel": {
+      "1": "Critical",
+      "2": "High",
+      "3": "Medium",
+      "4": "Low",
+      "5": "Planned"
+    },
+    "actions": {
+      "reply": "Reply",
+      "take": "Take",
+      "resolve": "Resolve",
+      "escalate": "Escalate",
+      "watch": "Watch",
+      "more": "More",
+      "copyLink": "Copy link",
+      "markKbCandidate": "Mark as KB candidate"
+    },
+    "timeline": {
+      "ariaLabel": "Ticket timeline",
+      "empty": "No timeline entries.",
+      "filter": {
+        "all": "All",
+        "public": "Public",
+        "internal": "Internal",
+        "system": "System"
+      },
+      "kindBadge": {
+        "public": "public",
+        "internal": "internal",
+        "system": "system"
+      },
+      "author": {
+        "public": "Requester",
+        "internal": "Team",
+        "system": "System"
+      }
+    },
+    "composer": {
+      "ariaLabel": "Reply composer",
+      "tab": {
+        "public": "Public reply",
+        "internal": "Internal note",
+        "resolution": "Resolution"
+      },
+      "placeholder": {
+        "public": "Write a reply to the requester…",
+        "internal": "Internal note for the team…",
+        "resolution": "Describe how this ticket was resolved…"
+      },
+      "submit": {
+        "send": "Send",
+        "resolution": "Continue to resolution"
+      },
+      "cmdEnterHint": "Cmd+Enter to send"
+    },
+    "context": {
+      "ariaLabel": "Context panel",
+      "requester": "Requester",
+      "ci": "Configuration item",
+      "ciPlaceholder": "No CI attached (arrives in H.11).",
+      "related": "Related records",
+      "relatedEmpty": "No related records.",
+      "relatedUnsupported": "Backend does not yet expose related records.",
+      "noRequester": "No requester.",
+      "fields": {
+        "name": "Name",
+        "id": "ID"
+      }
+    },
+    "escalateModal": {
+      "title": "Escalate ticket",
+      "body": "Pick a team and add a note — the ticket is reassigned to the next tier.",
+      "group": "Target group",
+      "note": "Note",
+      "notePlaceholder": "Why are you escalating?",
+      "submit": "Escalate"
+    },
+    "resolveModal": {
+      "title": "Resolve ticket",
+      "body": "Fill in solution + category — the ticket flips to Resolved.",
+      "category": "Category",
+      "solution": "Solution",
+      "solutionPlaceholder": "Briefly describe what was done…",
+      "submit": "Resolve"
+    }
+  },
   "placeholders": {
     "activeTenant": "Active tenant:",
     "ticketDetailTitle": "Ticket {id}",

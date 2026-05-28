@@ -4,7 +4,7 @@
  *
  * Usage in `createBrowserRouter(...)`:
  *
- *   { path: "tickets/:id", lazy: () => guardedLazy(import("./placeholders/ticket-detail"), "incident.read.queue") }
+ *   { path: "tickets/:id", lazy: () => guardedLazy(import("../features/tickets/TicketDetailRoute"), "incident.read.queue") }
  *
  * Returns a React component (not an element) so React Router can render it
  * directly. When `permission` is omitted the helper returns the bare
