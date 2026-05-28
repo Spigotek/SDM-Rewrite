@@ -1,8 +1,9 @@
 # H.1 — Tenant switcher activation + permission cache invalidation
 
-> **Status**: 🔜 NEXT (blokované na H.0 merge)
-> **Branch**: `chunk/H.1-tenant-switch` (od fresh `main` po H.0 merge)
-> **PR**: TBD
+> **Status**: ✅ DONE (2026-05-28)
+> **Branch**: `chunk/H.1-tenant-switch` (merged, deleted)
+> **PR**: #25 — merged squash via `--admin --delete-branch` > **Bundle outcome**: portal 159.31 KB / 180 KB (+3.99 KB vs H.0 baseline); workspace 159.43 KB / 350 KB.
+> **Deviations**: endpoint kept in `aggregator/me.ts` (shared `shapeMeResponse()`); `applySwitchedSession(SessionLoadResult)` API instead of `switchTenant(tenantId)` (avoids extra `/me` round-trip); `PendingChangesTestBridge` dev-only shim for tests; MSW handler made stateful (`Map<userId, activeTenantId>` per v2 statelessness).
 > **Cieľ**: aktivovať plne funkčný tenant switcher v oboch SPA — UI dropdown
 > (P0 wireframe `shared/tenant-switcher.md`) → BFF `POST /me/active-tenant`
 > → server-side session update → FE TanStack Query cache invalidation
