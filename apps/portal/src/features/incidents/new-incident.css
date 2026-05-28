@@ -1,0 +1,188 @@
+/**
+ * Portal new-incident form — single-column, mobile-first.
+ *
+ * Vertical rhythm mirrors `home.css` / `ticket-detail.css`. The form ships
+ * inside the standard 64rem `<section>` so the line length stays comfortable
+ * at desktop widths.
+ *
+ * Tokens consumed: spacing-*, font-size-*, color-text-*, radius-md,
+ * border-width-thin, color-border-default.
+ */
+
+.sdm-portal-new-incident {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  padding: var(--spacing-6) var(--spacing-5);
+  max-width: 48rem;
+  margin: 0 auto;
+}
+
+.sdm-portal-new-incident-back {
+  align-self: flex-start;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+}
+
+.sdm-portal-new-incident-back:hover {
+  color: var(--color-text-primary);
+  text-decoration: underline;
+}
+
+.sdm-portal-new-incident-heading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-portal-new-incident-heading h1 {
+  margin: 0;
+  font-size: var(--font-size-2xl, 1.5rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary);
+}
+
+.sdm-portal-new-incident-heading-sub {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+}
+
+.sdm-portal-new-incident-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-5);
+  background: var(--color-surface-raised, var(--color-bg-canvas));
+}
+
+/* Radio group — wireframe §5 Súrnosť. The design-system Radio primitive is
+   not yet exposed (G.1 shipped TextField/TextArea/Select/Checkbox only); we
+   render plain `<input type="radio">` styled to match. Layout: stacked at
+   mobile, inline at ≥ 480 px. */
+
+.sdm-portal-new-incident-radio-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-portal-new-incident-radio-legend {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold, 600);
+  color: var(--color-text-primary);
+  padding: 0;
+  margin: 0 0 var(--spacing-1) 0;
+}
+
+.sdm-portal-new-incident-radio-required {
+  margin-left: var(--spacing-1);
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+.sdm-portal-new-incident-radio-options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-portal-new-incident-radio-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-md);
+  cursor: pointer;
+}
+
+.sdm-portal-new-incident-radio-option input {
+  cursor: pointer;
+}
+
+.sdm-portal-new-incident-radio-helper {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sdm-portal-new-incident-radio-error {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+/* Submit row — Cancel left, Submit right. Stack on narrow viewports. */
+
+.sdm-portal-new-incident-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: var(--spacing-3);
+  border-top: var(--border-width-thin) solid var(--color-border-default);
+  padding-top: var(--spacing-4);
+}
+
+@media (min-width: 480px) {
+  .sdm-portal-new-incident-actions {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.sdm-portal-new-incident-submit-error {
+  color: var(--color-text-danger, var(--color-text-primary));
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+/* ── Success screen ───────────────────────────────────────────────────── */
+
+.sdm-portal-new-incident-success {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
+  padding: var(--spacing-6) var(--spacing-5);
+  max-width: 48rem;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.sdm-portal-new-incident-success-title {
+  margin: 0;
+  font-size: var(--font-size-2xl, 1.5rem);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary);
+}
+
+.sdm-portal-new-incident-success-body {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
+  line-height: var(--line-height-relaxed, 1.6);
+}
+
+.sdm-portal-new-incident-success-meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sdm-portal-new-incident-success-meta strong {
+  color: var(--color-text-primary);
+}
+
+.sdm-portal-new-incident-success-ctas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+@media (min-width: 480px) {
+  .sdm-portal-new-incident-success-ctas {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}

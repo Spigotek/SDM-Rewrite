@@ -50,8 +50,6 @@
     "submitted": "Ticket #{id} odoslaný. Helpdesk to dostane okamžite."
   },
   "placeholders": {
-    "newIncidentTitle": "Nahlásiť problém",
-    "newIncident": "Formulár pre nový incident dorazí v H.3.",
     "myTicketsTitle": "Moje tickety",
     "myTickets": "Zoznam tvojich ticketov dorazí v H.2.",
     "catalogTitle": "Katalóg služieb",
@@ -62,6 +60,63 @@
     "kb": "Vyhľadávanie KB dorazí v H.6.",
     "kbArticleTitle": "KB článok {id}",
     "kbArticle": "Detail KB článku dorazí v H.6."
+  },
+  "newIncident": {
+    "title": "Nahlásiť problém",
+    "subtitle": "Povedz mi v krátkosti, čo sa deje. Helpdesk to dostane okamžite.",
+    "back": "← Späť na domov",
+    "formAriaLabel": "Formulár nového ticketu",
+    "fields": {
+      "category": {
+        "label": "Čoho sa to týka?",
+        "helper": "Vyber tému, ktorá najlepšie sedí.",
+        "placeholder": "Vyber kategóriu",
+        "options": {
+          "hardware": "Hardvér (notebook, monitor, periférie)",
+          "software": "Softvér",
+          "network": "Sieť / VPN / Wi-Fi",
+          "account": "Účet / Heslo / Prístup",
+          "other": "Iné"
+        }
+      },
+      "summary": {
+        "label": "Stručný popis",
+        "helper": "Krátka veta — detail napíš nižšie.",
+        "placeholder": "Notebook sa náhodne reštartuje"
+      },
+      "description": {
+        "label": "Detail",
+        "helper": "Pomôž nám pomôcť ti rýchlejšie — čo presne sa deje, kedy začalo, čo si už skúsila.",
+        "placeholder": "Od dnes rána sa mi notebook reštartuje pri otváraní Outlooku…"
+      },
+      "urgency": {
+        "label": "Súrnosť",
+        "helper": "Pomôže helpdesku zoradiť rad.",
+        "options": {
+          "1": "Nemôžem pracovať",
+          "2": "Pracujem, ale s problémami",
+          "3": "Drobnosť, nie je to akútne"
+        }
+      }
+    },
+    "actions": {
+      "submit": "Odoslať ticket",
+      "cancel": "Zrušiť"
+    },
+    "errors": {
+      "submitFailed": "Server teraz neodpovedá. Skús to o chvíľu."
+    },
+    "success": {
+      "title": "Ticket #{ref} odoslaný",
+      "body": "Helpdesk to dostane okamžite. Pošleme ti notifikáciu, keď niekto prevezme ticket alebo bude mať otázku.",
+      "status": "Status",
+      "statusNew": "Nový",
+      "eta": "ETA prevzatia",
+      "etaValue": "do 2 hodín (typický čas pre stredne urgentné)",
+      "viewTicket": "Zobraziť detail ticketu →",
+      "reportAnother": "Nahlásiť ďalší",
+      "done": "Vrátiť sa na domov"
+    }
   },
   "ticketDetail": {
     "loading": "Načítavam ticket…",
