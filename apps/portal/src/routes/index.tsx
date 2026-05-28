@@ -46,9 +46,10 @@ export const router = createBrowserRouter([
       },
       {
         path: "new-incident",
-        lazy: async () => ({
-          Component: (await import("./placeholders/new-incident")).default,
-        }),
+        lazy: async () => {
+          const mod = await import("../features/incidents/NewIncidentRoute");
+          return { Component: mod.NewIncidentRoute };
+        },
       },
       {
         path: "tickets",

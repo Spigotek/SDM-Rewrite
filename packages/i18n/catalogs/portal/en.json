@@ -50,8 +50,6 @@
     "submitted": "Ticket #{id} submitted. Helpdesk will pick it up shortly."
   },
   "placeholders": {
-    "newIncidentTitle": "Report a problem",
-    "newIncident": "New incident form arrives in H.3.",
     "myTicketsTitle": "My tickets",
     "myTickets": "Your ticket list arrives in H.2.",
     "catalogTitle": "Service catalog",
@@ -62,6 +60,63 @@
     "kb": "KB search arrives in H.6.",
     "kbArticleTitle": "KB article {id}",
     "kbArticle": "KB article detail arrives in H.6."
+  },
+  "newIncident": {
+    "title": "Report a problem",
+    "subtitle": "Tell us what's going on in a few words. Helpdesk gets it instantly.",
+    "back": "← Back to home",
+    "formAriaLabel": "New ticket form",
+    "fields": {
+      "category": {
+        "label": "What's it about?",
+        "helper": "Pick the bucket that fits best.",
+        "placeholder": "Choose a category",
+        "options": {
+          "hardware": "Hardware (laptop, monitor, peripherals)",
+          "software": "Software",
+          "network": "Network / VPN / Wi-Fi",
+          "account": "Account / Password / Access",
+          "other": "Other"
+        }
+      },
+      "summary": {
+        "label": "Short summary",
+        "helper": "Short sentence — write details below.",
+        "placeholder": "Laptop reboots at random"
+      },
+      "description": {
+        "label": "Details",
+        "helper": "Help us help you faster — what's happening, when did it start, what have you tried.",
+        "placeholder": "Since this morning my laptop reboots when I open Outlook…"
+      },
+      "urgency": {
+        "label": "Urgency",
+        "helper": "Helps helpdesk sort the queue.",
+        "options": {
+          "1": "I can't work",
+          "2": "I'm working, but with issues",
+          "3": "Minor, not urgent"
+        }
+      }
+    },
+    "actions": {
+      "submit": "Submit ticket",
+      "cancel": "Cancel"
+    },
+    "errors": {
+      "submitFailed": "Our server isn't responding. Try again shortly."
+    },
+    "success": {
+      "title": "Ticket #{ref} submitted",
+      "body": "Helpdesk gets it right now. We'll notify you when someone takes the ticket or needs more info.",
+      "status": "Status",
+      "statusNew": "New",
+      "eta": "ETA for pickup",
+      "etaValue": "within 2 hours (typical for medium urgency)",
+      "viewTicket": "Open ticket detail →",
+      "reportAnother": "Report another",
+      "done": "Back to home"
+    }
   },
   "ticketDetail": {
     "loading": "Loading ticket…",
