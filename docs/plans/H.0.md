@@ -1,8 +1,9 @@
 # H.0 — Routing infrastructure (React Router v6 data router)
 
-> **Status**: 🔜 NEXT (Phase H entry chunk)
-> **Branch**: `chunk/H.0-routing` (od fresh `main` po Phase G merge)
-> **PR**: TBD
+> **Status**: ✅ DONE (2026-05-28)
+> **Branch**: `chunk/H.0-routing` (merged, deleted)
+> **PR**: #24 — merged squash via `--admin --delete-branch` > **Bundle outcome**: portal 155.32 KB / 180 KB (24 KB headroom, **−11 KB vs G.4 baseline** thanks to lazy Sentry); workspace 155.44 KB / 350 KB. Mitigation tier 1+2 (manualChunks + lazy Sentry init). No `.size-limit.json` cap relaxation.
+> **LHCI**: timing thresholds (TTI/LCP/score) zostali `warn` — LHCI staticDistDir fails `/config` 404 → bootstrap error fallback. Follow-up Phase I: MSW-in-LHCI alebo stub BFF, potom graduate na `error`. CLS + a11y + best-practices zostali `error`.
 > **Cieľ**: zaviazať `react-router-dom@6` data router (`createBrowserRouter` +
 > `RouterProvider`) v oboch SPA s code-split per route, route-level loaders
 > integrované s TanStack Query, `<RouteGuard>` permission gating napojený na

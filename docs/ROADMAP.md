@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk G.4 (LHCI + size-limit + manualChunks tuning, PR #23). Predchádzajúce: PR #22 — G.3 Sentry; PR #21 — G.2 i18n.
-- **In flight:** —
-- **Next up:** Phase H — Feature modules (najdlhšia, MVP scope). Phase G ✅ DONE (5/5).
+- **Last merged:** Chunk H.0 (Routing infrastructure — React Router 6 + RouteGuard + TanStack Query v5, PR #24). Predchádzajúce: PR #23 — G.4 LHCI/size-limit; PR #22 — G.3 Sentry.
+- **In flight:** Phase H — Feature modules (1/17 chunks merged).
+- **Next up:** Chunk H.1 — Tenant switcher activation + cache invalidation.
 
-Posledná revízia tohto dokumentu: Phase G DONE (2026-05-25).
+Posledná revízia tohto dokumentu: H.0 DONE (2026-05-28).
 
 ---
 
@@ -111,7 +111,11 @@ Posledná revízia tohto dokumentu: Phase G DONE (2026-05-25).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules 🔜 NEXT (najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (1/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.0 Routing infrastructure ✅ DONE** — `react-router-dom@6` data router (`createBrowserRouter` + `RouterProvider`) + `@tanstack/react-query@5` (5min stale, retry x1, no refetch on focus) wired v `apps/portal` + `apps/workspace`. Code-split per route cez `lazy()`; `routeGuard()` helper okolo lazy components s `<RouteGuard requires={...}>`. Portal placeholder routes: `/`, `/new-incident`, `/tickets`, `/tickets/:id`, `/catalog`, `/catalog/:itemId`, `/kb`, `/kb/article/:id`. Workspace placeholder routes: `/queue`, `/tickets/:id`, `/changes`, `/changes/calendar`, `/changes/:id`, `/problems`, `/cmdb`, `/cmdb/ci/:id`, `/kb`. `<AppShell>` ostáva s `children` API — `RootLayout` v `routes/index.tsx` podáva `<Outlet />` ako children (E.3 smoke contract preserved). `RootErrorBoundary` (404 / generic) + `<ForbiddenElement>` (403 s tenant switcher prominently) v `routes/error-boundaries.tsx`. Bundle mitigation Tier 1+2: `manualChunks` split (`vendor-router` 21.5 KB, `vendor-state` 7.4 KB) + lazy Sentry init (`bootstrap/sentry-bridge.ts` defers `@sentry/react` za `requestIdleCallback`, native React class boundary forwards errors → `vendor-observability` 120.6 KB moved out of initial). Final bundle (gzip): **portal 155.32 KB / 180 KB cap (24 KB headroom)** + **workspace 155.44 KB / 350 KB cap**. LHCI: numeric TTI/LCP/score zostávajú `warn` (graduate-uje keď LHCI infra dostane stub BFF / MSW-in-LHCI — staticDistDir fails `/config` 404 a LCP measures bootstrap error fallback; CLS + a11y + best-practices zostali `error`). Open follow-up pre Phase I: LHCI MSW/stub-BFF integration → graduate timing thresholds. Plán: [H.0.md](./plans/H.0.md), PR #24.
+
+### Phase H scope reference
 
 > MVP scope per `GOAL.md §3`: Incident, Request, Problem, Change, KB (read), CMDB (read), multi-tenancy.
 > Každý modul má 1-N chunks per dvojica `(portal-feature, workspace-feature)`.
