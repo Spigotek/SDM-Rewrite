@@ -54,8 +54,6 @@
     "newIncident": "Formulár pre nový incident dorazí v H.3.",
     "myTicketsTitle": "Moje tickety",
     "myTickets": "Zoznam tvojich ticketov dorazí v H.2.",
-    "ticketDetailTitle": "Ticket {id}",
-    "ticketDetail": "Detail ticketu dorazí v H.4.",
     "catalogTitle": "Katalóg služieb",
     "catalog": "Browse katalógu dorazí v H.5.",
     "catalogItemTitle": "Položka katalógu {id}",
@@ -64,5 +62,45 @@
     "kb": "Vyhľadávanie KB dorazí v H.6.",
     "kbArticleTitle": "KB článok {id}",
     "kbArticle": "Detail KB článku dorazí v H.6."
+  },
+  "ticketDetail": {
+    "loading": "Načítavam ticket…",
+    "error": "Ticket sa nepodarilo načítať. Skús stránku obnoviť.",
+    "noSummary": "(bez popisu)",
+    "unsupportedTooltip": "Táto sekcia bude dostupná čoskoro.",
+    "fields": {
+      "status": "Stav",
+      "priority": "Priorita",
+      "assignee": "Riešiteľ",
+      "openedAt": "Otvorené"
+    },
+    "body": {
+      "empty": "Žiadny popis."
+    },
+    "timeline": {
+      "title": "Komunikácia",
+      "ariaLabel": "Časová os ticketu",
+      "empty": "Zatiaľ žiadne aktualizácie.",
+      "unsupported": "Časovú os zatiaľ nie je možné načítať.",
+      "author": {
+        "public": "Žiadateľ",
+        "system": "Systém"
+      }
+    },
+    "attachments": {
+      "title": "Prílohy",
+      "unsupported": "Prílohy zatiaľ nie je možné načítať.",
+      "downloadDeferred": "Sťahovanie zatiaľ nie je podporované."
+    },
+    "composer": {
+      "title": "Pridať komentár",
+      "ariaLabel": "Composer odpovedí",
+      "label": "Tvoja odpoveď",
+      "placeholder": "Napíš odpoveď alebo upresnenie…",
+      "submit": "Odoslať komentár",
+      "cmdEnterHint": "Cmd+Enter na odoslanie",
+      "closedHint": "Ticket je uzavretý — nové komentáre nie sú možné.",
+      "error": "Komentár sa nepodarilo odoslať. Skús to znova."
+    }
   }
 }

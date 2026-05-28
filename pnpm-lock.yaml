@@ -114,6 +114,9 @@ importers:
       '@sdm/api-mocks':
         specifier: workspace:*
         version: link:../../packages/api-mocks
+      '@sdm/api-types':
+        specifier: workspace:*
+        version: link:../../packages/api-types
       '@sdm/auth':
         specifier: workspace:*
         version: link:../../packages/auth
