@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.3 (Portal new-incident form, PR #30). Predchádzajúce: PR #29 — H.4 ticket-detail; PR #28 — H.2 home.
-- **In flight:** Phase H — Feature modules (7/17 chunks merged).
-- **Next up:** Chunk H.5 — Portal service catalog + new-request per H.md §D2 recommended order.
+- **Last merged:** Chunk H.5 (Portal service catalog + new-request — DynamicForm, PR #31). Predchádzajúce: PR #30 — H.3 new-incident; PR #29 — H.4 ticket-detail.
+- **In flight:** Phase H — Feature modules (8/17 chunks merged).
+- **Next up:** Chunk H.6 — Portal KB search + article per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.3 DONE (2026-05-28).
+Posledná revízia tohto dokumentu: H.5 DONE (2026-05-29).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.3 DONE (2026-05-28).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (7/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (8/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.5 Portal service catalog + new-request ✅ DONE** — `/catalog` + `/catalog/:itemId` routes. `CatalogRoute.tsx` (`CategoryTiles` 4-tile grid Hardvér/Softvér/Prístupy/Iné + `FeaturedItemCard` grid) + `CatalogItemRoute.tsx` (`DynamicForm` schema-driven render). `FieldRenderer` per-type dispatch — **12 field types**: text/textarea/number/date/select/multi/radio/checkbox/file/user-picker/ci-picker/markdown-help (registry pattern per libraries.md §3 — adding new type touches union → registry → renderer only). `buildZodSchema(fields)` produces Zod from `CatalogField[]`. Submit → `POST /api/requests { catalogItemId, fields }`. BFF augmentation: new `apps/bff/src/api/endpoints/catalog.ts` (186 LOC) — `GET /api/catalog/items` + `GET /api/catalog/items/:id` (fixture-backed; CA SDM nemá native Service Catalog REST surface). MSW handlers extended: requests.ts +catalog routes, users.ts `?q=` async loadOptions pre user-picker, cmdb.ts `?q=` pre ci-picker. Fixtures `packages/api-mocks/src/fixtures/catalog.ts` — 6 items, 4 categories, všetky field types covered. Deviations: `date` field uses native `<input type="date">` (DS DatePicker R-007 pending); `markdown-help` plain text `whitespace: pre-line` (react-markdown deferred H.6); `file` placeholder + "Upload bude dostupný čoskoro" (per H.3 attachments deferral); LHCI graduation reverted (`staticDistDir` returns 404 pre `/catalog`, blocked on MSW/stub-BFF wiring per H.0 pattern). Bundle: portal **162.16 KB / 180 KB** (flat vs H.3 162.1 KB — CatalogRoute lazy 3.74 KB + CatalogItemRoute lazy 14.62 KB; RHF/Zod re-used from H.3 vendor-state). i18n: +catalog.\* keys SK/EN. Browser test `h5-portal-catalog.spec.ts`. Plán: [H.5.md](./plans/H.5.md), PR #31.
 
 - **H.3 Portal new-incident ✅ DONE** — `/new-incident` route — RHF + Zod form (`react-hook-form@7.54.2` + `@hookform/resolvers@3.10.0` + `zod@^3.23.8`). Fields: `summary` (TextField max 100), `description` (TextArea max 5000), `priority` (inline `<fieldset role="radiogroup">` — G.1 doesn't expose Radio primitive, native radios styled), `category` (Combobox). Helper text per microcopy.md §7; inline RHF field errors via `aria-describedby`. Submit → `POST /api/incidents` → `<SuccessScreen>` s ticket ID + 3 CTAs (View ticket / Report another / Done). PendingChanges register on dirty (H.1 context blocks tenant switch with ConfirmDialog). 401 → redirect `/login`; 4xx → inline RHF errors via `setError`; 5xx → toast. **Attachments deferred** per user default — TODO comment v `NewIncidentForm.tsx:41-46` references future scope (BFF multipart endpoint + virus-scan policy + DS FileUpload primitive). Bundle: portal **162.1 KB / 180 KB** (+0.04 KB vs H.4); `NewIncidentRoute` lazy chunk 24.15 KB (RHF + zod + resolvers contained). i18n: +25 SK/EN `newIncident.*` keys (99 portal parity). Tests: browser scenario `h3-portal-new-incident.spec.ts` (2 cases — fill+submit+success + validation). Plán: [H.3.md](./plans/H.3.md), PR #30.
 

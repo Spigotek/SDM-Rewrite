@@ -1,7 +1,10 @@
 # H.5 — Portal: service catalog + new-request (DynamicForm)
 
-> **Status**: 🔜 (blokované na H.0)
-> **Branch**: `chunk/H.5-portal-catalog` > **Persona**: Lucia
+> **Status**: ✅ DONE (2026-05-29)
+> **Branch**: `chunk/H.5-portal-catalog` (merged, deleted)
+> **PR**: #31 — merged squash via `--admin --delete-branch` > **Bundle outcome**: portal 162.16 KB / 180 KB (flat vs H.3); CatalogRoute lazy 3.74 KB + CatalogItemRoute lazy 14.62 KB.
+> **Deviations**: new BFF `catalog.ts` (186 LOC) for `/api/catalog/items[/:id]` (CA SDM nemá native catalog); `date` field native input (DS DatePicker R-007 pending); `markdown-help` plain text (react-markdown deferred H.6); `file` placeholder (per H.3 attachments deferral); LHCI graduation reverted (staticDistDir 404 blocker).
+> **Persona**: Lucia
 > **Cieľ**: route `/catalog` (kategórie + featured items) + route
 > `/catalog/:itemId` (DynamicForm rendered z JSON schema dodanej BFF) →
 > submit `POST /api/requests`.
