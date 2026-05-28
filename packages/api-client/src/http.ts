@@ -1,10 +1,8 @@
-import type { TenantId } from "@sdm/domain";
 import { createCorrelationId } from "./correlation";
 import { AppError, fromStatus } from "./errors";
 
 export interface HttpClientOptions {
   readonly baseUrl: string;
-  readonly tenantId?: TenantId;
   readonly fetchImpl?: typeof fetch;
   readonly correlationIdGenerator?: () => string;
   readonly defaultHeaders?: Readonly<Record<string, string>>;
@@ -14,28 +12,29 @@ export interface RequestOptions {
   readonly method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   readonly headers?: Readonly<Record<string, string>>;
   readonly body?: unknown;
-  readonly tenantOverride?: TenantId;
   readonly signal?: AbortSignal;
 }
 
 const CORRELATION_HEADER = "X-Correlation-ID";
-const TENANT_HEADER = "X-CA-SDM-Tenant";
 
 // ULID (Crockford base32, 26 chars) per ADR-09 §Otvorené závislosti r2 — lex-
 // sortable so log triage can group requests by emission time without an
 // external join. BFF echoes any incoming header back (`auth/correlation.ts`).
+//
+// H.1: `X-CA-SDM-Tenant` was removed — the BFF resolves the active tenant from
+// the server-side session (`session.activeTenantId`); the client must NOT
+// inject a tenant header. The previous implementation kept it for legacy MSW
+// fixtures during F.1–F.5 but H.1 finalises the server-authoritative model.
 const defaultCorrelationId = (): string => createCorrelationId();
 
 export class HttpClient {
   private readonly baseUrl: string;
-  private readonly tenantId: TenantId | undefined;
   private readonly fetchImpl: typeof fetch;
   private readonly correlationIdGenerator: () => string;
   private readonly defaultHeaders: Readonly<Record<string, string>>;
 
   constructor(opts: HttpClientOptions) {
     this.baseUrl = opts.baseUrl.replace(/\/+$/, "");
-    this.tenantId = opts.tenantId;
     this.fetchImpl = opts.fetchImpl ?? globalThis.fetch.bind(globalThis);
     this.correlationIdGenerator = opts.correlationIdGenerator ?? defaultCorrelationId;
     this.defaultHeaders = opts.defaultHeaders ?? {};
@@ -43,7 +42,6 @@ export class HttpClient {
 
   async request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
     const correlationId = this.correlationIdGenerator();
-    const tenantId = opts.tenantOverride ?? this.tenantId;
     const url = `${this.baseUrl}${path.startsWith("/") ? path : `/${path}`}`;
 
     const headers: Record<string, string> = {
@@ -52,7 +50,6 @@ export class HttpClient {
       ...this.defaultHeaders,
       ...(opts.headers ?? {}),
     };
-    if (tenantId !== undefined) headers[TENANT_HEADER] = tenantId;
     if (opts.body !== undefined && !("Content-Type" in headers)) {
       headers["Content-Type"] = "application/json";
     }
@@ -115,4 +112,3 @@ export class HttpClient {
 }
 
 export const CORRELATION_ID_HEADER = CORRELATION_HEADER;
-export const TENANT_ID_HEADER = TENANT_HEADER;

@@ -78,5 +78,25 @@
     "label": "Jazyk",
     "sk": "Slovenčina",
     "en": "Angličtina"
+  },
+  "tenantSwitcher": {
+    "label": "Tenant",
+    "current": "Aktívny tenant",
+    "search": "Hľadať tenant…",
+    "switchTo": "Prepnúť na {name}",
+    "open": "Otvoriť prepínač tenantov",
+    "noResults": "Žiadny tenant nezodpovedá hľadaniu.",
+    "singleTenantHint": "Máš rolu len v jednom tenante.",
+    "pendingChangesTitle": "Prepnúť tenant?",
+    "pendingChangesBody": "Máš otvorený nezapísaný formulár. Prepnutie ho uzavrie.",
+    "pendingChangesConfirm": "Prepnúť",
+    "pendingChangesCancel": "Zachovať tenant",
+    "error": "Prepnutie sa nepodarilo. Skús to znova.",
+    "env": {
+      "production": "Produkcia",
+      "staging": "Staging",
+      "development": "Development",
+      "sandbox": "Sandbox"
+    }
   }
 }

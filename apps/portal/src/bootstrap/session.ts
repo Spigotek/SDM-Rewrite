@@ -13,7 +13,9 @@ import {
 } from "@sdm/domain";
 import type { Session } from "@sdm/auth";
 
-interface MeResponse {
+export type TenantEnvironment = "production" | "staging" | "development" | "sandbox";
+
+export interface MeResponse {
   user: {
     id: string;
     userId: string;
@@ -25,6 +27,7 @@ interface MeResponse {
     id: string;
     name: string;
     isServiceProvider: boolean;
+    environment?: TenantEnvironment;
     roles: Array<{ id: string; name: string; uiRole: string }>;
   }>;
   activeTenant: {
@@ -42,36 +45,13 @@ interface MeResponse {
 
 export interface SessionLoadResult {
   readonly session: Session;
-  readonly tenants: ReadonlyArray<{ id: TenantId; name: string }>;
+  readonly tenants: ReadonlyArray<{ id: TenantId; name: string; environment?: TenantEnvironment }>;
 }
 
-// Active tenant header — SPA keeps the last switch in localStorage so a hard
-// refresh re-attaches the same `X-CA-SDM-Tenant` value. BFF validates against
-// `session.activeTenantId` (per auth-flow.md §4.3) — the header is a hint, not
-// authoritative. MSW reads it for tenant scoping in mock mode.
-export const ACTIVE_TENANT_STORAGE_KEY = "sdm.active-tenant";
-export const TENANT_HEADER = "X-CA-SDM-Tenant";
-
-function readStoredActiveTenant(): string | null {
-  try {
-    return window.localStorage.getItem(ACTIVE_TENANT_STORAGE_KEY);
-  } catch {
-    return null;
-  }
-}
-
-function writeStoredActiveTenant(id: string): void {
-  try {
-    window.localStorage.setItem(ACTIVE_TENANT_STORAGE_KEY, id);
-  } catch {
-    // localStorage unavailable (private mode, etc.) — degrade gracefully.
-  }
-}
-
-function tenantHeaders(): Record<string, string> {
-  const stored = readStoredActiveTenant();
-  return stored ? { [TENANT_HEADER]: stored } : {};
-}
+// H.1: `X-CA-SDM-Tenant` removed. The BFF resolves the active tenant from the
+// server-side session (`session.activeTenantId`) — the client must not inject
+// any tenant hint header. The localStorage key is kept for MSW backward-compat
+// in browser-test fixtures but the SPA no longer reads/writes it for requests.
 
 export class UnauthorizedError extends Error {
   constructor(public readonly reason?: string) {
@@ -84,7 +64,6 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(path, {
     ...init,
     credentials: "include",
-    headers: { ...tenantHeaders(), ...(init?.headers ?? {}) },
   });
   if (response.status === 401) {
     const body = (await response.json().catch(() => null)) as { reason?: string } | null;
@@ -118,11 +97,6 @@ export async function logout(): Promise<void> {
   } catch {
     // Logout is best-effort — server may already have torn down the session.
   }
-  try {
-    window.localStorage.removeItem(ACTIVE_TENANT_STORAGE_KEY);
-  } catch {
-    // ignore
-  }
 }
 
 const UI_ROLES: readonly UIRole[] = [
@@ -140,9 +114,7 @@ function parseUIRole(raw: string): UIRole | null {
   return (UI_ROLES as readonly string[]).includes(raw) ? (raw as UIRole) : null;
 }
 
-export async function loadSession(): Promise<SessionLoadResult> {
-  const me = await fetchJson<MeResponse>("/me");
-
+export function shapeMeResponseToSession(me: MeResponse): SessionLoadResult {
   const activeTenant = me.tenants.find((t) => t.id === me.activeTenant.id);
   const activeRoles: readonly UIRole[] = activeTenant
     ? activeTenant.roles.map((r) => parseUIRole(r.uiRole)).filter((r): r is UIRole => r !== null)
@@ -170,23 +142,43 @@ export async function loadSession(): Promise<SessionLoadResult> {
     i18n: me.i18n,
   };
 
-  writeStoredActiveTenant(me.activeTenant.id);
-
   return {
     session,
-    tenants: me.tenants.map((t) => ({ id: toTenantId(t.id), name: t.name })),
+    tenants: me.tenants.map((t) => {
+      const opt: { id: TenantId; name: string; environment?: TenantEnvironment } = {
+        id: toTenantId(t.id),
+        name: t.name,
+      };
+      if (t.environment) opt.environment = t.environment;
+      return opt;
+    }),
   };
 }
 
-export async function switchActiveTenant(tenantId: TenantId): Promise<void> {
+export async function loadSession(): Promise<SessionLoadResult> {
+  const me = await fetchJson<MeResponse>("/me");
+  return shapeMeResponseToSession(me);
+}
+
+/**
+ * H.1: POST /me/active-tenant returns the full /me shape so the caller can
+ * prime its query cache atomically. Throws `UnauthorizedError` on 401 and a
+ * generic `Error` on other non-2xx (the mutation hook surfaces a toast).
+ */
+export async function postActiveTenant(tenantId: TenantId): Promise<SessionLoadResult> {
   const response = await fetch("/me/active-tenant", {
     method: "POST",
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...tenantHeaders() },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ tenantId }),
   });
+  if (response.status === 401) {
+    const body = (await response.json().catch(() => null)) as { reason?: string } | null;
+    throw new UnauthorizedError(body?.reason);
+  }
   if (!response.ok) {
     throw new Error(`[session] tenant switch failed: HTTP ${response.status}`);
   }
-  writeStoredActiveTenant(tenantId);
+  const me = (await response.json()) as MeResponse;
+  return shapeMeResponseToSession(me);
 }

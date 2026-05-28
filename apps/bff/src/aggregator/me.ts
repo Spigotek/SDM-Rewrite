@@ -20,6 +20,78 @@ const ActiveTenantSchema = z.object({
   tenantId: z.string().min(1),
 });
 
+interface MeResponseShape {
+  readonly user: {
+    readonly id: string;
+    readonly userId: string;
+    readonly email: string;
+    readonly displayName: string;
+  };
+  readonly tenants: ReadonlyArray<{
+    readonly id: string;
+    readonly name: string;
+    readonly isServiceProvider: boolean;
+    readonly roles: ReadonlyArray<{
+      readonly id: string;
+      readonly name: string;
+      readonly uiRole: string;
+    }>;
+  }>;
+  readonly activeTenant: {
+    readonly id: string;
+    readonly activeRoleId: string;
+    readonly effectivePermissions: ReadonlyArray<Permission>;
+  };
+  readonly uiRole: string;
+  readonly app: "portal" | "workspace";
+  readonly csrfToken: string;
+  readonly featureFlags: Record<string, boolean>;
+  readonly i18n: { readonly locale: "sk"; readonly tz: string };
+  readonly session: { readonly idleTimeoutSec: number; readonly absoluteExpiresAt: string };
+  readonly correlationId: string;
+}
+
+function shapeMeResponse(
+  payload: SessionPayload,
+  activeTenant: SessionPayload["tenants"][number],
+  deps: MeRouteDeps,
+  correlationId: string,
+): MeResponseShape {
+  const effectivePermissions = computeEffectivePermissions(activeTenant.roles.map((r) => r.uiRole));
+  const primaryRole = activeTenant.roles[0]?.uiRole ?? "requester";
+
+  return {
+    user: {
+      id: payload.contactId,
+      userId: payload.userId,
+      email: payload.email,
+      displayName: payload.displayName,
+    },
+    tenants: payload.tenants.map((t) => ({
+      id: t.id,
+      name: t.name,
+      isServiceProvider: false,
+      roles: t.roles.map((r) => ({ id: r.id, name: r.sym, uiRole: r.uiRole })),
+    })),
+    activeTenant: {
+      id: activeTenant.id,
+      activeRoleId: activeTenant.roles[0]?.id ?? "",
+      effectivePermissions,
+    },
+    uiRole: primaryRole,
+    app:
+      primaryRole === "requester" || primaryRole === "requester_external" ? "portal" : "workspace",
+    csrfToken: "",
+    featureFlags: {},
+    i18n: { locale: "sk" as const, tz: "Europe/Bratislava" },
+    session: {
+      idleTimeoutSec: deps.config.session.idleSec,
+      absoluteExpiresAt: new Date(payload.absoluteExpiresAt).toISOString(),
+    },
+    correlationId,
+  };
+}
+
 export function registerMeRoutes(app: Hono, deps: MeRouteDeps): void {
   app.get("/me", async (c) => {
     const correlationId = c.get("correlationId");
@@ -55,47 +127,7 @@ export function registerMeRoutes(app: Hono, deps: MeRouteDeps): void {
       );
     }
 
-    const effectivePermissions = computeEffectivePermissions(
-      activeTenant.roles.map((r) => r.uiRole),
-    );
-    const primaryRole = activeTenant.roles[0]?.uiRole ?? "requester";
-
-    return c.json(
-      {
-        user: {
-          id: payload.contactId,
-          userId: payload.userId,
-          email: payload.email,
-          displayName: payload.displayName,
-        },
-        tenants: payload.tenants.map((t) => ({
-          id: t.id,
-          name: t.name,
-          isServiceProvider: false,
-          roles: t.roles.map((r) => ({ id: r.id, name: r.sym, uiRole: r.uiRole })),
-        })),
-        activeTenant: {
-          id: activeTenant.id,
-          activeRoleId: activeTenant.roles[0]?.id ?? "",
-          effectivePermissions,
-        },
-        uiRole: primaryRole,
-        app:
-          primaryRole === "requester" || primaryRole === "requester_external"
-            ? "portal"
-            : "workspace",
-        // F.1 — Origin/Referer check is the CSRF strategy (no double-submit token). Stub kept for §4.5 shape parity until F.5 aligns the canonical shape.
-        csrfToken: "",
-        featureFlags: {},
-        i18n: { locale: "sk" as const, tz: "Europe/Bratislava" },
-        session: {
-          idleTimeoutSec: deps.config.session.idleSec,
-          absoluteExpiresAt: new Date(payload.absoluteExpiresAt).toISOString(),
-        },
-        correlationId,
-      },
-      200,
-    );
+    return c.json(shapeMeResponse(payload, activeTenant, deps, correlationId), 200);
   });
 
   app.post("/me/active-tenant", async (c) => {
@@ -165,16 +197,10 @@ export function registerMeRoutes(app: Hono, deps: MeRouteDeps): void {
       payload,
     );
 
-    return c.json(
-      {
-        activeTenant: {
-          id: allowed.id,
-          activeRoleId: allowed.roles[0]?.id ?? "",
-          effectivePermissions: computeEffectivePermissions(allowed.roles.map((r) => r.uiRole)),
-        },
-      },
-      200,
-    );
+    // H.1: return the full /me shape so the FE mutation can prime the cache
+    // without a follow-up GET — single round-trip + atomic session swap.
+    const updatedPayload: SessionPayload = { ...payload, activeTenantId: allowed.id };
+    return c.json(shapeMeResponse(updatedPayload, allowed, deps, correlationId), 200);
   });
 }
 

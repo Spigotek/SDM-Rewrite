@@ -16,13 +16,15 @@ import {
   loadSession,
   login as doLogin,
   logout as doLogout,
-  switchActiveTenant,
+  type SessionLoadResult,
+  type TenantEnvironment,
   UnauthorizedError,
 } from "../bootstrap/session";
 
 interface TenantOption {
   readonly id: TenantId;
   readonly name: string;
+  readonly environment?: TenantEnvironment;
 }
 
 type Status = "loading" | "ready" | "anonymous" | "error";
@@ -32,7 +34,14 @@ interface SessionContextValue {
   readonly session: Session | null;
   readonly tenants: readonly TenantOption[];
   readonly error: string | null;
-  readonly switchTenant: (tenantId: TenantId) => Promise<void>;
+  /**
+   * H.1: callers (the `useActiveTenant()` mutation hook) hand in the freshly-
+   * fetched session payload after `POST /me/active-tenant`. The context just
+   * mirrors it into local state + broadcasts the cross-tab event. The previous
+   * `(tenantId) => Promise<void>` signature triggered an extra `/me` round-trip
+   * on top of the switch — now we use the response of the switch directly.
+   */
+  readonly applySwitchedSession: (next: SessionLoadResult) => void;
   readonly login: (username: string, password: string) => Promise<void>;
   readonly logout: () => Promise<void>;
 }
@@ -124,19 +133,18 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     };
   }, [session]);
 
-  const switchTenant = useCallback(
-    async (tenantId: TenantId) => {
-      await switchActiveTenant(tenantId);
-      await refresh();
-      channelRef.current?.post({
-        type: "tenant-changed",
-        tenantId,
-        ts: Date.now(),
-        sourceTabId: "",
-      });
-    },
-    [refresh],
-  );
+  const applySwitchedSession = useCallback((next: SessionLoadResult) => {
+    setSession(next.session);
+    setTenants(next.tenants);
+    setStatus("ready");
+    setError(null);
+    channelRef.current?.post({
+      type: "tenant-changed",
+      tenantId: next.session.tenantId,
+      ts: Date.now(),
+      sourceTabId: "",
+    });
+  }, []);
 
   const login = useCallback(
     async (username: string, password: string) => {
@@ -155,8 +163,8 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo<SessionContextValue>(
-    () => ({ status, session, tenants, error, switchTenant, login, logout }),
-    [status, session, tenants, error, switchTenant, login, logout],
+    () => ({ status, session, tenants, error, applySwitchedSession, login, logout }),
+    [status, session, tenants, error, applySwitchedSession, login, logout],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
