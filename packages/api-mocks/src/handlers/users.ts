@@ -1,5 +1,11 @@
 import { http, HttpResponse } from "msw";
-import { getPermissionsForRole, type Permission, type UIRole } from "@sdm/domain";
+import {
+  getPermissionsForRole,
+  tenantId as toTenantId,
+  type Permission,
+  type TenantId,
+  type UIRole,
+} from "@sdm/domain";
 import { store } from "../db";
 import { DEFAULT_USER_ID } from "../fixtures/users";
 import { correlationIdFrom } from "../utils/correlation";
@@ -10,9 +16,17 @@ interface ActiveTenantBody {
   tenantId?: string;
 }
 
+type TenantEnvironment = "production" | "staging" | "development" | "sandbox";
+
 const SESSION_IDLE_SEC = 30 * 60;
 const SESSION_ABSOLUTE_MS = 8 * 60 * 60 * 1000;
 const ROLE_PREFIX = "role:";
+
+// In-memory active-tenant — MSW handlers are stateless in MSW v2, so the
+// SPA-driven tenant switch needs a module-level cache to make the next /me
+// honour the new active tenant. The browser-test fixture clears the SW
+// between scenarios, which also resets this map.
+const ACTIVE_TENANT_BY_USER = new Map<string, TenantId>();
 
 function stripRolePrefix(raw: string): UIRole {
   return (raw.startsWith(ROLE_PREFIX) ? raw.slice(ROLE_PREFIX.length) : raw) as UIRole;
@@ -30,61 +44,88 @@ function appFromPrimaryRole(role: UIRole): "portal" | "workspace" {
   return role === "requester" || role === "requester_external" ? "portal" : "workspace";
 }
 
-export const userHandlers = [
-  http.get("*/me", ({ request }) => {
-    const user = store.users.find((u) => u.id === DEFAULT_USER_ID);
-    if (!user) return unauthorized("session user missing", correlationIdFrom(request));
+// Hard-coded env labels per tenant for browser tests (the fixture model has no
+// `environment` field — extending the domain just for this hint is out of
+// scope for H.1). Acme is production-grade in the example narratives; Globex
+// is staging. Unknown tenants fall back to undefined → no badge.
+const TENANT_ENV: Record<string, TenantEnvironment> = {
+  "acme-corp": "production",
+  globex: "staging",
+};
 
-    const accessibleTenantIds = new Set(user.roleAssignments.map((r) => r.tenantId));
-    const requestedTenant = parseTenantFromRequest(request);
-    const activeTenantId = accessibleTenantIds.has(requestedTenant)
-      ? requestedTenant
+function meResponseForUser(userIdValue: string, requestedTenant: TenantId) {
+  const user = store.users.find((u) => u.id === userIdValue);
+  if (!user) return null;
+
+  const accessibleTenantIds = new Set(user.roleAssignments.map((r) => r.tenantId));
+  const remembered = ACTIVE_TENANT_BY_USER.get(user.id);
+  const activeTenantId = accessibleTenantIds.has(requestedTenant)
+    ? requestedTenant
+    : remembered && accessibleTenantIds.has(remembered)
+      ? remembered
       : user.defaultTenantId;
 
-    const tenants = store.tenants
-      .filter((t) => accessibleTenantIds.has(t.id))
-      .map((t) => {
-        const assignments = user.roleAssignments.filter((r) => r.tenantId === t.id);
-        return {
-          id: t.id,
-          name: t.name,
-          isServiceProvider: false,
-          roles: assignments.map((r) => {
-            const uiRole = stripRolePrefix(r.roleId);
-            return { id: r.roleId, name: uiRole, uiRole };
-          }),
-        };
-      });
-
-    const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
-    if (!activeTenant) return unauthorized("no tenants for user", correlationIdFrom(request));
-
-    const activeRoles = activeTenant.roles.map((r) => r.uiRole as UIRole);
-    const primaryRole = activeRoles[0] ?? "requester";
-
-    return HttpResponse.json({
-      user: {
-        id: user.id,
-        userId: user.username,
-        email: user.email,
-        displayName: user.fullName,
-      },
-      tenants,
-      activeTenant: {
-        id: activeTenant.id,
-        activeRoleId: activeTenant.roles[0]?.id ?? "",
-        effectivePermissions: computeEffectivePermissions(activeRoles),
-      },
-      uiRole: primaryRole,
-      app: appFromPrimaryRole(primaryRole),
-      csrfToken: "",
-      featureFlags: {},
-      i18n: { locale: "sk" as const, tz: "Europe/Bratislava" },
-      session: {
-        idleTimeoutSec: SESSION_IDLE_SEC,
-        absoluteExpiresAt: new Date(Date.now() + SESSION_ABSOLUTE_MS).toISOString(),
-      },
+  const tenants = store.tenants
+    .filter((t) => accessibleTenantIds.has(t.id))
+    .map((t) => {
+      const assignments = user.roleAssignments.filter((r) => r.tenantId === t.id);
+      const tenant: {
+        id: TenantId;
+        name: string;
+        isServiceProvider: boolean;
+        environment?: TenantEnvironment;
+        roles: Array<{ id: string; name: string; uiRole: string }>;
+      } = {
+        id: t.id,
+        name: t.name,
+        isServiceProvider: false,
+        roles: assignments.map((r) => {
+          const uiRole = stripRolePrefix(r.roleId);
+          return { id: r.roleId, name: uiRole, uiRole };
+        }),
+      };
+      const env = TENANT_ENV[t.id];
+      if (env) tenant.environment = env;
+      return tenant;
     });
+
+  const activeTenant = tenants.find((t) => t.id === activeTenantId) ?? tenants[0];
+  if (!activeTenant) return null;
+
+  const activeRoles = activeTenant.roles.map((r) => r.uiRole as UIRole);
+  const primaryRole = activeRoles[0] ?? "requester";
+
+  return {
+    user: {
+      id: user.id,
+      userId: user.username,
+      email: user.email,
+      displayName: user.fullName,
+    },
+    tenants,
+    activeTenant: {
+      id: activeTenant.id,
+      activeRoleId: activeTenant.roles[0]?.id ?? "",
+      effectivePermissions: computeEffectivePermissions(activeRoles),
+    },
+    uiRole: primaryRole,
+    app: appFromPrimaryRole(primaryRole),
+    csrfToken: "",
+    featureFlags: {},
+    i18n: { locale: "sk" as const, tz: "Europe/Bratislava" },
+    session: {
+      idleTimeoutSec: SESSION_IDLE_SEC,
+      absoluteExpiresAt: new Date(Date.now() + SESSION_ABSOLUTE_MS).toISOString(),
+    },
+  };
+}
+
+export const userHandlers = [
+  http.get("*/me", ({ request }) => {
+    const requestedTenant = parseTenantFromRequest(request);
+    const me = meResponseForUser(DEFAULT_USER_ID, requestedTenant);
+    if (!me) return unauthorized("session user missing", correlationIdFrom(request));
+    return HttpResponse.json(me);
   }),
 
   http.get("*/whoami", ({ request }) => {
@@ -107,15 +148,18 @@ export const userHandlers = [
     if (!user) return unauthorized("session user missing", correlationId);
     const hasAccess = user.roleAssignments.some((r) => r.tenantId === body.tenantId);
     if (!hasAccess) return forbidden(`user has no role in tenant ${body.tenantId}`, correlationId);
-    return HttpResponse.json(
-      { activeTenantId: body.tenantId },
-      {
-        status: 200,
-        headers: {
-          "Set-Cookie": `sdm-active-tenant=${encodeURIComponent(body.tenantId)}; Path=/; SameSite=Lax`,
-        },
+
+    const newTenant = toTenantId(body.tenantId);
+    ACTIVE_TENANT_BY_USER.set(user.id, newTenant);
+
+    const me = meResponseForUser(user.id, newTenant);
+    if (!me) return unauthorized("session user missing", correlationId);
+    return HttpResponse.json(me, {
+      status: 200,
+      headers: {
+        "Set-Cookie": `sdm-active-tenant=${encodeURIComponent(body.tenantId)}; Path=/; SameSite=Lax`,
       },
-    );
+    });
   }),
 ];
 

@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { tenantId } from "@sdm/domain";
-import { HttpClient, CORRELATION_ID_HEADER, TENANT_ID_HEADER } from "./http";
+import { HttpClient, CORRELATION_ID_HEADER } from "./http";
 import { isUlid } from "./correlation";
 import { isAppError } from "./errors";
 
@@ -11,11 +10,10 @@ const okResponse = (body: unknown, status = 200) =>
   });
 
 describe("HttpClient", () => {
-  it("injects X-Correlation-ID + X-CA-SDM-Tenant headers", async () => {
+  it("injects X-Correlation-ID and does NOT inject any tenant header (server-side resolution)", async () => {
     const fetchSpy = vi.fn().mockResolvedValue(okResponse({ ok: true }));
     const client = new HttpClient({
       baseUrl: "https://bff.test",
-      tenantId: tenantId("tenant-42"),
       fetchImpl: fetchSpy as unknown as typeof fetch,
       correlationIdGenerator: () => "cid-fixed",
     });
@@ -27,20 +25,9 @@ describe("HttpClient", () => {
     expect(url).toBe("https://bff.test/me");
     const headers = init.headers as Record<string, string>;
     expect(headers[CORRELATION_ID_HEADER]).toBe("cid-fixed");
-    expect(headers[TENANT_ID_HEADER]).toBe("tenant-42");
-  });
-
-  it("uses tenantOverride when provided", async () => {
-    const fetchSpy = vi.fn().mockResolvedValue(okResponse({}));
-    const client = new HttpClient({
-      baseUrl: "https://bff.test",
-      tenantId: tenantId("tenant-default"),
-      fetchImpl: fetchSpy as unknown as typeof fetch,
-    });
-
-    await client.get("/me", { tenantOverride: tenantId("tenant-override") });
-    const headers = (fetchSpy.mock.calls[0]?.[1] as RequestInit).headers as Record<string, string>;
-    expect(headers[TENANT_ID_HEADER]).toBe("tenant-override");
+    // H.1: BFF resolves tenant from session.activeTenantId — the client must
+    // not inject `X-CA-SDM-Tenant` (or any tenant header) anymore.
+    expect(headers["X-CA-SDM-Tenant"]).toBeUndefined();
   });
 
   it("maps non-2xx response to typed AppError", async () => {

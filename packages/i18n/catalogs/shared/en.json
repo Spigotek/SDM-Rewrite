@@ -78,5 +78,25 @@
     "label": "Language",
     "sk": "Slovak",
     "en": "English"
+  },
+  "tenantSwitcher": {
+    "label": "Tenant",
+    "current": "Active tenant",
+    "search": "Search tenant…",
+    "switchTo": "Switch to {name}",
+    "open": "Open tenant switcher",
+    "noResults": "No tenant matches your search.",
+    "singleTenantHint": "You have a role in a single tenant only.",
+    "pendingChangesTitle": "Switch tenant?",
+    "pendingChangesBody": "You have an unsaved form open. Switching will close it.",
+    "pendingChangesConfirm": "Switch",
+    "pendingChangesCancel": "Keep tenant",
+    "error": "Switch failed. Please try again.",
+    "env": {
+      "production": "Production",
+      "staging": "Staging",
+      "development": "Development",
+      "sandbox": "Sandbox"
+    }
   }
 }

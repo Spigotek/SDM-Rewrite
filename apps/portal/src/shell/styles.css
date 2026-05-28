@@ -51,6 +51,9 @@
 }
 
 .sdm-tenant-display {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
   background-color: transparent;
   color: var(--color-text-body);
   border: var(--border-width-thin) solid var(--color-border-default);
@@ -69,19 +72,58 @@
   opacity: 0.7;
 }
 
+.sdm-tenant-display--single {
+  cursor: default;
+}
+
+.sdm-tenant-caret {
+  margin-left: var(--spacing-1);
+  color: var(--color-text-tertiary);
+}
+
 .sdm-tenant-dropdown {
   position: absolute;
   top: calc(100% + var(--spacing-1));
   left: 0;
-  min-width: 15rem;
+  min-width: 18rem;
   background-color: var(--color-background-surface);
   border: var(--border-width-thin) solid var(--color-border-default);
   border-radius: var(--radius-lg);
+  margin: 0;
+  padding: 0;
+  z-index: var(--z-dropdown);
+  box-shadow: var(--shadow-md);
+  display: flex;
+  flex-direction: column;
+}
+
+.sdm-tenant-dropdown-search {
+  padding: var(--spacing-2);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+}
+
+.sdm-tenant-dropdown-search-input {
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-2_5);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+  color: var(--color-text-body);
+  font: inherit;
+}
+
+.sdm-tenant-dropdown-search-input:focus-visible {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--shadow-focus-brand);
+}
+
+.sdm-tenant-dropdown-list {
   list-style: none;
   margin: 0;
   padding: var(--spacing-1);
-  z-index: var(--z-dropdown);
-  box-shadow: var(--shadow-md);
+  overflow-y: auto;
+  max-height: 18rem;
 }
 
 .sdm-tenant-row {
@@ -107,10 +149,33 @@
   color: var(--color-success-fg);
 }
 
+.sdm-tenant-name {
+  flex: 1 1 auto;
+}
+
 .sdm-tenant-dot {
   width: 0.875rem;
   text-align: center;
   color: var(--color-text-tertiary);
+}
+
+.sdm-tenant-empty {
+  padding: var(--spacing-3) var(--spacing-2_5);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-tenant-env-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--spacing-1_5);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-inverse);
+  text-transform: uppercase;
+  line-height: 1.4;
 }
 
 .sdm-user-pill {
