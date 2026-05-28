@@ -64,13 +64,17 @@ export const router = createBrowserRouter([
       },
       {
         path: "catalog",
-        lazy: async () => ({ Component: (await import("./placeholders/catalog")).default }),
+        lazy: async () => {
+          const mod = await import("../features/catalog/CatalogRoute");
+          return { Component: mod.CatalogRoute };
+        },
       },
       {
         path: "catalog/:itemId",
-        lazy: async () => ({
-          Component: (await import("./placeholders/catalog-item")).default,
-        }),
+        lazy: async () => {
+          const mod = await import("../features/catalog/CatalogItemRoute");
+          return { Component: mod.CatalogItemRoute };
+        },
       },
       {
         path: "kb",

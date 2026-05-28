@@ -1,4 +1,5 @@
 import type { Hono } from "hono";
+import { registerCatalogRoutes } from "./endpoints/catalog";
 import { registerChangeRoutes } from "./endpoints/changes";
 import { registerCmdbRoutes } from "./endpoints/cmdb";
 import { registerIncidentRoutes } from "./endpoints/incidents";
@@ -32,4 +33,5 @@ export function registerApiRoutes(
   registerKbRoutes(app, deps);
   registerCmdbRoutes(app, deps);
   registerReferenceRoutes(app, deps, state.reference);
+  registerCatalogRoutes(app);
 }

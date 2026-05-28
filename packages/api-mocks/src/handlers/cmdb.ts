@@ -38,4 +38,21 @@ export const cmdbHandlers = [
     );
     return HttpResponse.json({ relationships });
   }),
+
+  // Lightweight CMDB search used by Service Catalog `ci-picker` fields (H.5).
+  // Case-insensitive contains on `name` or `id`, capped at 20. Tenant-scoped.
+  http.get("*/api/cmdb", ({ request }) => {
+    const tenant = parseTenantFromRequest(request);
+    const url = new URL(request.url);
+    const q = (url.searchParams.get("q") ?? "").trim().toLowerCase();
+    const all = tenantCis(tenant);
+    const matches = (
+      q
+        ? all.filter((c) => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q))
+        : all
+    )
+      .slice(0, 20)
+      .map((c) => ({ id: c.id, name: c.name, class: c.class }));
+    return HttpResponse.json({ items: matches });
+  }),
 ];

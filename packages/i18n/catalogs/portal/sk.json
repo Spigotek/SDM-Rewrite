@@ -61,6 +61,48 @@
     "kbArticleTitle": "KB článok {id}",
     "kbArticle": "Detail KB článku dorazí v H.6."
   },
+  "catalogBrowse": {
+    "back": "← Späť na domov",
+    "title": "Katalóg služieb",
+    "subtitle": "Vyber službu, ktorú potrebuješ.",
+    "categories": {
+      "hardware": "Hardvér",
+      "software": "Softvér",
+      "access": "Prístupy",
+      "other": "Iné",
+      "count": "{count, plural, =0 {žiadne položky} one {1 položka} few {# položky} other {# položiek}}"
+    },
+    "list": {
+      "featuredTitle": "Najčastejšie žiadané",
+      "request": "Požiadať",
+      "empty": "Pre túto kategóriu zatiaľ nemáme položky.",
+      "loading": "Načítavam katalóg…",
+      "error": "Katalóg sa nepodarilo načítať. Skús stránku obnoviť."
+    },
+    "detail": {
+      "back": "← Späť na katalóg",
+      "loading": "Načítavam položku…",
+      "error": "Položku katalógu sa nepodarilo načítať.",
+      "notFound": "Položka neexistuje."
+    },
+    "form": {
+      "ariaLabel": "Formulár žiadosti pre {name}",
+      "submit": "Odoslať žiadosť",
+      "cancel": "Zrušiť",
+      "submitFailed": "Server teraz neodpovedá. Skús to o chvíľu.",
+      "estimatedCost": "Odhadovaná cena"
+    },
+    "fields": {
+      "fileDeferred": "Upload bude dostupný čoskoro.",
+      "fileDeferredTooltip": "Upload bude dostupný čoskoro."
+    },
+    "success": {
+      "title": "Žiadosť #{ref} odoslaná",
+      "body": "Helpdesk to dostane okamžite. Pošleme ti notifikáciu, keď niekto prevezme žiadosť.",
+      "viewTicket": "Zobraziť detail žiadosti →",
+      "backToCatalog": "Späť na katalóg"
+    }
+  },
   "newIncident": {
     "title": "Nahlásiť problém",
     "subtitle": "Povedz mi v krátkosti, čo sa deje. Helpdesk to dostane okamžite.",

@@ -61,6 +61,48 @@
     "kbArticleTitle": "KB article {id}",
     "kbArticle": "KB article detail arrives in H.6."
   },
+  "catalogBrowse": {
+    "back": "← Back to home",
+    "title": "Service catalog",
+    "subtitle": "Pick the service you need.",
+    "categories": {
+      "hardware": "Hardware",
+      "software": "Software",
+      "access": "Access",
+      "other": "Other",
+      "count": "{count, plural, =0 {no items} one {1 item} other {# items}}"
+    },
+    "list": {
+      "featuredTitle": "Most requested",
+      "request": "Request",
+      "empty": "No items in this category yet.",
+      "loading": "Loading catalog…",
+      "error": "Couldn't load the catalog. Try refreshing the page."
+    },
+    "detail": {
+      "back": "← Back to catalog",
+      "loading": "Loading item…",
+      "error": "Couldn't load the catalog item.",
+      "notFound": "Item not found."
+    },
+    "form": {
+      "ariaLabel": "Request form for {name}",
+      "submit": "Submit request",
+      "cancel": "Cancel",
+      "submitFailed": "Our server isn't responding. Try again shortly.",
+      "estimatedCost": "Estimated cost"
+    },
+    "fields": {
+      "fileDeferred": "Upload will be available soon.",
+      "fileDeferredTooltip": "Upload will be available soon."
+    },
+    "success": {
+      "title": "Request #{ref} submitted",
+      "body": "Helpdesk gets it right now. We'll notify you when someone picks up the request.",
+      "viewTicket": "Open request detail →",
+      "backToCatalog": "Back to catalog"
+    }
+  },
   "newIncident": {
     "title": "Report a problem",
     "subtitle": "Tell us what's going on in a few words. Helpdesk gets it instantly.",
