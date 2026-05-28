@@ -49,7 +49,12 @@
     "renderCrashed": "Something went wrong",
     "boundaryTitle": "Something went wrong",
     "boundaryBody": "Try refreshing the page. If the problem persists, contact support.",
-    "boundaryRefresh": "Refresh page"
+    "boundaryRefresh": "Refresh page",
+    "notFoundTitle": "Page not found",
+    "notFoundBody": "We couldn't find the page you were looking for. It may have been moved or the URL is wrong.",
+    "notFoundHome": "Back to home",
+    "forbiddenTitle": "Access denied",
+    "forbiddenBody": "You can't see this page with your current role in this tenant. Check your role with admin or switch tenant."
   },
   "validation": {
     "required": "This field is required.",

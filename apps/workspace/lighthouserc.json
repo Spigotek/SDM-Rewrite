@@ -1,6 +1,6 @@
 {
-  "_comment_scope": "Workspace LHCI config. Per performance.md §1 workspace pages are audited on DESKTOP form factor (Anna persona, 2-monitor workstation). Phase G ships a no-router shell; Phase H wires React Router and adds per-route assertions matching performance.md §2 workspace `/queue` desktop (TTI ≤ 2.5 s, LCP ≤ 2.0 s, CLS ≤ 0.05, score ≥ 0.85).",
-  "_comment_timing_thresholds": "Numeric timing thresholds (TTI/LCP) are deferred to Phase H — they require working bootstrap which needs BFF /config available. Static-dist LHCI on Phase G shell stops at the `Bootstrap failed: /config HTTP 404` error message. Until BFF or MSW is wired into the CI LHCI run, this config asserts only stable signals: categories:accessibility + categories:best-practices + CLS. Timing assertions stay listed (as `warn`) for PR visibility.",
+  "_comment_scope": "Workspace LHCI config. Per performance.md §1 workspace pages are audited on DESKTOP form factor (Anna persona, 2-monitor workstation). H.0 wires React Router so `/queue` is reachable via redirect from `/`; timing-threshold graduation (warn → error) is deferred until MSW or BFF is wired into the CI LHCI run (see `_comment_timing_thresholds`). Other routes stay listed under `_url_todo_phase_h` and graduate as feature chunks (H.7+) ship real content.",
+  "_comment_timing_thresholds": "Numeric timing thresholds (TTI/LCP) remain `warn` post-H.0. Reason: `staticDistDir` LHCI runs without a BFF, so bootstrap fails at `/config HTTP 404` and LCP measures the bootstrap error fallback. Graduation to `error` requires the static dist to serve `/config` + `/me` (either via MSW-in-LHCI or a stub backend), tracked as an open item for the LHCI infrastructure work. CLS + accessibility + best-practices stay as `error` because they are robust to bootstrap state.",
   "ci": {
     "collect": {
       "staticDistDir": "./dist",
@@ -23,8 +23,8 @@
       }
     },
     "assert": {
-      "_comment_blocking": "Blocking assertions — robust against the Phase G bootstrap state. CLS + accessibility + best-practices catch obvious regressions.",
-      "_comment_warn_phase_h": "Timing thresholds (TTI, LCP, score) graduate to `error` in Phase H. Values match performance.md §2 workspace `/queue` desktop.",
+      "_comment_blocking": "Blocking assertions — robust against the bootstrap state. CLS + accessibility + best-practices catch obvious regressions.",
+      "_comment_warn_only": "Timing thresholds (TTI, LCP, score) stay `warn` until MSW or stub BFF is wired into CI LHCI runs. Values match performance.md §2 workspace `/queue` desktop.",
       "assertions": {
         "cumulative-layout-shift": ["error", { "maxNumericValue": 0.05 }],
         "categories:accessibility": ["error", { "minScore": 0.9 }],

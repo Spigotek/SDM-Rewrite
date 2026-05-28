@@ -24,5 +24,23 @@
   },
   "feedback": {
     "submitted": "Ticket #{id} odoslaný. Helpdesk to dostane okamžite."
+  },
+  "placeholders": {
+    "activeTenant": "Aktívny tenant:",
+    "home": "Feature obsah dorazí v H.2. Toto je len placeholder cez H.0 routing infraštruktúru.",
+    "newIncidentTitle": "Nahlásiť problém",
+    "newIncident": "Formulár pre nový incident dorazí v H.3.",
+    "myTicketsTitle": "Moje tickety",
+    "myTickets": "Zoznam tvojich ticketov dorazí v H.2.",
+    "ticketDetailTitle": "Ticket {id}",
+    "ticketDetail": "Detail ticketu dorazí v H.4.",
+    "catalogTitle": "Katalóg služieb",
+    "catalog": "Browse katalógu dorazí v H.5.",
+    "catalogItemTitle": "Položka katalógu {id}",
+    "catalogItem": "Detail položky katalógu dorazí v H.5.",
+    "kbTitle": "Pomoc",
+    "kb": "Vyhľadávanie KB dorazí v H.6.",
+    "kbArticleTitle": "KB článok {id}",
+    "kbArticle": "Detail KB článku dorazí v H.6."
   }
 }

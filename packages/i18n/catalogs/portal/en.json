@@ -24,5 +24,23 @@
   },
   "feedback": {
     "submitted": "Ticket #{id} submitted. Helpdesk will pick it up shortly."
+  },
+  "placeholders": {
+    "activeTenant": "Active tenant:",
+    "home": "Feature content arrives in H.2. This is just a placeholder behind the H.0 routing infrastructure.",
+    "newIncidentTitle": "Report a problem",
+    "newIncident": "New incident form arrives in H.3.",
+    "myTicketsTitle": "My tickets",
+    "myTickets": "Your ticket list arrives in H.2.",
+    "ticketDetailTitle": "Ticket {id}",
+    "ticketDetail": "Ticket detail arrives in H.4.",
+    "catalogTitle": "Service catalog",
+    "catalog": "Catalog browse arrives in H.5.",
+    "catalogItemTitle": "Catalog item {id}",
+    "catalogItem": "Catalog item detail arrives in H.5.",
+    "kbTitle": "Help",
+    "kb": "KB search arrives in H.6.",
+    "kbArticleTitle": "KB article {id}",
+    "kbArticle": "KB article detail arrives in H.6."
   }
 }

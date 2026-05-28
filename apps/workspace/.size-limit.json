@@ -6,7 +6,8 @@
       "dist/assets/vendor-react-*.js",
       "dist/assets/vendor-i18n-*.js",
       "dist/assets/vendor-ds-*.js",
-      "dist/assets/vendor-observability-*.js"
+      "dist/assets/vendor-router-*.js",
+      "dist/assets/vendor-state-*.js"
     ],
     "limit": "350 KB",
     "gzip": true
@@ -36,9 +37,21 @@
     "gzip": true
   },
   {
-    "name": "Workspace — vendor-observability chunk",
+    "name": "Workspace — vendor-observability chunk (lazy)",
     "path": "dist/assets/vendor-observability-*.js",
-    "limit": "45 KB",
+    "limit": "130 KB",
+    "gzip": true
+  },
+  {
+    "name": "Workspace — vendor-router chunk",
+    "path": "dist/assets/vendor-router-*.js",
+    "limit": "25 KB",
+    "gzip": true
+  },
+  {
+    "name": "Workspace — vendor-state chunk",
+    "path": "dist/assets/vendor-state-*.js",
+    "limit": "20 KB",
     "gzip": true
   }
 ]

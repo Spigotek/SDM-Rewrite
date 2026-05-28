@@ -8,7 +8,7 @@ import {
   useState,
 } from "react";
 import type { ReactNode } from "react";
-import * as Sentry from "@sentry/react";
+import { setSentryUser, setSentryTag } from "../bootstrap/sentry-bridge";
 import type { Session } from "@sdm/auth";
 import type { TenantId } from "@sdm/domain";
 import { createCrossTabChannel, pseudonymize, type CrossTabChannel } from "@sdm/api-client";
@@ -107,17 +107,17 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   // user so subsequent anonymous errors aren't tagged with the last identity.
   useEffect(() => {
     if (!session) {
-      Sentry.setUser(null);
-      Sentry.setTag("tenantId", undefined);
-      Sentry.setTag("locale", undefined);
+      setSentryUser(null);
+      setSentryTag("tenantId", undefined);
+      setSentryTag("locale", undefined);
       return;
     }
     let cancelled = false;
     void pseudonymize(session.userId, session.tenantId).then((pseudId) => {
       if (cancelled) return;
-      Sentry.setUser({ id: pseudId });
-      Sentry.setTag("tenantId", session.tenantId);
-      Sentry.setTag("locale", session.i18n.locale);
+      setSentryUser({ id: pseudId });
+      setSentryTag("tenantId", session.tenantId);
+      setSentryTag("locale", session.i18n.locale);
     });
     return () => {
       cancelled = true;
