@@ -52,7 +52,9 @@ export const router = createBrowserRouter([
       },
       {
         path: "changes",
-        lazy: async () => ({ Component: (await import("./placeholders/changes")).default }),
+        lazy: async () => ({
+          Component: (await import("../features/changes/ChangesRoute")).default,
+        }),
       },
       {
         path: "changes/calendar",
@@ -63,7 +65,7 @@ export const router = createBrowserRouter([
       {
         path: "changes/:id",
         lazy: async () => ({
-          Component: (await import("./placeholders/change-detail")).default,
+          Component: (await import("../features/changes/ChangeDetailRoute")).default,
         }),
       },
       {

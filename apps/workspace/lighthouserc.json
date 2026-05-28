@@ -5,6 +5,7 @@
     "collect": {
       "staticDistDir": "./dist",
       "url": ["http://localhost/index.html"],
+      "_comment_h9_no_graduation": "H.9 keeps `/index.html` as the sole audited URL — the workspace SPA serves all routes from a single HTML, so `staticDistDir` LHCI without SPA fallback would 404 on `/changes/index.html`. Graduation of per-route URLs needs the same MSW-in-LHCI prerequisite as timing thresholds.",
       "_url_todo_phase_h": [
         "http://localhost/queue",
         "http://localhost/tickets/INC-1",

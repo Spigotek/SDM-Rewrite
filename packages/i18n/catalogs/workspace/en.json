@@ -192,16 +192,102 @@
       "submit": "Resolve"
     }
   },
+  "changes": {
+    "title": "Changes",
+    "loading": "Loading changes…",
+    "error": "Failed to load changes. Try refresh.",
+    "empty": "No changes for this tenant.",
+    "noSummary": "(no summary)",
+    "columns": {
+      "ref": "ID",
+      "risk": "Risk",
+      "status": "Status",
+      "schedule": "Window",
+      "category": "Type",
+      "approvals": "Approvers",
+      "summary": "Summary"
+    },
+    "risk": {
+      "HIGH": "High",
+      "MEDIUM": "Medium",
+      "LOW": "Low"
+    },
+    "category": {
+      "STANDARD": "Standard",
+      "NORMAL": "Normal",
+      "EMERGENCY": "Emergency"
+    },
+    "statusLabel": {
+      "RFC": "RFC",
+      "APPR_PENDING": "Awaiting approval",
+      "APPROVED": "Approved",
+      "SCHEDULED": "Scheduled",
+      "IN_PROGRESS": "In progress",
+      "VERIFICATION_IN_PROGRESS": "Verification",
+      "VERIFIED": "Verified",
+      "REJECTED": "Rejected",
+      "CL": "Closed",
+      "CD": "Cancelled",
+      "EMG_RFC": "Emergency RFC",
+      "EMG_IN_PROGRESS": "Emergency in progress",
+      "EMG_RETROSPECTIVE": "Emergency retrospective"
+    },
+    "approvalState": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected",
+      "unset": "—"
+    },
+    "approvalDecision": {
+      "PENDING": "Pending",
+      "APPROVED": "Approved",
+      "REJECTED": "Rejected"
+    },
+    "fields": {
+      "status": "Status",
+      "risk": "Risk",
+      "category": "Type",
+      "schedule": "Window",
+      "requester": "Requester",
+      "assignee": "Implementor",
+      "unassigned": "Unassigned",
+      "scheduledStart": "Scheduled start",
+      "scheduledEnd": "Scheduled end",
+      "actualStart": "Actual start",
+      "actualEnd": "Actual end",
+      "description": "Description",
+      "descriptionEmpty": "(no description)"
+    },
+    "tabs": {
+      "ariaLabel": "Change detail sections",
+      "detail": "Detail",
+      "impact": "Impact",
+      "rollback": "Rollback",
+      "approvals": "Approvals"
+    },
+    "impact": {
+      "title": "Affected CIs",
+      "count": "{count, plural, one {# CI} other {# CIs}}",
+      "empty": "No affected CIs."
+    },
+    "rollback": {
+      "title": "Rollback plan",
+      "empty": "Rollback plan is empty. CAB approval will be blocked (H.11).",
+      "loading": "Loading rollback plan…"
+    },
+    "approvals": {
+      "title": "CAB Approvers",
+      "empty": "No CAB approvers assigned.",
+      "actionsDeferred": "Approve / Reject / Send reminder actions arrive in H.11.",
+      "rowAriaLabel": "{approver} — {decision}"
+    }
+  },
   "placeholders": {
     "activeTenant": "Active tenant:",
     "ticketDetailTitle": "Ticket {id}",
     "ticketDetail": "Split-view ticket detail arrives in H.8.",
-    "changesTitle": "Changes",
-    "changes": "Changes list arrives in H.10.",
     "changesCalendarTitle": "Change calendar",
     "changesCalendar": "Change calendar arrives in H.10.",
-    "changeDetailTitle": "Change {id}",
-    "changeDetail": "Change detail arrives in H.10.",
     "problemsTitle": "Problems",
     "problems": "Problems list arrives in H.9.",
     "cmdbTitle": "CMDB",

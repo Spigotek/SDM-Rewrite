@@ -473,6 +473,12 @@ export interface Change {
   scheduledEndAt: IsoTimestamp | null;
   actualStartAt: IsoTimestamp | null;
   actualEndAt: IsoTimestamp | null;
+  /**
+   * Markdown rollback plan — CA SDM `chg.rollback_plan` column. Required for
+   * CAB approval per wireframe `03-change-calendar.md` ("Rollback plan: ✅
+   * provided"). Empty rollback plan ⇒ CAB Approve disabled (enforced in H.11).
+   */
+  rollbackPlan: string | null;
   approvalState: ApprovalState;
   cabApprovers: readonly CabApproval[];
   changeSpecifications: readonly ChangeSpecification[];

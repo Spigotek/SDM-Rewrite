@@ -16,7 +16,7 @@ import { epochSecToIso, liftAttrs, toFkRef, type CaSdmFk } from "./_shape";
  */
 
 const DEFAULT_ATTRS =
-  "chg_ref_num,summary,description,status,priority,requestor,assignee,open_date,close_date,category";
+  "chg_ref_num,summary,description,status,priority,requestor,assignee,open_date,close_date,category,risk,schedule_start_date,schedule_end_date,rollback_plan";
 
 export interface ChangeRowFe {
   readonly id: string;
@@ -29,6 +29,16 @@ export interface ChangeRowFe {
   readonly assignee: ReturnType<typeof toFkRef>;
   readonly openedAt: string | null;
   readonly closedAt: string | null;
+  /** `chg.category` ⇒ {STANDARD,NORMAL,EMERGENCY} per change-management.md §4.1. */
+  readonly category: ReturnType<typeof toFkRef>;
+  /** `chg.risk` ⇒ {LOW,MEDIUM,HIGH}. */
+  readonly risk: ReturnType<typeof toFkRef>;
+  /** `chg.schedule_start_date` — H.9 change-detail Detail tab. */
+  readonly scheduledStartAt: string | null;
+  /** `chg.schedule_end_date` — H.9 change-detail Detail tab. */
+  readonly scheduledEndAt: string | null;
+  /** `chg.rollback_plan` — H.9 RollbackTab markdown source. */
+  readonly rollbackPlan: string | null;
 }
 
 export interface ChangeCreateFe {
@@ -60,6 +70,13 @@ function mapRow(raw: Record<string, unknown>): ChangeRowFe {
     assignee: toFkRef(raw["assignee"] as CaSdmFk | undefined),
     openedAt: epochSecToIso(raw["open_date"] as string | number | null | undefined),
     closedAt: epochSecToIso(raw["close_date"] as string | number | null | undefined),
+    category: toFkRef(raw["category"] as CaSdmFk | undefined),
+    risk: toFkRef(raw["risk"] as CaSdmFk | undefined),
+    scheduledStartAt: epochSecToIso(
+      raw["schedule_start_date"] as string | number | null | undefined,
+    ),
+    scheduledEndAt: epochSecToIso(raw["schedule_end_date"] as string | number | null | undefined),
+    rollbackPlan: typeof raw["rollback_plan"] === "string" ? raw["rollback_plan"] : null,
   };
 }
 

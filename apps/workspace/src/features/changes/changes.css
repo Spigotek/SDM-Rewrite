@@ -1,0 +1,405 @@
+/**
+ * Changes list + detail layout per wireframe `03-change-calendar.md`.
+ * Visual styling pulls from `@sdm/design-system/tokens.css`; this file
+ * carries only layout + density rules.
+ */
+
+/* ── List page ─────────────────────────────────────────────────────── */
+
+.sdm-changes-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: var(--spacing-3);
+}
+
+.sdm-changes-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+}
+
+.sdm-changes-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-changes-tenant-hint {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-changes-state {
+  color: var(--color-text-secondary);
+  padding: var(--spacing-4);
+}
+
+.sdm-changes-state--error {
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+/* ── List table ────────────────────────────────────────────────────── */
+
+.sdm-changes-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.sdm-changes-table thead th {
+  text-align: left;
+  padding: var(--spacing-2) var(--spacing-3);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  background: var(--color-surface-raised);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sdm-changes-table tbody td {
+  padding: var(--spacing-2) var(--spacing-3);
+  border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
+  vertical-align: middle;
+}
+
+.sdm-changes-row {
+  cursor: pointer;
+}
+
+.sdm-changes-row:hover,
+.sdm-changes-row:focus-visible {
+  background: var(--color-surface-hover);
+  outline: none;
+}
+
+.sdm-changes-cell-ref {
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-secondary);
+}
+
+.sdm-changes-cell-summary {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 320px;
+}
+
+.sdm-changes-cell-schedule,
+.sdm-changes-cell-category {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-changes-cell-approvals {
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+}
+
+.sdm-changes-cell-approvals[data-state="APPROVED"] {
+  color: var(--color-text-success, var(--color-text-primary));
+}
+
+.sdm-changes-cell-approvals[data-state="REJECTED"] {
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+/* ── Detail page ───────────────────────────────────────────────────── */
+
+.sdm-change-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  min-height: 0;
+  overflow: auto;
+}
+
+.sdm-change-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  padding-bottom: var(--spacing-3);
+}
+
+.sdm-change-header-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
+.sdm-change-header-ref {
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.sdm-change-header-summary {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-change-header-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-3);
+}
+
+.sdm-change-header-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.sdm-change-header-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+/* ── Tab bar ───────────────────────────────────────────────────────── */
+
+.sdm-change-tabs {
+  display: flex;
+  gap: var(--spacing-1);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+}
+
+.sdm-change-tab {
+  padding: var(--spacing-2) var(--spacing-4);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.sdm-change-tab:hover {
+  color: var(--color-text-primary);
+}
+
+.sdm-change-tab[data-active] {
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-accent, var(--color-text-primary));
+}
+
+.sdm-change-tab:focus-visible {
+  outline: 2px solid var(--color-accent, var(--color-text-primary));
+  outline-offset: 2px;
+}
+
+.sdm-change-tabpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+/* ── Detail tab ─────────────────────────────────────────────────────── */
+
+.sdm-change-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-3) var(--spacing-4);
+  margin: 0;
+}
+
+.sdm-change-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-change-detail-row dt {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+}
+
+.sdm-change-detail-row dd {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.sdm-change-detail-description h2 {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--font-size-md);
+}
+
+.sdm-change-detail-empty {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+/* ── Impact tab ─────────────────────────────────────────────────────── */
+
+.sdm-change-impact-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.sdm-change-impact-header h2 {
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+.sdm-change-impact-count {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-change-impact-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--spacing-2);
+}
+
+.sdm-change-impact-list li {
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+.sdm-change-impact-list a {
+  color: var(--color-text-primary);
+  font-family: var(--font-family-mono, monospace);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+}
+
+.sdm-change-impact-list a:hover,
+.sdm-change-impact-list a:focus-visible {
+  text-decoration: underline;
+}
+
+/* ── Rollback tab ──────────────────────────────────────────────────── */
+
+.sdm-change-rollback-body {
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: var(--color-surface-raised);
+  line-height: var(--line-height-relaxed);
+}
+
+.sdm-change-rollback-body h1,
+.sdm-change-rollback-body h2,
+.sdm-change-rollback-body h3 {
+  margin: var(--spacing-3) 0 var(--spacing-2) 0;
+}
+
+.sdm-change-rollback-body :first-child {
+  margin-top: 0;
+}
+
+.sdm-change-rollback-body code {
+  background: var(--color-surface-subtle);
+  padding: 0 var(--spacing-1);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-family-mono, monospace);
+  font-size: 0.95em;
+}
+
+.sdm-change-rollback-loading {
+  color: var(--color-text-tertiary);
+}
+
+/* ── Approvals tab ─────────────────────────────────────────────────── */
+
+.sdm-change-approvals-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.sdm-change-approvals-header h2 {
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+.sdm-change-approvals-state {
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+}
+
+.sdm-change-approvals-state[data-state="APPROVED"] {
+  color: var(--color-text-success, var(--color-text-primary));
+}
+
+.sdm-change-approvals-state[data-state="REJECTED"] {
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+.sdm-change-approvals-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-change-approvals-list li {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.8fr);
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+}
+
+.sdm-change-approver-icon {
+  font-size: 1.25em;
+  text-align: center;
+}
+
+.sdm-change-approver-id {
+  font-family: var(--font-family-mono, monospace);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-change-approver-decision {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sdm-change-approver-ts {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  text-align: right;
+}
+
+.sdm-change-approvals-hint {
+  margin: 0;
+  padding: var(--spacing-2) 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}

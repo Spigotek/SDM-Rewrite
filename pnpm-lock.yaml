@@ -238,9 +238,18 @@ importers:
       react-hotkeys-hook:
         specifier: ^5.3.2
         version: 5.3.2(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      react-markdown:
+        specifier: '9'
+        version: 9.1.0(@types/react@19.0.2)(react@19.0.0)
       react-router-dom:
         specifier: 6.30.3
         version: 6.30.3(react-dom@19.0.0(react@19.0.0))(react@19.0.0)
+      rehype-sanitize:
+        specifier: '6'
+        version: 6.0.0
+      remark-gfm:
+        specifier: '4'
+        version: 4.0.1
     devDependencies:
       '@lhci/cli':
         specifier: ^0.15.1
