@@ -28,5 +28,25 @@
   "sla": {
     "breached": "SLA breached",
     "atRisk": "Breach risk"
+  },
+  "placeholders": {
+    "activeTenant": "Active tenant:",
+    "queue": "Queue table arrives in H.7. This is just a placeholder behind the H.0 routing infrastructure.",
+    "ticketDetailTitle": "Ticket {id}",
+    "ticketDetail": "Split-view ticket detail arrives in H.8.",
+    "changesTitle": "Changes",
+    "changes": "Changes list arrives in H.10.",
+    "changesCalendarTitle": "Change calendar",
+    "changesCalendar": "Change calendar arrives in H.10.",
+    "changeDetailTitle": "Change {id}",
+    "changeDetail": "Change detail arrives in H.10.",
+    "problemsTitle": "Problems",
+    "problems": "Problems list arrives in H.9.",
+    "cmdbTitle": "CMDB",
+    "cmdb": "CMDB browse arrives in H.11.",
+    "cmdbCiTitle": "CI {id}",
+    "cmdbCi": "Configuration item detail arrives in H.11.",
+    "kbTitle": "KB",
+    "kb": "KB browse arrives in H.12."
   }
 }

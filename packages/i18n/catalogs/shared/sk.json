@@ -49,7 +49,12 @@
     "renderCrashed": "Niečo sa pokazilo",
     "boundaryTitle": "Niečo sa pokazilo",
     "boundaryBody": "Skús obnoviť stránku. Ak to pokračuje, kontaktuj podporu.",
-    "boundaryRefresh": "Obnoviť stránku"
+    "boundaryRefresh": "Obnoviť stránku",
+    "notFoundTitle": "Stránka sa nenašla",
+    "notFoundBody": "Hľadanú stránku sme nenašli. Možno bola presunutá alebo si zadal zlú URL.",
+    "notFoundHome": "Späť na hlavnú",
+    "forbiddenTitle": "Nemáš prístup",
+    "forbiddenBody": "Túto stránku nevidíš s aktuálnou rolou v tomto tenante. Skontroluj rolu s administrátorom alebo prepni tenant."
   },
   "validation": {
     "required": "Toto pole je povinné.",

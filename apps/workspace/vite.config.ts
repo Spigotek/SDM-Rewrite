@@ -84,6 +84,16 @@ export default defineConfig(({ mode }) => {
               return "vendor-i18n";
             }
             if (
+              /[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:react-router|react-router-dom|@remix-run[\\/])/.test(
+                id,
+              )
+            ) {
+              return "vendor-router";
+            }
+            if (/[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:@tanstack[\\/])/.test(id)) {
+              return "vendor-state";
+            }
+            if (
               /[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:react|react-dom|scheduler)[@\\/]/.test(id)
             ) {
               return "vendor-react";

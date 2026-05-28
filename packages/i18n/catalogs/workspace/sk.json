@@ -28,5 +28,25 @@
   "sla": {
     "breached": "SLA prekročená",
     "atRisk": "Riziko prekročenia"
+  },
+  "placeholders": {
+    "activeTenant": "Aktívny tenant:",
+    "queue": "Queue tabuľka dorazí v H.7. Toto je len placeholder cez H.0 routing infraštruktúru.",
+    "ticketDetailTitle": "Ticket {id}",
+    "ticketDetail": "Split-view detail ticketu dorazí v H.8.",
+    "changesTitle": "Changes",
+    "changes": "Zoznam changes dorazí v H.10.",
+    "changesCalendarTitle": "Change kalendár",
+    "changesCalendar": "Change kalendár dorazí v H.10.",
+    "changeDetailTitle": "Change {id}",
+    "changeDetail": "Detail change dorazí v H.10.",
+    "problemsTitle": "Problems",
+    "problems": "Zoznam problems dorazí v H.9.",
+    "cmdbTitle": "CMDB",
+    "cmdb": "CMDB browse dorazí v H.11.",
+    "cmdbCiTitle": "CI {id}",
+    "cmdbCi": "Detail konfiguračnej položky dorazí v H.11.",
+    "kbTitle": "KB",
+    "kb": "KB browse dorazí v H.12."
   }
 }

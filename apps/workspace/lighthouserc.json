@@ -1,6 +1,5 @@
 {
-  "_comment_scope": "Workspace LHCI config. Per performance.md §1 workspace pages are audited on DESKTOP form factor (Anna persona, 2-monitor workstation). Phase G ships a no-router shell; Phase H wires React Router and adds per-route assertions matching performance.md §2 workspace `/queue` desktop (TTI ≤ 2.5 s, LCP ≤ 2.0 s, CLS ≤ 0.05, score ≥ 0.85).",
-  "_comment_timing_thresholds": "Numeric timing thresholds (TTI/LCP) are deferred to Phase H — they require working bootstrap which needs BFF /config available. Static-dist LHCI on Phase G shell stops at the `Bootstrap failed: /config HTTP 404` error message. Until BFF or MSW is wired into the CI LHCI run, this config asserts only stable signals: categories:accessibility + categories:best-practices + CLS. Timing assertions stay listed (as `warn`) for PR visibility.",
+  "_comment_scope": "Workspace LHCI config. Per performance.md §1 workspace pages are audited on DESKTOP form factor (Anna persona, 2-monitor workstation). H.0 wires React Router so `/queue` is reachable as a routed placeholder; timing thresholds graduate to error per performance.md §2 workspace `/queue` desktop (TTI ≤ 2.5 s, LCP ≤ 2.0 s, CLS ≤ 0.05, score ≥ 0.85). Other routes stay listed under `_url_todo_phase_h` and graduate as feature chunks (H.7+) ship real content.",
   "ci": {
     "collect": {
       "staticDistDir": "./dist",
@@ -23,16 +22,15 @@
       }
     },
     "assert": {
-      "_comment_blocking": "Blocking assertions — robust against the Phase G bootstrap state. CLS + accessibility + best-practices catch obvious regressions.",
-      "_comment_warn_phase_h": "Timing thresholds (TTI, LCP, score) graduate to `error` in Phase H. Values match performance.md §2 workspace `/queue` desktop.",
+      "_comment_h0_graduation": "H.0 graduates timing thresholds from warn to error: workspace `/queue` is now reachable via React Router redirect from `/`, so the same critical-path code as future feature routes runs. Numeric thresholds match performance.md §2 workspace `/queue` desktop. CLS/a11y/best-practices stay structural error gates.",
       "assertions": {
         "cumulative-layout-shift": ["error", { "maxNumericValue": 0.05 }],
         "categories:accessibility": ["error", { "minScore": 0.9 }],
         "categories:best-practices": ["error", { "minScore": 0.9 }],
-        "categories:performance": ["warn", { "minScore": 0.85 }],
-        "interactive": ["warn", { "maxNumericValue": 2500 }],
-        "largest-contentful-paint": ["warn", { "maxNumericValue": 2000 }],
-        "total-blocking-time": ["warn", { "maxNumericValue": 300 }]
+        "categories:performance": ["error", { "minScore": 0.85 }],
+        "interactive": ["error", { "maxNumericValue": 2500 }],
+        "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
+        "total-blocking-time": ["error", { "maxNumericValue": 300 }]
       }
     },
     "upload": { "target": "temporary-public-storage" }
