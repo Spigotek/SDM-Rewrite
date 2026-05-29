@@ -6,7 +6,7 @@ import { CiHeader } from "./components/CiHeader";
 import { CiTabs } from "./components/CiTabs";
 import { DetailTab } from "./components/DetailTab";
 import { AttributeGroups } from "./components/AttributeGroups";
-import { RelationshipsPlaceholder } from "./components/RelationshipsPlaceholder";
+import { RelationshipGraph } from "./components/RelationshipGraph";
 import { HistoryTab } from "./components/HistoryTab";
 import { useCmdbCiTab } from "./hooks";
 import "./cmdb.css";
@@ -16,8 +16,8 @@ import "./cmdb.css";
  * / Relationships / History). Pattern mirrors `/changes/:id` (H.9):
  *  - URL-driven active tab (`?tab=attributes`) for deep links from change
  *    impact rows + audit log entries.
- *  - Detail, Attributes, History are real (read-only); Relationships is a
- *    placeholder card pending H.14 Cytoscape graph.
+ *  - Detail, Attributes, History are real (read-only); Relationships renders
+ *    the lazy Cytoscape graph (H.14) with a list-view a11y fallback.
  *
  * Cross-tenant CI variant (#18) — Robert lands on `stg-shared-01` owned by
  * HQ — is deferred to a later chunk; H.13 assumes single-tenant CI.
@@ -61,7 +61,7 @@ export default function CmdbCiRoute() {
       <CiTabs active={tab} onSelect={setTab} />
       {tab === "detail" && <DetailTab detail={detail} />}
       {tab === "attributes" && <AttributeGroups detail={detail} />}
-      {tab === "relationships" && <RelationshipsPlaceholder />}
+      {tab === "relationships" && <RelationshipGraph detail={detail} />}
       {tab === "history" && <HistoryTab detail={detail} />}
     </section>
   );

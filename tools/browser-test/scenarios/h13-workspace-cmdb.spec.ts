@@ -12,7 +12,8 @@ import { test, expect } from "../fixtures/isolated-context";
  *      History) and the URL `?tab=` param updates for non-default tabs.
  *   4. Attributes tab — verify the per-class collapsible groups render and
  *      toggling collapse round-trips through localStorage.
- *   5. Relationships tab — verify the H.14 placeholder card renders.
+ *   5. Relationships tab — verify the H.14 graph panel mounts (its tabpanel
+ *      testid is enough; H.14's own spec asserts the canvas + drill-in).
  *   6. History tab — verify the read-only timeline renders (or the
  *      explicit empty-state when the CI fixture has no neighbours).
  */
@@ -73,7 +74,6 @@ test("H.13 cmdb — list, detail tabs, attribute collapse, history", async ({ is
   await isolatedPage.getByTestId("cmdb-tab-relationships").click();
   await expect(isolatedPage.getByTestId("cmdb-tabpanel-relationships")).toBeVisible();
   await expect(isolatedPage).toHaveURL(/[?&]tab=relationships/);
-  await expect(isolatedPage.getByTestId("cmdb-graph-placeholder")).toBeVisible();
 
   // ── History tab ──────────────────────────────────────────────────────
   await isolatedPage.getByTestId("cmdb-tab-history").click();

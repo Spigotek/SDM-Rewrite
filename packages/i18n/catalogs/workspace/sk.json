@@ -535,7 +535,43 @@
     },
     "relationships": {
       "title": "Vzťahy",
-      "placeholder": "Tu bude graf vzťahov — interaktívny pan/zoom, depends-on filter, impact analysis. Pridáme v nasledujúcej iterácii (H.14)."
+      "count": "{count} vzťahov",
+      "loading": "Načítavam vzťahy…",
+      "chunkLoading": "Načítavam graf…",
+      "error": "Vzťahy sa nepodarilo načítať.",
+      "empty": "Toto CI nemá zaznamenané žiadne vzťahy.",
+      "graphAriaLabel": "Interaktívny graf vzťahov CI",
+      "listAriaLabel": "Zoznam vzťahov CI",
+      "legendAriaLabel": "Legenda typov vzťahov",
+      "controlsAriaLabel": "Ovládacie prvky grafu",
+      "modeAriaLabel": "Spôsob zobrazenia",
+      "layoutLabel": "Layout",
+      "showMore": "Zobraziť viac",
+      "overflow": "Zobrazujem prvých {shown} z {total}.",
+      "mode": {
+        "graph": "Zobraziť ako graf",
+        "list": "Zobraziť ako zoznam"
+      },
+      "layout": {
+        "force": "Force-directed",
+        "tree": "Strom",
+        "breadth": "Breadth-first"
+      },
+      "legend": {
+        "depends_on": "závisí od",
+        "hosts": "hostuje",
+        "peers_with": "peer"
+      },
+      "type": {
+        "DEPENDS_ON": "závisí od",
+        "SUPPORTS": "podporuje",
+        "RUNS_ON": "beží na",
+        "INSTALLED_ON": "nainštalované na",
+        "CONNECTED_TO": "pripojené k",
+        "PARENT_OF": "rodič",
+        "USES_SERVICE": "využíva službu",
+        "PROVIDES_SERVICE": "poskytuje službu"
+      }
     },
     "history": {
       "title": "História zmien",
