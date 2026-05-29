@@ -1,0 +1,537 @@
+/**
+ * CMDB list + CI detail layout per wireframe `05-cmdb-ci-detail.md`.
+ * Pulls visual tokens from `@sdm/design-system/tokens.css`; this file
+ * carries layout + density rules only. Style decisions mirror the H.9
+ * `changes.css` baseline so the two list/detail pages feel like siblings.
+ */
+
+/* ── List page ─────────────────────────────────────────────────────── */
+
+.sdm-cmdb-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: var(--spacing-3);
+}
+
+.sdm-cmdb-page-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+}
+
+.sdm-cmdb-page-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-cmdb-tenant-hint {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-cmdb-state {
+  color: var(--color-text-secondary);
+  padding: var(--spacing-4);
+}
+
+.sdm-cmdb-state--error {
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+/* ── Filter bar ────────────────────────────────────────────────────── */
+
+.sdm-cmdb-filterbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-cmdb-filterbar-row {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: center;
+}
+
+.sdm-cmdb-search {
+  flex: 1 1 auto;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-cmdb-search:focus-visible {
+  outline: 2px solid var(--color-accent, var(--color-text-primary));
+  outline-offset: 1px;
+}
+
+.sdm-cmdb-result-count {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.sdm-cmdb-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-1);
+  align-items: center;
+}
+
+.sdm-cmdb-chip-group-label {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+  margin-right: var(--spacing-2);
+}
+
+.sdm-cmdb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: 999px;
+  background: var(--color-surface-raised);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.sdm-cmdb-chip:hover,
+.sdm-cmdb-chip:focus-visible {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.sdm-cmdb-chip--active {
+  background: var(--color-accent, var(--color-text-primary));
+  border-color: var(--color-accent, var(--color-text-primary));
+  color: var(--color-text-on-accent, #fff);
+}
+
+.sdm-cmdb-chip-count {
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* ── List table ────────────────────────────────────────────────────── */
+
+.sdm-cmdb-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+}
+
+.sdm-cmdb-table thead th {
+  text-align: left;
+  padding: var(--spacing-2) var(--spacing-3);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  background: var(--color-surface-raised);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sdm-cmdb-table tbody td {
+  padding: var(--spacing-2) var(--spacing-3);
+  border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
+  vertical-align: middle;
+}
+
+.sdm-cmdb-row {
+  cursor: pointer;
+}
+
+.sdm-cmdb-row:hover,
+.sdm-cmdb-row:focus-visible {
+  background: var(--color-surface-hover);
+  outline: none;
+}
+
+.sdm-cmdb-cell-id {
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-secondary);
+}
+
+.sdm-cmdb-cell-name,
+.sdm-cmdb-cell-class,
+.sdm-cmdb-cell-owner,
+.sdm-cmdb-cell-last-sync {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sdm-cmdb-cell-class,
+.sdm-cmdb-cell-owner,
+.sdm-cmdb-cell-last-sync {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+/* ── Detail page ───────────────────────────────────────────────────── */
+
+.sdm-cmdb-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  min-height: 0;
+  overflow: auto;
+}
+
+.sdm-cmdb-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  padding-bottom: var(--spacing-3);
+  position: sticky;
+  top: 0;
+  background: var(--color-surface, transparent);
+  z-index: 1;
+}
+
+.sdm-cmdb-header-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
+.sdm-cmdb-header-id {
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.sdm-cmdb-header-name {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-cmdb-header-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-3);
+}
+
+.sdm-cmdb-header-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.sdm-cmdb-header-label {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+/* ── Tab bar ───────────────────────────────────────────────────────── */
+
+.sdm-cmdb-tabs {
+  display: flex;
+  gap: var(--spacing-1);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+}
+
+.sdm-cmdb-tab {
+  padding: var(--spacing-2) var(--spacing-4);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  margin-bottom: -1px;
+}
+
+.sdm-cmdb-tab:hover {
+  color: var(--color-text-primary);
+}
+
+.sdm-cmdb-tab[data-active] {
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-accent, var(--color-text-primary));
+}
+
+.sdm-cmdb-tab:focus-visible {
+  outline: 2px solid var(--color-accent, var(--color-text-primary));
+  outline-offset: 2px;
+}
+
+.sdm-cmdb-tabpanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+/* ── Detail tab ────────────────────────────────────────────────────── */
+
+.sdm-cmdb-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-3) var(--spacing-4);
+  margin: 0;
+}
+
+.sdm-cmdb-detail-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-cmdb-detail-row dt {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+}
+
+.sdm-cmdb-detail-row dd {
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.sdm-cmdb-detail-description h2 {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--font-size-md);
+}
+
+.sdm-cmdb-detail-empty {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+/* ── Attributes tab ────────────────────────────────────────────────── */
+
+.sdm-cmdb-attributes-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.sdm-cmdb-attributes-header h2 {
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+.sdm-cmdb-attributes-count {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.sdm-cmdb-attribute-groups {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-cmdb-attribute-group {
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+}
+
+.sdm-cmdb-attribute-group-summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  font-weight: var(--font-weight-medium);
+}
+
+.sdm-cmdb-attribute-group-summary::-webkit-details-marker {
+  display: none;
+}
+
+.sdm-cmdb-attribute-group-summary::before {
+  content: "▶";
+  font-size: 0.75em;
+  color: var(--color-text-tertiary);
+  transition: transform 0.15s ease;
+}
+
+.sdm-cmdb-attribute-group[open] > .sdm-cmdb-attribute-group-summary::before {
+  transform: rotate(90deg);
+}
+
+.sdm-cmdb-attribute-group-summary:focus-visible {
+  outline: 2px solid var(--color-accent, var(--color-text-primary));
+  outline-offset: 2px;
+}
+
+.sdm-cmdb-attribute-group-title {
+  flex: 1 1 auto;
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  font-size: var(--font-size-xs);
+}
+
+.sdm-cmdb-attribute-group-count {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  background: var(--color-surface-subtle);
+  padding: 0 var(--spacing-1);
+  border-radius: var(--radius-sm);
+}
+
+.sdm-cmdb-attribute-list {
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-3) var(--spacing-3) var(--spacing-3);
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--spacing-2) var(--spacing-3);
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+}
+
+.sdm-cmdb-attribute-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.4fr) minmax(0, 0.6fr);
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  align-items: baseline;
+}
+
+.sdm-cmdb-attribute-row dt {
+  color: var(--color-text-tertiary);
+  font-family: var(--font-family-mono, monospace);
+  font-size: var(--font-size-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sdm-cmdb-attribute-row dd {
+  margin: 0;
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-word;
+}
+
+/* ── Relationships placeholder ─────────────────────────────────────── */
+
+.sdm-cmdb-graph-placeholder {
+  border: var(--border-width-thin) dashed var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4) var(--spacing-5, var(--spacing-4));
+  background: var(--color-surface-raised);
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.sdm-cmdb-graph-placeholder h2 {
+  margin: 0 0 var(--spacing-2) 0;
+  font-size: var(--font-size-md);
+  color: var(--color-text-primary);
+}
+
+.sdm-cmdb-graph-placeholder p {
+  margin: 0;
+  font-style: italic;
+  color: var(--color-text-tertiary);
+}
+
+/* ── History tab ───────────────────────────────────────────────────── */
+
+.sdm-cmdb-history-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.sdm-cmdb-history-header h2 {
+  margin: 0;
+  font-size: var(--font-size-md);
+}
+
+.sdm-cmdb-history-count {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.sdm-cmdb-history-state {
+  color: var(--color-text-secondary);
+  padding: var(--spacing-3) 0;
+}
+
+.sdm-cmdb-history-state--error {
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+.sdm-cmdb-history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-cmdb-history-row {
+  display: grid;
+  grid-template-columns: minmax(0, 0.35fr) minmax(0, 0.2fr) minmax(0, 0.2fr) minmax(0, 1fr);
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  font-size: var(--font-size-sm);
+  align-items: baseline;
+}
+
+.sdm-cmdb-history-ts {
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-size-xs);
+}
+
+.sdm-cmdb-history-action {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  font-size: var(--font-size-xs);
+}
+
+.sdm-cmdb-history-actor {
+  color: var(--color-text-secondary);
+  font-family: var(--font-family-mono, monospace);
+  font-size: var(--font-size-xs);
+}
+
+.sdm-cmdb-history-detail {
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

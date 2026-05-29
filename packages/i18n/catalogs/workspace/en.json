@@ -408,11 +408,149 @@
     "activeTenant": "Active tenant:",
     "ticketDetailTitle": "Ticket {id}",
     "ticketDetail": "Split-view ticket detail arrives in H.8.",
-    "cmdbTitle": "CMDB",
-    "cmdb": "CMDB browse arrives in H.11.",
-    "cmdbCiTitle": "CI {id}",
-    "cmdbCi": "Configuration item detail arrives in H.11.",
     "kbTitle": "KB",
     "kb": "KB browse arrives in H.12."
+  },
+  "cmdb": {
+    "title": "CMDB",
+    "loading": "Loading configuration items…",
+    "error": "Failed to load CMDB.",
+    "empty": "No CIs in this tenant.",
+    "columns": {
+      "id": "ID",
+      "name": "Name",
+      "class": "Class",
+      "status": "Status",
+      "owner": "Owner",
+      "lastSync": "Last sync"
+    },
+    "fields": {
+      "class": "Class",
+      "status": "Status",
+      "owner": "Owner",
+      "ip": "IP address",
+      "vendor": "Vendor",
+      "model": "Model",
+      "serialNumber": "Serial number",
+      "assetNumber": "Asset number",
+      "systemName": "Hostname",
+      "createdAt": "Created",
+      "lastModifiedAt": "Last modified",
+      "description": "Description",
+      "descriptionEmpty": "No description."
+    },
+    "owner": {
+      "unassigned": "Unassigned"
+    },
+    "statusLabel": {
+      "ACTIVE": "Active",
+      "INACTIVE": "Inactive",
+      "RETIRED": "Retired",
+      "INVENTORY": "Inventory"
+    },
+    "class": {
+      "DatabaseInstance": "Database",
+      "NetworkServer": "Server",
+      "Service": "Service",
+      "OperatingSystem": "Operating system",
+      "Router": "Router",
+      "Printer": "Printer",
+      "PortfolioApplication": "Application",
+      "ProvisionedSoftware": "Software",
+      "StorageVolume": "Storage volume",
+      "StoragePool": "Storage pool",
+      "ESXHypervisor": "ESX hypervisor",
+      "HyperVHypervisorManager": "Hyper-V manager",
+      "Processor": "Processor",
+      "Memory": "Memory",
+      "InterfaceCard": "Network card",
+      "Port": "Port",
+      "GenericIPDevice": "IP device",
+      "ResourceServer": "Resource server",
+      "RunningHardware": "Hardware",
+      "Location": "Location",
+      "File": "File",
+      "MediaDrive": "Media drive",
+      "DiskPartition": "Partition",
+      "EnvironmentalSensor": "Sensor"
+    },
+    "filters": {
+      "ariaLabel": "CMDB list filters",
+      "searchPlaceholder": "Search CIs (name, hostname, serial)…",
+      "classFilterLabel": "Class",
+      "statusFilterLabel": "Status",
+      "reset": "Reset",
+      "resultCount": "{visible} of {total}",
+      "noResults": "No CIs match the filter."
+    },
+    "tabs": {
+      "ariaLabel": "CI detail sections",
+      "detail": "Detail",
+      "attributes": "Attributes",
+      "relationships": "Relationships",
+      "history": "History"
+    },
+    "attributes": {
+      "title": "Attributes",
+      "count": "{count} attributes",
+      "empty": "No attributes defined for this CI class."
+    },
+    "attributeGroup": {
+      "key": "Key attributes",
+      "database": "Database",
+      "network": "Network",
+      "compliance": "Compliance",
+      "custom": "Custom attributes",
+      "generic": "All attributes"
+    },
+    "attribute": {
+      "hostname": "Hostname",
+      "ipAddress": "IP address",
+      "dnsName": "DNS",
+      "macAddress": "MAC address",
+      "vendor": "Vendor",
+      "model": "Model",
+      "serialNumber": "Serial number",
+      "assetNumber": "Asset number",
+      "status": "Status",
+      "createdAt": "Created",
+      "lastModifiedAt": "Last modified",
+      "productName": "Product",
+      "protocol": "Protocol",
+      "accessedViaTcpPort": "TCP port",
+      "processId": "Process ID",
+      "firmwareVersion": "Firmware",
+      "routingProtocolTypes": "Routing protocol",
+      "routingRedundancyType": "Redundancy",
+      "osType": "OS type",
+      "version": "Version",
+      "buildNumber": "Build",
+      "dbInstanceName": "DB instance",
+      "dbServerType": "DB server",
+      "processDistinguishingId": "Process distinguishing ID",
+      "name": "Name",
+      "family": "Family",
+      "systemName": "Hostname",
+      "description": "Description"
+    },
+    "relationships": {
+      "title": "Relationships",
+      "placeholder": "Relationship graph — interactive pan/zoom, depends-on filter, impact analysis — arrives in the next iteration (H.14)."
+    },
+    "history": {
+      "title": "Change history",
+      "loading": "Loading history…",
+      "error": "Failed to load history.",
+      "empty": "No changes recorded for this CI yet.",
+      "count": "{count} entries",
+      "action": {
+        "created": "Created",
+        "attribute_changed": "Attribute changed",
+        "relationship_added": "Relationship added",
+        "relationship_removed": "Relationship removed",
+        "status_changed": "Status changed",
+        "discovered": "Discovery"
+      }
+    }
   }
 }
