@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.14 (CMDB relationships graph — Cytoscape 3 lazy, PR #38). Predchádzajúce: PR #37 — H.13 CMDB CI; PR #36 — H.12 problems.
-- **In flight:** Phase H — Feature modules (15/17 chunks merged).
-- **Next up:** Chunk H.15 — Workspace KB browse + read (read-only MVP) per H.md §D2 recommended order.
+- **Last merged:** Chunk H.15 (Workspace KB browse + read — read-only, PR #39). Predchádzajúce: PR #38 — H.14 CMDB graph; PR #37 — H.13 CMDB CI.
+- **In flight:** Phase H — Feature modules (16/17 chunks merged).
+- **Next up:** Chunk H.16 — Acceptance criteria smoke (18 journeys, **close Phase H**) per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.14 DONE (2026-05-29).
+Posledná revízia tohto dokumentu: H.15 DONE (2026-05-29).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.14 DONE (2026-05-29).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (15/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (16/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.15 Workspace KB browse + read ✅ DONE** — `/kb` workspace browse route (`KbBrowseRoute` + `KbBrowseList` DataTable variant + `KbFilters`) + `/kb/article/:id` workspace article view (`KbArticleRoute` + `ArticleHeader` + `ArticleBody` Markdown + `ArticleStats` read-only). Filter by category + language. `<KbAttachIncidentAction>` cross-feature CTA — surfaces via `?attachToTicket=INC-X` URL param, inserts link to active ticket composer. **NO editor** per ROADMAP v1+ — Edit/New buttons hidden via `<Can permission="kb.edit" fallback={null}>` (G.1). MarkdownRenderer reuses vendor-markdown chunk from H.9 (lazy-loaded). MSW: minor augmentation v `knowledge.ts` pre workspace view (article stats endpoint). i18n: +62 SK/EN `kb.*` workspace keys. Browser test `h15-workspace-kb.spec.ts` (104 LOC). Plán: [H.15.md](./plans/H.15.md), PR #39.
 
 - **H.14 CMDB relationships graph ✅ DONE** — Cytoscape 3 + `react-cytoscapejs` + `cytoscape-cose-bilkent` lazy-loaded `vendor-graph` chunk. Relationships tab v `/cmdb/ci/:id` aktivovaná (replace H.13 `RelationshipsPlaceholder`). Komponenty: `RelationshipGraph` (Cytoscape wrapper), `CmdbGraph` (CMDB-specific preset), `GraphLegend` (edge style toggle), `GraphListFallback` (a11y treeview alternative). Layouts: `cose-bilkent` default (force-directed), `breadthfirst` (tree), `concentric` (breadth) — built-in zero-cost plugins (dagre dropped pre lodash bloat — pushed chunk to 197 KB; mapping documentary v `CmdbGraph.tsx` + `cytoscape-config.ts` komentároch). Edge styles per relationType: `depends_on` solid, `hosts` thick, `peers_with` dashed (per components.md). Node click → drill-in `/cmdb/ci/:newId`. Max 200 nodes default + "Show more" prompt. A11y toggle "Zobraziť ako zoznam" → `GraphListFallback` treeview. **Deviation**: vendor-graph cap raised 150 → 200 KB (Cytoscape 3.33 gzipped ~160 KB on its own — under any deployment); final chunk **164.11 KB / 200 KB** gzip. Workspace initial JS **176.01 KB / 350 KB** — flat vs H.13 (graph fully lazy). BFF nezmenené (MSW `/api/ci/:id/relationships` returns `{ relationships, neighbours }`; BFF projection BREL queries deferred per H.13 precedent). i18n: +cmdb.graph.\* SK/EN. Browser test `h14-cmdb-graph.spec.ts`. Plán: [H.14.md](./plans/H.14.md), PR #38.
 

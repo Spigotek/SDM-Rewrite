@@ -1,7 +1,9 @@
 # H.15 — Workspace: KB browse + read (read-only MVP)
 
-> **Status**: 🔜 (blokované na H.6 — KB read flow established)
-> **Branch**: `chunk/H.15-workspace-kb` > **Persona**: Jana (`kb_editor` reads articles; **write/editor je v1+**)
+> **Status**: ✅ DONE (2026-05-29)
+> **Branch**: `chunk/H.15-workspace-kb` (merged, deleted)
+> **PR**: #39 — merged squash via `--admin --delete-branch` > **Outcome**: KbBrowseRoute (DataTable + filters) + KbArticleRoute (Markdown via vendor-markdown chunk H.9 reused). KbAttachIncidentAction cross-feature via `?attachToTicket=INC-X`. Edit/New hidden via `<Can permission="kb.edit" fallback={null}>` — no v1+ editor surface. MSW knowledge.ts augmented for workspace view + stats.
+> **Persona**: Jana (`kb_editor` reads articles; **write/editor je v1+**)
 > **Cieľ**: route `/kb` (workspace) — browse mode (similar to portal H.6 ale
 > agent-focused: viac metadata viditeľne, KB-from-incident shortcut).
 > Editor (TipTap) je v1+, NIE MVP.
