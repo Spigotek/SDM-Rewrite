@@ -328,12 +328,86 @@
       "mobileFallbackLink": "Otvoriť zoznam zmien"
     }
   },
+  "problems": {
+    "title": "Problémy",
+    "loading": "Načítavam problémy…",
+    "error": "Problémy sa nepodarilo načítať. Skús refresh.",
+    "empty": "Žiadne problémy pre tento tenant.",
+    "noSummary": "(bez popisu)",
+    "columns": {
+      "ref": "ID",
+      "status": "Stav",
+      "summary": "Popis",
+      "rootCause": "Príčina",
+      "assignee": "Riešiteľ",
+      "openedAt": "Otvorený"
+    },
+    "statusLabel": {
+      "IDENTIFIED": "Identifikovaný",
+      "INVESTIGATION": "Vyšetrovanie",
+      "ROOT_CAUSE_KNOWN": "Príčina známa",
+      "KNOWN_ERROR": "Known error",
+      "RESOLVED": "Vyriešený",
+      "CL": "Uzavretý",
+      "CD": "Zrušený"
+    },
+    "fields": {
+      "status": "Stav",
+      "priority": "Priorita",
+      "impact": "Impact",
+      "urgency": "Urgency",
+      "assignee": "Riešiteľ",
+      "unassigned": "Nepriradené",
+      "openedAt": "Otvorený",
+      "resolvedAt": "Vyriešený",
+      "isMajor": "Major problém",
+      "description": "Popis",
+      "descriptionEmpty": "(bez popisu)",
+      "rootCause": "Analýza príčiny",
+      "rootCauseEmpty": "(príčina zatiaľ nie je identifikovaná)",
+      "category": "Kategória"
+    },
+    "filters": {
+      "ariaLabel": "Filtrovať problémy",
+      "searchPlaceholder": "Hľadať problémy…",
+      "resultCount": "{visible} z {total} problémov",
+      "statusFilterLabel": "Stav",
+      "reset": "Resetovať filtre",
+      "noResults": "🔍 Žiadne problémy nezodpovedajú filtrom."
+    },
+    "linkedIncidents": {
+      "title": "Prepojené incidenty",
+      "ariaLabel": "Prepojené incidenty",
+      "linkButton": "Prepojiť incident",
+      "unlinkButton": "Odpojiť",
+      "empty": "Zatiaľ žiadne prepojené incidenty.",
+      "unsupportedHint": "Link tickets feature dostupný po B-E customization.",
+      "count": "{count, plural, one {# incident} few {# incidenty} many {# incidentov} other {# incidentov}}"
+    },
+    "linkModal": {
+      "title": "Prepojiť incident s problémom",
+      "body": "Vyber jeden alebo viac incidentov ako prejavy tohto problému.",
+      "searchLabel": "Hľadať incidenty",
+      "searchPlaceholder": "Napíš ref alebo popis…",
+      "noMatches": "Žiadne incidenty nezodpovedajú hľadaniu.",
+      "selected": "{count, plural, one {# vybraný} few {# vybrané} many {# vybraných} other {# vybraných}}",
+      "submit": "Prepojiť vybrané"
+    },
+    "convertModal": {
+      "title": "Premeniť incident na problém?",
+      "body": "Vytvorí sa nový problém naseedovaný z tohto incidentu. Incident zostáva otvorený a je prepojený s novým problémom.",
+      "summaryLabel": "Popis problému",
+      "summaryPlaceholder": "Popíš základný problém…",
+      "submit": "Premeniť"
+    },
+    "actions": {
+      "convert": "Premeniť na problém"
+    }
+  },
   "placeholders": {
     "activeTenant": "Aktívny tenant:",
     "ticketDetailTitle": "Ticket {id}",
     "ticketDetail": "Split-view detail ticketu dorazí v H.8.",
-    "problemsTitle": "Problems",
-    "problems": "Zoznam problems dorazí v H.9.",
     "cmdbTitle": "CMDB",
     "cmdb": "CMDB browse dorazí v H.11.",
     "cmdbCiTitle": "CI {id}",

@@ -328,12 +328,86 @@
       "mobileFallbackLink": "Open changes list"
     }
   },
+  "problems": {
+    "title": "Problems",
+    "loading": "Loading problems…",
+    "error": "Failed to load problems. Try refresh.",
+    "empty": "No problems for this tenant.",
+    "noSummary": "(no summary)",
+    "columns": {
+      "ref": "ID",
+      "status": "Status",
+      "summary": "Summary",
+      "rootCause": "Root cause",
+      "assignee": "Assignee",
+      "openedAt": "Opened"
+    },
+    "statusLabel": {
+      "IDENTIFIED": "Identified",
+      "INVESTIGATION": "Investigation",
+      "ROOT_CAUSE_KNOWN": "Root cause known",
+      "KNOWN_ERROR": "Known error",
+      "RESOLVED": "Resolved",
+      "CL": "Closed",
+      "CD": "Cancelled"
+    },
+    "fields": {
+      "status": "Status",
+      "priority": "Priority",
+      "impact": "Impact",
+      "urgency": "Urgency",
+      "assignee": "Assignee",
+      "unassigned": "Unassigned",
+      "openedAt": "Opened",
+      "resolvedAt": "Resolved",
+      "isMajor": "Major problem",
+      "description": "Description",
+      "descriptionEmpty": "(no description)",
+      "rootCause": "Root cause analysis",
+      "rootCauseEmpty": "(no root cause identified yet)",
+      "category": "Category"
+    },
+    "filters": {
+      "ariaLabel": "Filter problems",
+      "searchPlaceholder": "Search problems…",
+      "resultCount": "{visible} of {total} problems",
+      "statusFilterLabel": "Status",
+      "reset": "Reset filters",
+      "noResults": "🔍 No problems match these filters."
+    },
+    "linkedIncidents": {
+      "title": "Linked incidents",
+      "ariaLabel": "Linked incidents",
+      "linkButton": "Link incident",
+      "unlinkButton": "Unlink",
+      "empty": "No linked incidents yet.",
+      "unsupportedHint": "Link tickets feature available after B-E customization.",
+      "count": "{count, plural, one {# incident} other {# incidents}}"
+    },
+    "linkModal": {
+      "title": "Link incident to this problem",
+      "body": "Pick one or more incidents to link as root-cause symptoms of this problem.",
+      "searchLabel": "Search incidents",
+      "searchPlaceholder": "Type ref or summary…",
+      "noMatches": "No incidents match the search.",
+      "selected": "{count, plural, one {# selected} other {# selected}}",
+      "submit": "Link selected"
+    },
+    "convertModal": {
+      "title": "Convert incident to problem?",
+      "body": "Create a new problem record seeded from this incident. The incident stays open and is linked to the new problem.",
+      "summaryLabel": "Problem summary",
+      "summaryPlaceholder": "Describe the underlying problem…",
+      "submit": "Convert"
+    },
+    "actions": {
+      "convert": "Convert to problem"
+    }
+  },
   "placeholders": {
     "activeTenant": "Active tenant:",
     "ticketDetailTitle": "Ticket {id}",
     "ticketDetail": "Split-view ticket detail arrives in H.8.",
-    "problemsTitle": "Problems",
-    "problems": "Problems list arrives in H.9.",
     "cmdbTitle": "CMDB",
     "cmdb": "CMDB browse arrives in H.11.",
     "cmdbCiTitle": "CI {id}",
