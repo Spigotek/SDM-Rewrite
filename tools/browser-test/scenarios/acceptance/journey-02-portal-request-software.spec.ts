@@ -43,8 +43,11 @@ test("journey-02 portal software request — catalog → dynamic form → reques
   await expect(isolatedPage.getByTestId("portal-catalog-item")).toBeVisible({ timeout: 10_000 });
   await expect(isolatedPage.getByTestId("catalog-form")).toBeVisible();
 
-  // Audience = self (avoids conditional colleague picker).
-  await isolatedPage.getByTestId("catalog-field-audience-self").check();
+  // Audience = self (avoids conditional colleague picker). Click the
+  // input directly so the `onChange` Controller wired by RHF fires
+  // synchronously — Playwright `.check()` semantics + the controlled
+  // `checked={value === opt.value}` binding can race in preview build.
+  await isolatedPage.getByTestId("catalog-field-audience-self").click({ force: true });
   // `data-testid` is spread onto the inner `<input>` itself by the
   // TextField primitive (forwards `...rest` to the input), so we fill
   // the testid locator directly.
