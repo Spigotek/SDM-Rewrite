@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.12 (Workspace problems + link-to-incident, PR #36). Predchádzajúce: PR #35 — H.10 calendar; PR #34 — H.11 CAB.
-- **In flight:** Phase H — Feature modules (13/17 chunks merged).
-- **Next up:** Chunk H.13 — Workspace CMDB CI list + detail per H.md §D2 recommended order.
+- **Last merged:** Chunk H.13 (Workspace CMDB CI list + detail, PR #37). Predchádzajúce: PR #36 — H.12 problems; PR #35 — H.10 calendar.
+- **In flight:** Phase H — Feature modules (14/17 chunks merged).
+- **Next up:** Chunk H.14 — CMDB relationships graph (Cytoscape 3 lazy) per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.12 DONE (2026-05-29).
+Posledná revízia tohto dokumentu: H.13 DONE (2026-05-29).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.12 DONE (2026-05-29).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (13/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (14/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.13 Workspace CMDB CI list + detail ✅ DONE** — `/cmdb` route (`CmdbRoute` + `CmdbTable` + `FilterBar`) + `/cmdb/ci/:id` route (`CmdbCiRoute` + `CiHeader` + `CiTabs` 4-tab: `DetailTab` / Attributes / Relationships / History). DetailTab consumes `buildAttributeGroups()` registry per CI class — explicit groups pre top classes (DatabaseInstance / NetworkServer family / Service+PortfolioApplication family) + generic "All attributes" fallback pre 15 remaining classes (Location, File, MediaDrive…). `AttributeGroups` collapsible (Key/Database/Network/Compliance/Custom) — per-user localStorage persistence cez `useAttributeGroupCollapse` hook (`localStorage.cmdbCiCollapse:{ciClass}.{group}` key) s SSR-safe fallback. RelationshipsPlaceholder — H.14 doplní real graph. HistoryTab read-only change log; MSW `/api/ci/:id/history` synthetic deterministic stream (created → 0-3 relationship_added → attribute_changed if `lastModifiedAt` differs → discovered, sorted newest-first). URL-driven state: `?q=&class=&status=` na list, `?tab=` na detail. **CMDB read-only** per ROADMAP (write/edit v1+). BFF: žiadna augmentation (`/api/ci` MSW returns full domain `Ci`; thin `/api/cmdb` BFF projection swap dokumentovaný v `api.ts` ako "swap when MSW comes out"). Bundle: workspace **176.01 KB / 350 KB** (+0.04 KB vs H.12); CmdbRoute lazy 6.75 KB + CmdbCiRoute lazy 13.20 KB + cmdb.css 10.15 KB. i18n: +146 SK/EN `cmdb.*` keys (columns + 23 CiClass labels + statusLabel + attributeGroup + tabs + filters). Browser test `h13-workspace-cmdb.spec.ts` (89 LOC). Plán: [H.13.md](./plans/H.13.md), PR #37.
 
 - **H.12 Workspace problems + link-to-incident ✅ DONE** — `/problems` route (`ProblemsRoute` + `ProblemsTable` + `FilterBar`) + `/problems/:id` detail (`ProblemDetailRoute` + `ProblemHeader` + `ProblemBody` + `LinkedIncidentsList` + `ActivityTimeline` + `LinkIncidentModal` + `ConvertToProblemModal`). H.8 ActionBar More menu rozšírené o "Convert to problem" akciu. **Linked-incidents BFF integration deferred** to Phase I.x — CA SDM real mutation by si vyžadovala WC-query + `cr.rootcause_id` manipulation mimo F.2 entity proxy footprint (~200+ LOC across multiple BFF files). FE + MSW shipped today exercise full link/unlink/convert flow end-to-end; empty state surfaces "feature dostupný po B-E customization" hint when MSW není present. Audit emit deferred s BFF mutation — when Phase I.x lands endpoint, it must emit `data.problem.write` (composed under F.4 frozen taxonomy, no new event names). Bundle: workspace **175.97 KB / 350 KB** (+0.08 KB vs H.10); ProblemsRoute lazy 2.18 KB gzip + ProblemDetailRoute lazy 3.01 KB gzip. i18n: +78 SK/EN `problems.*` keys. Browser test `h12-workspace-problems.spec.ts` (120 LOC). Plán: [H.12.md](./plans/H.12.md), PR #36.
 

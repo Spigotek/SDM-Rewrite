@@ -1,7 +1,10 @@
 # H.13 — Workspace: CMDB CI list + CI detail (no graph)
 
-> **Status**: 🔜 (blokované na H.7 — uses table pattern)
-> **Branch**: `chunk/H.13-workspace-cmdb` > **Persona**: Robert (`cmdb_owner`)
+> **Status**: ✅ DONE (2026-05-29)
+> **Branch**: `chunk/H.13-workspace-cmdb` (merged, deleted)
+> **PR**: #37 — merged squash via `--admin --delete-branch` > **Bundle outcome**: workspace 176.01 KB / 350 KB (+0.04 KB vs H.12); CmdbRoute lazy 6.75 KB + CmdbCiRoute lazy 13.20 KB.
+> **Outcome**: buildAttributeGroups() registry per CI class — top classes (DatabaseInstance/NetworkServer/Service+App) + generic fallback. localStorage collapse persistence. MSW `/api/ci/:id/history` synthetic stream. URL-driven state per H.9 useChangeTab pattern. BFF unchanged (MSW returns full domain `Ci`; thin BFF projection swap documented as future task).
+> **Persona**: Robert (`cmdb_owner`)
 > **Cieľ**: route `/cmdb` (CI list — search + filter + table) + `/cmdb/ci/:id`
 > (CI detail — collapsible attribute groups, tabs: Detail / Attributes /
 > Relationships / History). Relationships tab placeholder; real graph v H.14.
