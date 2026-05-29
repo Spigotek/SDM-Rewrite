@@ -23,9 +23,9 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 - **Last merged:** Chunk H.16 (Acceptance criteria smoke — 18 journeys, **Phase H closed**, PR #40). Predchádzajúce: PR #39 — H.15 KB; PR #38 — H.14 CMDB graph.
 - **In flight:** —
-- **Next up:** Phase I — Acceptance + production hardening (~5 chunks: e2e Playwright, security audit, multi-tenancy edges, release v1.0 dry-run, v1.0 cut). **Phase H ✅ DONE (17/17 chunks).**
+- **Next up:** Phase I — Acceptance + production hardening + v1.0 cut (**8 chunks**, plánovanie hotové: [I.md](./plans/I.md) + I.0-I.7 per-chunk plans + [I-prompt.md](./plans/I-prompt.md) pre `/clear` workflow). Rozšírený scope: I.0 LHCI graduation + pôvodný I.1-I.3 (e2e + security + multi-tenancy) + I.4 KB authoring (v1+ pulled in) + I.5 SP cockpit (v1+ pulled in) + I.6 release dry-run + I.7 v1.0 cut. **Phase H ✅ DONE (17/17 chunks)**.
 
-Posledná revízia tohto dokumentu: Phase H DONE (2026-05-29).
+Posledná revízia tohto dokumentu: Phase I plánovanie hotové (2026-05-29).
 
 ---
 
@@ -178,26 +178,39 @@ Posledná revízia tohto dokumentu: Phase H DONE (2026-05-29).
 
 Granularita: 1 PR ≈ 1 (modul, app) dvojica. Odhad: **~25-35 PR** pre MVP scope.
 
-### Phase I — Acceptance + production hardening 🔜 (~5 chunks)
+### Phase I — Acceptance + production hardening + v1.0 cut 🔜 NEXT (8 chunks — rozšírený scope)
 
-- **I.1 Playwright e2e suite** — 18 acceptance criteria. Inputs: `qa-test-strategy/{acceptance-criteria,a11y-tests,performance}.md`.
-- **I.2 Security audit** — CodeQL + Trufflehog + `pnpm audit` + Snyk/Semgrep eval. Inputs: `security/owasp-mitigations.md`.
-- **I.3 Multi-tenancy edge cases** — RLS, cross-tenant data leak prevention, tenant switch state cleanup. Inputs: `docs/spec/multi-tenancy.md`.
-- **I.4 Release v1.0 dry-run** — full helm install do staging, smoke run, rollback test. Inputs: `system-overview.md` §Release.
-- **I.5 v1.0 cut** — semver tag, image push, helm OCI publish, release notes.
+> Cieľ: zatvoriť Phase H exit-criteria gaps (LHCI graduation + 18/18 strict
+> acceptance) + security/multi-tenancy hardening + KB editor (v1+ pulled in) +
+> SP cockpit (v1+ pulled in) + release v1.0. Detail: [I.md](./plans/I.md).
+
+- **I.0 LHCI graduation (MSW-in-LHCI)** — graduate timing thresholds `warn` → `error` per všetkých H.X routes; build s `VITE_USE_MOCKS=true` + `vite preview` v LHCI step. Closes Phase H exit #5. Plán: [I.0.md](./plans/I.0.md).
+- **I.1 Step-up 2FA + emergency approve + RHF Controller race fix** — BFF `POST /auth/step-up` (TOTP via node:crypto), FE `<StepUpModal>` gate pre critical+prod changes, journey-02 RHF Controller race fix v preview-build, journey-09 required-field close block. Closes journeys #2, #9, #11. Plán: [I.1.md](./plans/I.1.md).
+- **I.2 Security audit sweep** — CodeQL + Trufflehog workflows, axe-core/playwright sweep per route, Playwright multi-browser matrix (chromium + firefox + webkit), BroadcastChannel cross-tab rig, BFF security integration tests. Closes §4 deferred + C6 + C8. Plán: [I.2.md](./plans/I.2.md).
+- **I.3 Multi-tenancy edge cases** — BFF tenant scoping sweep, tenant suspension flow, X-Response-Tenant mismatch handling, Sentry beforeSend scrubbing. Closes §4.2 deferred. Plán: [I.3.md](./plans/I.3.md).
+- **I.4 KB authoring** (v1+ pulled in) — TipTap editor + DOMPurify sanitization + publish/visibility/draft auto-save + analytics dashboard. Closes journeys #13, #14, #15. Plán: [I.4.md](./plans/I.4.md).
+- **I.5 SP cockpit / cross-tenant view** (v1+ pulled in) — sp_admin "All my tenants" calendar overlay, shared-CI marker v CMDB, cross-tenant relationship graph edges, SP impersonation BFF endpoint. Closes journeys #12, #18. Plán: [I.5.md](./plans/I.5.md).
+- **I.6 Release v1.0 dry-run** — helm install do staging cluster, live 18-journey smoke proti real CA SDM 17.4, rollback test (RTO < 5 min), performance baseline, Sentry verify. Plán: [I.6.md](./plans/I.6.md).
+- **I.7 v1.0 cut** — semver `v1.0.0` git tag, portal/workspace/BFF images push, helm chart OCI publish, CHANGELOG.md + RELEASE-NOTES-v1.0.md. **Project = v1.0 RELEASED**. Plán: [I.7.md](./plans/I.7.md).
+
+Dispatch: strict sekvenčný I.0 → I.7 (per `feedback_pr_flow.md` PR-flow). Prompt template pre `/clear` workflow: [I-prompt.md](./plans/I-prompt.md).
 
 ---
 
-## v1 scope (post-MVP)
+## v1+ scope (post-v1.0)
 
-Tu sa neplánuje granulárne — po MVP cut sa znovu prejde tento dokument. Indicative
-fázy (každá vlastné chunks):
+Indicative chunks pre v1.1+ — replanned po v1.0 cut:
 
 - Bulk operations vo workspace queue (per `GOAL.md §3 v1`)
-- KB editor (write/publish)
+- Mobile PWA offline mode (draft auto-save, service-worker cache)
+- Advanced Change Calendar (drag-resize events, cross-tenant conflict overlay heavy mode)
+- CAB meeting big-screen mode (`CalendarPresenter`)
 - CMDB editor + Visualizer integrácia
-- Pokročilý Change Calendar + CAB workflow
+- KB analytics widgets (real-time ingest, dashboards)
 - Reporting widgety
+- Real-time collaboration (KB editor multi-user via Yjs/Loro)
+
+**Pulled into Phase I (no longer v1+)**: KB editor write/publish (→ I.4), SP cockpit cross-tenant view (→ I.5).
 
 ---
 
