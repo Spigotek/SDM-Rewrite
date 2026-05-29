@@ -82,11 +82,15 @@ export const router = createBrowserRouter([
       },
       {
         path: "cmdb",
-        lazy: async () => ({ Component: (await import("./placeholders/cmdb")).default }),
+        lazy: async () => ({
+          Component: (await import("../features/cmdb/CmdbRoute")).default,
+        }),
       },
       {
         path: "cmdb/ci/:id",
-        lazy: async () => ({ Component: (await import("./placeholders/cmdb-ci")).default }),
+        lazy: async () => ({
+          Component: (await import("../features/cmdb/CmdbCiRoute")).default,
+        }),
       },
       {
         path: "kb",

@@ -408,11 +408,149 @@
     "activeTenant": "Aktívny tenant:",
     "ticketDetailTitle": "Ticket {id}",
     "ticketDetail": "Split-view detail ticketu dorazí v H.8.",
-    "cmdbTitle": "CMDB",
-    "cmdb": "CMDB browse dorazí v H.11.",
-    "cmdbCiTitle": "CI {id}",
-    "cmdbCi": "Detail konfiguračnej položky dorazí v H.11.",
     "kbTitle": "KB",
     "kb": "KB browse dorazí v H.12."
+  },
+  "cmdb": {
+    "title": "CMDB",
+    "loading": "Načítavam konfiguračné položky…",
+    "error": "Nepodarilo sa načítať CMDB.",
+    "empty": "V tomto tenante nie sú žiadne CI.",
+    "columns": {
+      "id": "ID",
+      "name": "Názov",
+      "class": "Trieda",
+      "status": "Stav",
+      "owner": "Vlastník",
+      "lastSync": "Posledná synchr."
+    },
+    "fields": {
+      "class": "Trieda",
+      "status": "Stav",
+      "owner": "Vlastník",
+      "ip": "IP adresa",
+      "vendor": "Výrobca",
+      "model": "Model",
+      "serialNumber": "Sériové číslo",
+      "assetNumber": "Inventárne číslo",
+      "systemName": "Hostname",
+      "createdAt": "Vytvorené",
+      "lastModifiedAt": "Posledná zmena",
+      "description": "Popis",
+      "descriptionEmpty": "Žiadny popis."
+    },
+    "owner": {
+      "unassigned": "Bez vlastníka"
+    },
+    "statusLabel": {
+      "ACTIVE": "Aktívne",
+      "INACTIVE": "Neaktívne",
+      "RETIRED": "Vyradené",
+      "INVENTORY": "Sklad"
+    },
+    "class": {
+      "DatabaseInstance": "Databáza",
+      "NetworkServer": "Server",
+      "Service": "Služba",
+      "OperatingSystem": "Operačný systém",
+      "Router": "Router",
+      "Printer": "Tlačiareň",
+      "PortfolioApplication": "Aplikácia",
+      "ProvisionedSoftware": "Software",
+      "StorageVolume": "Storage volume",
+      "StoragePool": "Storage pool",
+      "ESXHypervisor": "ESX hypervisor",
+      "HyperVHypervisorManager": "Hyper-V manager",
+      "Processor": "Procesor",
+      "Memory": "Pamäť",
+      "InterfaceCard": "Sieťová karta",
+      "Port": "Port",
+      "GenericIPDevice": "IP zariadenie",
+      "ResourceServer": "Resource server",
+      "RunningHardware": "Hardware",
+      "Location": "Lokalita",
+      "File": "Súbor",
+      "MediaDrive": "Médium",
+      "DiskPartition": "Partícia",
+      "EnvironmentalSensor": "Senzor"
+    },
+    "filters": {
+      "ariaLabel": "Filtre CMDB zoznamu",
+      "searchPlaceholder": "Hľadať CI (názov, hostname, sériové číslo)…",
+      "classFilterLabel": "Trieda",
+      "statusFilterLabel": "Stav",
+      "reset": "Resetovať",
+      "resultCount": "{visible} z {total}",
+      "noResults": "Žiadne CI nespĺňajú filter."
+    },
+    "tabs": {
+      "ariaLabel": "Sekcie CI detailu",
+      "detail": "Detail",
+      "attributes": "Atribúty",
+      "relationships": "Vzťahy",
+      "history": "História"
+    },
+    "attributes": {
+      "title": "Atribúty",
+      "count": "{count} atribútov",
+      "empty": "Pre túto triedu CI nie sú definované žiadne atribúty."
+    },
+    "attributeGroup": {
+      "key": "Kľúčové atribúty",
+      "database": "Databáza",
+      "network": "Sieť",
+      "compliance": "Compliance",
+      "custom": "Vlastné atribúty",
+      "generic": "Všetky atribúty"
+    },
+    "attribute": {
+      "hostname": "Hostname",
+      "ipAddress": "IP adresa",
+      "dnsName": "DNS",
+      "macAddress": "MAC adresa",
+      "vendor": "Výrobca",
+      "model": "Model",
+      "serialNumber": "Sériové číslo",
+      "assetNumber": "Inventárne číslo",
+      "status": "Stav",
+      "createdAt": "Vytvorené",
+      "lastModifiedAt": "Posledná zmena",
+      "productName": "Produkt",
+      "protocol": "Protokol",
+      "accessedViaTcpPort": "TCP port",
+      "processId": "Process ID",
+      "firmwareVersion": "Firmware",
+      "routingProtocolTypes": "Routing protokol",
+      "routingRedundancyType": "Redundancia",
+      "osType": "OS typ",
+      "version": "Verzia",
+      "buildNumber": "Build",
+      "dbInstanceName": "DB inštancia",
+      "dbServerType": "DB server",
+      "processDistinguishingId": "Process distinguishing ID",
+      "name": "Názov",
+      "family": "Rodina",
+      "systemName": "Hostname",
+      "description": "Popis"
+    },
+    "relationships": {
+      "title": "Vzťahy",
+      "placeholder": "Tu bude graf vzťahov — interaktívny pan/zoom, depends-on filter, impact analysis. Pridáme v nasledujúcej iterácii (H.14)."
+    },
+    "history": {
+      "title": "História zmien",
+      "loading": "Načítavam históriu…",
+      "error": "Históriu sa nepodarilo načítať.",
+      "empty": "Pre toto CI zatiaľ nie sú zaznamenané žiadne zmeny.",
+      "count": "{count} záznamov",
+      "action": {
+        "created": "Vytvorené",
+        "attribute_changed": "Zmena atribútu",
+        "relationship_added": "Pridaný vzťah",
+        "relationship_removed": "Odstránený vzťah",
+        "status_changed": "Zmena stavu",
+        "discovered": "Discovery"
+      }
+    }
   }
 }

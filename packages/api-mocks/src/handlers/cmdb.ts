@@ -10,6 +10,97 @@ function tenantCis(tenant: string): Ci[] {
   return store.cis.filter((c) => c.tenantId === tenant);
 }
 
+/**
+ * Deterministic CI history stream — derived from the CI's lifecycle anchors
+ * (`createdAt`, `lastModifiedAt`) and its neighbour-relationship count. The
+ * goal is to give the workspace H.13 History tab a realistic timeline without
+ * a separate audit-log fixture. The BFF will eventually project CA SDM
+ * `nr_com` (asset_log BREL) into the same shape.
+ *
+ * Why deterministic + not random:
+ *  - Browser tests assert on row counts and action codes; a faker-seeded list
+ *    would still drift if the seed plumbing changes upstream.
+ *  - Reasoning about the timeline is easier when "ci:60003 always has 5
+ *    history rows starting with `created` and ending with `discovered`".
+ */
+function buildCiHistory(ci: Ci): Array<{
+  id: string;
+  timestamp: string;
+  action:
+    | "created"
+    | "attribute_changed"
+    | "relationship_added"
+    | "relationship_removed"
+    | "status_changed"
+    | "discovered";
+  actor: string;
+  detail: string;
+}> {
+  const neighbours = store.ciRelationships.filter(
+    (r) => r.sourceCiId === ci.id || r.targetCiId === ci.id,
+  );
+  const createdMs = Date.parse(ci.createdAt);
+  const modifiedMs = Date.parse(ci.lastModifiedAt);
+  const haveModifiedDelta = !Number.isNaN(modifiedMs) && modifiedMs !== createdMs;
+  const entries: Array<{
+    id: string;
+    timestamp: string;
+    action:
+      | "created"
+      | "attribute_changed"
+      | "relationship_added"
+      | "relationship_removed"
+      | "status_changed"
+      | "discovered";
+    actor: string;
+    detail: string;
+  }> = [];
+
+  entries.push({
+    id: `${ci.id}:hist:0`,
+    timestamp: ci.createdAt,
+    action: "created",
+    actor: "discovery@system",
+    detail: `CI vytvorené (class ${ci.class}).`,
+  });
+
+  neighbours.slice(0, 3).forEach((rel, idx) => {
+    // Spread relationship-adds across the lifecycle window.
+    const offset = haveModifiedDelta
+      ? createdMs + ((modifiedMs - createdMs) * (idx + 1)) / 5
+      : createdMs + (idx + 1) * 60_000 * 60 * 24;
+    entries.push({
+      id: `${ci.id}:hist:rel:${rel.id}`,
+      timestamp: new Date(offset).toISOString(),
+      action: rel.sourceCiId === ci.id ? "relationship_added" : "relationship_added",
+      actor: "discovery@system",
+      detail: `${rel.type} → ${rel.sourceCiId === ci.id ? rel.targetCiId : rel.sourceCiId}`,
+    });
+  });
+
+  if (haveModifiedDelta) {
+    entries.push({
+      id: `${ci.id}:hist:attr`,
+      timestamp: new Date(modifiedMs).toISOString(),
+      action: "attribute_changed",
+      actor: ci.primaryContactId ?? "discovery@system",
+      detail: "Aktualizované atribúty z poslednej discovery sweep.",
+    });
+  }
+
+  entries.push({
+    id: `${ci.id}:hist:disc`,
+    timestamp: new Date(Math.max(createdMs, modifiedMs)).toISOString(),
+    action: "discovered",
+    actor: "discovery@system",
+    detail: `Discovery agent overil dostupnosť — status ${ci.status}.`,
+  });
+
+  // Most recent first.
+  entries.sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+  return entries;
+}
+
 export const cmdbHandlers = [
   http.get("*/api/ci", ({ request }) => {
     const tenant = parseTenantFromRequest(request);
@@ -37,6 +128,14 @@ export const cmdbHandlers = [
       (r) => r.sourceCiId === ci.id || r.targetCiId === ci.id,
     );
     return HttpResponse.json({ relationships });
+  }),
+
+  http.get("*/api/ci/:id/history", ({ params, request }) => {
+    const tenant = parseTenantFromRequest(request);
+    const id = String(params["id"] ?? "");
+    const ci = tenantCis(tenant).find((c) => c.id === id);
+    if (!ci) return notFound("ci", id, correlationIdFrom(request));
+    return HttpResponse.json({ entries: buildCiHistory(ci) });
   }),
 
   // Lightweight CMDB search used by Service Catalog `ci-picker` fields (H.5).
