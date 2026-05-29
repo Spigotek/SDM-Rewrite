@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.11 (CAB approval flow, PR #34). Predchádzajúce: PR #33 — H.9 changes; PR #32 — H.6 KB.
-- **In flight:** Phase H — Feature modules (11/17 chunks merged).
-- **Next up:** Chunk H.10 — Change calendar (FullCalendar 6 lazy) per H.md §D2 recommended order.
+- **Last merged:** Chunk H.10 (Change calendar — FullCalendar 6 lazy, PR #35). Predchádzajúce: PR #34 — H.11 CAB; PR #33 — H.9 changes.
+- **In flight:** Phase H — Feature modules (12/17 chunks merged).
+- **Next up:** Chunk H.12 — Workspace problems + link-to-incident per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.11 DONE (2026-05-29).
+Posledná revízia tohto dokumentu: H.10 DONE (2026-05-29).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.11 DONE (2026-05-29).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (11/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (12/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.10 Change calendar ✅ DONE** — `/changes/calendar` route — `ChangeCalendarRoute` + `CalendarView` (FullCalendar 6 wrapper) + `CalendarFilters` (risk/status chips) + `EventTooltip` (portal-rendered hover). Plugins: `@fullcalendar/daygrid` + `@fullcalendar/timegrid` + `@fullcalendar/interaction` (drag-resize **disabled** per MVP — `editable: false`). Day/Week/Month view switch (segmented tabs). Event color per `risk_tier` mapping na `color.severity.*` tokens; click → `/changes/:id`. Mobile fallback: `window.matchMedia("(max-width: 900px)")` → banner "Pre kalendár otvor desktop" + redirect to `/changes` list. **Lazy chunk**: `vendor-calendar` manualChunks split — `@fullcalendar/*` + bundled `preact` (FullCalendar render engine — preact NIE React 19, kept out of vendor-react). **75.44 KB / 150 KB cap** gzip (well under heavy-chunk budget per performance.md §3). Workspace initial JS **175.89 KB / 350 KB** — flat vs H.11 (calendar fully lazy). i18n: +11 SK/EN `changes.calendar.*` keys. BFF range query NOT augmented (`changesInRangeQuery` filters client-side from existing `changesListQuery` cache; documented swap point pre BFF range support v1+). LHCI nezmenené (staticDistDir blocker persists). Browser test `h10-change-calendar.spec.ts`. Plán: [H.10.md](./plans/H.10.md), PR #35.
 
 - **H.11 CAB approval flow ✅ DONE** — `ApprovalsTab` z H.9 rozšírený o action buttons (Approve/Reject/Send reminder) gated by `<Can permission="cab.approve">`. Per-row buttons render iba pre `PENDING`; Send reminder skrytý na self-rows (žiadne self-nags). Modaly: `ApproveModal` (optional comment), `RejectModal` (RHF/Zod required reason per microcopy.md §6), `SendReminderModal`. BFF augmentation `apps/bff/src/api/endpoints/changes.ts` (+119 LOC) — `POST /api/changes/:id/{approve,reject,reminder}` s `requireActiveSession` + audit emit `data.chg.write` per F.4 (no new event names; `details.op` diskriminuje `cab.approve|cab.reject|cab.reminder`). MSW augmented (changes.ts) — back-compat `/approve` s `decision: approve|reject` + new `/reject` + `/reminder` paths s `rollupApprovalState`. **Step-up auth degraded** per user default (F.1 step-up not impl) — audit emit zostáva enabled, SIEM môže flagovať emergency approvals; Phase I.2 follow-up logged v `ApproveModal.tsx` komentári. Bundle: workspace **175.88 KB / 350 KB** (+0.79 KB vs H.9). i18n: +15 SK/EN `changes.cab.*` keys. Tests: 8 BFF cases pre payload validation + audit emit + F.4 invariant + browser scenario `h11-cab-approval.spec.ts`. Plán: [H.11.md](./plans/H.11.md), PR #34.
 

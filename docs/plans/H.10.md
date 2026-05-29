@@ -1,7 +1,10 @@
 # H.10 — Workspace: change calendar (FullCalendar lazy)
 
-> **Status**: 🔜 (blokované na H.9 — uses changes routes)
-> **Branch**: `chunk/H.10-change-calendar` > **Persona**: Peter
+> **Status**: ✅ DONE (2026-05-29)
+> **Branch**: `chunk/H.10-change-calendar` (merged, deleted)
+> **PR**: #35 — merged squash via `--admin --delete-branch` > **Bundle outcome**: workspace initial JS 175.89 KB / 350 KB (flat vs H.11 — calendar fully lazy); vendor-calendar chunk 75.44 KB / 150 KB cap.
+> **Deviations**: BFF `?start=&end=` range query NOT augmented (client-side filter on existing `changesListQuery` cache; documented swap point v1+); preact bundled with FullCalendar — kept v `vendor-calendar` chunk regex away from React 19 vendor-react; drag-resize disabled (`editable: false`) per MVP.
+> **Persona**: Peter
 > **Cieľ**: route `/changes/calendar` — FullCalendar 6 lazy chunk (~95 KB)
 > rendering changes ako event blocks coloured per risk tier (severity colors).
 > Day / Week / Month views. Click event → `/changes/:id`.
