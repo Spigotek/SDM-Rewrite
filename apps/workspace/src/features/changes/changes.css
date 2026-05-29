@@ -403,3 +403,33 @@
   color: var(--color-text-tertiary);
   font-style: italic;
 }
+
+/* ── H.11 CAB action buttons + modal feedback ──────────────────────── */
+
+.sdm-change-approvals-list li {
+  grid-template-columns:
+    1.5rem
+    minmax(0, 1.2fr)
+    minmax(0, 0.8fr)
+    minmax(0, 0.6fr)
+    minmax(0, auto);
+}
+
+.sdm-change-approver-actions {
+  display: flex;
+  gap: var(--spacing-1);
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.sdm-change-cab-error {
+  margin: var(--spacing-1) 0 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+.sdm-change-cab-confirm {
+  margin: var(--spacing-2) 0 0 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-success, var(--color-text-primary));
+}

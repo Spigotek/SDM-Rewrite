@@ -280,6 +280,35 @@
       "empty": "No CAB approvers assigned.",
       "actionsDeferred": "Approve / Reject / Send reminder actions arrive in H.11.",
       "rowAriaLabel": "{approver} — {decision}"
+    },
+    "cab": {
+      "actions": {
+        "approve": "Approve",
+        "reject": "Reject",
+        "reminder": "Send reminder"
+      },
+      "deniedHint": "You need higher permission to approve CAB changes. Check your role with the tenant administrator.",
+      "approveModal": {
+        "title": "Approve {ref}?",
+        "body": "You're adding your approval to the CAB workflow. Your decision will be recorded in the audit log.",
+        "commentLabel": "Comment (optional)",
+        "commentPlaceholder": "For example a condition that must be met before implementation…",
+        "submit": "Approve"
+      },
+      "rejectModal": {
+        "title": "Reject {ref}?",
+        "body": "Approvers will be notified of the rejection. You must add a reason.",
+        "reasonLabel": "Reason for rejection",
+        "reasonPlaceholder": "Explain why the change is rejected — it helps the author iterate.",
+        "reasonRequired": "Rejection reason is required.",
+        "submit": "Reject"
+      },
+      "reminderModal": {
+        "title": "Send a reminder?",
+        "body": "We'll notify approver {approver} that {ref} is waiting for a decision.",
+        "confirm": "Reminder sent.",
+        "submit": "Send reminder"
+      }
     }
   },
   "placeholders": {
