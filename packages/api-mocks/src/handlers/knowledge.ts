@@ -80,12 +80,21 @@ interface KbSearchRow {
   readonly categoryId: string;
   readonly categoryName: string | null;
   readonly helpfulCount: number;
+  readonly viewCount: number;
+  readonly helpfulnessRatio: number | null;
+  readonly lastModifiedAt: string;
   readonly readTimeMin: number;
   readonly language: "sk" | "en";
 }
 
 function rowFor(article: KbArticle, q: string | undefined): KbSearchRow {
   const cat = store.kbCategories.find((c) => c.id === article.categoryId);
+  // `hits` and `acceptedHits` come from the domain `KbArticle` fixture. The
+  // workspace KB browse (H.15) exposes them as view count + helpfulness ratio
+  // for the agent persona. Real-backend contract gap tracked in wireframe
+  // `[GAP-4]` — the portal H.6 surface ignores them by design.
+  const viewCount = article.hits;
+  const helpfulCount = article.acceptedHits;
   return {
     id: article.id,
     title: article.title,
@@ -93,10 +102,10 @@ function rowFor(article: KbArticle, q: string | undefined): KbSearchRow {
     snippet: snippetFor(article, q),
     categoryId: article.categoryId,
     categoryName: cat?.name ?? null,
-    // No CA SDM attribute for helpfulness; derive a stable count from
-    // `acceptedHits` so the UI has something to show. Real-backend
-    // contract gap tracked in wireframe `[GAP-4]`.
-    helpfulCount: article.acceptedHits,
+    helpfulCount,
+    viewCount,
+    helpfulnessRatio: viewCount > 0 ? helpfulCount / viewCount : null,
+    lastModifiedAt: article.lastModifiedAt,
     readTimeMin: readTimeMin(article.body.blocks),
     // Domain doesn't yet carry a language attribute; treat every fixture as
     // SK by default so the "EN only" badge stays dormant until the editor
@@ -107,6 +116,7 @@ function rowFor(article: KbArticle, q: string | undefined): KbSearchRow {
 
 interface KbArticleDetail extends KbSearchRow {
   readonly markdown: string;
+  readonly authorId: string;
   readonly updatedAt: string;
   readonly related: ReadonlyArray<{
     readonly id: string;
@@ -167,6 +177,7 @@ export const knowledgeHandlers = [
     const detail: KbArticleDetail = {
       ...rowFor(found, undefined),
       markdown: blocksToMarkdown(found.body.blocks),
+      authorId: found.authorId,
       updatedAt: found.lastModifiedAt,
       related: relatedFor(found, tenant),
     };
