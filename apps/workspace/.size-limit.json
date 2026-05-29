@@ -59,5 +59,11 @@
     "path": "dist/assets/vendor-markdown-*.js",
     "limit": "60 KB",
     "gzip": true
+  },
+  {
+    "name": "Workspace — vendor-calendar chunk (lazy, /changes/calendar only)",
+    "path": "dist/assets/vendor-calendar-*.js",
+    "limit": "150 KB",
+    "gzip": true
   }
 ]

@@ -69,6 +69,48 @@ export async function prefetchChangesList(qc: QueryClient, tenantId: TenantId): 
   await qc.prefetchQuery(changesListQuery(tenantId));
 }
 
+/**
+ * H.10 calendar range query. The backend (`/api/changes` BFF + MSW) doesn't
+ * yet support `?start=&end=` range params — adding one would require a CA SDM
+ * WC filter clause for `schedule_start_date BETWEEN` which is out of MVP
+ * scope. We fetch the full tenant list (same query as the list view) and
+ * filter client-side; for the MVP fixture of ~15 changes this is cheap, and
+ * once the BFF gains range support the queryFn here is the one place to
+ * swap.
+ *
+ * `staleTime` matches the list view so toggling between `/changes` and
+ * `/changes/calendar` reuses the cached data without a refetch.
+ */
+export function changesInRangeQuery(
+  tenantId: TenantId,
+  start: Date,
+  end: Date,
+): {
+  readonly queryKey: readonly unknown[];
+  readonly queryFn: () => Promise<ReadonlyArray<ChangeRow>>;
+  readonly refetchInterval: number;
+  readonly staleTime: number;
+} {
+  const startIso = start.toISOString();
+  const endIso = end.toISOString();
+  return {
+    queryKey: ["changes-range", tenantId, startIso, endIso] as const,
+    queryFn: async () => {
+      const all = await fetchChanges();
+      const startMs = start.getTime();
+      const endMs = end.getTime();
+      return all.filter((c) => {
+        if (!c.scheduledStartAt) return false;
+        const ms = Date.parse(c.scheduledStartAt);
+        if (Number.isNaN(ms)) return false;
+        return ms >= startMs && ms <= endMs;
+      });
+    },
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  };
+}
+
 export function changeDetailQueryKey(id: string): readonly unknown[] {
   return ["change-detail", id] as const;
 }

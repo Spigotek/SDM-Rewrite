@@ -433,3 +433,244 @@
   font-size: var(--font-size-sm);
   color: var(--color-text-success, var(--color-text-primary));
 }
+
+/* ── Calendar route (H.10) ─────────────────────────────────────────── */
+
+.sdm-calendar-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  height: 100%;
+  min-height: 0;
+}
+
+.sdm-calendar-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+}
+
+.sdm-calendar-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-calendar-tenant-hint {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-calendar-state {
+  color: var(--color-text-secondary);
+  padding: var(--spacing-4);
+}
+
+.sdm-calendar-state--error {
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+.sdm-calendar-filters {
+  display: flex;
+  gap: var(--spacing-4);
+  flex-wrap: wrap;
+}
+
+.sdm-calendar-filter-group {
+  border: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.sdm-calendar-filter-group > legend {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+  margin-right: var(--spacing-2);
+  float: left;
+}
+
+.sdm-calendar-chip {
+  padding: var(--spacing-1) var(--spacing-2);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: 999px;
+  background: var(--color-surface-raised);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.sdm-calendar-chip:hover,
+.sdm-calendar-chip:focus-visible {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.sdm-calendar-chip[data-active] {
+  background: var(--color-accent, var(--color-text-primary));
+  border-color: var(--color-accent, var(--color-text-primary));
+  color: var(--color-text-on-accent, #fff);
+}
+
+.sdm-calendar-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sdm-calendar-view-switch {
+  display: inline-flex;
+  align-self: flex-end;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.sdm-calendar-view-btn {
+  padding: var(--spacing-1) var(--spacing-3);
+  background: transparent;
+  border: none;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.sdm-calendar-view-btn:hover,
+.sdm-calendar-view-btn:focus-visible {
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+.sdm-calendar-view-btn[data-active] {
+  background: var(--color-accent, var(--color-text-primary));
+  color: var(--color-text-on-accent, #fff);
+}
+
+.sdm-calendar-container {
+  flex: 1 1 auto;
+  min-height: 480px;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-raised);
+  padding: var(--spacing-2);
+}
+
+/* FullCalendar internal classnames — minimal token override so the calendar
+ * grid blends into the workspace theme. We avoid styling event blocks
+ * heavily because `changeToEvent` already inlines risk-tier colors as
+ * background/border CSS variables. */
+.sdm-calendar-container .fc {
+  font-family: inherit;
+  color: var(--color-text-primary);
+}
+
+.sdm-calendar-container .fc-event {
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+}
+
+.sdm-calendar-tooltip {
+  background: var(--color-surface-overlay, var(--color-surface-raised));
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-2) var(--spacing-3);
+  box-shadow: var(--shadow-md, 0 6px 16px rgba(0, 0, 0, 0.25));
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  pointer-events: none;
+}
+
+.sdm-calendar-tooltip-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-1);
+}
+
+.sdm-calendar-tooltip-ref {
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.sdm-calendar-tooltip-risk {
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  padding: 0 var(--spacing-1);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-on-severity, #fff);
+}
+
+.sdm-calendar-tooltip-risk[data-risk="HIGH"] {
+  background: var(--color-severity-high);
+}
+.sdm-calendar-tooltip-risk[data-risk="MEDIUM"] {
+  background: var(--color-severity-medium);
+}
+.sdm-calendar-tooltip-risk[data-risk="LOW"] {
+  background: var(--color-severity-low);
+}
+
+.sdm-calendar-tooltip-summary {
+  margin: 0 0 var(--spacing-2) 0;
+  font-weight: var(--font-weight-medium);
+}
+
+.sdm-calendar-tooltip-meta {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-xs);
+}
+
+.sdm-calendar-tooltip-meta > div {
+  display: contents;
+}
+
+.sdm-calendar-tooltip-meta dt {
+  color: var(--color-text-tertiary);
+}
+
+.sdm-calendar-tooltip-meta dd {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.sdm-calendar-mobile-banner {
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-4);
+  background: var(--color-surface-raised);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  align-items: flex-start;
+}
+
+.sdm-calendar-mobile-link {
+  color: var(--color-accent, var(--color-text-primary));
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+}
+
+.sdm-calendar-mobile-link:hover,
+.sdm-calendar-mobile-link:focus-visible {
+  text-decoration: underline;
+}

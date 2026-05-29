@@ -73,6 +73,18 @@ export default defineConfig(({ mode }) => {
             if (/[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:@sentry[\\/])/.test(id)) {
               return "vendor-observability";
             }
+            // FullCalendar stack — used only on `/changes/calendar` (H.10).
+            // Grouping the core + dayGrid + timeGrid + interaction + the
+            // react wrapper into one lazy `vendor-calendar` chunk keeps the
+            // workspace initial JS untouched. Per `performance.md §3 heavy
+            // chunks`, this chunk is capped at 150 KB gzip in
+            // `.size-limit.json`.
+            if (
+              /[\\/]node_modules[\\/](?:\.pnpm[\\/])?@fullcalendar[\\/]/.test(id) ||
+              /[\\/]node_modules[\\/](?:\.pnpm[\\/])?preact[@\\/]/.test(id)
+            ) {
+              return "vendor-calendar";
+            }
             // Markdown stack — used only on `/changes/:id` RollbackTab (H.9).
             // Grouping these packages keeps the change-detail route slim and
             // the rest of the workspace pays zero markdown cost up front.
