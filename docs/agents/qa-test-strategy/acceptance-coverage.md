@@ -139,11 +139,29 @@ log sink instrumentation.
 ## 4. CI hookup
 
 The acceptance journeys run via the dedicated `.github/workflows/acceptance.yml`
-workflow on every PR + `main` push. The workflow boots the FE dev server in
-MSW mode (`VITE_USE_MOCKS=true`) and drives Playwright against the 18 specs
-in series (`workers: 1`, `fullyParallel: false` per repo-wide config). Live
-BFF + CA SDM smoke (`acceptance-live.yml`) is a manual-trigger workflow
-reserved for pre-Phase-I sanity runs and is not part of the merge gate.
+workflow on every PR + `main` push. The workflow builds both SPAs in MSW
+mode (`VITE_USE_MOCKS=true`), serves them via `vite preview` on ports
+5173 (portal) and 5175 (workspace), and runs the 18 specs split per app
+(journeys 1-3 → portal, 4-18 → workspace). Live BFF + CA SDM smoke
+(`acceptance-live.yml`) is a manual-trigger workflow reserved for
+pre-Phase-I sanity runs and is not part of the merge gate.
+
+## 4a. Discovered regressions (fixed in H.16)
+
+The first production-build run of these specs surfaced two latent bugs
+that the dev-mode harness (`pnpm dev`) never exposed:
+
+- **`packages/api-mocks/src/handlers/requests.ts`** — MSW handler
+  precedence: `*/api/catalog/:id` matched `/api/catalog/items` because
+  it was registered before the `/items` handler. Fixed by reordering.
+- **`apps/workspace/src/features/queue/api.ts`** —
+  `readSavedViewsFromStorage()` returned a fresh array on every call,
+  which made `useSyncExternalStore` think the store mutated and triggered
+  an infinite render loop. In production-build mode (minified React) this
+  surfaces as error #185 and the error boundary takes over the route.
+  Fixed by caching the parsed snapshot keyed on the raw localStorage string.
+
+Both fixes are isolated and add no new features.
 
 ## 5. Phase I follow-up issues
 
