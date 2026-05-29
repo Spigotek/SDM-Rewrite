@@ -407,9 +407,65 @@
   "placeholders": {
     "activeTenant": "Aktívny tenant:",
     "ticketDetailTitle": "Ticket {id}",
-    "ticketDetail": "Split-view detail ticketu dorazí v H.8.",
-    "kbTitle": "KB",
-    "kb": "KB browse dorazí v H.12."
+    "ticketDetail": "Split-view detail ticketu dorazí v H.8."
+  },
+  "kb": {
+    "title": "Knowledge Base",
+    "loading": "Načítavam KB články…",
+    "error": "Nepodarilo sa načítať KB.",
+    "empty": "V tomto tenante nie sú žiadne publikované články.",
+    "columns": {
+      "category": "Kategória",
+      "title": "Názov",
+      "helpfulnessRatio": "Pomer užitočnosti",
+      "viewCount": "Zobrazenia",
+      "lastUpdated": "Aktualizované"
+    },
+    "filters": {
+      "ariaLabel": "Filtre KB",
+      "categoryLabel": "Kategória",
+      "categoryAll": "Všetky kategórie",
+      "categoryOption": "{name} ({count})",
+      "languageLabel": "Jazyk",
+      "languageAll": "Všetky",
+      "language": {
+        "sk": "SK",
+        "en": "EN"
+      },
+      "resultCount": "{visible} z {total} článkov",
+      "reset": "Resetovať filtre",
+      "noResults": "Žiadne články nezodpovedajú filtru."
+    },
+    "actions": {
+      "newArticle": "Nový článok",
+      "editArticle": "Upraviť článok"
+    },
+    "article": {
+      "back": "← Späť na KB",
+      "loading": "Načítavam článok…",
+      "loadingBody": "Načítavam telo článku…",
+      "error": "Článok sa nepodarilo načítať.",
+      "empty": "Tento článok zatiaľ nemá obsah.",
+      "category": "Kategória",
+      "author": "Autor",
+      "updated": "Aktualizované",
+      "readTime": "Čas čítania",
+      "readTimeValue": "{count} min",
+      "language": "Jazyk",
+      "englishOnly": "Len v EN"
+    },
+    "stats": {
+      "title": "Štatistiky",
+      "viewCount": "Zobrazenia",
+      "helpfulCount": "Označené ako užitočné",
+      "helpfulnessRatio": "Pomer užitočnosti"
+    },
+    "attach": {
+      "browseBanner": "Vyber článok, ktorý chceš pripojiť k ticketu #{ticket}.",
+      "title": "Pripojiť k ticketu #{ticket}",
+      "hint": "Tento článok môžeš pripojiť k aktívnemu ticketu ako referenciu pre žiadateľa.",
+      "cta": "Pripojiť k #{ticket}"
+    }
   },
   "cmdb": {
     "title": "CMDB",

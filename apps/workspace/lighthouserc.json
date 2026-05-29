@@ -16,7 +16,8 @@
         "http://localhost/problems/PR-1",
         "http://localhost/cmdb",
         "http://localhost/cmdb/ci/CI-1",
-        "http://localhost/kb/editor"
+        "http://localhost/kb",
+        "http://localhost/kb/article/kb:50000"
       ],
       "numberOfRuns": 3,
       "settings": {

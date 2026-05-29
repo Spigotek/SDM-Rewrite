@@ -407,9 +407,65 @@
   "placeholders": {
     "activeTenant": "Active tenant:",
     "ticketDetailTitle": "Ticket {id}",
-    "ticketDetail": "Split-view ticket detail arrives in H.8.",
-    "kbTitle": "KB",
-    "kb": "KB browse arrives in H.12."
+    "ticketDetail": "Split-view ticket detail arrives in H.8."
+  },
+  "kb": {
+    "title": "Knowledge Base",
+    "loading": "Loading KB articles…",
+    "error": "Failed to load KB.",
+    "empty": "No published articles in this tenant.",
+    "columns": {
+      "category": "Category",
+      "title": "Title",
+      "helpfulnessRatio": "Helpfulness ratio",
+      "viewCount": "Views",
+      "lastUpdated": "Updated"
+    },
+    "filters": {
+      "ariaLabel": "KB filters",
+      "categoryLabel": "Category",
+      "categoryAll": "All categories",
+      "categoryOption": "{name} ({count})",
+      "languageLabel": "Language",
+      "languageAll": "All",
+      "language": {
+        "sk": "SK",
+        "en": "EN"
+      },
+      "resultCount": "{visible} of {total} articles",
+      "reset": "Reset filters",
+      "noResults": "No articles match these filters."
+    },
+    "actions": {
+      "newArticle": "New article",
+      "editArticle": "Edit article"
+    },
+    "article": {
+      "back": "← Back to KB",
+      "loading": "Loading article…",
+      "loadingBody": "Loading article body…",
+      "error": "Failed to load article.",
+      "empty": "This article has no content yet.",
+      "category": "Category",
+      "author": "Author",
+      "updated": "Updated",
+      "readTime": "Read time",
+      "readTimeValue": "{count} min",
+      "language": "Language",
+      "englishOnly": "EN only"
+    },
+    "stats": {
+      "title": "Stats",
+      "viewCount": "Views",
+      "helpfulCount": "Marked helpful",
+      "helpfulnessRatio": "Helpfulness ratio"
+    },
+    "attach": {
+      "browseBanner": "Pick an article to attach to ticket #{ticket}.",
+      "title": "Attach to ticket #{ticket}",
+      "hint": "Attach this article to the active ticket as a reference for the requester.",
+      "cta": "Attach to #{ticket}"
+    }
   },
   "cmdb": {
     "title": "CMDB",
