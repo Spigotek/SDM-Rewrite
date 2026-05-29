@@ -40,9 +40,11 @@ test("journey-18 workspace CMDB cross-tenant — tenant-scoped CI list", async (
 test("journey-18 workspace CMDB cross-tenant — CI fetch yields 404 across tenants", async ({
   isolatedPage,
 }) => {
-  // Bootstrap MSW.
-  await isolatedPage.goto("/");
-  await expect(isolatedPage.getByTestId("top-bar")).toBeVisible({ timeout: 15_000 });
+  // Bootstrap MSW via the CMDB list (the workspace `/` cold-redirect to
+  // `/queue` is slower in preview build mode and just loads MSW + session
+  // anyway).
+  await isolatedPage.goto("/cmdb");
+  await expect(isolatedPage.getByTestId("cmdb-table")).toBeVisible({ timeout: 30_000 });
 
   // Capture an acme CI id, then re-fetch it scoped to globex — MSW returns
   // 404 (existence non-leakage, `@security:cross-tenant-cmdb`).

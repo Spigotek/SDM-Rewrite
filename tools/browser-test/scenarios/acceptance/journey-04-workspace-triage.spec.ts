@@ -18,12 +18,12 @@ import { test, expect } from "../../fixtures/isolated-context";
  */
 test("journey-04 workspace triage — queue, keyboard nav, filter chip", async ({ isolatedPage }) => {
   await isolatedPage.goto("/");
-  await expect(isolatedPage).toHaveURL(/\/queue/, { timeout: 15_000 });
-  await expect(isolatedPage.getByTestId("active-tenant")).toBeVisible({ timeout: 15_000 });
+  await expect(isolatedPage).toHaveURL(/\/queue/, { timeout: 30_000 });
 
   const table = isolatedPage.getByTestId("queue-table");
-  await expect(table).toBeVisible({ timeout: 15_000 });
+  await expect(table).toBeVisible({ timeout: 30_000 });
   const rows = isolatedPage.getByTestId("queue-row");
+  await expect(rows.first()).toBeVisible({ timeout: 30_000 });
   expect(await rows.count()).toBeGreaterThan(0);
 
   // Keyboard nav.

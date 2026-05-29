@@ -16,10 +16,10 @@ test("journey-06 workspace escalate L2 — open modal, submit, timeline entry", 
   isolatedPage,
 }) => {
   await isolatedPage.goto("/");
-  await expect(isolatedPage).toHaveURL(/\/queue/, { timeout: 15_000 });
+  await expect(isolatedPage).toHaveURL(/\/queue/, { timeout: 30_000 });
 
   const firstRow = isolatedPage.getByTestId("queue-row").first();
-  await expect(firstRow).toBeVisible({ timeout: 15_000 });
+  await expect(firstRow).toBeVisible({ timeout: 30_000 });
   const rowId = await firstRow.getAttribute("data-row-id");
   if (!rowId) throw new Error("Queue row missing data-row-id");
 
