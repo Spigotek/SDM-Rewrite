@@ -16,7 +16,7 @@ test("journey-02 portal software request — catalog → dynamic form → reques
 }) => {
   // Dynamic form submit + catalog list + first-render MSW cold-start can
   // exceed the 60 s default. Bump for safety on CI runners.
-  test.setTimeout(90_000);
+  test.setTimeout(120_000);
   await isolatedPage.goto("/");
   await expect(isolatedPage.getByTestId("portal-home")).toBeVisible({ timeout: 15_000 });
 

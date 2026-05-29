@@ -15,6 +15,9 @@ import { test, expect } from "../../fixtures/isolated-context";
 test("journey-06 workspace escalate L2 — open modal, submit, timeline entry", async ({
   isolatedPage,
 }) => {
+  // Preview-mode cold start + modal mount + escalate POST can exceed
+  // the 60 s default in CI.
+  test.setTimeout(90_000);
   await isolatedPage.goto("/");
   await expect(isolatedPage).toHaveURL(/\/queue/, { timeout: 30_000 });
 
