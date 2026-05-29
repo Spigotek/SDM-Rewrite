@@ -1,7 +1,10 @@
 # H.12 — Workspace: problems list + problem-detail + link-to-incident
 
-> **Status**: 🔜 (blokované na H.7 + H.8 — uses ticket-detail pattern)
-> **Branch**: `chunk/H.12-workspace-problems` > **Persona**: Marek (`agent_l2`)
+> **Status**: ✅ DONE (2026-05-29)
+> **Branch**: `chunk/H.12-workspace-problems` (merged, deleted)
+> **PR**: #36 — merged squash via `--admin --delete-branch` > **Bundle outcome**: workspace 175.97 KB / 350 KB (+0.08 KB vs H.10); ProblemsRoute lazy 2.18 KB + ProblemDetailRoute lazy 3.01 KB.
+> **Deviations**: BFF linked-incidents integration deferred to Phase I.x (CA SDM WC-query + cr.rootcause_id manipulation outside F.2 entity proxy ~200+ LOC). FE + MSW ship end-to-end flow; empty state surfaces "feature dostupný po B-E customization" hint. Audit emit `data.problem.write` to be wired with BFF endpoint Phase I.x.
+> **Persona**: Marek (`agent_l2`)
 > **Cieľ**: route `/problems` (list) + `/problems/:id` (detail with linked
 > incidents) + action "Link incident to this problem" (per RCA workflow).
 

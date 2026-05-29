@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.10 (Change calendar — FullCalendar 6 lazy, PR #35). Predchádzajúce: PR #34 — H.11 CAB; PR #33 — H.9 changes.
-- **In flight:** Phase H — Feature modules (12/17 chunks merged).
-- **Next up:** Chunk H.12 — Workspace problems + link-to-incident per H.md §D2 recommended order.
+- **Last merged:** Chunk H.12 (Workspace problems + link-to-incident, PR #36). Predchádzajúce: PR #35 — H.10 calendar; PR #34 — H.11 CAB.
+- **In flight:** Phase H — Feature modules (13/17 chunks merged).
+- **Next up:** Chunk H.13 — Workspace CMDB CI list + detail per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.10 DONE (2026-05-29).
+Posledná revízia tohto dokumentu: H.12 DONE (2026-05-29).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.10 DONE (2026-05-29).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (12/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (13/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.12 Workspace problems + link-to-incident ✅ DONE** — `/problems` route (`ProblemsRoute` + `ProblemsTable` + `FilterBar`) + `/problems/:id` detail (`ProblemDetailRoute` + `ProblemHeader` + `ProblemBody` + `LinkedIncidentsList` + `ActivityTimeline` + `LinkIncidentModal` + `ConvertToProblemModal`). H.8 ActionBar More menu rozšírené o "Convert to problem" akciu. **Linked-incidents BFF integration deferred** to Phase I.x — CA SDM real mutation by si vyžadovala WC-query + `cr.rootcause_id` manipulation mimo F.2 entity proxy footprint (~200+ LOC across multiple BFF files). FE + MSW shipped today exercise full link/unlink/convert flow end-to-end; empty state surfaces "feature dostupný po B-E customization" hint when MSW není present. Audit emit deferred s BFF mutation — when Phase I.x lands endpoint, it must emit `data.problem.write` (composed under F.4 frozen taxonomy, no new event names). Bundle: workspace **175.97 KB / 350 KB** (+0.08 KB vs H.10); ProblemsRoute lazy 2.18 KB gzip + ProblemDetailRoute lazy 3.01 KB gzip. i18n: +78 SK/EN `problems.*` keys. Browser test `h12-workspace-problems.spec.ts` (120 LOC). Plán: [H.12.md](./plans/H.12.md), PR #36.
 
 - **H.10 Change calendar ✅ DONE** — `/changes/calendar` route — `ChangeCalendarRoute` + `CalendarView` (FullCalendar 6 wrapper) + `CalendarFilters` (risk/status chips) + `EventTooltip` (portal-rendered hover). Plugins: `@fullcalendar/daygrid` + `@fullcalendar/timegrid` + `@fullcalendar/interaction` (drag-resize **disabled** per MVP — `editable: false`). Day/Week/Month view switch (segmented tabs). Event color per `risk_tier` mapping na `color.severity.*` tokens; click → `/changes/:id`. Mobile fallback: `window.matchMedia("(max-width: 900px)")` → banner "Pre kalendár otvor desktop" + redirect to `/changes` list. **Lazy chunk**: `vendor-calendar` manualChunks split — `@fullcalendar/*` + bundled `preact` (FullCalendar render engine — preact NIE React 19, kept out of vendor-react). **75.44 KB / 150 KB cap** gzip (well under heavy-chunk budget per performance.md §3). Workspace initial JS **175.89 KB / 350 KB** — flat vs H.11 (calendar fully lazy). i18n: +11 SK/EN `changes.calendar.*` keys. BFF range query NOT augmented (`changesInRangeQuery` filters client-side from existing `changesListQuery` cache; documented swap point pre BFF range support v1+). LHCI nezmenené (staticDistDir blocker persists). Browser test `h10-change-calendar.spec.ts`. Plán: [H.10.md](./plans/H.10.md), PR #35.
 
