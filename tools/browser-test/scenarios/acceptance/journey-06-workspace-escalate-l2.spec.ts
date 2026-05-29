@@ -36,9 +36,11 @@ test("journey-06 workspace escalate L2 — open modal, submit, timeline entry", 
   const modal = isolatedPage.getByTestId("ticket-escalate-modal");
   await expect(modal).toBeVisible({ timeout: 5_000 });
 
+  // `data-testid` is spread onto the inner `<textarea>` itself (the
+  // TextArea primitive forwards `...rest` to the textarea element), so
+  // we fill the testid locator directly without `.locator("textarea")`.
   await isolatedPage
     .getByTestId("ticket-escalate-note")
-    .locator("textarea")
     .fill("Network outage suspected — handing off to L2 Network team.");
   await isolatedPage.getByTestId("ticket-escalate-submit").click();
   await expect(modal).toBeHidden({ timeout: 5_000 });

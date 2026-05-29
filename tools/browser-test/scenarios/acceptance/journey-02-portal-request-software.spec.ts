@@ -45,7 +45,10 @@ test("journey-02 portal software request — catalog → dynamic form → reques
 
   // Audience = self (avoids conditional colleague picker).
   await isolatedPage.getByTestId("catalog-field-audience-self").check();
-  await isolatedPage.getByTestId("catalog-field-costCenter").locator("input").fill("Brand 2026");
+  // `data-testid` is spread onto the inner `<input>` itself by the
+  // TextField primitive (forwards `...rest` to the input), so we fill
+  // the testid locator directly.
+  await isolatedPage.getByTestId("catalog-field-costCenter").fill("Brand 2026");
 
   await isolatedPage
     .locator('[data-component="select"]')
