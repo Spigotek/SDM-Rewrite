@@ -59,7 +59,7 @@ export const router = createBrowserRouter([
       {
         path: "changes/calendar",
         lazy: async () => ({
-          Component: (await import("./placeholders/changes-calendar")).default,
+          Component: (await import("../features/changes/ChangeCalendarRoute")).default,
         }),
       },
       {

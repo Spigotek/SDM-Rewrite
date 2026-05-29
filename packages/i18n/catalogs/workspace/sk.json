@@ -309,14 +309,29 @@
         "confirm": "Pripomienka odoslaná.",
         "submit": "Odoslať pripomienku"
       }
+    },
+    "calendar": {
+      "title": "Change kalendár",
+      "loading": "Načítavam kalendár…",
+      "error": "Kalendár sa nepodarilo načítať. Skús refresh.",
+      "filtersAriaLabel": "Filtre kalendára",
+      "viewSwitchAriaLabel": "Prepnúť pohľad kalendára",
+      "filterAll": "Všetky",
+      "riskFilterLabel": "Riziko",
+      "statusFilterLabel": "Stav",
+      "view": {
+        "timeGridDay": "Deň",
+        "timeGridWeek": "Týždeň",
+        "dayGridMonth": "Mesiac"
+      },
+      "mobileFallback": "Pre kalendár otvor desktop. Na mobile použi zoznam zmien.",
+      "mobileFallbackLink": "Otvoriť zoznam zmien"
     }
   },
   "placeholders": {
     "activeTenant": "Aktívny tenant:",
     "ticketDetailTitle": "Ticket {id}",
     "ticketDetail": "Split-view detail ticketu dorazí v H.8.",
-    "changesCalendarTitle": "Change kalendár",
-    "changesCalendar": "Change kalendár dorazí v H.10.",
     "problemsTitle": "Problems",
     "problems": "Zoznam problems dorazí v H.9.",
     "cmdbTitle": "CMDB",

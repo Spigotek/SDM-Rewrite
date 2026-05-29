@@ -309,14 +309,29 @@
         "confirm": "Reminder sent.",
         "submit": "Send reminder"
       }
+    },
+    "calendar": {
+      "title": "Change calendar",
+      "loading": "Loading calendar…",
+      "error": "Failed to load calendar. Try refresh.",
+      "filtersAriaLabel": "Calendar filters",
+      "viewSwitchAriaLabel": "Switch calendar view",
+      "filterAll": "All",
+      "riskFilterLabel": "Risk",
+      "statusFilterLabel": "Status",
+      "view": {
+        "timeGridDay": "Day",
+        "timeGridWeek": "Week",
+        "dayGridMonth": "Month"
+      },
+      "mobileFallback": "Open the desktop app to use the calendar. On mobile use the changes list.",
+      "mobileFallbackLink": "Open changes list"
     }
   },
   "placeholders": {
     "activeTenant": "Active tenant:",
     "ticketDetailTitle": "Ticket {id}",
     "ticketDetail": "Split-view ticket detail arrives in H.8.",
-    "changesCalendarTitle": "Change calendar",
-    "changesCalendar": "Change calendar arrives in H.10.",
     "problemsTitle": "Problems",
     "problems": "Problems list arrives in H.9.",
     "cmdbTitle": "CMDB",

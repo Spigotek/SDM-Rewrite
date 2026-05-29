@@ -16,6 +16,11 @@
     "clean": "rimraf dist .vite .turbo *.tsbuildinfo"
   },
   "dependencies": {
+    "@fullcalendar/core": "^6",
+    "@fullcalendar/daygrid": "^6",
+    "@fullcalendar/interaction": "^6",
+    "@fullcalendar/react": "^6",
+    "@fullcalendar/timegrid": "^6",
     "@sdm/api-client": "workspace:*",
     "@sdm/api-mocks": "workspace:*",
     "@sdm/api-types": "workspace:*",
