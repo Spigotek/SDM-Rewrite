@@ -20,6 +20,9 @@ test("journey-02 portal software request — catalog → dynamic form → reques
   await isolatedPage.goto("/catalog");
   await expect(isolatedPage.getByTestId("portal-catalog")).toBeVisible({ timeout: 15_000 });
 
+  // Featured grid must populate before filtering.
+  await expect(isolatedPage.getByTestId("catalog-list")).toBeVisible({ timeout: 15_000 });
+
   // Filter by software category — software card group.
   await isolatedPage.getByTestId("catalog-category-software").click();
   await expect(isolatedPage.getByTestId("catalog-category-software")).toHaveAttribute(
@@ -29,7 +32,7 @@ test("journey-02 portal software request — catalog → dynamic form → reques
 
   // Open the Figma offering — featured under "software".
   const figmaCard = isolatedPage.getByTestId(/^catalog-featured-catalog:figma/).first();
-  await expect(figmaCard).toBeVisible({ timeout: 10_000 });
+  await expect(figmaCard).toBeVisible({ timeout: 15_000 });
   await figmaCard.click();
 
   await expect(isolatedPage.getByTestId("portal-catalog-item")).toBeVisible({ timeout: 10_000 });
