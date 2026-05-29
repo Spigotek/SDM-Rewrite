@@ -1,7 +1,10 @@
 # H.14 — Workspace: CMDB relationships graph (Cytoscape lazy)
 
-> **Status**: 🔜 (blokované na H.13 — uses CI detail tab)
-> **Branch**: `chunk/H.14-cmdb-graph` > **Persona**: Robert
+> **Status**: ✅ DONE (2026-05-29)
+> **Branch**: `chunk/H.14-cmdb-graph` (merged, deleted)
+> **PR**: #38 — merged squash via `--admin --delete-branch` > **Bundle outcome**: workspace initial JS 176.01 KB / 350 KB (flat vs H.13 — graph fully lazy); vendor-graph chunk 164.11 KB / 200 KB cap (raised 150 → 200 KB — Cytoscape gzipped ~160 KB sám o sebe).
+> **Deviations**: dagre plugin dropped (lodash bloat → 197 KB), remapped "tree" na built-in `breadthfirst` + "breadth" na `concentric` (3 layouts preserved, zero-cost plugins). BFF nezmenené (MSW `/api/ci/:id/relationships` returns `{ relationships, neighbours }`; BREL queries deferred per H.13 precedent).
+> **Persona**: Robert
 > **Cieľ**: aktivovať Relationships tab v `/cmdb/ci/:id` — Cytoscape 3 lazy
 > chunk (~110 KB) rendering CI relationships (depends_on / hosts / peers_with
 > edges, force-directed layout). Click node → drill-in.

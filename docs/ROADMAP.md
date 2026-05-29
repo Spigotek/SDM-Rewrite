@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.13 (Workspace CMDB CI list + detail, PR #37). Predchádzajúce: PR #36 — H.12 problems; PR #35 — H.10 calendar.
-- **In flight:** Phase H — Feature modules (14/17 chunks merged).
-- **Next up:** Chunk H.14 — CMDB relationships graph (Cytoscape 3 lazy) per H.md §D2 recommended order.
+- **Last merged:** Chunk H.14 (CMDB relationships graph — Cytoscape 3 lazy, PR #38). Predchádzajúce: PR #37 — H.13 CMDB CI; PR #36 — H.12 problems.
+- **In flight:** Phase H — Feature modules (15/17 chunks merged).
+- **Next up:** Chunk H.15 — Workspace KB browse + read (read-only MVP) per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.13 DONE (2026-05-29).
+Posledná revízia tohto dokumentu: H.14 DONE (2026-05-29).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.13 DONE (2026-05-29).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (14/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (15/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.14 CMDB relationships graph ✅ DONE** — Cytoscape 3 + `react-cytoscapejs` + `cytoscape-cose-bilkent` lazy-loaded `vendor-graph` chunk. Relationships tab v `/cmdb/ci/:id` aktivovaná (replace H.13 `RelationshipsPlaceholder`). Komponenty: `RelationshipGraph` (Cytoscape wrapper), `CmdbGraph` (CMDB-specific preset), `GraphLegend` (edge style toggle), `GraphListFallback` (a11y treeview alternative). Layouts: `cose-bilkent` default (force-directed), `breadthfirst` (tree), `concentric` (breadth) — built-in zero-cost plugins (dagre dropped pre lodash bloat — pushed chunk to 197 KB; mapping documentary v `CmdbGraph.tsx` + `cytoscape-config.ts` komentároch). Edge styles per relationType: `depends_on` solid, `hosts` thick, `peers_with` dashed (per components.md). Node click → drill-in `/cmdb/ci/:newId`. Max 200 nodes default + "Show more" prompt. A11y toggle "Zobraziť ako zoznam" → `GraphListFallback` treeview. **Deviation**: vendor-graph cap raised 150 → 200 KB (Cytoscape 3.33 gzipped ~160 KB on its own — under any deployment); final chunk **164.11 KB / 200 KB** gzip. Workspace initial JS **176.01 KB / 350 KB** — flat vs H.13 (graph fully lazy). BFF nezmenené (MSW `/api/ci/:id/relationships` returns `{ relationships, neighbours }`; BFF projection BREL queries deferred per H.13 precedent). i18n: +cmdb.graph.\* SK/EN. Browser test `h14-cmdb-graph.spec.ts`. Plán: [H.14.md](./plans/H.14.md), PR #38.
 
 - **H.13 Workspace CMDB CI list + detail ✅ DONE** — `/cmdb` route (`CmdbRoute` + `CmdbTable` + `FilterBar`) + `/cmdb/ci/:id` route (`CmdbCiRoute` + `CiHeader` + `CiTabs` 4-tab: `DetailTab` / Attributes / Relationships / History). DetailTab consumes `buildAttributeGroups()` registry per CI class — explicit groups pre top classes (DatabaseInstance / NetworkServer family / Service+PortfolioApplication family) + generic "All attributes" fallback pre 15 remaining classes (Location, File, MediaDrive…). `AttributeGroups` collapsible (Key/Database/Network/Compliance/Custom) — per-user localStorage persistence cez `useAttributeGroupCollapse` hook (`localStorage.cmdbCiCollapse:{ciClass}.{group}` key) s SSR-safe fallback. RelationshipsPlaceholder — H.14 doplní real graph. HistoryTab read-only change log; MSW `/api/ci/:id/history` synthetic deterministic stream (created → 0-3 relationship_added → attribute_changed if `lastModifiedAt` differs → discovered, sorted newest-first). URL-driven state: `?q=&class=&status=` na list, `?tab=` na detail. **CMDB read-only** per ROADMAP (write/edit v1+). BFF: žiadna augmentation (`/api/ci` MSW returns full domain `Ci`; thin `/api/cmdb` BFF projection swap dokumentovaný v `api.ts` ako "swap when MSW comes out"). Bundle: workspace **176.01 KB / 350 KB** (+0.04 KB vs H.12); CmdbRoute lazy 6.75 KB + CmdbCiRoute lazy 13.20 KB + cmdb.css 10.15 KB. i18n: +146 SK/EN `cmdb.*` keys (columns + 23 CiClass labels + statusLabel + attributeGroup + tabs + filters). Browser test `h13-workspace-cmdb.spec.ts` (89 LOC). Plán: [H.13.md](./plans/H.13.md), PR #37.
 
