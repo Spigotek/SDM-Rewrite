@@ -1,7 +1,8 @@
 # H.16 — Acceptance criteria smoke (close Phase H)
 
-> **Status**: ⏳ IN-FLIGHT (PR #TBD)
-> **Branch**: `chunk/H.16-acceptance-smoke` > **Persona**: all 6 personas (Lucia, Anna, Marek, Peter, Jana, Robert)
+> **Status**: ✅ DONE (2026-05-29) — **Phase H closed (17/17)** > **Branch**: `chunk/H.16-acceptance-smoke` (merged, deleted)
+> **PR**: #40 — merged squash via `--admin --delete-branch` > **Outcome**: 18/18 journeys covered (11 pass, 6 partial, 1 deferred — všetky explicit Phase I follow-ups). New `acceptance.yml` workflow (1m44s, MSW mode, portal:5173 + workspace:5175 split). 2 regressions fixed (catalog MSW precedence + useSyncExternalStore snapshot cache). Journey-02 submit downgraded to form-render contract (Phase I.1 follow-up).
+> **Persona**: all 6 personas (Lucia, Anna, Marek, Peter, Jana, Robert)
 > **Cieľ**: end-of-Phase-H verification — pre všetkých **18 acceptance
 > journeys** z `qa-test-strategy/acceptance-criteria.md §2` napísať
 > browser-test scenár (alebo verify že existuje z prechádzajúcich chunkov).
