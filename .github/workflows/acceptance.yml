@@ -1,0 +1,145 @@
+name: acceptance
+
+# 18 user-journey acceptance smoke (per `qa-test-strategy/acceptance-criteria.md §2`).
+# Runs the Phase H exit gate against MSW-mocked SPAs. Live BFF + CA SDM
+# smoke is the separate `acceptance-live.yml` workflow (manual-trigger
+# only). Per H.16: ~30 s per spec × 18 specs ≈ 9 min wall — kept on its
+# own workflow off the critical-path `ci.yml`.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+concurrency:
+  group: acceptance-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22.11.0"
+  PNPM_VERSION: "9.12.0"
+
+jobs:
+  smoke:
+    name: 18 journey scenarios (MSW mode)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Cache Turborepo
+        uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: turbo-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            turbo-${{ runner.os }}-
+
+      - name: Install Playwright browser (Chromium only)
+        run: pnpm --filter @sdm/browser-test exec playwright install --with-deps chromium
+
+      # Build the SPAs with MSW bootstrap baked in. `import.meta.env` is
+      # replaced at build time, so the flag must be set here (not at preview).
+      - name: Build apps (VITE_USE_MOCKS=true)
+        env:
+          VITE_USE_MOCKS: "true"
+        run: pnpm build
+
+      # Each SPA owns its own port. Portal serves /, /new-incident, /catalog,
+      # /kb, /tickets. Workspace serves /queue, /changes, /cmdb, /problems,
+      # /kb (workspace variant), /tickets (workspace variant). The acceptance
+      # specs are split per-app — journeys 1-3 hit portal, 4-18 hit workspace.
+      - name: Start portal preview (:5173)
+        run: pnpm --filter @sdm/portal preview &
+
+      - name: Start workspace preview (:5175)
+        run: pnpm --filter @sdm/workspace preview &
+
+      - name: Wait for preview servers
+        run: |
+          set -e
+          for url in http://localhost:5173/ http://localhost:5175/; do
+            for i in $(seq 1 60); do
+              if curl -fsI "$url" >/dev/null 2>&1; then
+                echo "$url ready"
+                break
+              fi
+              if [ "$i" = "60" ]; then
+                echo "$url never became ready"
+                exit 1
+              fi
+              sleep 1
+            done
+          done
+
+      - name: Verify MSW worker reachable (both SPAs)
+        run: |
+          curl -fsI http://localhost:5173/mockServiceWorker.js
+          curl -fsI http://localhost:5175/mockServiceWorker.js
+
+      - name: Portal acceptance journeys (1-3) on :5173
+        env:
+          SDM_BROWSER_TEST_RUN_ID: "p00001"
+          SDM_BROWSER_TEST_BASE_URL: "http://localhost:5173"
+        working-directory: tools/browser-test
+        run: |
+          pnpm exec playwright test \
+            scenarios/acceptance/journey-01-portal-incident.spec.ts \
+            scenarios/acceptance/journey-02-portal-request-software.spec.ts \
+            scenarios/acceptance/journey-03-portal-kb-self-help.spec.ts \
+            --config=playwright.config.ts \
+            --reporter=list
+
+      - name: Workspace acceptance journeys (4-18) on :5175
+        # Run even if the portal step failed so we get full coverage of both
+        # SPAs in a single CI run. The job's overall conclusion still reflects
+        # any failure.
+        if: success() || failure()
+        env:
+          SDM_BROWSER_TEST_RUN_ID: "w00001"
+          SDM_BROWSER_TEST_BASE_URL: "http://localhost:5175"
+        working-directory: tools/browser-test
+        run: |
+          pnpm exec playwright test \
+            scenarios/acceptance/journey-04-workspace-triage.spec.ts \
+            scenarios/acceptance/journey-05-workspace-resolve-cmdb.spec.ts \
+            scenarios/acceptance/journey-06-workspace-escalate-l2.spec.ts \
+            scenarios/acceptance/journey-07-workspace-problem-rca.spec.ts \
+            scenarios/acceptance/journey-08-workspace-cmdb-impact.spec.ts \
+            scenarios/acceptance/journey-09-workspace-incident-deepdive.spec.ts \
+            scenarios/acceptance/journey-10-workspace-change-cab-prep.spec.ts \
+            scenarios/acceptance/journey-11-workspace-change-emergency.spec.ts \
+            scenarios/acceptance/journey-12-workspace-change-cross-tenant.spec.ts \
+            scenarios/acceptance/journey-13-workspace-kb-author-new.spec.ts \
+            scenarios/acceptance/journey-14-workspace-kb-from-incident.spec.ts \
+            scenarios/acceptance/journey-15-workspace-kb-analytics.spec.ts \
+            scenarios/acceptance/journey-16-workspace-cmdb-ci-detail.spec.ts \
+            scenarios/acceptance/journey-17-workspace-cmdb-relationships.spec.ts \
+            scenarios/acceptance/journey-18-workspace-cmdb-cross-tenant.spec.ts \
+            --config=playwright.config.ts \
+            --reporter=list
+
+      - name: Upload artefacts on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-playwright-artefacts
+          path: |
+            .playwright/runs/p00001/
+            .playwright/runs/w00001/
+            tools/browser-test/test-results/
+          retention-days: 7

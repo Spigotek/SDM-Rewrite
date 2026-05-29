@@ -47,22 +47,44 @@ export async function prefetchQueue(queryClient: QueryClient, tenantId: TenantId
 const SAVED_VIEWS_STORAGE_KEY = "sdm.workspace.queue.savedViews";
 const SAVED_VIEWS_EVENT = "sdm:queue-saved-views-changed";
 
+// Snapshot cache — `useSyncExternalStore` requires a stable reference
+// between calls when the underlying data hasn't changed. Without the
+// cache `parsed.filter(isSavedView)` returns a fresh array on every call,
+// which makes React think the store mutated and triggers infinite
+// re-renders (React production error #185 — surfaced in H.16 acceptance
+// CI which was the first time the workspace ran in build mode).
+const EMPTY_VIEWS: ReadonlyArray<SavedView> = [];
+let cachedRaw: string | null = null;
+let cachedViews: ReadonlyArray<SavedView> = EMPTY_VIEWS;
+
 export function readSavedViewsFromStorage(): ReadonlyArray<SavedView> {
-  if (typeof window === "undefined") return [];
+  if (typeof window === "undefined") return EMPTY_VIEWS;
   try {
     const raw = window.localStorage.getItem(SAVED_VIEWS_STORAGE_KEY);
-    if (!raw) return [];
+    if (raw === cachedRaw) return cachedViews;
+    cachedRaw = raw;
+    if (!raw) {
+      cachedViews = EMPTY_VIEWS;
+      return cachedViews;
+    }
     const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isSavedView);
+    if (!Array.isArray(parsed)) {
+      cachedViews = EMPTY_VIEWS;
+      return cachedViews;
+    }
+    cachedViews = parsed.filter(isSavedView);
+    return cachedViews;
   } catch {
-    return [];
+    cachedViews = EMPTY_VIEWS;
+    return cachedViews;
   }
 }
 
 export function writeSavedViewsToStorage(views: ReadonlyArray<SavedView>): void {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(SAVED_VIEWS_STORAGE_KEY, JSON.stringify(views));
+  // Invalidate the snapshot cache so the next read picks up the new value.
+  cachedRaw = null;
   window.dispatchEvent(new CustomEvent(SAVED_VIEWS_EVENT));
 }
 

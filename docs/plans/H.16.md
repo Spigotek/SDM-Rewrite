@@ -1,6 +1,6 @@
 # H.16 — Acceptance criteria smoke (close Phase H)
 
-> **Status**: 🔜 (blokované na H.0-H.15 merge — final Phase H chunk)
+> **Status**: ⏳ IN-FLIGHT (PR #TBD)
 > **Branch**: `chunk/H.16-acceptance-smoke` > **Persona**: all 6 personas (Lucia, Anna, Marek, Peter, Jana, Robert)
 > **Cieľ**: end-of-Phase-H verification — pre všetkých **18 acceptance
 > journeys** z `qa-test-strategy/acceptance-criteria.md §2` napísať

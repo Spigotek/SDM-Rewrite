@@ -72,22 +72,6 @@ export const requestHandlers = [
     return HttpResponse.json({ offerings });
   }),
 
-  http.get("*/api/catalog/:id", ({ params, request }) => {
-    const tenant = parseTenantFromRequest(request);
-    const id = String(params["id"] ?? "");
-    const offering = store.catalog.find((c) => c.id === id && c.tenantId === tenant);
-    if (!offering) return notFound("catalog offering", id, correlationIdFrom(request));
-    return HttpResponse.json(offering);
-  }),
-
-  http.get("*/api/catalog/:id/form", ({ params, request }) => {
-    const tenant = parseTenantFromRequest(request);
-    const id = String(params["id"] ?? "");
-    const offering = store.catalog.find((c) => c.id === id && c.tenantId === tenant);
-    if (!offering) return notFound("catalog offering", id, correlationIdFrom(request));
-    return HttpResponse.json({ form: offering.form });
-  }),
-
   // --- H.5 Service Catalog (items + dynamic-form schema) ---
   // The H.5 wireframe (`portal/03-service-catalog.md`) consumes the catalog as
   // a flat list of items (no nested `offering` wrapper). Two endpoints, both
@@ -95,8 +79,10 @@ export const requestHandlers = [
   //   GET  /api/catalog/items          → [{ id, name, description, category,
   //                                        sla?, cost?, featured? }, ...]
   //   GET  /api/catalog/items/:id      → { item, fields: CatalogField[] }
-  // The legacy `/api/catalog` routes above stay for back-compat with H.0
-  // tests until they are migrated.
+  // The legacy `/api/catalog/:id` route stays for back-compat with H.0
+  // tests; both `/items` routes must be registered BEFORE `:id` because
+  // MSW does first-match-wins on the handler array (otherwise `:id`
+  // captures `items` as a URL param and returns 404).
   http.get("*/api/catalog/items", ({ request }) => {
     const tenant = parseTenantFromRequest(request);
     const url = new URL(request.url);
@@ -133,5 +119,23 @@ export const requestHandlers = [
       ...(offering.featured !== undefined ? { featured: offering.featured } : {}),
     };
     return HttpResponse.json({ item, fields: offering.form.fields });
+  }),
+
+  // Legacy back-compat routes for H.0 tests (must stay AFTER `items` routes
+  // — first-match-wins, see comment above).
+  http.get("*/api/catalog/:id", ({ params, request }) => {
+    const tenant = parseTenantFromRequest(request);
+    const id = String(params["id"] ?? "");
+    const offering = store.catalog.find((c) => c.id === id && c.tenantId === tenant);
+    if (!offering) return notFound("catalog offering", id, correlationIdFrom(request));
+    return HttpResponse.json(offering);
+  }),
+
+  http.get("*/api/catalog/:id/form", ({ params, request }) => {
+    const tenant = parseTenantFromRequest(request);
+    const id = String(params["id"] ?? "");
+    const offering = store.catalog.find((c) => c.id === id && c.tenantId === tenant);
+    if (!offering) return notFound("catalog offering", id, correlationIdFrom(request));
+    return HttpResponse.json({ form: offering.form });
   }),
 ];
