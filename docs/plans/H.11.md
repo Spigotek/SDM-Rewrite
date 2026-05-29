@@ -1,7 +1,9 @@
 # H.11 — Workspace: CAB approval flow
 
-> **Status**: 🔜 (blokované na H.9 — uses ApprovalsTab)
-> **Branch**: `chunk/H.11-cab-approval` > **Persona**: Peter
+> **Status**: ✅ DONE (2026-05-29)
+> **Branch**: `chunk/H.11-cab-approval` (merged, deleted)
+> **PR**: #34 — merged squash via `--admin --delete-branch` > **Outcome**: ApproveModal + RejectModal (RHF/Zod required reason) + SendReminderModal; BFF POST /api/changes/:id/{approve,reject,reminder} s `data.chg.write` audit emit (no new event names — `details.op` discriminator). Per-row gating by `<Can permission="cab.approve">`. Step-up auth degraded per user default — Phase I.2 follow-up logged.
+> **Persona**: Peter
 > **Cieľ**: aktivovať `ApprovalsTab` v change detail — list approvers
 >
 > - actions (Approve, Reject, Send reminder). Modal confirms with comment

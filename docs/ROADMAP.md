@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.9 (Workspace changes list + detail, PR #33). Predchádzajúce: PR #32 — H.6 KB; PR #31 — H.5 catalog.
-- **In flight:** Phase H — Feature modules (10/17 chunks merged) — **portal batch H.2-H.6 complete**.
-- **Next up:** Chunk H.11 — CAB approval flow per H.md §D2 recommended order.
+- **Last merged:** Chunk H.11 (CAB approval flow, PR #34). Predchádzajúce: PR #33 — H.9 changes; PR #32 — H.6 KB.
+- **In flight:** Phase H — Feature modules (11/17 chunks merged).
+- **Next up:** Chunk H.10 — Change calendar (FullCalendar 6 lazy) per H.md §D2 recommended order.
 
-Posledná revízia tohto dokumentu: H.9 DONE (2026-05-29).
+Posledná revízia tohto dokumentu: H.11 DONE (2026-05-29).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.9 DONE (2026-05-29).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (10/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ⏳ IN-FLIGHT (11/17 chunks DONE — najdlhšia, MVP scope)
+
+- **H.11 CAB approval flow ✅ DONE** — `ApprovalsTab` z H.9 rozšírený o action buttons (Approve/Reject/Send reminder) gated by `<Can permission="cab.approve">`. Per-row buttons render iba pre `PENDING`; Send reminder skrytý na self-rows (žiadne self-nags). Modaly: `ApproveModal` (optional comment), `RejectModal` (RHF/Zod required reason per microcopy.md §6), `SendReminderModal`. BFF augmentation `apps/bff/src/api/endpoints/changes.ts` (+119 LOC) — `POST /api/changes/:id/{approve,reject,reminder}` s `requireActiveSession` + audit emit `data.chg.write` per F.4 (no new event names; `details.op` diskriminuje `cab.approve|cab.reject|cab.reminder`). MSW augmented (changes.ts) — back-compat `/approve` s `decision: approve|reject` + new `/reject` + `/reminder` paths s `rollupApprovalState`. **Step-up auth degraded** per user default (F.1 step-up not impl) — audit emit zostáva enabled, SIEM môže flagovať emergency approvals; Phase I.2 follow-up logged v `ApproveModal.tsx` komentári. Bundle: workspace **175.88 KB / 350 KB** (+0.79 KB vs H.9). i18n: +15 SK/EN `changes.cab.*` keys. Tests: 8 BFF cases pre payload validation + audit emit + F.4 invariant + browser scenario `h11-cab-approval.spec.ts`. Plán: [H.11.md](./plans/H.11.md), PR #34.
 
 - **H.9 Workspace changes list + detail ✅ DONE** — `/changes` route (`ChangesRoute` + `ChangesTable` — TanStack Table re-used from H.7 pattern; columns ID/Risk/Status/Schedule/Type/Approver state) + `/changes/:id` route (`ChangeDetailRoute` + `ChangeHeader` + `ChangeTabs` s 4 tabs: `DetailTab` / `ImpactTab` / `RollbackTab` / `ApprovalsTab`). DetailTab: read-only fields (change_category, requestor, scheduled_start/end, business_window). ImpactTab: affected CIs grid + click → `/cmdb/ci/:id` (H.13). RollbackTab: markdown render `rollback_plan` cez vendor-markdown chunk lazy-loaded (`apps/workspace/vite.config.ts` rozšírený o `vendor-markdown` manualChunk per H.6 portal pattern; cap 60 KB). ApprovalsTab: read-only ApprovalChecklist — H.11 doplní actions (approve/reject/send reminder). BFF augmentation v `apps/bff/src/api/endpoints/changes.ts` (+19/-X for approval list endpoint). MSW: fixtures rozšírené (`packages/api-mocks/src/fixtures/changes.ts` +84 LOC pre approvals + rollback). Domain: `Change.approvals` shape pridaný do `packages/domain/src/model.ts`. i18n: +94 SK/EN `changes.*` keys. Browser test `h9-workspace-changes.spec.ts`. Plán: [H.9.md](./plans/H.9.md), PR #33.
 
