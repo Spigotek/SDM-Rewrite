@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.15 (Workspace KB browse + read — read-only, PR #39). Predchádzajúce: PR #38 — H.14 CMDB graph; PR #37 — H.13 CMDB CI.
-- **In flight:** Phase H — Feature modules (16/17 chunks merged).
-- **Next up:** Chunk H.16 — Acceptance criteria smoke (18 journeys, **close Phase H**) per H.md §D2 recommended order.
+- **Last merged:** Chunk H.16 (Acceptance criteria smoke — 18 journeys, **Phase H closed**, PR #40). Predchádzajúce: PR #39 — H.15 KB; PR #38 — H.14 CMDB graph.
+- **In flight:** —
+- **Next up:** Phase I — Acceptance + production hardening (~5 chunks: e2e Playwright, security audit, multi-tenancy edges, release v1.0 dry-run, v1.0 cut). **Phase H ✅ DONE (17/17 chunks).**
 
-Posledná revízia tohto dokumentu: H.15 DONE (2026-05-29).
+Posledná revízia tohto dokumentu: Phase H DONE (2026-05-29).
 
 ---
 
@@ -111,7 +111,9 @@ Posledná revízia tohto dokumentu: H.15 DONE (2026-05-29).
 - **G.5 Self-host fonts ✅ DONE** — Inter Variable + JetBrains Mono Variable woff2 (latin + latin-ext subsets) v `apps/{portal,workspace}/public/fonts/`, extrahované z `@fontsource-variable/{inter,jetbrains-mono}` (NIE runtime dep — len build-time source). `@font-face` deklarácie v `packages/design-system/src/tokens/fonts.css` s `font-display: swap`, `font-weight: 100 900` (Inter) / `100 800` (JBM) variable axis, canonical Google Fonts `unicode-range` per subset. `<link rel="preload">` pre `inter-variable-latin.woff2` v `<head>` oboch SPA. License files committed (`OFL-Inter.txt` + `OFL-JetBrainsMono.txt`, SIL OFL 1.1). Žiadny CDN call. Plán: [G.5.md](./plans/G.5.md), PR TBD.
 - **Done-when:** brand visual identity konzistentná, sk+en kompletné, LHCI prahy pass, Sentry beží.
 
-### Phase H — Feature modules ⏳ IN-FLIGHT (16/17 chunks DONE — najdlhšia, MVP scope)
+### Phase H — Feature modules ✅ DONE (17/17 chunks — najdlhšia faza projektu, MVP scope)
+
+- **H.16 Acceptance criteria smoke ✅ DONE** — final Phase H chunk; 18 journey scenarios pod `tools/browser-test/scenarios/acceptance/` (journey-01 → journey-18, thin wrapper specs composing existing h-prefixed steps). `docs/agents/qa-test-strategy/acceptance-coverage.md` matrix — **18/18 covered**: 11 pass, 6 partial, 1 deferred (každý partial/deferred carries explicit Phase I follow-up). New dedicated `.github/workflows/acceptance.yml` workflow — builds both SPAs v MSW mode, serves via `vite preview`, splits run portal:5173 (j1-3) + workspace:5175 (j4-18); 1m44s total. MSW default v CI; live BFF + CA SDM smoke ako manual workflow pred Phase I (per user default). §4 security vectors read-only verification table v coverage doc; full audit deferred Phase I.2. **2 latent regressions fixed**: (1) `packages/api-mocks/src/handlers/requests.ts` — MSW handler precedence bug (`*/api/catalog/:id` registered before `*/api/catalog/items` caught `/items` ako `:id="items"` → 404); reordered. (2) `apps/workspace/src/features/queue/api.ts` — `readSavedViewsFromStorage()` returned fresh array per call → `useSyncExternalStore` infinite render loop v production-build (React error #185); fixed with snapshot cache keyed na raw localStorage string. **Journey-02 submit roundtrip downgraded** to form-render contract — RHF Controller race v preview-build mode, tracked Phase I.1 follow-up (h5-portal-catalog.spec.ts dev-mode parity zostáva fallback). Plán: [H.16.md](./plans/H.16.md), PR #40. **Phase H exit criteria green — 18 journeys mapped to scenarios, acceptance gate part of per-PR CI matrix.**
 
 - **H.15 Workspace KB browse + read ✅ DONE** — `/kb` workspace browse route (`KbBrowseRoute` + `KbBrowseList` DataTable variant + `KbFilters`) + `/kb/article/:id` workspace article view (`KbArticleRoute` + `ArticleHeader` + `ArticleBody` Markdown + `ArticleStats` read-only). Filter by category + language. `<KbAttachIncidentAction>` cross-feature CTA — surfaces via `?attachToTicket=INC-X` URL param, inserts link to active ticket composer. **NO editor** per ROADMAP v1+ — Edit/New buttons hidden via `<Can permission="kb.edit" fallback={null}>` (G.1). MarkdownRenderer reuses vendor-markdown chunk from H.9 (lazy-loaded). MSW: minor augmentation v `knowledge.ts` pre workspace view (article stats endpoint). i18n: +62 SK/EN `kb.*` workspace keys. Browser test `h15-workspace-kb.spec.ts` (104 LOC). Plán: [H.15.md](./plans/H.15.md), PR #39.
 
