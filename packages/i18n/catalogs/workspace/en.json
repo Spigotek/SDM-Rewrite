@@ -535,7 +535,43 @@
     },
     "relationships": {
       "title": "Relationships",
-      "placeholder": "Relationship graph — interactive pan/zoom, depends-on filter, impact analysis — arrives in the next iteration (H.14)."
+      "count": "{count} relationships",
+      "loading": "Loading relationships…",
+      "chunkLoading": "Loading graph…",
+      "error": "Failed to load relationships.",
+      "empty": "This CI has no recorded relationships.",
+      "graphAriaLabel": "Interactive CI relationships graph",
+      "listAriaLabel": "CI relationships list",
+      "legendAriaLabel": "Relationship type legend",
+      "controlsAriaLabel": "Graph controls",
+      "modeAriaLabel": "View mode",
+      "layoutLabel": "Layout",
+      "showMore": "Show more",
+      "overflow": "Showing first {shown} of {total}.",
+      "mode": {
+        "graph": "Show as graph",
+        "list": "Show as list"
+      },
+      "layout": {
+        "force": "Force-directed",
+        "tree": "Tree",
+        "breadth": "Breadth-first"
+      },
+      "legend": {
+        "depends_on": "depends on",
+        "hosts": "hosts",
+        "peers_with": "peers with"
+      },
+      "type": {
+        "DEPENDS_ON": "depends on",
+        "SUPPORTS": "supports",
+        "RUNS_ON": "runs on",
+        "INSTALLED_ON": "installed on",
+        "CONNECTED_TO": "connected to",
+        "PARENT_OF": "parent of",
+        "USES_SERVICE": "uses service",
+        "PROVIDES_SERVICE": "provides service"
+      }
     },
     "history": {
       "title": "Change history",

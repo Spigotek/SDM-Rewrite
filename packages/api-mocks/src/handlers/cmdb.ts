@@ -127,7 +127,18 @@ export const cmdbHandlers = [
     const relationships = store.ciRelationships.filter(
       (r) => r.sourceCiId === ci.id || r.targetCiId === ci.id,
     );
-    return HttpResponse.json({ relationships });
+    // H.14 graph renderer needs neighbour CIs (label + class) to render
+    // nodes — without them the Cytoscape graph would only show ids. We
+    // resolve neighbours from the same tenant scope so cross-tenant CIs
+    // never leak (sp_admin cross-tenant variant is a future chunk).
+    const neighbourIds = new Set<string>();
+    for (const rel of relationships) {
+      const other = rel.sourceCiId === ci.id ? rel.targetCiId : rel.sourceCiId;
+      neighbourIds.add(other);
+    }
+    const sameTenant = tenantCis(tenant);
+    const neighbours = sameTenant.filter((c) => neighbourIds.has(c.id));
+    return HttpResponse.json({ relationships, neighbours });
   }),
 
   http.get("*/api/ci/:id/history", ({ params, request }) => {

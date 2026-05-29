@@ -65,5 +65,11 @@
     "path": "dist/assets/vendor-calendar-*.js",
     "limit": "150 KB",
     "gzip": true
+  },
+  {
+    "name": "Workspace — vendor-graph chunk (lazy, /cmdb/ci/:id Relationships tab only)",
+    "path": "dist/assets/vendor-graph-*.js",
+    "limit": "200 KB",
+    "gzip": true
   }
 ]

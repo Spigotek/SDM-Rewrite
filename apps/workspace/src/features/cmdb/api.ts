@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
-import type { TenantId } from "@sdm/domain";
-import type { CiDetail, CiHistoryEntry, CiRow } from "./types";
+import type { CIRelationship, TenantId } from "@sdm/domain";
+import type { CiDetail, CiHistoryEntry, CiRow, CiRelationshipsPayload } from "./types";
 
 /**
  * CMDB data plumbing — `/api/ci` (list, paginated) + `/api/ci/:id` (detail) +
@@ -71,6 +71,40 @@ export function ciDetailQuery(id: string) {
         headers: { Accept: "application/json" },
       });
       return jsonOrThrow<CiDetail>(resp, "cmdb-detail");
+    },
+    staleTime: 60_000,
+  };
+}
+
+export function ciRelationshipsQueryKey(id: string): readonly unknown[] {
+  return ["cmdb-relationships", id] as const;
+}
+
+/**
+ * Fetch the CI's neighbour graph in a single round-trip — `relationships[]`
+ * (edges) plus `neighbours[]` (target/source CIs we need to render as nodes).
+ *
+ * MSW (`packages/api-mocks/src/handlers/cmdb.ts`) returns both arrays so the
+ * graph component can render without follow-up `/api/ci/:id` lookups. Once the
+ * BFF projection lands (CA SDM brel queries), the same shape will be served
+ * from `/api/cmdb/ci/:id/relationships`.
+ */
+export function ciRelationshipsQuery(id: string) {
+  return {
+    queryKey: ciRelationshipsQueryKey(id),
+    queryFn: async (): Promise<CiRelationshipsPayload> => {
+      const resp = await fetch(`/api/ci/${encodeURIComponent(id)}/relationships`, {
+        credentials: "include",
+        headers: { Accept: "application/json" },
+      });
+      const body = await jsonOrThrow<{
+        readonly relationships: ReadonlyArray<CIRelationship>;
+        readonly neighbours?: ReadonlyArray<CiRow>;
+      }>(resp, "cmdb-relationships");
+      return {
+        relationships: body.relationships,
+        neighbours: body.neighbours ?? [],
+      };
     },
     staleTime: 60_000,
   };

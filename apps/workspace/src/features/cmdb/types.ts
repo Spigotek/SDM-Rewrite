@@ -1,4 +1,4 @@
-import type { Ci } from "@sdm/domain";
+import type { Ci, CIRelationship } from "@sdm/domain";
 
 /**
  * UI-side aliases for the workspace CMDB feature. The list and detail share the
@@ -11,7 +11,8 @@ import type { Ci } from "@sdm/domain";
  *                       / Compliance / Custom). H.13 covers Server (NetworkServer),
  *                       Database (DatabaseInstance), App (PortfolioApplication /
  *                       Service) + a generic "All attributes" fallback.
- *  - RelationshipsTab → H.13 placeholder card; H.14 swaps in the Cytoscape graph.
+ *  - RelationshipsTab → lazy Cytoscape graph (`vendor-graph` chunk) with a
+ *                       list-view a11y fallback per components.md (H.14).
  *  - HistoryTab       → read-only change log from `/api/ci/:id/history`
  *                       (synthetic MSW stream per spec/cmdb.md §audit-trail).
  */
@@ -69,4 +70,15 @@ export interface AttributeRow {
 export interface AttributeGroup {
   readonly key: AttributeGroupKey;
   readonly rows: ReadonlyArray<AttributeRow>;
+}
+
+/**
+ * Relationship-graph payload — edges (CIRelationship) plus the neighbour CIs
+ * referenced by those edges. The graph renderer needs both because Cytoscape
+ * draws nodes from `neighbours[]` (label, class) and edges from
+ * `relationships[]`. MSW emits the shape; the BFF will do the same projection.
+ */
+export interface CiRelationshipsPayload {
+  readonly relationships: ReadonlyArray<CIRelationship>;
+  readonly neighbours: ReadonlyArray<Ci>;
 }

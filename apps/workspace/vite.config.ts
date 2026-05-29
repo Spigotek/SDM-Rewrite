@@ -73,6 +73,19 @@ export default defineConfig(({ mode }) => {
             if (/[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:@sentry[\\/])/.test(id)) {
               return "vendor-observability";
             }
+            // Cytoscape graph stack — used only on `/cmdb/ci/:id`
+            // Relationships tab (H.14). Grouping `cytoscape` + the
+            // `cose-bilkent` / `dagre` layout plugins + the React wrapper
+            // into one `vendor-graph` lazy chunk keeps the workspace
+            // initial JS untouched. Per `performance.md §3 heavy chunks`,
+            // capped at 150 KB gzip in `.size-limit.json`.
+            if (
+              /[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:cytoscape|cytoscape-cose-bilkent|react-cytoscapejs)[@\\/]/.test(
+                id,
+              )
+            ) {
+              return "vendor-graph";
+            }
             // FullCalendar stack — used only on `/changes/calendar` (H.10).
             // Grouping the core + dayGrid + timeGrid + interaction + the
             // react wrapper into one lazy `vendor-calendar` chunk keeps the

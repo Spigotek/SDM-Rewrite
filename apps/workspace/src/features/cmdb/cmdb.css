@@ -438,27 +438,253 @@
   word-break: break-word;
 }
 
-/* ── Relationships placeholder ─────────────────────────────────────── */
+/* ── Relationships graph (H.14) ────────────────────────────────────── */
 
-.sdm-cmdb-graph-placeholder {
-  border: var(--border-width-thin) dashed var(--color-border-default);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-4) var(--spacing-5, var(--spacing-4));
-  background: var(--color-surface-raised);
-  text-align: center;
-  color: var(--color-text-secondary);
+.sdm-cmdb-graph-panel {
+  gap: var(--spacing-3);
 }
 
-.sdm-cmdb-graph-placeholder h2 {
-  margin: 0 0 var(--spacing-2) 0;
+.sdm-cmdb-graph-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+.sdm-cmdb-graph-header-titles h2 {
+  margin: 0;
   font-size: var(--font-size-md);
   color: var(--color-text-primary);
 }
 
-.sdm-cmdb-graph-placeholder p {
+.sdm-cmdb-graph-count {
   margin: 0;
-  font-style: italic;
   color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.sdm-cmdb-graph-controls {
+  display: flex;
+  gap: var(--spacing-3);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sdm-cmdb-graph-mode-toggle {
+  display: inline-flex;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.sdm-cmdb-graph-mode-btn {
+  padding: var(--spacing-1) var(--spacing-3);
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.sdm-cmdb-graph-mode-btn[data-active] {
+  background: var(--color-accent, var(--color-text-primary));
+  color: var(--color-text-on-accent, #fff);
+}
+
+.sdm-cmdb-graph-mode-btn:focus-visible {
+  outline: 2px solid var(--color-accent, var(--color-text-primary));
+  outline-offset: 2px;
+}
+
+.sdm-cmdb-graph-layout-picker {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sdm-cmdb-graph-layout-label {
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.sdm-cmdb-graph-layout-select {
+  padding: var(--spacing-1) var(--spacing-2);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-cmdb-graph-wrapper {
+  position: relative;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface, transparent);
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+}
+
+.sdm-cmdb-graph-canvas {
+  flex: 1 1 auto;
+  min-height: 460px;
+  width: 100%;
+}
+
+.sdm-cmdb-graph-legend {
+  list-style: none;
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-3);
+  display: flex;
+  gap: var(--spacing-4);
+  flex-wrap: wrap;
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  background: var(--color-surface-raised);
+}
+
+.sdm-cmdb-graph-legend-row {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.sdm-cmdb-graph-legend-symbol {
+  stroke: var(--color-text-secondary);
+  fill: var(--color-text-secondary);
+}
+
+.sdm-cmdb-graph-state {
+  color: var(--color-text-secondary);
+  padding: var(--spacing-3) 0;
+}
+
+.sdm-cmdb-graph-state--error {
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+.sdm-cmdb-graph-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-cmdb-graph-list > li {
+  background: var(--color-surface-raised);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+.sdm-cmdb-graph-list > li > ul {
+  list-style: none;
+  margin: var(--spacing-2) 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-cmdb-graph-list-center {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--spacing-2);
+  color: var(--color-text-primary);
+}
+
+.sdm-cmdb-graph-list-row {
+  display: flex;
+}
+
+.sdm-cmdb-graph-list-link {
+  display: grid;
+  grid-template-columns: minmax(0, 0.3fr) auto minmax(0, 1fr) auto;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding: var(--spacing-1) var(--spacing-2);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-primary);
+  text-decoration: none;
+  font-size: var(--font-size-sm);
+  align-items: baseline;
+}
+
+.sdm-cmdb-graph-list-link:hover,
+.sdm-cmdb-graph-list-link:focus-visible {
+  background: var(--color-surface-hover);
+  outline: none;
+}
+
+.sdm-cmdb-graph-list-rel {
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.sdm-cmdb-graph-list-arrow {
+  color: var(--color-text-tertiary);
+}
+
+.sdm-cmdb-graph-list-name {
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sdm-cmdb-graph-list-class {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-xs);
+}
+
+.sdm-cmdb-graph-list-empty {
+  color: var(--color-text-tertiary);
+  padding: var(--spacing-3) 0;
+  font-style: italic;
+}
+
+.sdm-cmdb-graph-overflow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--border-width-thin) dashed var(--color-border-default);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-raised);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-cmdb-graph-overflow p {
+  margin: 0;
+}
+
+.sdm-cmdb-graph-show-more {
+  padding: var(--spacing-1) var(--spacing-3);
+  background: var(--color-accent, var(--color-text-primary));
+  color: var(--color-text-on-accent, #fff);
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+}
+
+.sdm-cmdb-graph-show-more:focus-visible {
+  outline: 2px solid var(--color-accent, var(--color-text-primary));
+  outline-offset: 2px;
 }
 
 /* ── History tab ───────────────────────────────────────────────────── */
