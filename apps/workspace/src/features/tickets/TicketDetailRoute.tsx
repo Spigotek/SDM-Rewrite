@@ -12,6 +12,7 @@ import { ContextPanel } from "./components/ContextPanel";
 import { EscalateModal } from "./components/EscalateModal";
 import { ResolveModal } from "./components/ResolveModal";
 import { useComposerTab } from "./hooks";
+import { ConvertToProblemModal } from "../problems/components/ConvertToProblemModal";
 import "./ticket-detail.css";
 
 const KNOWN_TYPES: ReadonlyArray<UiTicketType> = ["incident", "request", "problem", "change"];
@@ -51,6 +52,7 @@ export default function TicketDetailRoute() {
   const [escalateOpen, setEscalateOpen] = useState(false);
   const [resolveOpen, setResolveOpen] = useState(false);
   const [resolveSeed, setResolveSeed] = useState("");
+  const [convertOpen, setConvertOpen] = useState(false);
   const { setTab } = useComposerTab();
 
   if (detailQuery.isPending) {
@@ -103,6 +105,9 @@ export default function TicketDetailRoute() {
           }}
           onEscalateClick={() => setEscalateOpen(true)}
           onReplyClick={onReplyClick}
+          onConvertToProblemClick={
+            detail.ticketType === "incident" ? () => setConvertOpen(true) : undefined
+          }
         />
         <ActivityTimeline activity={detail.activity} />
         <Composer detail={detail} onResolveRequest={onResolveFromComposer} />
@@ -116,6 +121,13 @@ export default function TicketDetailRoute() {
           detail={detail}
           initialSolution={resolveSeed}
           onClose={() => setResolveOpen(false)}
+        />
+      )}
+      {convertOpen && (
+        <ConvertToProblemModal
+          incidentId={detail.id}
+          initialSummary={detail.summary}
+          onClose={() => setConvertOpen(false)}
         />
       )}
     </section>

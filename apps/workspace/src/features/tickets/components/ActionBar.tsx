@@ -9,6 +9,7 @@ export interface ActionBarProps {
   readonly onResolveClick: () => void;
   readonly onEscalateClick: () => void;
   readonly onReplyClick: () => void;
+  readonly onConvertToProblemClick?: (() => void) | undefined;
 }
 
 /**
@@ -16,14 +17,17 @@ export interface ActionBarProps {
  * mutation hook. `Resolve` and `Escalate` open modals because they require a
  * payload (Solution / Note + Group); `Take` and `Watch` fire-and-forget.
  *
- * The "More" menu is intentionally a placeholder anchor (mark KB candidate,
- * copy link) — the H.8 footprint covers the four authoritative transitions.
+ * The "More" menu hosts secondary actions: copy link, mark-KB-candidate
+ * (deferred), and — added in H.12 — "Convert to problem" for incident
+ * tickets (opens the convert modal so Marek can spin up a problem record
+ * seeded from the symptoms Anna has been triaging).
  */
 export function ActionBar({
   detail,
   onResolveClick,
   onEscalateClick,
   onReplyClick,
+  onConvertToProblemClick,
 }: ActionBarProps) {
   const { t } = useTranslation("workspace");
   const take = useTake(detail.ticketType, detail.id);
@@ -98,6 +102,20 @@ export function ActionBar({
                 {t("ticketDetail.actions.copyLink")}
               </button>
             </li>
+            {detail.ticketType === "incident" && onConvertToProblemClick ? (
+              <li role="menuitem">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMoreOpen(false);
+                    onConvertToProblemClick();
+                  }}
+                  data-testid="ticket-action-convert-to-problem"
+                >
+                  {t("problems.actions.convert")}
+                </button>
+              </li>
+            ) : null}
             <li role="menuitem">
               <button type="button" onClick={() => setMoreOpen(false)} disabled>
                 {t("ticketDetail.actions.markKbCandidate")}

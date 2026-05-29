@@ -70,7 +70,15 @@ export const router = createBrowserRouter([
       },
       {
         path: "problems",
-        lazy: async () => ({ Component: (await import("./placeholders/problems")).default }),
+        lazy: async () => ({
+          Component: (await import("../features/problems/ProblemsRoute")).default,
+        }),
+      },
+      {
+        path: "problems/:id",
+        lazy: async () => ({
+          Component: (await import("../features/problems/ProblemDetailRoute")).default,
+        }),
       },
       {
         path: "cmdb",

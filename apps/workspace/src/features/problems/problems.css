@@ -1,0 +1,402 @@
+/**
+ * Problem-management layout — list + detail pages for Marek (agent_l2).
+ *
+ * Mirrors the changes feature stylesheet (H.9): list uses the dense table
+ * pattern from the queue; detail uses the H.8 split layout but with a single
+ * column because the linked-incidents block sits inline rather than in a
+ * dedicated context rail.
+ */
+
+.sdm-problems-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  height: 100%;
+  min-height: 0;
+}
+
+.sdm-problems-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+.sdm-problems-title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-problems-tenant-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sdm-problems-state {
+  color: var(--color-text-secondary);
+  padding: var(--spacing-4);
+}
+
+.sdm-problems-state--error {
+  color: var(--color-text-danger, var(--color-text-primary));
+}
+
+/* ── Filter bar ────────────────────────────────────────────────────── */
+
+.sdm-problems-filterbar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-problems-filterbar-row {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sdm-problems-search {
+  flex: 1 1 16rem;
+  min-width: 12rem;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-input, var(--color-surface-default));
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-problems-result-count {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  margin-right: auto;
+}
+
+.sdm-problems-chip-group {
+  display: flex;
+  gap: var(--spacing-2);
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.sdm-problems-chip-group-label {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-semibold);
+  margin-right: var(--spacing-1);
+}
+
+.sdm-problems-chip {
+  display: inline-flex;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+}
+
+.sdm-problems-chip--active {
+  background: var(--color-surface-active, var(--color-surface-raised));
+  color: var(--color-text-primary);
+  border-color: var(--color-border-strong, var(--color-border-default));
+}
+
+.sdm-problems-chip-count {
+  color: var(--color-text-tertiary);
+}
+
+/* ── List table ────────────────────────────────────────────────────── */
+
+.sdm-problems-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--font-size-sm);
+}
+
+.sdm-problems-table thead th {
+  text-align: left;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.sdm-problems-table tbody td {
+  padding: var(--spacing-2) var(--spacing-3);
+  border-bottom: var(--border-width-thin) solid
+    var(--color-border-subtle, var(--color-border-default));
+  color: var(--color-text-body);
+  vertical-align: top;
+}
+
+.sdm-problems-row {
+  cursor: pointer;
+}
+
+.sdm-problems-row:hover {
+  background: var(--color-surface-hover, var(--color-surface-raised));
+}
+
+.sdm-problems-row:focus-visible {
+  outline: 2px solid var(--color-border-focus, var(--color-border-strong));
+  outline-offset: -2px;
+}
+
+.sdm-problems-cell-ref {
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-secondary);
+}
+
+.sdm-problems-cell-rootcause,
+.sdm-problems-cell-summary {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 24rem;
+  display: inline-block;
+}
+
+/* ── Detail page ───────────────────────────────────────────────────── */
+
+.sdm-problem-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+}
+
+.sdm-problem-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  padding-bottom: var(--spacing-3);
+}
+
+.sdm-problem-header-title {
+  display: flex;
+  align-items: baseline;
+  gap: var(--spacing-2);
+  flex-wrap: wrap;
+}
+
+.sdm-problem-header-ref {
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-problem-header-summary {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-problem-header-major {
+  background: var(--color-surface-danger, var(--color-surface-raised));
+  color: var(--color-text-danger, var(--color-text-primary));
+  padding: 0 var(--spacing-2);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+.sdm-problem-header-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-3);
+}
+
+.sdm-problem-header-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.sdm-problem-header-label {
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sdm-problem-header-value {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-body);
+}
+
+.sdm-problem-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-problem-section-title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-problem-body-text {
+  white-space: pre-wrap;
+  color: var(--color-text-body);
+  font-size: var(--font-size-sm);
+  line-height: 1.5;
+}
+
+.sdm-problem-body-empty {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  font-style: italic;
+}
+
+/* ── Linked incidents ──────────────────────────────────────────────── */
+
+.sdm-problem-linked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-problem-linked-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+
+.sdm-problem-linked-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-problem-linked-item {
+  display: grid;
+  grid-template-columns: 7rem 8rem minmax(0, 1fr) auto;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  align-items: center;
+}
+
+.sdm-problem-linked-ref {
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-problem-linked-summary {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-body);
+}
+
+.sdm-problem-linked-empty {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-2);
+  border: var(--border-width-thin) dashed var(--color-border-default);
+  border-radius: var(--radius-sm);
+}
+
+.sdm-problem-linked-empty-hint {
+  display: block;
+  margin-top: var(--spacing-1);
+  color: var(--color-text-tertiary);
+  font-style: italic;
+  font-size: var(--font-size-xs);
+}
+
+/* ── Link modal — search + multi-select list ───────────────────────── */
+
+.sdm-link-modal-search {
+  width: 100%;
+  padding: var(--spacing-2) var(--spacing-3);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-input, var(--color-surface-default));
+  color: var(--color-text-primary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-link-modal-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 20rem;
+  overflow-y: auto;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+}
+
+.sdm-link-modal-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2);
+  cursor: pointer;
+  border-bottom: var(--border-width-thin) solid
+    var(--color-border-subtle, var(--color-border-default));
+}
+
+.sdm-link-modal-option:last-child {
+  border-bottom: none;
+}
+
+.sdm-link-modal-option:hover {
+  background: var(--color-surface-hover, var(--color-surface-raised));
+}
+
+.sdm-link-modal-option-ref {
+  font-family: var(--font-family-mono, monospace);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  min-width: 6rem;
+}
+
+.sdm-link-modal-option-summary {
+  flex: 1;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sdm-link-modal-empty {
+  padding: var(--spacing-3);
+  color: var(--color-text-tertiary);
+  text-align: center;
+}
+
+.sdm-link-modal-selected {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  margin-top: var(--spacing-2);
+}

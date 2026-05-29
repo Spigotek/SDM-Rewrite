@@ -12,6 +12,8 @@
         "http://localhost/changes",
         "http://localhost/changes/calendar",
         "http://localhost/changes/CHG-1",
+        "http://localhost/problems",
+        "http://localhost/problems/PR-1",
         "http://localhost/cmdb",
         "http://localhost/cmdb/ci/CI-1",
         "http://localhost/kb/editor"
