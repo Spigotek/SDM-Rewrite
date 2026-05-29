@@ -105,6 +105,10 @@ jobs:
             --reporter=list
 
       - name: Workspace acceptance journeys (4-18) on :5175
+        # Run even if the portal step failed so we get full coverage of both
+        # SPAs in a single CI run. The job's overall conclusion still reflects
+        # any failure.
+        if: success() || failure()
         env:
           SDM_BROWSER_TEST_RUN_ID: "w00001"
           SDM_BROWSER_TEST_BASE_URL: "http://localhost:5175"

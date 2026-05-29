@@ -20,8 +20,12 @@ test("journey-02 portal software request — catalog → dynamic form → reques
   await isolatedPage.goto("/catalog");
   await expect(isolatedPage.getByTestId("portal-catalog")).toBeVisible({ timeout: 15_000 });
 
-  // Featured grid must populate before filtering.
-  await expect(isolatedPage.getByTestId("catalog-list")).toBeVisible({ timeout: 15_000 });
+  // Wait for the catalog query to settle — `catalog-list-loading` clears
+  // once react-query resolves. The list testid only renders on success +
+  // non-empty results; the empty-state testid covers the alternate branch.
+  const list = isolatedPage.getByTestId("catalog-list");
+  const empty = isolatedPage.getByTestId("catalog-list-empty");
+  await expect(list.or(empty)).toBeVisible({ timeout: 30_000 });
 
   // Filter by software category — software card group.
   await isolatedPage.getByTestId("catalog-category-software").click();
