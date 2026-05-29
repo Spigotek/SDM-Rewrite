@@ -76,8 +76,13 @@ test("H.9 changes — list, detail tabs, navigation", async ({ isolatedPage }) =
   await expect(isolatedPage.getByTestId("change-tabpanel-approvals")).toBeVisible();
   await expect(isolatedPage).toHaveURL(/[?&]tab=approvals/);
   await expect(isolatedPage.getByTestId("change-approvals-list")).toBeVisible();
-  // Read-only contract — no action buttons, only the deferred hint.
-  await expect(isolatedPage.getByTestId("change-approvals-hint")).toBeVisible();
+
+  // H.11 turned the read-only list into an action surface; either the action
+  // buttons are visible (permission-holder) or the denied hint is rendered
+  // (no `cab.approve`). Both states are valid post-H.11.
+  const approverActions = isolatedPage.getByTestId("change-approver-actions");
+  const approvalsHint = isolatedPage.getByTestId("change-approvals-hint");
+  await expect(approverActions.first().or(approvalsHint)).toBeVisible();
 
   // Approver rows carry decision data attribute for H.11 to hook into.
   const approverRows = isolatedPage.getByTestId("change-approver-row");

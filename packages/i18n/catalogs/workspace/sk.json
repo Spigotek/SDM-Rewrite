@@ -280,6 +280,35 @@
       "empty": "Žiadni CAB approveri priradení.",
       "actionsDeferred": "Approve / Reject / Send reminder akcie dorazia v H.11.",
       "rowAriaLabel": "{approver} — {decision}"
+    },
+    "cab": {
+      "actions": {
+        "approve": "Schváliť",
+        "reject": "Zamietnuť",
+        "reminder": "Pripomenúť"
+      },
+      "deniedHint": "Na schválenie CAB potrebuješ vyššie oprávnenie. Skontroluj rolu s administrátorom tenanta.",
+      "approveModal": {
+        "title": "Schváliť {ref}?",
+        "body": "Pridáš svoj súhlas k CAB schvaľovaniu. Tvoje rozhodnutie bude zaznamenané v audit logu.",
+        "commentLabel": "Komentár (voliteľné)",
+        "commentPlaceholder": "Napríklad podmienka, ktorú treba splniť pred implementáciou…",
+        "submit": "Schváliť"
+      },
+      "rejectModal": {
+        "title": "Zamietnuť {ref}?",
+        "body": "Schvaľovateľom pôjde notifikácia o zamietnutí. Musíš pridať komentár prečo.",
+        "reasonLabel": "Dôvod zamietnutia",
+        "reasonPlaceholder": "Vysvetli, prečo je zmena zamietnutá — pomôže autorovi pri prepracovaní.",
+        "reasonRequired": "Dôvod zamietnutia je povinný.",
+        "submit": "Zamietnuť"
+      },
+      "reminderModal": {
+        "title": "Pripomenúť schvaľovateľovi?",
+        "body": "Pošleme notifikáciu schvaľovateľovi {approver}, že čaká rozhodnutie pre {ref}.",
+        "confirm": "Pripomienka odoslaná.",
+        "submit": "Odoslať pripomienku"
+      }
     }
   },
   "placeholders": {

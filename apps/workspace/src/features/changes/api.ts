@@ -3,6 +3,18 @@ import type { TenantId } from "@sdm/domain";
 import type { ChangeRow, ChangeDetail } from "./types";
 
 /**
+ * H.11: CAB approval actions. Three endpoints share the change-detail key so a
+ * successful POST swaps the cache via `setQueryData` (mirrors H.8 ticket
+ * mutations) — no extra refetch needed.
+ *
+ * Backward-compat: the MSW handler `/api/changes/:id/approve` already accepts
+ * `{ decision: "approve" | "reject" }` (legacy contract from the read-only
+ * H.9 baseline). H.11 augments MSW + BFF with a dedicated `/reject` path so the
+ * payload is action-shaped — `comment` is approve-only and `reason` is
+ * reject-only — and emits `data.change.write` per F.4 taxonomy server-side.
+ */
+
+/**
  * Changes data plumbing — `/api/changes` (list) + `/api/changes/:id` (detail).
  *
  * Both endpoints return the domain `Change` shape directly:
@@ -73,4 +85,59 @@ export function changeDetailQuery(id: string) {
     },
     staleTime: 15_000,
   };
+}
+
+// ── H.11 CAB approval actions ────────────────────────────────────────────────
+
+export interface ApprovePayload {
+  readonly approverId: string;
+  readonly comment?: string;
+}
+
+export interface RejectPayload {
+  readonly approverId: string;
+  readonly reason: string;
+}
+
+export interface ReminderPayload {
+  readonly approverId: string;
+}
+
+async function postJson<T>(path: string, body: unknown, op: string): Promise<T> {
+  const resp = await fetch(path, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(body),
+  });
+  return jsonOrThrow<T>(resp, op);
+}
+
+export function postApprove(id: string, payload: ApprovePayload): Promise<ChangeDetail> {
+  return postJson<ChangeDetail>(
+    `/api/changes/${encodeURIComponent(id)}/approve`,
+    { decision: "approve", approverId: payload.approverId, comment: payload.comment ?? "" },
+    "change-approve",
+  );
+}
+
+export function postReject(id: string, payload: RejectPayload): Promise<ChangeDetail> {
+  return postJson<ChangeDetail>(
+    `/api/changes/${encodeURIComponent(id)}/reject`,
+    { approverId: payload.approverId, reason: payload.reason },
+    "change-reject",
+  );
+}
+
+export interface ReminderAck {
+  readonly ok: true;
+  readonly approverId: string;
+}
+
+export function postReminder(id: string, payload: ReminderPayload): Promise<ReminderAck> {
+  return postJson<ReminderAck>(
+    `/api/changes/${encodeURIComponent(id)}/reminder`,
+    { approverId: payload.approverId },
+    "change-reminder",
+  );
 }

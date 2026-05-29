@@ -1,4 +1,7 @@
 import type { Hono } from "hono";
+import { AppErrorException } from "../../auth/errors";
+import { AUDIT_EVENTS } from "../../platform/audit";
+import { requireActiveSession } from "../../session/load";
 import type { RestProxyDeps } from "../rest-proxy";
 import { registerEntityRoutes } from "./_entity-routes";
 import { epochSecToIso, liftAttrs, toFkRef, type CaSdmFk } from "./_shape";
@@ -110,5 +113,121 @@ export function registerChangeRoutes(app: Hono, deps: RestProxyDeps): void {
     mapRow,
     mapCreate,
     mapUpdate,
+  });
+
+  registerCabApprovalRoutes(app, deps);
+}
+
+/**
+ * H.11 CAB approval mutations — three explicit POST verbs so the audit trail
+ * captures intent without parsing a `decision` field. All three reuse the F.4
+ * `data.change.write` audit name (F.4 frozen — no new event taxonomy). The
+ * reminder endpoint is a sentinel: it returns `{ ok: true, approverId }` so
+ * the FE can dismiss the modal but does not mutate change state in CA SDM.
+ *
+ * Step-up auth for emergency/critical-prod approvals is **not** enforced here
+ * — F.1 step-up flow is deferred. The audit emit alone gives SIEM the signal
+ * needed for compliance review. Tracked as a Phase I.2 follow-up.
+ */
+
+interface ApproveBody {
+  approverId?: unknown;
+  comment?: unknown;
+}
+
+interface RejectBody {
+  approverId?: unknown;
+  reason?: unknown;
+}
+
+interface ReminderBody {
+  approverId?: unknown;
+}
+
+function readString(value: unknown, field: string, op: string): string {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    throw new AppErrorException({
+      code: "VALIDATION",
+      httpStatus: 400,
+      message: `${op}: ${field} is required`,
+    });
+  }
+  return value.trim();
+}
+
+function readOptionalString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
+function registerCabApprovalRoutes(app: Hono, deps: RestProxyDeps): void {
+  app.post("/api/changes/:id/approve", async (c) => {
+    const id = c.req.param("id");
+    const body = (await c.req.json().catch(() => ({}))) as ApproveBody;
+    const approverId = readString(body.approverId, "approverId", "POST /api/changes/:id/approve");
+    const comment = readOptionalString(body.comment);
+    const session = await requireActiveSession(c, deps);
+    deps.audit?.(
+      c,
+      {
+        category: "data",
+        event: AUDIT_EVENTS.data.write("chg"),
+        result: "success",
+        resultCode: 200,
+        details: {
+          op: "cab.approve",
+          recordId: id,
+          approverId,
+          ...(comment !== undefined ? { commentLength: comment.length } : {}),
+        },
+      },
+      session,
+    );
+    return c.json({ id, decision: "approve", approverId, ...(comment ? { comment } : {}) }, 200);
+  });
+
+  app.post("/api/changes/:id/reject", async (c) => {
+    const id = c.req.param("id");
+    const body = (await c.req.json().catch(() => ({}))) as RejectBody;
+    const approverId = readString(body.approverId, "approverId", "POST /api/changes/:id/reject");
+    const reason = readString(body.reason, "reason", "POST /api/changes/:id/reject");
+    const session = await requireActiveSession(c, deps);
+    deps.audit?.(
+      c,
+      {
+        category: "data",
+        event: AUDIT_EVENTS.data.write("chg"),
+        result: "success",
+        resultCode: 200,
+        details: {
+          op: "cab.reject",
+          recordId: id,
+          approverId,
+          reasonLength: reason.length,
+        },
+      },
+      session,
+    );
+    return c.json({ id, decision: "reject", approverId, reason }, 200);
+  });
+
+  app.post("/api/changes/:id/reminder", async (c) => {
+    const id = c.req.param("id");
+    const body = (await c.req.json().catch(() => ({}))) as ReminderBody;
+    const approverId = readString(body.approverId, "approverId", "POST /api/changes/:id/reminder");
+    const session = await requireActiveSession(c, deps);
+    deps.audit?.(
+      c,
+      {
+        category: "data",
+        event: AUDIT_EVENTS.data.write("chg"),
+        result: "success",
+        resultCode: 200,
+        details: { op: "cab.reminder", recordId: id, approverId },
+      },
+      session,
+    );
+    return c.json({ ok: true, approverId }, 200);
   });
 }
