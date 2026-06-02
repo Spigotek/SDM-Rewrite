@@ -11,6 +11,7 @@ import { loadSession, UnauthorizedError, type SessionLoadResult } from "./bootst
 import { setPreloadedSession } from "./bootstrap/session-preload";
 import { prefetchHome } from "./features/home/api";
 import { queryClient } from "./lib/query-client";
+import { preloadRouteForPath } from "./bootstrap/route-preload";
 
 /**
  * Bootstrap critical path — I.0 perf fix.
@@ -43,6 +44,15 @@ async function bootstrap(): Promise<void> {
     const { startMockWorker } = await import("./mocks/browser");
     await startMockWorker({ quiet: false });
   }
+
+  // Kick off the lazy route chunk that matches the current pathname before
+  // awaiting the bootstrap promises. Router's `lazy:` for the same path
+  // dedupes against the in-flight module-graph request, so this collapses
+  // what was a serial waterfall — entry → bootstrap → router → lazy chunk
+  // → render — into parallel fetches. The match is path-prefix based and
+  // covers the two LCP-critical routes (home and ticket detail). Anything
+  // else falls through to the post-mount router path with no penalty.
+  void preloadRouteForPath(window.location.pathname);
 
   // `loadSession()` rejection branches are normalised here — we do NOT want
   // a 401 or 5xx on `/me` to blank the page (the post-render fallback in
