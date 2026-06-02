@@ -256,3 +256,49 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-sm);
 }
+
+/* ─── I.0 — Loading skeletons ─────────────────────────────────────────── */
+
+/*
+ * Dimensions approximate the real rows so the layout doesn't shift when the
+ * query resolves (CLS budget 0.05 per `performance.md §2 portal /`). A
+ * single `<span>` per row keeps DOM cost low — the visual variation only
+ * lives in CSS sizing.
+ */
+
+.sdm-home-skeleton-row {
+  padding: var(--spacing-3) var(--spacing-4);
+}
+
+.sdm-home-skeleton {
+  display: block;
+  background-color: var(--color-background-subtle);
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+.sdm-home-skeleton-ticket {
+  height: 1.5rem;
+  width: 70%;
+}
+
+.sdm-home-skeleton-kb {
+  height: 5rem;
+  width: 100%;
+  border-radius: var(--radius-md);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sdm-home-skeleton {
+    animation: sdm-home-skeleton-pulse 1.4s ease-in-out infinite;
+  }
+}
+
+@keyframes sdm-home-skeleton-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
