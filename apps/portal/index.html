@@ -11,6 +11,13 @@
       href="/fonts/inter-variable-latin.woff2"
       crossorigin
     />
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/inter-variable-latin-ext.woff2"
+      crossorigin
+    />
     <script>
       (function () {
         try {
@@ -32,8 +39,159 @@
         }
       })();
     </script>
+    <!--
+      I.0 Resolution 4 — inline critical CSS for the prerender hero band
+      below. Self-contained subset of tokens + minimal layout so the first
+      server response paints the LCP element BEFORE `vendor-react` /
+      `index-*.js` arrive. Removed from the DOM by `main.tsx` after React
+      commits.
+      Raw size budget: < 4 KB, gz < 1.5 KB. Variables match `tokens.css`
+      light defaults — dark theme is handled by the `[data-theme]` selector
+      already set by the inline theme script above.
+    -->
+    <style>
+      .sdm-prerender {
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
+        padding: 1.5rem 1.25rem;
+        max-width: 64rem;
+        margin: 0 auto;
+        font-family:
+          "Inter Variable",
+          system-ui,
+          -apple-system,
+          Segoe UI,
+          Roboto,
+          sans-serif;
+        color: #1f2937;
+      }
+      [data-theme="dark"] .sdm-prerender {
+        color: #e5e7eb;
+      }
+      .sdm-prerender-hero {
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .sdm-prerender-hero h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.25;
+      }
+      .sdm-prerender-hero p {
+        margin: 0;
+        color: #6b7280;
+      }
+      [data-theme="dark"] .sdm-prerender-hero p {
+        color: #9ca3af;
+      }
+      .sdm-prerender-actions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+      @media (min-width: 640px) {
+        .sdm-prerender-actions {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .sdm-prerender-card {
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1.25rem;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        box-sizing: border-box;
+      }
+      [data-theme="dark"] .sdm-prerender-card {
+        background: #1f2937;
+        border-color: #374151;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+      }
+      .sdm-prerender-card h2 {
+        margin: 0 0 0.5rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+      }
+      .sdm-prerender-card p {
+        margin: 0;
+        color: #6b7280;
+      }
+      [data-theme="dark"] .sdm-prerender-card p {
+        color: #9ca3af;
+      }
+    </style>
+    <script>
+      // I.0 Resolution 4 — locale swap for the prerender. Default ships SK
+      // (portal primary locale). If `localStorage["sdm.locale"]` or
+      // `navigator.language` resolves to EN, flip the prerender text + the
+      // `<html lang>` attribute BEFORE the LCP frame paints. Critical path
+      // budget: < 1 KB minified.
+      (function () {
+        try {
+          var stored = localStorage.getItem("sdm.locale");
+          var locale =
+            stored === "sk" || stored === "en"
+              ? stored
+              : (navigator.language || "sk").toLowerCase().indexOf("en") === 0
+                ? "en"
+                : "sk";
+          if (locale === "en") {
+            document.documentElement.lang = "en";
+            var pre = document.getElementById("portal-prerender");
+            if (pre) {
+              var en = {
+                greeting: "Hi 👋",
+                subgreeting: "How can I help you?",
+                newIncidentTitle: "Report a problem",
+                newIncidentBody: "Something isn't working — laptop, access, network.",
+                newRequestTitle: "Request something",
+                newRequestBody: "Software, access, hardware.",
+              };
+              var byKey = pre.querySelectorAll("[data-i18n]");
+              for (var i = 0; i < byKey.length; i++) {
+                var k = byKey[i].getAttribute("data-i18n");
+                if (k && en[k]) byKey[i].textContent = en[k];
+              }
+            }
+          }
+        } catch (e) {
+          // localStorage / navigator unavailable — leave SK defaults.
+        }
+      })();
+    </script>
   </head>
   <body data-density="comfortable">
+    <!--
+      I.0 Resolution 4 — static prerender of the LCP target. Lives outside
+      `<div id="root">` so React never touches it. `main.tsx` removes it on
+      `requestAnimationFrame` after `createRoot().render()` commits the real
+      shell. The two `<a>` cards are progressive-enhancement-friendly: a
+      user clicking before React mounts gets a native navigation that the
+      router picks up on the next page.
+    -->
+    <main id="portal-prerender" class="sdm-prerender" data-testid="portal-prerender">
+      <section class="sdm-prerender-hero">
+        <h1 data-i18n="greeting">Ahoj 👋</h1>
+        <p data-i18n="subgreeting">Ako ti môžem dnes pomôcť?</p>
+      </section>
+      <section class="sdm-prerender-actions" aria-label="Rýchle akcie">
+        <a class="sdm-prerender-card" href="/new-incident" data-testid="prerender-new-incident">
+          <h2 data-i18n="newIncidentTitle">Nahlásiť problém</h2>
+          <p data-i18n="newIncidentBody">Niečo nefunguje — laptop, prístup, sieť.</p>
+        </a>
+        <a class="sdm-prerender-card" href="/catalog" data-testid="prerender-new-request">
+          <h2 data-i18n="newRequestTitle">Požiadať o niečo</h2>
+          <p data-i18n="newRequestBody">Softvér, prístupy, hardvér.</p>
+        </a>
+      </section>
+    </main>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

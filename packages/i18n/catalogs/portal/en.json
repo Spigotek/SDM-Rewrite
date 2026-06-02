@@ -19,6 +19,7 @@
   },
   "home": {
     "greeting": "Hi, {name} 👋",
+    "greetingAnonymous": "Hi 👋",
     "subgreeting": "How can I help you?",
     "actions": {
       "ariaLabel": "Quick actions",

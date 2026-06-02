@@ -20,6 +20,7 @@ import {
   type TenantEnvironment,
   UnauthorizedError,
 } from "../bootstrap/session";
+import { consumePreloadedSession } from "../bootstrap/session-preload";
 
 interface TenantOption {
   readonly id: TenantId;
@@ -49,9 +50,26 @@ interface SessionContextValue {
 const SessionContext = createContext<SessionContextValue | null>(null);
 
 export function SessionProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
-  const [tenants, setTenants] = useState<readonly TenantOption[]>([]);
-  const [status, setStatus] = useState<Status>("loading");
+  // I.0 — consume the bootstrap-phase session preload (set by `main.tsx`
+  // before `createRoot().render()`). `ready` / `anonymous` outcomes skip
+  // the initial `useEffect → loadSession()` fetch entirely; `loading`
+  // (5xx fallback) keeps the legacy retry-on-mount behaviour. The slot is
+  // cleared on read so a hot-reload re-mount falls back to normal flow.
+  const preloadedRef = useRef(consumePreloadedSession());
+  const preloaded = preloadedRef.current;
+  const [session, setSession] = useState<Session | null>(
+    preloaded?.status === "ready" ? preloaded.result.session : null,
+  );
+  const [tenants, setTenants] = useState<readonly TenantOption[]>(
+    preloaded?.status === "ready" ? preloaded.result.tenants : [],
+  );
+  const [status, setStatus] = useState<Status>(
+    preloaded?.status === "ready"
+      ? "ready"
+      : preloaded?.status === "anonymous"
+        ? "anonymous"
+        : "loading",
+  );
   const [error, setError] = useState<string | null>(null);
   const channelRef = useRef<CrossTabChannel | null>(null);
 
@@ -76,8 +94,13 @@ export function SessionProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
+    // Skip the initial `/me` round-trip when bootstrap already produced an
+    // authoritative outcome (`ready` or `anonymous`). The legacy fallback
+    // (`loading` — 5xx / network failure during bootstrap) re-runs the
+    // fetch on mount so transient backend hiccups self-heal.
+    if (preloaded?.status === "ready" || preloaded?.status === "anonymous") return;
     void refresh();
-  }, [refresh]);
+  }, [refresh, preloaded]);
 
   // Cross-tab sync (auth-flow.md §2.6): tenant-changed → refetch; logout → drop to anonymous.
   useEffect(() => {
