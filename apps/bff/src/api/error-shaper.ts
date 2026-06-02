@@ -91,6 +91,8 @@ function appErrorToHttpStatus(code: AppErrorCode): number {
       return 403;
     case "TENANT_FORBIDDEN":
       return 403;
+    case "STEP_UP_REQUIRED":
+      return 401;
     case "VALIDATION":
       return 400;
     case "NOT_FOUND":

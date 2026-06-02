@@ -1,6 +1,5 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, type FormEvent } from "react";
 import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { usePendingChanges } from "../../../shell/pending-changes";
@@ -42,12 +41,20 @@ export function DynamicForm(props: DynamicFormProps) {
   const { t } = useTranslation("portal");
   const { register: registerDirty } = usePendingChanges();
 
-  const schema = useMemo(() => buildZodSchema(fields), [fields]);
   const defaultValues = useMemo(() => buildDefaultValues(fields), [fields]);
 
+  // I.1 fix for journey-02 acceptance: build the Zod schema dynamically based
+  // on the *currently visible* field set. A `visibleIf`-hidden conditional
+  // field (e.g. `colleague` user-picker when `audience === "self"`) must not
+  // be required on submit. With a static schema the hidden field's default
+  // `""` value silently failed `.min(1)` and submit dropped the click. This
+  // was masked in dev mode by React Strict-Mode double-mount cycles that
+  // toggled the field state but consistently broke the preview-build journey.
+  // `shouldUnregister: true` complements the dynamic schema so RHF state and
+  // the validator stay in lockstep when conditional fields toggle.
   const form = useForm({
-    resolver: zodResolver(schema),
     mode: "onTouched",
+    shouldUnregister: true,
     defaultValues: defaultValues as Record<string, unknown>,
   });
 
@@ -81,17 +88,35 @@ export function DynamicForm(props: DynamicFormProps) {
     return { visible, hidden };
   }, [fields, allValues]);
 
-  const submit = handleSubmit(async (values) => {
-    // Strip values for fields that are not currently visible so the request
-    // payload doesn't carry stale data from conditional branches.
-    const cleaned: Record<string, unknown> = {};
-    for (const f of fields) {
-      if (!visibilityState.visible.has(f.key)) continue;
-      if (f.type === "markdown-help") continue;
-      cleaned[f.key] = values[f.key];
-    }
-    await onSubmit(cleaned);
-  });
+  // Resolver is rebuilt every render against the *currently visible* fields
+  // so a conditional branch (e.g. `colleague` when `audience !== "colleague"`)
+  // is not required on submit. The `handleSubmit` closure captures this
+  // resolver each render — no extra dependency tracking needed.
+  const visibleFields = useMemo(
+    () => fields.filter((f) => visibilityState.visible.has(f.key)),
+    [fields, visibilityState.visible],
+  );
+  const visibleSchema = useMemo(() => buildZodSchema(visibleFields), [visibleFields]);
+  const submit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    void handleSubmit(async (values) => {
+      const parsed = visibleSchema.safeParse(values);
+      if (!parsed.success) {
+        for (const issue of parsed.error.issues) {
+          const key = String(issue.path[0] ?? "");
+          if (!key) continue;
+          form.setError(key, { type: "manual", message: issue.message });
+        }
+        return;
+      }
+      const cleaned: Record<string, unknown> = {};
+      for (const f of visibleFields) {
+        if (f.type === "markdown-help") continue;
+        cleaned[f.key] = (parsed.data as Record<string, unknown>)[f.key];
+      }
+      await onSubmit(cleaned);
+    })(e);
+  };
 
   return (
     <form

@@ -1,5 +1,6 @@
 import type { Hono } from "hono";
 import { AppErrorException } from "../../auth/errors";
+import { consumeStepUpToken } from "../../auth/step-up-token";
 import { AUDIT_EVENTS } from "../../platform/audit";
 import { requireActiveSession } from "../../session/load";
 import type { RestProxyDeps } from "../rest-proxy";
@@ -125,15 +126,28 @@ export function registerChangeRoutes(app: Hono, deps: RestProxyDeps): void {
  * reminder endpoint is a sentinel: it returns `{ ok: true, approverId }` so
  * the FE can dismiss the modal but does not mutate change state in CA SDM.
  *
- * Step-up auth for emergency/critical-prod approvals is **not** enforced here
- * — F.1 step-up flow is deferred. The audit emit alone gives SIEM the signal
- * needed for compliance review. Tracked as a Phase I.2 follow-up.
+ * I.1 step-up gate: approvals on changes with `category === "EMERGENCY"`
+ * require an `X-Step-Up-Token` header minted by `POST /auth/step-up`. Tokens
+ * are single-use, 15-min TTL, session-bound (see `step-up-token.ts`). A
+ * missing/invalid token produces a 401 + `data.chg.write` audit with
+ * `details.op = "cab.approve.denied_step_up"` so SIEM can flag failed
+ * elevation attempts without expanding the F.4 event taxonomy. The
+ * `tenant.environment === "production"` half of the policy is enforced
+ * client-side (FE only prompts the modal in prod tenants) — defense-in-depth
+ * is the EMERGENCY category check, which is the journey #11 trigger.
  */
 
 interface ApproveBody {
   approverId?: unknown;
   comment?: unknown;
+  /** I.1 step-up policy hint — FE passes the change's `category` so the BFF
+   *  can decide whether to require `X-Step-Up-Token` without a CA SDM
+   *  round-trip. EMERGENCY ⇒ require token. */
+  category?: unknown;
 }
+
+const STEP_UP_REQUIRED_CATEGORIES = new Set<string>(["EMERGENCY"]);
+const STEP_UP_HEADER = "x-step-up-token";
 
 interface RejectBody {
   approverId?: unknown;
@@ -167,7 +181,42 @@ function registerCabApprovalRoutes(app: Hono, deps: RestProxyDeps): void {
     const body = (await c.req.json().catch(() => ({}))) as ApproveBody;
     const approverId = readString(body.approverId, "approverId", "POST /api/changes/:id/approve");
     const comment = readOptionalString(body.comment);
+    const category = readOptionalString(body.category);
     const session = await requireActiveSession(c, deps);
+
+    if (category !== undefined && STEP_UP_REQUIRED_CATEGORIES.has(category)) {
+      const token = c.req.header(STEP_UP_HEADER);
+      const ok =
+        typeof token === "string" && token.length > 0
+          ? consumeStepUpToken(token, session.sid)
+          : false;
+      if (!ok) {
+        deps.audit?.(
+          c,
+          {
+            category: "data",
+            event: AUDIT_EVENTS.data.write("chg"),
+            result: "denied",
+            resultCode: 401,
+            details: {
+              op: "cab.approve.denied_step_up",
+              recordId: id,
+              approverId,
+              category,
+              reason: token ? "invalid_or_replayed" : "missing",
+            },
+          },
+          session,
+        );
+        throw new AppErrorException({
+          code: "STEP_UP_REQUIRED",
+          httpStatus: 401,
+          message: "Step-up authentication required for emergency change approval",
+          details: { reason: token ? "invalid_or_replayed" : "missing" },
+        });
+      }
+    }
+
     deps.audit?.(
       c,
       {
@@ -179,6 +228,7 @@ function registerCabApprovalRoutes(app: Hono, deps: RestProxyDeps): void {
           op: "cab.approve",
           recordId: id,
           approverId,
+          ...(category !== undefined ? { category } : {}),
           ...(comment !== undefined ? { commentLength: comment.length } : {}),
         },
       },

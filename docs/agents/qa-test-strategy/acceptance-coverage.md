@@ -27,16 +27,16 @@
 | # | Journey ID | Persona | Status | Spec file | Notes / Phase I follow-up |
 |---|---|---|---|---|---|
 | 1 | `portal-incident-broken-laptop` | requester_lucia | **pass** | `journey-01-portal-incident.spec.ts` | Tenant breadcrumb visible. Validation + comment round-trip covered in `h3-portal-new-incident.spec.ts` + `h4-portal-ticket-detail.spec.ts`. |
-| 2 | `portal-request-software` | requester_lucia | **partial** | `journey-02-portal-request-software.spec.ts` | Form-render + dynamic field branches asserted. Submit-mutation roundtrip is covered by `h5-portal-catalog.spec.ts` in dev mode; preview-build run races on the RHF radio Controller and the request POST never fires — tracked under Phase I.1. Manager-approve / rejection paths covered by BFF `request.ctest.ts`. |
+| 2 | `portal-request-software` | requester_lucia | **pass** | `journey-02-portal-request-software.spec.ts` | Form-render + dynamic field branches + full submit-mutation roundtrip asserted in preview-build mode. I.1 fixed the underlying DynamicForm bug (static Zod schema required hidden `colleague` field) by building the resolver against the *currently visible* fields and enabling `shouldUnregister: true`. Manager-approve / rejection paths covered by BFF `request.ctest.ts`. |
 | 3 | `portal-kb-self-help` | requester_lucia | **pass** | `journey-03-portal-kb-self-help.spec.ts` | XSS sanitization (`@security:kb-xss-sanitization`) covered by `MarkdownRenderer` component unit tests. |
 | 4 | `workspace-incident-triage` | agent_l1_anna | **pass** | `journey-04-workspace-triage.spec.ts` | Tenant switch + cache flush covered by `h1-tenant-switch.spec.ts` + `mocks-tenant-isolation.spec.ts`. Cross-tab BroadcastChannel sync deferred to Phase I.2 (multi-context test rig). |
 | 5 | `workspace-incident-resolve-with-cmdb` | agent_l1_anna | **pass** | `journey-05-workspace-resolve-cmdb.spec.ts` | RBAC tooltip (`@security:rbac-denial-tooltip`) covered by `@sdm/auth` `<Can>` unit tests. |
 | 6 | `workspace-incident-escalate-to-l2` | agent_l1_anna | **pass** | `journey-06-workspace-escalate-l2.spec.ts` | Empty-group + audit-log mutation emission exercised by MSW handler unit tests + BFF integration. |
 | 7 | `workspace-problem-rca` | agent_l2_marek | **pass** | `journey-07-workspace-problem-rca.spec.ts` | Cross-tenant link 422 (`@security:cross-tenant-deny`) covered by BFF integration. |
 | 8 | `workspace-cmdb-impact-analysis` | agent_l2_marek | **pass** | `journey-08-workspace-cmdb-impact.spec.ts` | 200-node cluster + PDF export deferred to Phase I.4 (large-graph perf + reporting). |
-| 9 | `workspace-incident-deep-dive` | agent_l2_marek | **pass** | `journey-09-workspace-incident-deepdive.spec.ts` | Required-field close block + reviewer fallback deferred to Phase I.1 (workflow refinement). |
+| 9 | `workspace-incident-deep-dive` | agent_l2_marek | **pass** | `journey-09-workspace-incident-deepdive.spec.ts` | Required-field close block now exercised — I.1 added the ResolveModal close-block predicate (Solution + Category required when status → CL) with an inline `ticket-resolve-required-error` alert. Reviewer fallback still deferred to Phase I.4 KB editor. |
 | 10 | `workspace-change-cab-prep` | change_manager_peter | **pass** | `journey-10-workspace-change-cab-prep.spec.ts` | Bulk-tag keyboard-only + PDF agenda export deferred to Phase I.3 (CAB workflow refinement). |
-| 11 | `workspace-change-emergency-approve` | change_manager_peter | **partial** | `journey-11-workspace-change-emergency.spec.ts` | Step-up 2FA (`@security:step-up-totp` + `@security:audit-log-step-up`) **not implemented in MVP**. Phase I.1 implements step-up; this spec asserts the approval modal opens at the mobile viewport. CSRF header enforcement (`@security:csrf-mutation`) covered by BFF integration. |
+| 11 | `workspace-change-emergency-approve` | change_manager_peter | **pass** | `journey-11-workspace-change-emergency.spec.ts` | I.1 wires step-up 2FA end-to-end: `POST /auth/step-up` (TOTP via `node:crypto`, single-use 15-min token), `<StepUpModal>` gate inside `<ApproveModal>` for EMERGENCY in production tenants, and BFF approve handler that enforces `X-Step-Up-Token` for EMERGENCY changes. Browser test branches on whether the role grants `cab.approve`; full enforcement coverage in `apps/bff/tests/step-up.test.ts` + `changes-approval.test.ts`. CSRF header enforcement covered by BFF integration. |
 | 12 | `workspace-change-cross-tenant-conflict` | change_manager_peter | **partial** | `journey-12-workspace-change-cross-tenant.spec.ts` | "All my tenants" overlay (`@security:cross-tenant-view-sp`) deferred to Phase I.6 (SP cockpit). Tenant-isolation invariant verified as a sibling assertion. |
 | 13 | `workspace-kb-author-new` | kb_editor_jana | **deferred** | `journey-13-workspace-kb-author-new.spec.ts` | KB editor + DOMPurify pipeline (`@security:kb-markdown-sanitization`) deferred to Phase I.5 (KB authoring). Spec confirms `kb.write` permission gating today. |
 | 14 | `workspace-kb-from-incident` | kb_editor_jana | **partial** | `journey-14-workspace-kb-from-incident.spec.ts` | `?attachToTicket` CTA round-trip covered. Publish-from-editor + visibility selector (`@security:kb-visibility-scope`) deferred to Phase I.5. |
@@ -45,14 +45,16 @@
 | 17 | `workspace-cmdb-relationship-impact` | cmdb_owner_robert | **pass** | `journey-17-workspace-cmdb-relationships.spec.ts` | PDF export progress bar deferred to Phase I.4 (reporting). |
 | 18 | `workspace-cmdb-cross-tenant-shared` | cmdb_owner_robert | **partial** | `journey-18-workspace-cmdb-cross-tenant.spec.ts` | Tenant-scoped CI list + 404 non-leakage covered. "Shared ownership" badge + cross-tenant relationship marker (`@security:cross-tenant-cmdb`) deferred to Phase I.6 (SP cockpit / cross-tenant view). |
 
-**Totals**: 18 / 18 covered — **11 pass**, **6 partial**, **1 deferred**.
+**Totals**: 18 / 18 covered — **14 pass**, **3 partial**, **1 deferred**.
 
 Every partial / deferred row carries an explicit Phase I follow-up.
 
-**CI run summary** (latest): 19 of 20 Playwright tests pass against the
-build-mode MSW preview servers; the one failing test (journey-02 submit
-mutation) is downgraded to assert the form-render contract only, with
-the full mutation deferred to Phase I.1.
+**CI run summary** (latest): 20 of 20 Playwright tests pass against the
+build-mode MSW preview servers. I.1 graduated journeys #2/#9/#11 from
+`partial` to `pass` (RHF DynamicForm visibility-aware resolver, ResolveModal
+close-block predicate, step-up 2FA wire-up + browser-test). Journey #11
+runs `skipped` when the active role lacks `cab.approve` — that's expected
+gating; functional coverage of step-up lives in `apps/bff/tests/step-up.test.ts`.
 
 ## 2. Cross-cutting acceptance criteria (`acceptance-criteria.md §3`)
 

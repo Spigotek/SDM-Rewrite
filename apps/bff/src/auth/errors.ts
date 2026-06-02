@@ -3,6 +3,7 @@ export type AppErrorCode =
   | "AUTH_EXPIRED"
   | "AUTH_FORBIDDEN"
   | "TENANT_FORBIDDEN"
+  | "STEP_UP_REQUIRED"
   | "VALIDATION"
   | "NOT_FOUND"
   | "CONFLICT"

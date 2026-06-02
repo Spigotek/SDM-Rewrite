@@ -28,6 +28,14 @@ export const AUDIT_EVENTS = {
     SESSION_HEARTBEAT: "auth.session.heartbeat",
     SESSION_IDLE_EXPIRED: "auth.session.idle.expired",
     SESSION_ABSOLUTE_EXPIRED: "auth.session.absolute.expired",
+    /**
+     * Step-up 2FA — wired in I.1 from the long-reserved
+     * `audit-and-compliance.md §2` names. Not a taxonomy expansion: the names
+     * are the canonical forward-compatible strings the SIEM contract has
+     * always anticipated (per the events.ts header comment).
+     */
+    STEP_UP_SUCCESS: "auth.step_up.success",
+    STEP_UP_DENIED: "auth.step_up.denied",
   },
   authz: {
     PERMISSION_DENIED: "authz.permission.denied",

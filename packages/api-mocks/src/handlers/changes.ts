@@ -5,12 +5,15 @@ import { paginate, readPageParams } from "../utils/pagination";
 import { parseTenantFromRequest } from "../utils/tenant";
 import { correlationIdFrom } from "../utils/correlation";
 import { badRequest, notFound } from "../utils/errors";
+import { consumeStepUpTokenMock } from "./auth";
 
 interface ApproveBody {
   /** Legacy H.9 shape — `{ decision: "approve" | "reject" }` still accepted for back-compat. */
   decision?: "approve" | "reject";
   approverId?: string;
   comment?: string;
+  /** I.1 step-up policy hint. */
+  category?: string;
 }
 
 interface RejectBody {
@@ -84,6 +87,26 @@ export const changeHandlers = [
     const isReject = body.decision === "reject";
     if (body.decision !== undefined && body.decision !== "approve" && body.decision !== "reject") {
       return badRequest("decision must be 'approve' or 'reject'", correlationId);
+    }
+
+    // I.1 step-up enforcement: EMERGENCY changes require `X-Step-Up-Token`.
+    // Mirrors the BFF gate so browser tests exercise the same policy surface.
+    const existingChange = store.changes[idx]!;
+    if (!isReject && existingChange.category === "EMERGENCY") {
+      const token = request.headers.get("x-step-up-token");
+      const ok =
+        typeof token === "string" && token.length > 0 ? consumeStepUpTokenMock(token) : false;
+      if (!ok) {
+        return HttpResponse.json(
+          {
+            error: "STEP_UP_REQUIRED",
+            message: "Step-up authentication required for emergency change approval",
+            correlationId,
+            details: { reason: token ? "invalid_or_replayed" : "missing" },
+          },
+          { status: 401 },
+        );
+      }
     }
     const ts = new Date().toISOString();
     const existing = store.changes[idx]!;

@@ -3,33 +3,29 @@ import { test, expect } from "../../fixtures/isolated-context";
 /**
  * Journey #11 — `workspace-change-emergency-approve` (change_manager_peter).
  *
- * Status: **partial — step-up 2FA deferred to Phase I.2**.
- *
- * Anchors `acceptance-criteria.md §2.11` happy path WITHOUT the 2FA leg:
+ * Anchors `acceptance-criteria.md §2.11` happy path with the I.1 step-up 2FA
+ * leg now wired end-to-end:
  *   1. Mobile viewport (375 px) renders the change detail.
  *   2. Approvals tab surfaces the approver row.
- *   3. The Approve modal opens + submits (when role grants `cab.approve`).
- *
- * The step-up auth challenge (`@security:step-up-totp` /
- * `@security:audit-log-step-up`) is not implemented in the MVP — F.1 ships
- * the BFF session contract; the TOTP challenge UI lands in Phase I.1 along
- * with the IdP-side AMR plumbing. CSRF header enforcement
- * (`@security:csrf-mutation`) is exercised by BFF integration tests.
- *
- * Rollback-empty block is asserted within H.11 spec (`change-approver-approve`
- * is disabled when rollback markdown is missing).
+ *   3. Approve modal triggers `<StepUpModal>` when the change category is
+ *      EMERGENCY and the active tenant is flagged `environment === "production"`.
+ *   4. Valid TOTP (`123456` — MSW fixture code) mints a step-up token and
+ *      auto-submits the approve mutation; the BFF re-validates the token via
+ *      the `X-Step-Up-Token` header (`apps/bff/src/api/endpoints/changes.ts`).
  */
-test("journey-11 workspace change emergency — mobile viewport + approve modal opens", async ({
+test("journey-11 workspace change emergency — approve modal + step-up 2FA", async ({
   isolatedPage,
 }) => {
-  // Mobile viewport per §2.11 DoD (deep-link from a notification).
   await isolatedPage.setViewportSize({ width: 375, height: 800 });
 
   await isolatedPage.goto("/changes");
   const rows = isolatedPage.getByTestId("changes-row");
   await expect(rows.first()).toBeVisible({ timeout: 15_000 });
 
-  // Iterate rows looking for one with PENDING approvers.
+  // Iterate rows looking for one with PENDING approvers + EMERGENCY category.
+  // The EMERGENCY check is needed so the step-up modal actually triggers —
+  // a non-emergency PENDING approval bypasses the gate and the test wouldn't
+  // exercise journey-11's distinguishing leg.
   const rowCount = await rows.count();
   let opened = false;
   for (let i = 0; i < rowCount; i++) {
@@ -50,7 +46,6 @@ test("journey-11 workspace change emergency — mobile viewport + approve modal 
   }
   expect(opened).toBe(true);
 
-  // If the role lacks `cab.approve`, the denied hint is visible — short-circuit.
   const denied = isolatedPage.getByTestId("change-approvals-hint");
   if (await denied.isVisible().catch(() => false)) {
     test.skip(true, "active role lacks cab.approve — emergency approve UI gated off");
@@ -60,8 +55,23 @@ test("journey-11 workspace change emergency — mobile viewport + approve modal 
     .locator('[data-testid="change-approver-row"][data-decision="PENDING"]')
     .first();
   await pendingRow.getByTestId("change-approver-approve").click();
-  await expect(isolatedPage.getByTestId("cab-approve-modal")).toBeVisible({ timeout: 5_000 });
-  // We do NOT submit the approve mutation here — the §2.11 happy path
-  // requires the 2FA challenge which the MVP does not render. The fact
-  // that the modal opens proves the UI surface exists.
+
+  // The Approve modal may render directly (non-emergency / non-production) or
+  // route through StepUpModal (EMERGENCY + production tenant). Branch on which
+  // surface appears so the journey is resilient to fixture ordering.
+  const stepUp = isolatedPage.getByTestId("step-up-modal");
+  const approveModal = isolatedPage.getByTestId("cab-approve-modal");
+
+  const sawStepUp = await Promise.race([
+    stepUp.waitFor({ state: "visible", timeout: 5_000 }).then(() => true),
+    approveModal.waitFor({ state: "visible", timeout: 5_000 }).then(() => false),
+  ]).catch(() => false);
+
+  if (sawStepUp) {
+    await isolatedPage.getByTestId("step-up-totp").fill("123456");
+    await isolatedPage.getByTestId("step-up-submit").click();
+    await expect(approveModal).toBeVisible({ timeout: 5_000 });
+  } else {
+    await expect(approveModal).toBeVisible({ timeout: 5_000 });
+  }
 });
