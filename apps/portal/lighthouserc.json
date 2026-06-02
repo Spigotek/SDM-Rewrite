@@ -1,17 +1,17 @@
 {
-  "_comment_scope": "Portal LHCI config. Per performance.md §1 portal pages are audited on MOBILE form factor (Lucia persona, simulated slow 4G, 4x CPU slowdown). I.0 graduated this config: builds run with VITE_USE_MOCKS=true so the MSW worker intercepts /config, /me, /me/tenants etc., and lhci collect targets the live `vite preview` server (port 5173) instead of the broken `staticDistDir` mode that surfaced the bootstrap error fallback. Every route listed below now blocks merge on its numeric TTI/LCP/score thresholds.",
+  "_comment_scope": "Portal LHCI config. Per performance.md §1 portal pages are audited on MOBILE form factor (Lucia persona, simulated slow 4G, 4x CPU slowdown). I.0 graduated this config: builds run WITHOUT `VITE_USE_MOCKS` so the production SPA bundle is what gets measured (no MSW client runtime inflating TTI), and lhci collect targets the `@sdm/stub-bff` harness on port 5180 — a tiny node:http server that replays the same `@sdm/api-mocks` handlers used by MSW. Every route listed below now blocks merge on its numeric TTI/LCP/score thresholds.",
   "_comment_timing_thresholds": "Numeric timing thresholds graduated from `warn` → `error` in I.0 per performance.md §2 portal table. `assertMatrix` carries one global entry (`.*` — CLS, a11y, best-practices, TBT) plus per-URL timing overrides. CLS + accessibility + best-practices stay at the strict global error thresholds.",
   "ci": {
     "collect": {
       "url": [
-        "http://localhost:5173/",
-        "http://localhost:5173/new-incident",
-        "http://localhost:5173/tickets",
-        "http://localhost:5173/tickets/incident:10001",
-        "http://localhost:5173/catalog",
-        "http://localhost:5173/catalog/catalog:figma",
-        "http://localhost:5173/kb",
-        "http://localhost:5173/kb/article/kb:50000"
+        "http://localhost:5180/",
+        "http://localhost:5180/new-incident",
+        "http://localhost:5180/tickets",
+        "http://localhost:5180/tickets/incident:10001",
+        "http://localhost:5180/catalog",
+        "http://localhost:5180/catalog/catalog:figma",
+        "http://localhost:5180/kb",
+        "http://localhost:5180/kb/article/kb:50000"
       ],
       "numberOfRuns": 3,
       "settings": {
@@ -48,7 +48,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5173/$",
+          "matchingUrlPattern": "http://localhost:5180/$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 1800 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1500 }],
@@ -56,7 +56,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5173/new-incident$",
+          "matchingUrlPattern": "http://localhost:5180/new-incident$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2000 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
@@ -64,7 +64,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5173/tickets$",
+          "matchingUrlPattern": "http://localhost:5180/tickets$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2200 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1800 }],
@@ -72,7 +72,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5173/tickets/.+",
+          "matchingUrlPattern": "http://localhost:5180/tickets/.+",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 1800 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1500 }],
@@ -80,7 +80,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5173/catalog$",
+          "matchingUrlPattern": "http://localhost:5180/catalog$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2200 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1800 }],
@@ -88,7 +88,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5173/catalog/.+",
+          "matchingUrlPattern": "http://localhost:5180/catalog/.+",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2400 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
@@ -97,7 +97,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5173/kb$",
+          "matchingUrlPattern": "http://localhost:5180/kb$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2000 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
@@ -105,7 +105,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5173/kb/article/.+",
+          "matchingUrlPattern": "http://localhost:5180/kb/article/.+",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 1600 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1300 }],

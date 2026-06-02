@@ -1,20 +1,20 @@
 {
-  "_comment_scope": "Workspace LHCI config. Per performance.md §1 workspace pages are audited on DESKTOP form factor (Anna persona, 2-monitor workstation). I.0 graduated this config: builds run with VITE_USE_MOCKS=true so the MSW worker intercepts /config, /me, /me/tenants etc., and lhci collect targets the live `vite preview` server (port 5175) instead of the broken `staticDistDir` mode. Every route listed below now blocks merge on its numeric TTI/LCP/score thresholds. Heavy routes — `/changes/calendar` (FullCalendar lazy chunk) and `/cmdb/ci/:id` (Cytoscape graph lazy chunk) — carry deliberately looser per-URL overrides per performance.md §2.",
+  "_comment_scope": "Workspace LHCI config. Per performance.md §1 workspace pages are audited on DESKTOP form factor (Anna persona, 2-monitor workstation). I.0 graduated this config: builds run WITHOUT `VITE_USE_MOCKS` so the production SPA bundle is what gets measured, and lhci collect targets the `@sdm/stub-bff` harness on port 5181 — a tiny node:http server that replays the same `@sdm/api-mocks` handlers used by MSW. Every route listed below now blocks merge on its numeric TTI/LCP/score thresholds. Heavy routes — `/changes/calendar` (FullCalendar lazy chunk) and `/cmdb/ci/:id` (Cytoscape graph lazy chunk) — carry deliberately looser per-URL overrides per performance.md §2.",
   "_comment_timing_thresholds": "Numeric timing thresholds graduated from `warn` → `error` in I.0 per performance.md §2 workspace table. `assertMatrix` carries one global entry (`.*` — CLS, a11y, best-practices) plus per-URL timing overrides. `/problems`, `/kb`, `/kb/article/:id` aren't enumerated in §2 — values chosen conservatively at the workspace queue/article baseline.",
   "ci": {
     "collect": {
       "url": [
-        "http://localhost:5175/queue",
-        "http://localhost:5175/tickets/incident:10001",
-        "http://localhost:5175/changes",
-        "http://localhost:5175/changes/calendar",
-        "http://localhost:5175/changes/change:40000",
-        "http://localhost:5175/problems",
-        "http://localhost:5175/problems/problem:30000",
-        "http://localhost:5175/cmdb",
-        "http://localhost:5175/cmdb/ci/ci:60000",
-        "http://localhost:5175/kb",
-        "http://localhost:5175/kb/article/kb:50000"
+        "http://localhost:5181/queue",
+        "http://localhost:5181/tickets/incident:10001",
+        "http://localhost:5181/changes",
+        "http://localhost:5181/changes/calendar",
+        "http://localhost:5181/changes/change:40000",
+        "http://localhost:5181/problems",
+        "http://localhost:5181/problems/problem:30000",
+        "http://localhost:5181/cmdb",
+        "http://localhost:5181/cmdb/ci/ci:60000",
+        "http://localhost:5181/kb",
+        "http://localhost:5181/kb/article/kb:50000"
       ],
       "numberOfRuns": 3,
       "settings": {
@@ -36,7 +36,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/queue$",
+          "matchingUrlPattern": "http://localhost:5181/queue$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2500 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
@@ -44,7 +44,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/tickets/.+",
+          "matchingUrlPattern": "http://localhost:5181/tickets/.+",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2000 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
@@ -52,7 +52,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/changes$",
+          "matchingUrlPattern": "http://localhost:5181/changes$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2500 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
@@ -60,7 +60,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/changes/calendar$",
+          "matchingUrlPattern": "http://localhost:5181/changes/calendar$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 3000 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
@@ -70,7 +70,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/changes/change:.+",
+          "matchingUrlPattern": "http://localhost:5181/changes/change:.+",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2000 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
@@ -78,7 +78,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/problems$",
+          "matchingUrlPattern": "http://localhost:5181/problems$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2500 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
@@ -86,7 +86,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/problems/problem:.+",
+          "matchingUrlPattern": "http://localhost:5181/problems/problem:.+",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2000 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
@@ -94,7 +94,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/cmdb$",
+          "matchingUrlPattern": "http://localhost:5181/cmdb$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2500 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
@@ -102,7 +102,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/cmdb/ci/.+",
+          "matchingUrlPattern": "http://localhost:5181/cmdb/ci/.+",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 3500 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 2800 }],
@@ -112,7 +112,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/kb$",
+          "matchingUrlPattern": "http://localhost:5181/kb$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2200 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
@@ -120,7 +120,7 @@
           }
         },
         {
-          "matchingUrlPattern": "http://localhost:5175/kb/article/.+",
+          "matchingUrlPattern": "http://localhost:5181/kb/article/.+",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2200 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],

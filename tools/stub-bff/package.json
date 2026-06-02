@@ -1,0 +1,19 @@
+{
+  "name": "@sdm/stub-bff",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "echo \"(no tests — covered by lhci-collect.sh smoke)\" && exit 0",
+    "build": "echo \"(source-only — no build)\" && exit 0",
+    "clean": "rimraf .turbo *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@sdm/api-mocks": "workspace:*",
+    "msw": "2.6.6",
+    "tsx": "4.19.2"
+  }
+}

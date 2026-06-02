@@ -11,3 +11,4 @@ packages:
   - "tools/scaffold"
   - "tools/pm-hooks"
   - "tools/browser-test"
+  - "tools/stub-bff"

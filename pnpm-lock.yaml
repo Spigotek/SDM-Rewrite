@@ -467,6 +467,18 @@ importers:
 
   tools/scaffold: {}
 
+  tools/stub-bff:
+    dependencies:
+      '@sdm/api-mocks':
+        specifier: workspace:*
+        version: link:../../packages/api-mocks
+      msw:
+        specifier: 2.6.6
+        version: 2.6.6(@types/node@22.10.5)(typescript@5.7.2)
+      tsx:
+        specifier: 4.19.2
+        version: 4.19.2
+
   tools/tsconfig-base: {}
 
 packages:
