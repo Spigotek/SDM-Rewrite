@@ -1,23 +1,20 @@
 {
-  "_comment_scope": "Workspace LHCI config. Per performance.md §1 workspace pages are audited on DESKTOP form factor (Anna persona, 2-monitor workstation). H.0 wires React Router so `/queue` is reachable via redirect from `/`; timing-threshold graduation (warn → error) is deferred until MSW or BFF is wired into the CI LHCI run (see `_comment_timing_thresholds`). Other routes stay listed under `_url_todo_phase_h` and graduate as feature chunks (H.7+) ship real content.",
-  "_comment_timing_thresholds": "Numeric timing thresholds (TTI/LCP) remain `warn` post-H.0. Reason: `staticDistDir` LHCI runs without a BFF, so bootstrap fails at `/config HTTP 404` and LCP measures the bootstrap error fallback. Graduation to `error` requires the static dist to serve `/config` + `/me` (either via MSW-in-LHCI or a stub backend), tracked as an open item for the LHCI infrastructure work. CLS + accessibility + best-practices stay as `error` because they are robust to bootstrap state.",
+  "_comment_scope": "Workspace LHCI config. Per performance.md §1 workspace pages are audited on DESKTOP form factor (Anna persona, 2-monitor workstation). I.0 graduated this config: builds run with VITE_USE_MOCKS=true so the MSW worker intercepts /config, /me, /me/tenants etc., and lhci collect targets the live `vite preview` server (port 5175) instead of the broken `staticDistDir` mode. Every route listed below now blocks merge on its numeric TTI/LCP/score thresholds. Heavy routes — `/changes/calendar` (FullCalendar lazy chunk) and `/cmdb/ci/:id` (Cytoscape graph lazy chunk) — carry deliberately looser per-URL overrides per performance.md §2.",
+  "_comment_timing_thresholds": "Numeric timing thresholds graduated from `warn` → `error` in I.0 per performance.md §2 workspace table. `assertMatrix` carries one global entry (`.*` — CLS, a11y, best-practices) plus per-URL timing overrides. `/problems`, `/kb`, `/kb/article/:id` aren't enumerated in §2 — values chosen conservatively at the workspace queue/article baseline.",
   "ci": {
     "collect": {
-      "staticDistDir": "./dist",
-      "url": ["http://localhost/index.html"],
-      "_comment_h9_no_graduation": "H.9 keeps `/index.html` as the sole audited URL — the workspace SPA serves all routes from a single HTML, so `staticDistDir` LHCI without SPA fallback would 404 on `/changes/index.html`. Graduation of per-route URLs needs the same MSW-in-LHCI prerequisite as timing thresholds.",
-      "_url_todo_phase_h": [
-        "http://localhost/queue",
-        "http://localhost/tickets/INC-1",
-        "http://localhost/changes",
-        "http://localhost/changes/calendar",
-        "http://localhost/changes/CHG-1",
-        "http://localhost/problems",
-        "http://localhost/problems/PR-1",
-        "http://localhost/cmdb",
-        "http://localhost/cmdb/ci/CI-1",
-        "http://localhost/kb",
-        "http://localhost/kb/article/kb:50000"
+      "url": [
+        "http://localhost:5175/queue",
+        "http://localhost:5175/tickets/incident:10001",
+        "http://localhost:5175/changes",
+        "http://localhost:5175/changes/calendar",
+        "http://localhost:5175/changes/change:40000",
+        "http://localhost:5175/problems",
+        "http://localhost:5175/problems/problem:30000",
+        "http://localhost:5175/cmdb",
+        "http://localhost:5175/cmdb/ci/ci:60000",
+        "http://localhost:5175/kb",
+        "http://localhost:5175/kb/article/kb:50000"
       ],
       "numberOfRuns": 3,
       "settings": {
@@ -27,17 +24,110 @@
       }
     },
     "assert": {
-      "_comment_blocking": "Blocking assertions — robust against the bootstrap state. CLS + accessibility + best-practices catch obvious regressions.",
-      "_comment_warn_only": "Timing thresholds (TTI, LCP, score) stay `warn` until MSW or stub BFF is wired into CI LHCI runs. Values match performance.md §2 workspace `/queue` desktop.",
-      "assertions": {
-        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.05 }],
-        "categories:accessibility": ["error", { "minScore": 0.9 }],
-        "categories:best-practices": ["error", { "minScore": 0.9 }],
-        "categories:performance": ["warn", { "minScore": 0.85 }],
-        "interactive": ["warn", { "maxNumericValue": 2500 }],
-        "largest-contentful-paint": ["warn", { "maxNumericValue": 2000 }],
-        "total-blocking-time": ["warn", { "maxNumericValue": 300 }]
-      }
+      "_comment_blocking": "Blocking assertions per performance.md §2 workspace — TTI/LCP/score graduated in I.0. The global `.*` matrix entry holds the CLS + a11y + best-practices floors; per-URL entries override timing per route. Heavier routes (calendar, ci-detail) relax their CLS + TBT inline.",
+      "assertMatrix": [
+        {
+          "matchingUrlPattern": ".*",
+          "assertions": {
+            "cumulative-layout-shift": ["error", { "maxNumericValue": 0.05 }],
+            "categories:accessibility": ["error", { "minScore": 0.9 }],
+            "categories:best-practices": ["error", { "minScore": 0.9 }],
+            "total-blocking-time": ["error", { "maxNumericValue": 300 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/queue$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2500 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
+            "categories:performance": ["error", { "minScore": 0.85 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/tickets/.+",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2000 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
+            "categories:performance": ["error", { "minScore": 0.85 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/changes$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2500 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
+            "categories:performance": ["error", { "minScore": 0.85 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/changes/calendar$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 3000 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2500 }],
+            "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+            "total-blocking-time": ["error", { "maxNumericValue": 400 }],
+            "categories:performance": ["error", { "minScore": 0.8 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/changes/change:.+",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2000 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
+            "categories:performance": ["error", { "minScore": 0.85 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/problems$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2500 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
+            "categories:performance": ["error", { "minScore": 0.85 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/problems/problem:.+",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2000 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
+            "categories:performance": ["error", { "minScore": 0.85 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/cmdb$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2500 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
+            "categories:performance": ["error", { "minScore": 0.85 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/cmdb/ci/.+",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 3500 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2800 }],
+            "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+            "total-blocking-time": ["error", { "maxNumericValue": 500 }],
+            "categories:performance": ["error", { "minScore": 0.78 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/kb$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2200 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
+            "categories:performance": ["error", { "minScore": 0.88 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5175/kb/article/.+",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2200 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
+            "categories:performance": ["error", { "minScore": 0.88 }]
+          }
+        }
+      ]
     },
     "upload": { "target": "temporary-public-storage" }
   }

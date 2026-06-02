@@ -1,18 +1,17 @@
 {
-  "_comment_scope": "Portal LHCI config. Per performance.md §1 portal pages are audited on MOBILE form factor (Lucia persona, simulated slow 4G, 4x CPU slowdown). H.2 replaced the `/` placeholder with the real home dashboard (HeroGreeting + ActionCards + MyRecentTickets + KbSuggestions); H.4 added the ticket-detail route. The bootstrap-fails-without-BFF condition that H.0 documented is unchanged — `staticDistDir` LHCI runs still surface the bootstrap error fallback rather than the route component. Timing thresholds therefore stay `warn` until MSW-in-LHCI lands (see `_comment_timing_thresholds`). Other routes stay listed under `_url_todo_phase_h` and graduate as feature chunks (H.3+) ship real content.",
-  "_comment_timing_thresholds": "Numeric timing thresholds (TTI/LCP) remain `warn` post-H.4. Reason: `staticDistDir` LHCI runs without a BFF, so bootstrap fails at `/config HTTP 404` and LCP measures the bootstrap error fallback. Graduation to `error` requires the static dist to serve `/config` + `/me` (either via MSW-in-LHCI or a stub backend), tracked as an open item for the LHCI infrastructure work. CLS + accessibility + best-practices stay as `error` because they are robust to bootstrap state.",
+  "_comment_scope": "Portal LHCI config. Per performance.md §1 portal pages are audited on MOBILE form factor (Lucia persona, simulated slow 4G, 4x CPU slowdown). I.0 graduated this config: builds run with VITE_USE_MOCKS=true so the MSW worker intercepts /config, /me, /me/tenants etc., and lhci collect targets the live `vite preview` server (port 5173) instead of the broken `staticDistDir` mode that surfaced the bootstrap error fallback. Every route listed below now blocks merge on its numeric TTI/LCP/score thresholds.",
+  "_comment_timing_thresholds": "Numeric timing thresholds graduated from `warn` → `error` in I.0 per performance.md §2 portal table. `assertMatrix` carries one global entry (`.*` — CLS, a11y, best-practices, TBT) plus per-URL timing overrides. CLS + accessibility + best-practices stay at the strict global error thresholds.",
   "ci": {
     "collect": {
-      "staticDistDir": "./dist",
-      "url": ["http://localhost/index.html"],
-      "_url_todo_phase_h": [
-        "http://localhost/new-incident",
-        "http://localhost/tickets",
-        "http://localhost/tickets/incident:10001",
-        "http://localhost/catalog",
-        "http://localhost/catalog/item-1",
-        "http://localhost/kb",
-        "http://localhost/kb/article/kb:50000"
+      "url": [
+        "http://localhost:5173/",
+        "http://localhost:5173/new-incident",
+        "http://localhost:5173/tickets",
+        "http://localhost:5173/tickets/incident:10001",
+        "http://localhost:5173/catalog",
+        "http://localhost:5173/catalog/catalog:figma",
+        "http://localhost:5173/kb",
+        "http://localhost:5173/kb/article/kb:50000"
       ],
       "numberOfRuns": 3,
       "settings": {
@@ -37,17 +36,83 @@
       }
     },
     "assert": {
-      "_comment_blocking": "Blocking assertions — robust against the bootstrap state. CLS is structural (layout shift = bad regardless of backend). Accessibility + best-practices catch obvious regressions.",
-      "_comment_warn_only": "Timing thresholds (TTI, LCP, score) stay `warn` until MSW or stub BFF is wired into CI LHCI runs. Values match performance.md §2 portal `/` mobile.",
-      "assertions": {
-        "cumulative-layout-shift": ["error", { "maxNumericValue": 0.05 }],
-        "categories:accessibility": ["error", { "minScore": 0.9 }],
-        "categories:best-practices": ["error", { "minScore": 0.9 }],
-        "categories:performance": ["warn", { "minScore": 0.9 }],
-        "interactive": ["warn", { "maxNumericValue": 1800 }],
-        "largest-contentful-paint": ["warn", { "maxNumericValue": 1500 }],
-        "total-blocking-time": ["warn", { "maxNumericValue": 200 }]
-      }
+      "_comment_blocking": "Blocking assertions per performance.md §2 portal — TTI/LCP/score graduated in I.0. CLS is structural (regardless of backend). Accessibility + best-practices catch obvious regressions. assertMatrix overlays per-URL overrides on top of the global `.*` entry.",
+      "assertMatrix": [
+        {
+          "matchingUrlPattern": ".*",
+          "assertions": {
+            "cumulative-layout-shift": ["error", { "maxNumericValue": 0.05 }],
+            "categories:accessibility": ["error", { "minScore": 0.9 }],
+            "categories:best-practices": ["error", { "minScore": 0.9 }],
+            "total-blocking-time": ["error", { "maxNumericValue": 200 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5173/$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 1800 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1500 }],
+            "categories:performance": ["error", { "minScore": 0.9 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5173/new-incident$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2000 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
+            "categories:performance": ["error", { "minScore": 0.9 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5173/tickets$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2200 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1800 }],
+            "categories:performance": ["error", { "minScore": 0.88 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5173/tickets/.+",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 1800 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1500 }],
+            "categories:performance": ["error", { "minScore": 0.88 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5173/catalog$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2200 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1800 }],
+            "categories:performance": ["error", { "minScore": 0.88 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5173/catalog/.+",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2400 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
+            "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
+            "categories:performance": ["error", { "minScore": 0.85 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5173/kb$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2000 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
+            "categories:performance": ["error", { "minScore": 0.88 }]
+          }
+        },
+        {
+          "matchingUrlPattern": "http://localhost:5173/kb/article/.+",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 1600 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 1300 }],
+            "categories:performance": ["error", { "minScore": 0.92 }]
+          }
+        }
+      ]
     },
     "upload": { "target": "temporary-public-storage" }
   }
