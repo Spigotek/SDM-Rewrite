@@ -3,7 +3,6 @@ import { createRoot } from "react-dom/client";
 import "@sdm/design-system/tokens.css";
 import "@sdm/design-system/reset.css";
 import "@sdm/design-system/fonts.css";
-import { I18nProvider, bootstrapI18n } from "@sdm/i18n";
 import App from "./App";
 import { loadConfig } from "./bootstrap/config";
 import { initSentry } from "./bootstrap/sentry";
@@ -38,6 +37,13 @@ import { preloadRouteForPath } from "./bootstrap/route-preload";
  * with React mount. The `homeLoader` (React Router v6 data router) then sees
  * a warm cache and the Home shell's `<MyRecentTickets>` + `<KbSuggestions>`
  * paint without a second post-render fetch waterfall.
+ *
+ * I.0 Resolution 4 — `bootstrapI18n` is no longer on the critical path.
+ * `useTranslation` is aliased to a tiny shim (`lib/i18n-shim.ts`) that ships
+ * a 30-key static dictionary at FCP. The full `vendor-i18n` chunk is fetched
+ * via `bootstrap/i18n-late.ts` AFTER `createRoot().render()` and components
+ * re-render once `i18next` resolves. The prerender hero band in `index.html`
+ * provides the LCP element; React handover removes it after first paint.
  */
 async function bootstrap(): Promise<void> {
   if (import.meta.env.VITE_USE_MOCKS === "true") {
@@ -62,11 +68,7 @@ async function bootstrap(): Promise<void> {
     (e: unknown) => (e instanceof Error ? e : new Error(String(e))),
   );
 
-  const [config, , sessionOutcome] = await Promise.all([
-    loadConfig(),
-    bootstrapI18n({ app: "portal" }),
-    sessionPromise,
-  ]);
+  const [config, sessionOutcome] = await Promise.all([loadConfig(), sessionPromise]);
   // Sentry init runs BEFORE React render so render-time throws are captured.
   // No-op when DSN is missing (mock mode / dev without a Sentry project).
   initSentry({ observability: config.observability, appVersion: config.meta.appVersion });
@@ -96,13 +98,41 @@ async function bootstrap(): Promise<void> {
   const rootEl = document.getElementById("root");
   if (!rootEl) throw new Error("[portal] root element #root not found in index.html");
 
+  // The shim-aliased `<I18nProvider>` is intentionally NOT used here. Portal's
+  // `useTranslation` is the critical-path shim — it reads from a module-level
+  // store, not from `react-i18next`'s context. Skipping the provider keeps
+  // `react-i18next` itself out of the entry graph.
   createRoot(rootEl).render(
     <StrictMode>
-      <I18nProvider>
-        <App />
-      </I18nProvider>
+      <App />
     </StrictMode>,
   );
+
+  // Hydrate `vendor-i18n` AFTER first React paint. Dynamic import →
+  // `i18n-late` chunk pulls i18next + react-i18next + ICU. On resolve the
+  // shim promotes to `hydrated` and every subscribed component re-renders
+  // with the real `i18next.t()`. Static dict already covered the FCP paint
+  // so this swap is invisible (texts match exactly).
+  //
+  // Schedule with `requestIdleCallback` (Chrome) / fallback `setTimeout` so
+  // it never competes with React's commit phase for main-thread time.
+  const fireHydrate = () => {
+    void import("./bootstrap/i18n-late").then((m) => m.hydrateI18n());
+  };
+  if (typeof requestIdleCallback === "function") {
+    requestIdleCallback(fireHydrate, { timeout: 2000 });
+  } else {
+    setTimeout(fireHydrate, 0);
+  }
+
+  // Remove the static prerender from `index.html` once React has painted the
+  // real shell. The DOM node lives outside `<div id="root">` so React never
+  // touches it. We wait one frame to give React's commit phase room, then
+  // remove the prerender — its job (a paint-able LCP target before JS
+  // executes) is done.
+  requestAnimationFrame(() => {
+    document.getElementById("portal-prerender")?.remove();
+  });
 }
 
 bootstrap().catch((err: unknown) => {
