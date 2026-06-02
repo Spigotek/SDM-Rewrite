@@ -134,6 +134,11 @@ export function changeDetailQuery(id: string) {
 export interface ApprovePayload {
   readonly approverId: string;
   readonly comment?: string;
+  /** I.1 step-up policy hint — FE forwards `change.category` so the BFF can
+   *  decide whether to require `X-Step-Up-Token` without a CA SDM round-trip. */
+  readonly category?: string;
+  /** Minted by `POST /auth/step-up`. Sent as `X-Step-Up-Token` header. */
+  readonly stepUpToken?: string;
 }
 
 export interface RejectPayload {
@@ -145,21 +150,38 @@ export interface ReminderPayload {
   readonly approverId: string;
 }
 
-async function postJson<T>(path: string, body: unknown, op: string): Promise<T> {
+async function postJson<T>(
+  path: string,
+  body: unknown,
+  op: string,
+  extraHeaders: Record<string, string> = {},
+): Promise<T> {
   const resp = await fetch(path, {
     method: "POST",
     credentials: "include",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      ...extraHeaders,
+    },
     body: JSON.stringify(body),
   });
   return jsonOrThrow<T>(resp, op);
 }
 
 export function postApprove(id: string, payload: ApprovePayload): Promise<ChangeDetail> {
+  const extraHeaders: Record<string, string> = {};
+  if (payload.stepUpToken) extraHeaders["X-Step-Up-Token"] = payload.stepUpToken;
   return postJson<ChangeDetail>(
     `/api/changes/${encodeURIComponent(id)}/approve`,
-    { decision: "approve", approverId: payload.approverId, comment: payload.comment ?? "" },
+    {
+      decision: "approve",
+      approverId: payload.approverId,
+      comment: payload.comment ?? "",
+      ...(payload.category !== undefined ? { category: payload.category } : {}),
+    },
     "change-approve",
+    extraHeaders,
   );
 }
 

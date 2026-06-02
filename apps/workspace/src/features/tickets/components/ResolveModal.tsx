@@ -10,7 +10,16 @@ export interface ResolveModalProps {
   readonly onClose: () => void;
 }
 
+/**
+ * Category sentinel — the design-system `<Select>` is built on Radix, which
+ * rejects empty-string option values (Radix reserves `""` for the cleared
+ * state). We model "not selected yet" via the `__none` sentinel and treat it
+ * as unselected in the close-block predicate.
+ */
+const CATEGORY_NONE = "__none";
+
 const RESOLUTION_CATEGORIES = [
+  { value: CATEGORY_NONE, label: "—" },
   { value: "fixed", label: "Fixed" },
   { value: "workaround", label: "Workaround applied" },
   { value: "no-action", label: "No action required" },
@@ -19,16 +28,28 @@ const RESOLUTION_CATEGORIES = [
 ];
 
 /**
- * Resolve modal — Solution textarea (required) + Category select (per H.8.md
- * §Open questions). Submitting closes the ticket via
+ * Resolve modal — Solution textarea + Category select (per H.8.md
+ * §Open questions). Submitting closes the ticket (status → CL) via
  * `POST /api/tickets/:type/:id/resolve`.
+ *
+ * I.1 required-field close block (journey-09): both Solution AND Category
+ * must be non-empty before the close (status → CL) is allowed. Surfacing
+ * the rule as an explicit inline error closes acceptance journey #9's
+ * deferred "required-field block" criterion.
  */
 export function ResolveModal({ detail, initialSolution, onClose }: ResolveModalProps) {
   const { t } = useTranslation("workspace");
   const resolve = useResolve(detail.ticketType, detail.id);
   const [solution, setSolution] = useState(initialSolution);
-  const [category, setCategory] = useState<string>("fixed");
+  const [category, setCategory] = useState<string>(CATEGORY_NONE);
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const cancelRef = useRef<HTMLButtonElement | null>(null);
+
+  const categoryUnset = !category || category === CATEGORY_NONE;
+  const closeBlockError =
+    !solution.trim() || categoryUnset
+      ? t("ticketDetail.resolveModal.errors.solutionAndCategoryRequiredOnClose")
+      : null;
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -43,7 +64,10 @@ export function ResolveModal({ detail, initialSolution, onClose }: ResolveModalP
   }, []);
 
   const onSubmit = () => {
-    if (!solution.trim()) return;
+    if (closeBlockError) {
+      setSubmitAttempted(true);
+      return;
+    }
     resolve.mutate(
       { solution: solution.trim(), category },
       {
@@ -71,6 +95,7 @@ export function ResolveModal({ detail, initialSolution, onClose }: ResolveModalP
           options={RESOLUTION_CATEGORIES}
           value={category}
           onValueChange={setCategory}
+          required
         />
         <TextArea
           label={t("ticketDetail.resolveModal.solution")}
@@ -81,6 +106,12 @@ export function ResolveModal({ detail, initialSolution, onClose }: ResolveModalP
           rows={4}
           data-testid="ticket-resolve-solution"
         />
+
+        {submitAttempted && closeBlockError ? (
+          <p role="alert" className="sdm-modal-error" data-testid="ticket-resolve-required-error">
+            {closeBlockError}
+          </p>
+        ) : null}
 
         <div className="sdm-modal-actions">
           <Button
@@ -95,7 +126,6 @@ export function ResolveModal({ detail, initialSolution, onClose }: ResolveModalP
             variant="success"
             onClick={onSubmit}
             loading={resolve.isPending}
-            disabled={!solution.trim()}
             data-testid="ticket-resolve-submit"
           >
             {t("ticketDetail.resolveModal.submit")}

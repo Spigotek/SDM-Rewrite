@@ -260,6 +260,12 @@
   gap: var(--spacing-2);
 }
 
+.sdm-modal-error {
+  margin: var(--spacing-3) 0 var(--spacing-4);
+  color: var(--color-text-error, #b91c1c);
+  font-size: var(--font-size-sm);
+}
+
 .sdm-modal-button {
   background-color: transparent;
   color: var(--color-text-body);

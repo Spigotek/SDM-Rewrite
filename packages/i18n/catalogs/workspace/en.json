@@ -189,7 +189,10 @@
       "category": "Category",
       "solution": "Solution",
       "solutionPlaceholder": "Briefly describe what was done…",
-      "submit": "Resolve"
+      "submit": "Resolve",
+      "errors": {
+        "solutionAndCategoryRequiredOnClose": "Closing the ticket (status Closed) requires both Solution and Category."
+      }
     }
   },
   "changes": {
@@ -643,6 +646,22 @@
         "status_changed": "Status changed",
         "discovered": "Discovery"
       }
+    }
+  },
+  "stepUp": {
+    "title": "Confirm with second factor",
+    "help": "For a critical emergency change in a production tenant, enter the 6-digit code from your authenticator app.",
+    "label": "Authenticator code",
+    "submit": "Verify",
+    "cancel": "Cancel",
+    "errors": {
+      "invalidCode": "Code is invalid or has expired. Try again with the current window from your app.",
+      "networkError": "Failed to verify the code — check the network and retry.",
+      "unauthorized": "Session has expired, please log in again."
+    },
+    "audit": {
+      "success": "Step-up confirmed.",
+      "denied": "Step-up denied."
     }
   }
 }

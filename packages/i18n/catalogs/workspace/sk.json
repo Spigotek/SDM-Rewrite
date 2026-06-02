@@ -189,7 +189,10 @@
       "category": "Kategória",
       "solution": "Riešenie",
       "solutionPlaceholder": "Stručne popíš čo bolo urobené…",
-      "submit": "Vyriešiť"
+      "submit": "Vyriešiť",
+      "errors": {
+        "solutionAndCategoryRequiredOnClose": "Pre uzavretie ticketu (stav Closed) je povinné Riešenie aj Kategória."
+      }
     }
   },
   "changes": {
@@ -643,6 +646,22 @@
         "status_changed": "Zmena stavu",
         "discovered": "Discovery"
       }
+    }
+  },
+  "stepUp": {
+    "title": "Potvrď druhým faktorom",
+    "help": "Pre kritickú emergency zmenu v produkčnom tenante zadaj 6-miestny kód z authenticator aplikácie.",
+    "label": "Kód z aplikácie",
+    "submit": "Overiť",
+    "cancel": "Zrušiť",
+    "errors": {
+      "invalidCode": "Kód je neplatný alebo už expiroval. Skús znova z aktuálneho okna v aplikácii.",
+      "networkError": "Nepodarilo sa overiť kód — skontroluj sieť a skús znova.",
+      "unauthorized": "Session expiroval, prihlás sa znova."
+    },
+    "audit": {
+      "success": "Step-up overený.",
+      "denied": "Step-up zamietnutý."
     }
   }
 }

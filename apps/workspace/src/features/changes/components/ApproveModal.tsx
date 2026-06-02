@@ -3,6 +3,8 @@ import { useTranslation } from "@sdm/i18n";
 import { Button, TextArea } from "@sdm/design-system";
 import type { ChangeDetail } from "../types";
 import { useApproveChange } from "../hooks";
+import { useSession } from "../../../shell/session-context";
+import { StepUpModal } from "./StepUpModal";
 
 /**
  * CAB approve confirmation. Optional comment field per `microcopy.md §6` —
@@ -10,11 +12,12 @@ import { useApproveChange } from "../hooks";
  * reason), but the audit emit (`data.change.write` server-side) still captures
  * actor + approverId so the trail is complete.
  *
- * Step-up auth (F.1 §13.2 microcopy): the design calls for re-auth on critical
- * production changes. F.1 has not implemented the step-up flow yet — we ship
- * Approve **without** the re-auth prompt (degraded UX, tracked as a Phase I.2
- * follow-up in the PR description). The audit emit still goes out, so SIEM
- * can flag emergency approves for compliance review.
+ * I.1 step-up gate: when the change is `category === "EMERGENCY"` AND the
+ * active tenant is flagged `environment === "production"`, the FE renders
+ * `<StepUpModal>` first; on TOTP success the minted token is forwarded as
+ * `X-Step-Up-Token` to the approve mutation. The BFF re-validates the token
+ * server-side (`changes.ts` step-up gate) so the FE check is UX-only — a
+ * forged client bypass still fails at the BFF.
  */
 export interface ApproveModalProps {
   readonly detail: ChangeDetail;
@@ -24,28 +27,45 @@ export interface ApproveModalProps {
 
 export function ApproveModal({ detail, approverId, onClose }: ApproveModalProps) {
   const { t } = useTranslation("workspace");
+  const { session, tenants } = useSession();
   const approve = useApproveChange(detail.id);
   const [comment, setComment] = useState("");
+  const [stepUpToken, setStepUpToken] = useState<string | null>(null);
   const cancelRef = useRef<HTMLButtonElement | null>(null);
 
+  const activeTenant = session ? tenants.find((t_) => t_.id === session.tenantId) : undefined;
+  const needsStepUp = detail.category === "EMERGENCY" && activeTenant?.environment === "production";
+  const stepUpPending = needsStepUp && stepUpToken === null;
+
   useEffect(() => {
+    if (stepUpPending) return;
     function onKey(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, [onClose]);
+  }, [onClose, stepUpPending]);
 
   useEffect(() => {
+    if (stepUpPending) return;
     cancelRef.current?.focus();
-  }, []);
+  }, [stepUpPending]);
 
   const onSubmit = () => {
     approve.mutate(
-      { approverId, ...(comment.trim() ? { comment: comment.trim() } : {}) },
+      {
+        approverId,
+        category: detail.category,
+        ...(comment.trim() ? { comment: comment.trim() } : {}),
+        ...(stepUpToken ? { stepUpToken } : {}),
+      },
       { onSuccess: () => onClose() },
     );
   };
+
+  if (stepUpPending) {
+    return <StepUpModal onSuccess={setStepUpToken} onCancel={onClose} />;
+  }
 
   return (
     <div className="sdm-modal-overlay" role="presentation">

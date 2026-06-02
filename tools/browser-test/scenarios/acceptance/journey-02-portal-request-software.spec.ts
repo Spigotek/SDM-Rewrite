@@ -8,17 +8,17 @@ import { test, expect } from "../../fixtures/isolated-context";
  *   2. Clicking a featured offering renders the dynamic form.
  *   3. Submit yields 201 with a request ref.
  *
- * Manager-approve / rejection branches are deferred to BFF integration —
- * MSW does not simulate the second-user approval round-trip end-to-end.
+ * I.1 restored the full submit roundtrip after the DynamicForm visibility
+ * fix in `apps/portal/src/features/catalog/components/DynamicForm.tsx`. The
+ * static Zod schema previously required the hidden `colleague` user-picker
+ * (visibleIf `audience === "colleague"`), so submit silently failed when
+ * `audience === "self"`. The fix builds the resolver against the currently
+ * visible field set and toggles `shouldUnregister: true` so RHF state and
+ * the schema stay in lockstep.
  */
-test("journey-02 portal software request — catalog → dynamic form → submit click", async ({
+test("journey-02 portal software request — catalog → dynamic form → submit", async ({
   isolatedPage,
 }) => {
-  // §2.2 happy path — Phase I.1 follow-up needed for the full
-  // submit-roundtrip assertion. The submit step itself (radio-controlled
-  // RHF + submit click) is racy in preview-build mode against MSW; the
-  // dev-mode `h5-portal-catalog.spec.ts` exercises the full mutation in
-  // the local harness. Coverage matrix marks this as **partial**.
   test.setTimeout(120_000);
   await isolatedPage.goto("/");
   await expect(isolatedPage.getByTestId("portal-home")).toBeVisible({ timeout: 15_000 });
@@ -26,19 +26,14 @@ test("journey-02 portal software request — catalog → dynamic form → submit
   await isolatedPage.goto("/catalog");
   await expect(isolatedPage.getByTestId("portal-catalog")).toBeVisible({ timeout: 30_000 });
 
-  // Wait for the catalog list to populate. `catalog-list` only renders on
-  // success+nonempty; covers the path the journey actually exercises. If
-  // MSW is slow on the cold boot the query may take >15 s in preview mode.
   await expect(isolatedPage.getByTestId("catalog-list")).toBeVisible({ timeout: 30_000 });
 
-  // Filter by software category — software card group.
   await isolatedPage.getByTestId("catalog-category-software").click();
   await expect(isolatedPage.getByTestId("catalog-category-software")).toHaveAttribute(
     "aria-pressed",
     "true",
   );
 
-  // Open the Figma offering — featured under "software".
   const figmaCard = isolatedPage.getByTestId(/^catalog-featured-catalog:figma/).first();
   await expect(figmaCard).toBeVisible({ timeout: 15_000 });
   await figmaCard.click();
@@ -46,14 +41,11 @@ test("journey-02 portal software request — catalog → dynamic form → submit
   await expect(isolatedPage.getByTestId("portal-catalog-item")).toBeVisible({ timeout: 10_000 });
   await expect(isolatedPage.getByTestId("catalog-form")).toBeVisible();
 
-  // Audience = self (avoids conditional colleague picker). Click the
-  // input directly so the `onChange` Controller wired by RHF fires
-  // synchronously — Playwright `.check()` semantics + the controlled
-  // `checked={value === opt.value}` binding can race in preview build.
-  await isolatedPage.getByTestId("catalog-field-audience-self").click({ force: true });
-  // `data-testid` is spread onto the inner `<input>` itself by the
-  // TextField primitive (forwards `...rest` to the input), so we fill
-  // the testid locator directly.
+  // Audience = self. The conditional `colleague` user-picker stays hidden
+  // and — post-I.1 — is no longer required by the resolver (it's filtered
+  // out of the visibility-aware schema in DynamicForm).
+  await isolatedPage.getByTestId("catalog-field-audience-self").check();
+
   await isolatedPage.getByTestId("catalog-field-costCenter").fill("Brand 2026");
 
   await isolatedPage
@@ -63,10 +55,10 @@ test("journey-02 portal software request — catalog → dynamic form → submit
     .click();
   await isolatedPage.getByRole("option", { name: /12 mesiacov/ }).click();
 
-  // Assert the submit button is reachable + enabled before clicking.
-  // The success roundtrip is covered by `h5-portal-catalog.spec.ts` in
-  // dev mode; here the preview-build RHF race is tracked under Phase I.1.
-  const submitBtn = isolatedPage.getByTestId("catalog-form-submit");
-  await expect(submitBtn).toBeVisible();
-  await expect(submitBtn).toBeEnabled();
+  await isolatedPage.getByTestId("catalog-form-submit").click();
+
+  const success = isolatedPage.getByTestId("catalog-item-success");
+  await expect(success).toBeVisible({ timeout: 15_000 });
+  await expect(success).toHaveAttribute("data-ticket-ref", /^REQ-\d+$/);
+  await expect(isolatedPage.getByTestId("catalog-item-success-view")).toBeVisible();
 });

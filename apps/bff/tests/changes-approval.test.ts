@@ -6,6 +6,7 @@ import { SdmHttpClient } from "../src/api/http-client";
 import { createApiRoutesState, registerApiRoutes } from "../src/api/routes";
 import { correlationMiddleware } from "../src/auth/correlation";
 import { AppErrorException, toAppErrorBody } from "../src/auth/errors";
+import { _resetStepUpTokensForTests, mintStepUpToken } from "../src/auth/step-up-token";
 import type { RuntimeConfig } from "../src/config/schema";
 import { createAuditEmitter } from "../src/platform/audit";
 import { createSessionStore } from "../src/session";
@@ -106,13 +107,23 @@ async function buildApi(): Promise<{ app: Hono; audit: AuditMock }> {
 }
 
 const COOKIE = "Cookie";
-const SID_COOKIE = "sdm.sid=cab-approval-sid";
+const SID = "cab-approval-sid";
+const SID_COOKIE = `sdm.sid=${SID}`;
 
-async function post(app: Hono, path: string, body: unknown): Promise<Response> {
+async function post(
+  app: Hono,
+  path: string,
+  body: unknown,
+  extraHeaders: Record<string, string> = {},
+): Promise<Response> {
   return app.fetch(
     new Request(`http://bff${path}`, {
       method: "POST",
-      headers: { [COOKIE]: SID_COOKIE, "Content-Type": "application/json" },
+      headers: {
+        [COOKIE]: SID_COOKIE,
+        "Content-Type": "application/json",
+        ...extraHeaders,
+      },
       body: JSON.stringify(body),
     }),
   );
@@ -211,6 +222,88 @@ describe("/api/changes/:id/reminder", () => {
   it("rejects missing approverId with 400", async () => {
     const res = await post(app, "/api/changes/CHG-001/reminder", {});
     expect(res.status).toBe(400);
+  });
+});
+
+describe("/api/changes/:id/approve — I.1 step-up gate", () => {
+  let app: Hono;
+  let audit: AuditMock;
+  beforeEach(async () => {
+    _resetStepUpTokensForTests();
+    const built = await buildApi();
+    app = built.app;
+    audit = built.audit;
+  });
+  afterEach(() => {
+    _resetStepUpTokensForTests();
+    vi.restoreAllMocks();
+  });
+
+  it("non-EMERGENCY category bypasses step-up requirement", async () => {
+    const res = await post(app, "/api/changes/CHG-001/approve", {
+      approverId: "user-1",
+      category: "NORMAL",
+    });
+    expect(res.status).toBe(200);
+    const emit = audit.calls.find((c) => c.details?.["op"] === "cab.approve");
+    expect(emit).toBeDefined();
+    expect(emit?.details?.["category"]).toBe("NORMAL");
+  });
+
+  it("EMERGENCY without X-Step-Up-Token → 401 STEP_UP_REQUIRED + denied audit", async () => {
+    const res = await post(app, "/api/changes/CHG-001/approve", {
+      approverId: "user-1",
+      category: "EMERGENCY",
+    });
+    expect(res.status).toBe(401);
+    const body = (await res.json()) as { error: string };
+    expect(body.error).toBe("STEP_UP_REQUIRED");
+    const emit = audit.calls.find((c) => c.details?.["op"] === "cab.approve.denied_step_up");
+    expect(emit).toBeDefined();
+    expect(emit?.details?.["reason"]).toBe("missing");
+  });
+
+  it("EMERGENCY with invalid X-Step-Up-Token → 401 + denied audit", async () => {
+    const res = await post(
+      app,
+      "/api/changes/CHG-001/approve",
+      { approverId: "user-1", category: "EMERGENCY" },
+      { "X-Step-Up-Token": "bogus" },
+    );
+    expect(res.status).toBe(401);
+    const emit = audit.calls.find((c) => c.details?.["op"] === "cab.approve.denied_step_up");
+    expect(emit?.details?.["reason"]).toBe("invalid_or_replayed");
+  });
+
+  it("EMERGENCY with valid token → 200 + cab.approve audit", async () => {
+    const { token } = mintStepUpToken(SID);
+    const res = await post(
+      app,
+      "/api/changes/CHG-001/approve",
+      { approverId: "user-1", category: "EMERGENCY", comment: "rollback signed" },
+      { "X-Step-Up-Token": token },
+    );
+    expect(res.status).toBe(200);
+    const emit = audit.calls.find((c) => c.details?.["op"] === "cab.approve");
+    expect(emit?.details?.["category"]).toBe("EMERGENCY");
+  });
+
+  it("EMERGENCY token is single-use — replay returns 401", async () => {
+    const { token } = mintStepUpToken(SID);
+    const first = await post(
+      app,
+      "/api/changes/CHG-001/approve",
+      { approverId: "user-1", category: "EMERGENCY" },
+      { "X-Step-Up-Token": token },
+    );
+    expect(first.status).toBe(200);
+    const replay = await post(
+      app,
+      "/api/changes/CHG-001/approve",
+      { approverId: "user-1", category: "EMERGENCY" },
+      { "X-Step-Up-Token": token },
+    );
+    expect(replay.status).toBe(401);
   });
 });
 
