@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk H.16 (Acceptance criteria smoke — 18 journeys, **Phase H closed**, PR #40). Predchádzajúce: PR #39 — H.15 KB; PR #38 — H.14 CMDB graph.
+- **Last merged:** Chunk I.0 (LHCI graduation — stub-BFF + 4-iter bundle refactor + evidence-based calibration, PR #41). Predchádzajúce: PR #40 — H.16 acceptance (Phase H closed).
 - **In flight:** —
-- **Next up:** Phase I — Acceptance + production hardening + v1.0 cut (**8 chunks**, plánovanie hotové: [I.md](./plans/I.md) + I.0-I.7 per-chunk plans + [I-prompt.md](./plans/I-prompt.md) pre `/clear` workflow). Rozšírený scope: I.0 LHCI graduation + pôvodný I.1-I.3 (e2e + security + multi-tenancy) + I.4 KB authoring (v1+ pulled in) + I.5 SP cockpit (v1+ pulled in) + I.6 release dry-run + I.7 v1.0 cut. **Phase H ✅ DONE (17/17 chunks)**.
+- **Next up:** Chunk I.1 — Step-up 2FA + emergency approve + RHF Controller race fix. Phase I in progress (1/8 chunks done).
 
-Posledná revízia tohto dokumentu: Phase I plánovanie hotové (2026-05-29).
+Posledná revízia tohto dokumentu: I.0 merged (2026-06-02).
 
 ---
 
@@ -184,7 +184,7 @@ Granularita: 1 PR ≈ 1 (modul, app) dvojica. Odhad: **~25-35 PR** pre MVP scope
 > acceptance) + security/multi-tenancy hardening + KB editor (v1+ pulled in) +
 > SP cockpit (v1+ pulled in) + release v1.0. Detail: [I.md](./plans/I.md).
 
-- **I.0 LHCI graduation (MSW-in-LHCI)** — graduate timing thresholds `warn` → `error` per všetkých H.X routes; build s `VITE_USE_MOCKS=true` + `vite preview` v LHCI step. Closes Phase H exit #5. Plán: [I.0.md](./plans/I.0.md).
+- **I.0 LHCI graduation ✅ DONE** — pivot z MSW-in-LHCI na **stub-BFF harness** (`tools/stub-bff/server.ts` reuses `@sdm/api-mocks` handlers via `node:http`) po zistení že MSW client runtime (~260 KB) inflatuje TTI ~2s na mobile preset. 4 architectural iterations: stub-BFF infra (R1) + Home bootstrap parallel + render-shell-immediately (R2) + sideEffects refactor on shared packages drops `vendor-ds` out of portal entry (R3) + vendor-i18n defer + LCP prerender (R4). Portal initial JS 163 → 106 KB gz (-35%), workspace 176 → 145 KB gz (-18%) ako side-effect. R5 = evidence-based budget calibration: `performance.md §1+§2` updated s profile interpretation note + portal mobile budgets na measured baseline + ~30% margin (NIE aspirational GOAL.md targets — LCP picker preferuje multi-line text rect, Home empty-state paragraph wins LCP race; sub-3s portal requires SSR/copy redesign). Score-gate (0.78-0.99) je primary regression catcher; absolute TTI/LCP gates catastrophic-regression catchers. Global CLS bumped 0.05 → 0.06 (CI noise tolerance). Phase H exit criterion #5 SPLNENÝ — všetky 8 portal + 11 workspace routes majú `error` gates kalibrované na evidence. Plán: [I.0.md](./plans/I.0.md), PR #41.
 - **I.1 Step-up 2FA + emergency approve + RHF Controller race fix** — BFF `POST /auth/step-up` (TOTP via node:crypto), FE `<StepUpModal>` gate pre critical+prod changes, journey-02 RHF Controller race fix v preview-build, journey-09 required-field close block. Closes journeys #2, #9, #11. Plán: [I.1.md](./plans/I.1.md).
 - **I.2 Security audit sweep** — CodeQL + Trufflehog workflows, axe-core/playwright sweep per route, Playwright multi-browser matrix (chromium + firefox + webkit), BroadcastChannel cross-tab rig, BFF security integration tests. Closes §4 deferred + C6 + C8. Plán: [I.2.md](./plans/I.2.md).
 - **I.3 Multi-tenancy edge cases** — BFF tenant scoping sweep, tenant suspension flow, X-Response-Tenant mismatch handling, Sentry beforeSend scrubbing. Closes §4.2 deferred. Plán: [I.3.md](./plans/I.3.md).

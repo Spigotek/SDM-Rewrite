@@ -1,12 +1,25 @@
-# I.0 — LHCI graduation (MSW-in-LHCI)
+# I.0 — LHCI graduation (MSW-in-LHCI → stub-BFF + evidence-based calibration)
 
-> **Status**: 🔜 NEXT (Phase I entry chunk)
-> **Branch**: `chunk/I.0-lhci-msw` > **PR**: TBD
-> **Cieľ**: graduovať LHCI timing thresholds `warn` → `error` per všetkých H.X
-> routes. Blocker = LHCI `staticDistDir` mode fails na `/config` 404 → bootstrap
-> error fallback → LCP merá fragment, nie app. Riešenie: build SPAs s
-> `VITE_USE_MOCKS=true` flag pre LHCI step, MSW worker bootstrap-uje
-> `/config` + `/me` + `/me/tenants` z fixtures.
+> **Status**: ✅ DONE (squash `dac4e94`, PR #41)
+> **Branch**: `chunk/I.0-lhci-msw` (deleted)
+> **Final approach**: stub-BFF harness (NOT MSW-in-LHCI per original plan) + 4
+> architectural iterations (Home bootstrap parallel + sideEffects refactor +
+> vendor-i18n defer + LCP prerender) + evidence-based budget calibration. Per
+> R-prompt template + 5-iteration escalation log.
+>
+> **Outcome**:
+>
+> - LHCI timing thresholds graduated `warn` → `error` per všetkých 8 portal +
+>   11 workspace routes. Score-gate (0.78-0.99) je primary regression catcher;
+>   absolute TTI/LCP gates kalibrované na measured baseline + ~30% margin.
+> - Portal initial JS 163 → 106 KB gz (-35%), workspace 176 → 145 KB (-18%) ako
+>   side-effect refactoru.
+> - `performance.md §1+§2` updated s profile interpretation note + portal mobile
+>   budgets calibrated to architectural floor. Phase H exit criterion #5 SPLNENÝ.
+> - **NOT achieved**: original aspirational GOAL.md targets (TTI 1.8s portal `/`).
+>   LCP picker prefers multi-line text rect — Home empty-state paragraph
+>   intrinsically wins LCP race; closing that gap requires SSR alebo copy/UX
+>   redesign (out of I.0 scope).
 
 ## Pivot vs ROADMAP
 
