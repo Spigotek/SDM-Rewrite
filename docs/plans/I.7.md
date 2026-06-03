@@ -1,6 +1,6 @@
 # I.7 — v1.0 cut (semver tag + image push + OCI helm publish + release notes)
 
-> **Status**: 🔜 (blokované na I.6 release dry-run pass)
+> **Status**: 🔁 in-review (parent flips → ✅ DONE post-merge + tag push)
 > **Branch**: `chunk/I.7-v1.0-cut` > **PR**: TBD
 > **Cieľ**: cut v1.0.0 — semver git tag, container images push do registry,
 > helm chart publish ako OCI artifact, CHANGELOG.md + RELEASE-NOTES-v1.0.md.

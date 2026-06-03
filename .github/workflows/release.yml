@@ -3,7 +3,7 @@ name: release
 on:
   push:
     tags:
-      - "v*"
+      - "v*.*.*"
 
 permissions:
   contents: write
@@ -13,8 +13,13 @@ permissions:
 env:
   NODE_VERSION: "22.11.0"
   PNPM_VERSION: "9.12.0"
+  # Image registry: ghcr.io/spigotek matches I.6 staging values (deploy/helm/sdm/values-staging.yaml).
+  # On-prem registry alternative — flip to 10.11.36.21:88 per docs/plans/I.md §D10 once the
+  # internal registry serves OCI artefacts (helm OCI + image push). Memory: deploy_target.md.
   REGISTRY: ghcr.io
   IMAGE_BFF: ghcr.io/${{ github.repository_owner }}/sdm-bff
+  IMAGE_PORTAL: ghcr.io/${{ github.repository_owner }}/sdm-portal
+  IMAGE_WORKSPACE: ghcr.io/${{ github.repository_owner }}/sdm-workspace
 
 jobs:
   bff-image:
@@ -45,6 +50,7 @@ jobs:
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
             type=sha,format=short
 
       - name: Build and push
@@ -63,28 +69,18 @@ jobs:
           cache-from: type=gha,scope=bff-release
           cache-to: type=gha,mode=max,scope=bff-release
 
-  helm-chart:
-    name: Package + publish Helm chart
+  portal-image:
+    name: Publish Portal image
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    needs: bff-image
+    timeout-minutes: 25
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      digest: ${{ steps.push.outputs.digest }}
     steps:
       - uses: actions/checkout@v4
 
-      - uses: azure/setup-helm@v4
-        with:
-          version: v3.16.1
-
-      - name: Set chart appVersion to release tag
-        run: |
-          VERSION="${GITHUB_REF_NAME#v}"
-          sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" deploy/helm/sdm/Chart.yaml
-          sed -i "s/^version:.*/version: ${VERSION}/" deploy/helm/sdm/Chart.yaml
-
-      - name: helm package
-        run: |
-          mkdir -p dist
-          helm package deploy/helm/sdm -d dist
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -93,11 +89,167 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Compute image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PORTAL }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/portal/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            VERSION=${{ steps.meta.outputs.version }}
+          cache-from: type=gha,scope=portal-release
+          cache-to: type=gha,mode=max,scope=portal-release
+
+  workspace-image:
+    name: Publish Workspace image
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_WORKSPACE }}
+          tags: |
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Build and push
+        id: push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/workspace/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+            VERSION=${{ steps.meta.outputs.version }}
+          cache-from: type=gha,scope=workspace-release
+          cache-to: type=gha,mode=max,scope=workspace-release
+
+  helm-chart:
+    name: Package + publish Helm chart
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [bff-image, portal-image, workspace-image]
+    outputs:
+      chart-version: ${{ steps.pkg.outputs.chart-version }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: azure/setup-helm@v4
+        with:
+          version: v3.16.1
+
+      - name: Set chart version + appVersion to release tag
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          sed -i "s/^appVersion:.*/appVersion: \"${VERSION}\"/" deploy/helm/sdm/Chart.yaml
+          sed -i "s/^version:.*/version: ${VERSION}/" deploy/helm/sdm/Chart.yaml
+
+      - name: helm lint
+        run: helm lint deploy/helm/sdm
+
+      - name: helm package
+        id: pkg
+        run: |
+          mkdir -p dist
+          helm package deploy/helm/sdm -d dist
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "chart-version=${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Log in to GHCR (helm registry)
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" \
+            | helm registry login ${{ env.REGISTRY }} \
+                -u ${{ github.actor }} --password-stdin
+
       - name: helm push (OCI)
         run: |
-          helm push dist/sdm-*.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}
+          helm push dist/sdm-*.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
 
-      - name: Attach chart to GitHub Release
+      - name: Upload chart artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: helm-chart
+          path: dist/sdm-*.tgz
+          retention-days: 90
+
+  github-release:
+    name: Create GitHub Release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: helm-chart
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download chart artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: helm-chart
+          path: dist
+
+      - name: Resolve release notes body
+        id: notes
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          # Prefer per-major-minor release notes (e.g. RELEASE-NOTES-v1.0.md).
+          MAJOR_MINOR="$(echo "$VERSION" | awk -F. '{print $1"."$2}')"
+          PER_MM="docs/RELEASE-NOTES-v${MAJOR_MINOR}.md"
+          PER_FULL="docs/RELEASE-NOTES-v${VERSION}.md"
+          if [ -f "$PER_FULL" ]; then
+            echo "path=$PER_FULL" >> "$GITHUB_OUTPUT"
+          elif [ -f "$PER_MM" ]; then
+            echo "path=$PER_MM" >> "$GITHUB_OUTPUT"
+          else
+            echo "path=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create GitHub Release (with notes body)
+        if: steps.notes.outputs.path != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/sdm-*.tgz
+          body_path: ${{ steps.notes.outputs.path }}
+
+      - name: Create GitHub Release (auto notes fallback)
+        if: steps.notes.outputs.path == ''
         uses: softprops/action-gh-release@v2
         with:
           files: dist/sdm-*.tgz
