@@ -1,7 +1,8 @@
 # I.2 — Security audit sweep (CodeQL + Trufflehog + axe + multi-browser)
 
-> **Status**: 🚧 in-flight (PR open)
-> **Branch**: `chunk/I.2-security-audit` > **PR**: TBD
+> **Status**: ✅ DONE (squash `6c1b0d2`, PR #43)
+> **Branch**: `chunk/I.2-security-audit` (deleted)
+> **Outcome**: `.github/workflows/security.yml` (CodeQL TS+JS + Trufflehog `--only-verified` on PR/push/nightly) + `pnpm audit --audit-level=high` blocking v ci.yml. Multi-browser Playwright matrix (chromium + firefox + webkit) × 18 journeys cez `acceptance.yml`. axe-core sweep per route — 4 a11y bugs surfaced + fixed (Badge component contrast tokens `*-fg` → `*-solid`, queue/timeline meta colors neutral-500 → neutral-600, FullCalendar chevron a11y). BroadcastChannel cross-tab rig (logout + tenant sync) + CSRF mutation + silent re-auth verification. BFF security tests pod `apps/bff/tests/security/`: 56 cases (rbac-server-side 21 + tenant-isolation-sweep 18 + audit-log-emission 11 + token-replay 6). **Real vulnerabilities surfaced + fixed**: happy-dom 15→20 (RCE), vitest 2→4 (2× RCE), hono 4.6→4.12 (improper auth), @hono/node-server 1.13→1.19, vite 6.0→6.4, @playwright/test 1.49→1.60, tmp `>=0.2.6` via `pnpm.overrides`. 27 acceptance matrix rows graduated `deferred → pass` (§4.1 + §4.2 + §4.4 + §4.5 + §4.6 + C6 + C8).
 > **Cieľ**: enable automated security scanning (CodeQL workflow, Trufflehog
 > secret scan, pnpm audit hardening), pridať axe browser sweep per route, rozšíriť
 > Playwright matrix o Firefox + WebKit, implementovať BroadcastChannel multi-context
