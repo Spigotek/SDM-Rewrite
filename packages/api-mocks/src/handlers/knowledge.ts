@@ -1,4 +1,5 @@
 import { http, HttpResponse } from "msw";
+import sanitizeHtmlLib from "sanitize-html";
 import { store } from "../db";
 import type { KbArticle, KbContentBlock } from "@sdm/domain";
 import { paginate, readPageParams } from "../utils/pagination";
@@ -247,19 +248,65 @@ function asTags(value: unknown): readonly string[] {
 }
 
 /**
- * MSW-side sanitization mirror of `apps/workspace/.../lib/sanitizer.ts`. The
- * full DOMPurify dependency lives in the workspace + BFF; here we just strip
- * the highest-impact attack surfaces so the journey-13 XSS assertion still
- * holds when MSW is the only backend in the loop.
+ * MSW-side sanitization mirror of `apps/workspace/.../lib/sanitizer.ts` and
+ * `apps/bff/.../kb-write.ts`. Uses `sanitize-html` (pure-JS, htmlparser2-based,
+ * no jsdom — works identically in the browser and Node). The previous regex
+ * implementation was flagged by CodeQL `js/incomplete-multi-character-sanitization`
+ * and `js/bad-tag-filter` (e.g. `<script foo></script >` slipped through). The
+ * htmlparser2 backend handles the full HTML grammar correctly and the
+ * allowlist mirrors the workspace + BFF surface so the journey-13 XSS
+ * assertion holds regardless of which backend serves the request.
  */
+const MOCK_ALLOWED_TAGS = [
+  "p",
+  "br",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "ul",
+  "ol",
+  "li",
+  "strong",
+  "em",
+  "u",
+  "s",
+  "code",
+  "pre",
+  "blockquote",
+  "a",
+  "img",
+  "table",
+  "thead",
+  "tbody",
+  "tr",
+  "td",
+  "th",
+  "hr",
+  "span",
+];
+const MOCK_ALLOWED_ATTR = ["href", "src", "alt", "title", "target", "rel", "class"];
+
 function sanitizeMock(input: string): string {
-  return input
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<style[\s\S]*?<\/style>/gi, "")
-    .replace(/<iframe[\s\S]*?<\/iframe>/gi, "")
-    .replace(/\son\w+\s*=\s*"[^"]*"/gi, "")
-    .replace(/\son\w+\s*=\s*'[^']*'/gi, "")
-    .replace(/\]\((\s*javascript:[^)]*)\)/gi, "](#)");
+  const cleaned = sanitizeHtmlLib(input, {
+    allowedTags: MOCK_ALLOWED_TAGS,
+    allowedAttributes: { "*": MOCK_ALLOWED_ATTR },
+    allowedSchemes: ["http", "https", "mailto"],
+    allowedSchemesAppliedToAttributes: ["href", "src", "cite"],
+    allowProtocolRelative: false,
+    nonTextTags: [
+      "script",
+      "style",
+      "iframe",
+      "object",
+      "embed",
+      "form",
+      "input",
+      "textarea",
+      "noscript",
+    ],
+  });
+  return cleaned.replace(/\]\((\s*javascript:[^)]*)\)/gi, "](#)");
 }
 
 function fixtureAnalytics(range: "7d" | "30d" | "90d") {

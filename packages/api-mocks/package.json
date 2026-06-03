@@ -21,7 +21,11 @@
     "@sdm/api-client": "workspace:*",
     "@sdm/api-types": "workspace:*",
     "@sdm/domain": "workspace:*",
-    "msw": "2.6.6"
+    "msw": "2.6.6",
+    "sanitize-html": "2.17.4"
+  },
+  "devDependencies": {
+    "@types/sanitize-html": "2.16.1"
   },
   "msw": {
     "workerDirectory": [

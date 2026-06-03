@@ -1,5 +1,5 @@
 import type { Hono } from "hono";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtmlLib from "sanitize-html";
 import { hasPermission, type Permission, type UIRole } from "@sdm/domain";
 import { AppErrorException } from "../../auth/errors";
 import { AUDIT_EVENTS } from "../../platform/audit";
@@ -14,8 +14,13 @@ import type { RestProxyDeps } from "../rest-proxy";
  *   - requires an active session (cookie + idle expiry checks),
  *   - re-validates the `kb.write` permission server-side (defense in depth;
  *     the FE `<RouteGuard>` is a UX optimisation only),
- *   - sanitizes the body with `isomorphic-dompurify` (the same allowlist
- *     the FE uses, per `owasp-mitigations.md §A03`),
+ *   - sanitizes the body with `sanitize-html` (Node-side pure-JS sanitizer
+ *     using the same allowlist the FE uses via `isomorphic-dompurify`, per
+ *     `owasp-mitigations.md §A03`). We deliberately avoid `isomorphic-
+ *     dompurify` on the server: it pulls `jsdom@28` which transitively
+ *     requires the ESM-only `@exodus/bytes` and breaks CJS test loaders
+ *     under Node 22.11. `sanitize-html` is pure JS (htmlparser2) — no jsdom,
+ *     no dual-package hazard, identical effective allowlist.
  *   - emits `data.kd.write` (factory name lowercased per the F.4 convention
  *     used by `_entity-routes.ts`) with `details.op` discriminating
  *     create / update / publish / draft / delete (audit taxonomy frozen
@@ -59,31 +64,48 @@ const ALLOWED_TAGS = [
   "span",
 ];
 const ALLOWED_ATTR = ["href", "src", "alt", "title", "target", "rel", "class"];
-const FORBID_ATTR = [
-  "onerror",
-  "onload",
-  "onclick",
-  "onmouseover",
-  "onfocus",
-  "onblur",
-  "onchange",
-  "onsubmit",
-  "onkeydown",
-  "onkeyup",
-  "style",
-];
-const FORBID_TAGS = ["script", "style", "iframe", "object", "embed", "form", "input"];
 
-/** Server-side sanitization — same allowlist as `apps/workspace/.../lib/sanitizer.ts`. */
+/**
+ * Server-side sanitization — same effective allowlist as
+ * `apps/workspace/.../lib/sanitizer.ts`. Implementation differs (sanitize-html
+ * vs DOMPurify) but the contract is identical:
+ *   - only the allowlisted tags survive,
+ *   - the listed attributes survive (on any tag),
+ *   - inline event handlers (`on*`) and `style` are stripped,
+ *   - `<script>` / `<style>` / etc. are removed along with their text content,
+ *   - URLs in `href` / `src` are restricted to http(s) / mailto / relative
+ *     paths / anchors — `javascript:` is dropped,
+ *   - markdown-style `[text](javascript:…)` links are rewritten to `](#)`.
+ */
 function sanitize(input: string): string {
-  return DOMPurify.sanitize(input, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR,
-    FORBID_ATTR,
-    FORBID_TAGS,
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto):|\/|#)/i,
-    KEEP_CONTENT: true,
-  }).replace(/\]\((\s*javascript:[^)]*)\)/gi, "](#)");
+  const cleaned = sanitizeHtmlLib(input, {
+    allowedTags: ALLOWED_TAGS,
+    allowedAttributes: { "*": ALLOWED_ATTR },
+    allowedSchemes: ["http", "https", "mailto"],
+    allowedSchemesByTag: {},
+    allowedSchemesAppliedToAttributes: ["href", "src", "cite"],
+    allowProtocolRelative: false,
+    // `<script>`, `<style>`, `<iframe>` etc. are not in allowedTags, so they
+    // are stripped by default. Listing them in `nonTextTags` tells the parser
+    // to discard their text content as well (matching the DOMPurify forbid
+    // behaviour for these tags specifically — `<script>alert(1)</script>`
+    // leaves nothing behind, not the literal string `alert(1)`).
+    nonTextTags: [
+      "script",
+      "style",
+      "iframe",
+      "object",
+      "embed",
+      "form",
+      "input",
+      "textarea",
+      "noscript",
+    ],
+  });
+  // Belt-and-suspenders for markdown link syntax: `[text](javascript:…)` —
+  // sanitize-html doesn't process markdown source, only HTML, so this regex
+  // catches the markdown form before storage.
+  return cleaned.replace(/\]\((\s*javascript:[^)]*)\)/gi, "](#)");
 }
 
 export type KbVisibility = "public" | "tenant" | "sp_only";
