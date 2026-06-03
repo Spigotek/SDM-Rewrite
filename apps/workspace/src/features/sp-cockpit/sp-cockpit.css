@@ -1,0 +1,167 @@
+.sdm-sp-cockpit-page {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.sdm-sp-cockpit-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sdm-sp-cockpit-title {
+  font-size: 22px;
+  margin: 0;
+}
+
+.sdm-sp-cockpit-subtitle {
+  color: var(--color-text-secondary, #888);
+  margin: 0;
+}
+
+.sdm-sp-cockpit-state {
+  color: var(--color-text-secondary, #888);
+}
+
+.sdm-sp-cockpit-state--error {
+  color: var(--color-severity-high, #d9534f);
+}
+
+.sdm-sp-cockpit-tenant-grid {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.sdm-sp-cockpit-tenant-card {
+  background: var(--color-surface-raised, #2a2a2a);
+  border: 1px solid var(--color-border-default, #555);
+  border-left: 4px solid var(--color-accent, #89b4fa);
+  border-radius: 6px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sdm-sp-cockpit-tenant-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.sdm-sp-cockpit-tenant-card-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.sdm-sp-cockpit-tenant-card-id {
+  color: var(--color-text-secondary, #888);
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+}
+
+.sdm-sp-cockpit-tenant-card-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 0;
+}
+
+.sdm-sp-cockpit-tenant-card-stats div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sdm-sp-cockpit-tenant-card-stats dt {
+  color: var(--color-text-secondary, #888);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sdm-sp-cockpit-tenant-card-stats dd {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.sdm-sp-cockpit-tenant-card-state {
+  color: var(--color-text-secondary, #888);
+  font-size: 13px;
+}
+
+.sdm-sp-cockpit-tenant-card-state--error {
+  color: var(--color-severity-high, #d9534f);
+}
+
+.sdm-shared-ci-marker {
+  position: relative;
+  display: inline-block;
+  margin-left: 6px;
+}
+
+.sdm-shared-ci-marker-badge {
+  background: var(--color-accent, #89b4fa);
+  color: var(--color-surface-base, #1e1e1e);
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  cursor: pointer;
+  letter-spacing: 0.02em;
+}
+
+.sdm-shared-ci-marker-badge:hover,
+.sdm-shared-ci-marker-badge:focus-visible {
+  outline: 2px solid var(--color-accent, #89b4fa);
+  outline-offset: 1px;
+}
+
+.sdm-shared-ci-marker-popover {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--color-surface-raised, #2a2a2a);
+  border: 1px solid var(--color-border-default, #555);
+  border-radius: 4px;
+  padding: 8px;
+  min-width: 160px;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.sdm-shared-ci-marker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sdm-shared-ci-marker-list-item {
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+  color: var(--color-text-primary, #eee);
+}
+
+.sdm-sp-mode-badge {
+  background: var(--color-severity-medium, #f9a825);
+  color: var(--color-surface-base, #1e1e1e);
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.06em;
+  margin-left: 6px;
+  text-transform: uppercase;
+}

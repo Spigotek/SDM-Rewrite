@@ -11,6 +11,7 @@ import { correlationMiddleware, getCorrelationId } from "./auth/correlation";
 import { AppErrorException, toAppErrorBody } from "./auth/errors";
 import { registerAuthRoutes } from "./auth/routes";
 import { SdmBroker } from "./auth/sdm-broker";
+import { registerSpImpersonationRoutes } from "./auth/sp-impersonation";
 import { registerStepUpRoutes } from "./auth/step-up";
 import { loadConfig } from "./config/load";
 import type { RuntimeConfig } from "./config/schema";
@@ -69,6 +70,12 @@ export function buildApp(deps: BuildAppDeps): Hono {
 
   registerAuthRoutes(app, { ...deps, audit });
   registerStepUpRoutes(app, {
+    config: deps.config,
+    sessionStore: deps.sessionStore,
+    log: deps.log,
+    audit,
+  });
+  registerSpImpersonationRoutes(app, {
     config: deps.config,
     sessionStore: deps.sessionStore,
     log: deps.log,

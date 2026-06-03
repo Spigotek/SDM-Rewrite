@@ -1,5 +1,6 @@
 import { useTranslation } from "@sdm/i18n";
-import type { RiskLevel, ChangeStatus } from "@sdm/domain";
+import { Can } from "@sdm/auth";
+import type { RiskLevel, ChangeStatus, UIRole } from "@sdm/domain";
 
 /**
  * Calendar chips — risk tier + change-status filters.
@@ -13,15 +14,21 @@ import type { RiskLevel, ChangeStatus } from "@sdm/domain";
  *
  * Filters are single-select with an "all" sentinel — multi-select calendar
  * filters in the wireframe are advanced (v1+). KISS for MVP.
+ *
+ * I.5 — `crossTenant` toggle visible only to `sp_admin` via `<Can>`. When ON
+ * the parent route swaps the data query to `?tenants=all` (cross-tenant
+ * overlay per journey #12).
  */
 export interface CalendarFiltersValue {
   readonly risk: RiskLevel | "ALL";
   readonly status: ChangeStatus | "ALL";
+  readonly crossTenant: boolean;
 }
 
 export interface CalendarFiltersProps {
   readonly value: CalendarFiltersValue;
   readonly onChange: (next: CalendarFiltersValue) => void;
+  readonly roles: readonly UIRole[];
 }
 
 const RISKS: ReadonlyArray<RiskLevel> = ["HIGH", "MEDIUM", "LOW"];
@@ -33,7 +40,7 @@ const STATUSES: ReadonlyArray<ChangeStatus> = [
   "IN_PROGRESS",
 ];
 
-export function CalendarFilters({ value, onChange }: CalendarFiltersProps) {
+export function CalendarFilters({ value, onChange, roles }: CalendarFiltersProps) {
   const { t } = useTranslation("workspace");
 
   return (
@@ -43,6 +50,20 @@ export function CalendarFilters({ value, onChange }: CalendarFiltersProps) {
       role="toolbar"
       aria-label={t("changes.calendar.filtersAriaLabel")}
     >
+      <Can roles={roles} permission="change.read.calendar.cross-tenant">
+        <fieldset className="sdm-calendar-filter-group">
+          <legend>{t("sp.calendar.allMyTenants.label")}</legend>
+          <label className="sdm-calendar-switch" data-testid="calendar-all-tenants-toggle">
+            <input
+              type="checkbox"
+              checked={value.crossTenant}
+              onChange={(e) => onChange({ ...value, crossTenant: e.target.checked })}
+              aria-label={t("sp.calendar.allMyTenants.label")}
+            />
+            <span>{t("sp.calendar.allMyTenants.tooltip")}</span>
+          </label>
+        </fieldset>
+      </Can>
       <fieldset className="sdm-calendar-filter-group">
         <legend>{t("changes.calendar.riskFilterLabel")}</legend>
         <button

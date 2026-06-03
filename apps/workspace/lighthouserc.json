@@ -16,7 +16,8 @@
         "http://localhost:5181/kb",
         "http://localhost:5181/kb/article/kb:50000",
         "http://localhost:5181/kb/editor",
-        "http://localhost:5181/kb/analytics"
+        "http://localhost:5181/kb/analytics",
+        "http://localhost:5181/sp/cockpit"
       ],
       "numberOfRuns": 3,
       "settings": {
@@ -145,6 +146,15 @@
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2800 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 2200 }],
+            "categories:performance": ["error", { "minScore": 0.82 }]
+          }
+        },
+        {
+          "_comment": "I.5 — `/sp/cockpit` SP-admin landing. Per-tenant health summary fans out N parallel queries (one per administered tenant), so TTI relaxes vs. the queue baseline. Conservative thresholds per I.5 plan — `performance.md` will pick these up post-merge if I.0 calibration moves.",
+          "matchingUrlPattern": "http://localhost:5181/sp/cockpit$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 3500 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 3500 }],
             "categories:performance": ["error", { "minScore": 0.82 }]
           }
         }

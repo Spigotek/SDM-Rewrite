@@ -105,5 +105,10 @@
       "label": "Suspended",
       "tooltip": "Tenant is suspended — please contact your administrator."
     }
+  },
+  "sp": {
+    "mode": {
+      "indicator": "SP mode"
+    }
   }
 }

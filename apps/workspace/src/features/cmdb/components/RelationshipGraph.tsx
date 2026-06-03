@@ -57,6 +57,21 @@ export function RelationshipGraph({ detail }: RelationshipGraphProps) {
     return map;
   }, [payload]);
 
+  /**
+   * I.5 — derive the set of neighbour CI ids that live in a foreign tenant.
+   * The MSW handler attaches `tenantId` on every neighbour record (single-
+   * tenant clients see only same-tenant neighbours anyway, so this set is
+   * empty there). The graph uses this to paint the "cross-tenant" edge class.
+   */
+  const crossTenantNeighbourIds = useMemo(() => {
+    const set = new Set<string>();
+    if (!payload) return set;
+    for (const n of payload.neighbours) {
+      if (n.tenantId !== detail.tenantId) set.add(n.id);
+    }
+    return set;
+  }, [payload, detail.tenantId]);
+
   const elements = useMemo(
     () =>
       buildElements({
@@ -65,8 +80,16 @@ export function RelationshipGraph({ detail }: RelationshipGraphProps) {
         centerClass: detail.class,
         relationships: visibleRelationships,
         neighbourLabels,
+        crossTenantNeighbourIds,
       }),
-    [detail.id, detail.name, detail.class, visibleRelationships, neighbourLabels],
+    [
+      detail.id,
+      detail.name,
+      detail.class,
+      visibleRelationships,
+      neighbourLabels,
+      crossTenantNeighbourIds,
+    ],
   );
 
   return (

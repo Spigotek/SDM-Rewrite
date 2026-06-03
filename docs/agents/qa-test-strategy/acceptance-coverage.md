@@ -37,19 +37,20 @@
 | 9 | `workspace-incident-deep-dive` | agent_l2_marek | **pass** | `journey-09-workspace-incident-deepdive.spec.ts` | Required-field close block now exercised — I.1 added the ResolveModal close-block predicate (Solution + Category required when status → CL) with an inline `ticket-resolve-required-error` alert. Reviewer fallback still deferred to Phase I.4 KB editor. |
 | 10 | `workspace-change-cab-prep` | change_manager_peter | **pass** | `journey-10-workspace-change-cab-prep.spec.ts` | Bulk-tag keyboard-only + PDF agenda export deferred to Phase I.3 (CAB workflow refinement). |
 | 11 | `workspace-change-emergency-approve` | change_manager_peter | **pass** | `journey-11-workspace-change-emergency.spec.ts` | I.1 wires step-up 2FA end-to-end: `POST /auth/step-up` (TOTP via `node:crypto`, single-use 15-min token), `<StepUpModal>` gate inside `<ApproveModal>` for EMERGENCY in production tenants, and BFF approve handler that enforces `X-Step-Up-Token` for EMERGENCY changes. Browser test branches on whether the role grants `cab.approve`; full enforcement coverage in `apps/bff/tests/step-up.test.ts` + `changes-approval.test.ts`. CSRF header enforcement covered by BFF integration. |
-| 12 | `workspace-change-cross-tenant-conflict` | change_manager_peter | **partial** | `journey-12-workspace-change-cross-tenant.spec.ts` | "All my tenants" overlay (`@security:cross-tenant-view-sp`) deferred to Phase I.6 (SP cockpit). Tenant-isolation invariant verified as a sibling assertion. |
+| 12 | `workspace-change-cross-tenant-conflict` | sp_admin | **pass** | `journey-12-workspace-change-cross-tenant.spec.ts` | I.5 — sp_admin lands on `/changes/calendar`, toggles "All my tenants" → BFF/MSW returns changes from every administered tenant with per-tenant color overlay; non-sp_admin still 403s on `?tenants=all` (existence non-leakage). |
 | 13 | `workspace-kb-author-new` | kb_editor_jana | **pass** | `journey-13-workspace-kb-author-new.spec.ts` | I.4 — full TipTap + DOMPurify editor flow: Jana creates draft → publishes → article surfaces on `/kb`. `@security:kb-markdown-sanitization` covered (XSS payload stripped both FE + BFF). |
 | 14 | `workspace-kb-from-incident` | kb_editor_jana | **pass** | `journey-14-workspace-kb-from-incident.spec.ts` | I.4 — `?attachToTicket` CTA round-trip + publish-from-editor leg with `@security:kb-visibility-scope` (visibility radio scoped to public/tenant/sp_only). |
 | 15 | `workspace-kb-analytics-review` | kb_editor_jana | **pass** | `journey-15-workspace-kb-analytics.spec.ts` | I.4 — full `/kb/analytics` dashboard (top-10 / bottom-5 / search-miss × 7d/30d/90d range selector) + per-article stats panel. |
 | 16 | `workspace-cmdb-ci-detail` | cmdb_owner_robert | **pass** | `journey-16-workspace-cmdb-ci-detail.spec.ts` | All 4 tabs + collapse round-trip + history empty/list branch covered. |
 | 17 | `workspace-cmdb-relationship-impact` | cmdb_owner_robert | **pass** | `journey-17-workspace-cmdb-relationships.spec.ts` | PDF export progress bar deferred to Phase I.4 (reporting). |
-| 18 | `workspace-cmdb-cross-tenant-shared` | cmdb_owner_robert | **partial** | `journey-18-workspace-cmdb-cross-tenant.spec.ts` | Tenant-scoped CI list + 404 non-leakage covered. "Shared ownership" badge + cross-tenant relationship marker (`@security:cross-tenant-cmdb`) deferred to Phase I.6 (SP cockpit / cross-tenant view). |
+| 18 | `workspace-cmdb-cross-tenant-shared` | sp_admin | **pass** | `journey-18-workspace-cmdb-cross-tenant.spec.ts` | I.5 — sp_admin sees the "Shared (N)" marker on cross-tenant CIs in the CMDB list + detail header; `?tenants=all` exposes foreign-tenant neighbours with the dashed-orange Cytoscape edge style; non-sp_admin still 404s on cross-tenant CI fetches. |
 
-**Totals**: 18 / 18 covered — **17 pass**, **1 partial**, **0 deferred**.
+**Totals**: 18 / 18 covered — **18 pass**, **0 partial**, **0 deferred**.
 
-I.4 graduated journeys #13/#14/#15 from deferred/partial → pass (full
-TipTap editor + DOMPurify pipeline + analytics dashboard). Only journey
-#12 remains `partial` (cross-tenant overlay deferred to I.5 SP cockpit).
+I.5 graduated journeys #12 + #18 from `partial` → `pass`: sp_admin
+"All my tenants" calendar overlay, shared-CI marker in the CMDB list +
+detail header, cross-tenant Cytoscape edges, and BFF SP impersonation
+(GET /me/sp-tenants, POST/DELETE /api/sp/view-as) step-up gated.
 
 **CI run summary** (latest): 20 of 20 Playwright tests pass against the
 build-mode MSW preview servers. I.1 graduated journeys #2/#9/#11 from
@@ -108,12 +109,12 @@ Phase I.2 scope.
 | `tenant-search-leak-l6` | pass | I.3 — BFF `cross-tenant-sweep.test.ts` sweeps incidents + requests + problems + changes + cmdb + kb endpoint families per tenant; browser-test `tenant-search-leak.spec.ts` exercises the live SPA → MSW path. |
 | `cross-tenant-attachment-l7` | pass | I.3 — Journey #18 baseline plus BFF `cross-tenant-sweep.test.ts` 404-not-403 matrix proves the existence-non-leakage contract for every entity endpoint. Attachment endpoint-specific test still tracked for I.6 when the attachment factory lands. |
 | `tenant-activity-log-leak-l8` | pass | I.3 — Activity log is fetched via the ticket-detail aggregator under the parent tenant scope; cross-tenant attempts surface 404 via the I.3 sweep matrix. BFF `audit-log-emission.test.ts` verifies actor.uiRole + tenant scoping in every audit envelope. |
-| `cross-tenant-cmdb-l9` | pass | I.3 — BFF `cross-tenant-sweep.test.ts` covers cmdb-ci (factory `nr`) per tenant; browser-test `tenant-search-leak.spec.ts` + `tenant-deep-link.spec.ts` cover SPA paths. Shared-CI marker badge deferred (Phase I.5 SP cockpit). |
-| `cross-tenant-change-l10` | pass | I.3 — BFF `cross-tenant-sweep.test.ts` covers changes (factory `chg`) per tenant; browser-test `tenant-search-leak.spec.ts` covers the SPA path. Cross-tenant calendar overlay deferred (Phase I.5 SP cockpit). |
+| `cross-tenant-cmdb-l9` | pass | I.3 — BFF `cross-tenant-sweep.test.ts` covers cmdb-ci (factory `nr`) per tenant; browser-test `tenant-search-leak.spec.ts` + `tenant-deep-link.spec.ts` cover SPA paths. I.5 added the shared-CI marker badge + cross-tenant graph edges (journey #18). |
+| `cross-tenant-change-l10` | pass | I.3 — BFF `cross-tenant-sweep.test.ts` covers changes (factory `chg`) per tenant; browser-test `tenant-search-leak.spec.ts` covers the SPA path. I.5 added the cross-tenant calendar overlay (journey #12). |
 | `tenant-telemetry-l11` | pass | I.3 — Sentry `beforeSend` cross-tenant tag scrub via `sanitizeSentryEvent({ activeTenantId })`, wired in both portal + workspace `bootstrap/sentry-bridge.ts`. `@sdm/api-client` `observability.test.ts` covers the redaction matrix + per-event perf budget. |
 | `tenant-race-l12` | pass | I.3 — `@sdm/api-client` HttpClient `X-Response-Tenant` mismatch detector (retry-once policy, `TENANT_RACE` AppError) covered by `http.test.ts`; BFF stamps the header via `security/tenant-headers.ts`; browser-test `tenant-race-condition.spec.ts` covers the AbortController path. |
 | `tenant-deep-link-l13` | pass | I.3 — BFF `cross-tenant-sweep.test.ts` pins 404-not-403 for every entity detail GET; browser-test `tenant-deep-link.spec.ts` asserts the live SPA receives 404 on cross-tenant deep links. |
-| `cross-tenant-view-sp-l14` | deferred → Phase I.5 | SP cockpit not in MVP — pulled into I.5 (renumbered from original I.6). |
+| `cross-tenant-view-sp-l14` | pass | I.5 — `/sp/cockpit` lists every administered tenant with a per-tenant health summary card; BFF `sp-impersonation.ts` exposes `POST /api/sp/view-as` step-up gated + `GET /me/sp-tenants`; `?tenants=all` returns cross-tenant CIs / changes for sp_admin and 403s for everyone else (`tests/sp-impersonation.test.ts`). |
 | `tenant-bootstrap-claim-l15` | pass | I.3 — `/me` returns the user's `defaultTenantId` on first call; browser-test `tenant-bootstrap-claim.spec.ts` pins the SPA receiver contract; BFF `auth-flow.integration.test.ts` covers the session loader. |
 | `tenant-suspension` | pass | I.3 — `apps/bff/src/auth/tenant-suspension.ts` filters `GET /me/tenants` + denies `POST /me/active-tenant` with `details.reason: "tenant_suspended"`; BFF `tenant-suspension.test.ts` covers the 6 contract cases; browser-test `tenant-suspension.spec.ts` covers the SPA receiver (TenantSwitcher grey-out, SessionContext drop-to-anonymous). |
 

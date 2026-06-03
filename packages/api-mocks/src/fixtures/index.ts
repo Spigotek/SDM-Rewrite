@@ -5,6 +5,11 @@ export { requestsFixture } from "./requests";
 export { problemsFixture } from "./problems";
 export { changesFixture } from "./changes";
 export { kbArticlesFixture, kbCategoriesFixture } from "./knowledge";
-export { cisFixture, ciRelationshipsFixture } from "./ci";
+export {
+  cisFixture,
+  ciRelationshipsFixture,
+  crossTenantRelationshipsFixture,
+  sharedCiIdsFixture,
+} from "./ci";
 export { catalogFixture } from "./catalog";
 export { auditEventsFixture, AUDIT_EVENT_TYPES } from "./audit-events";

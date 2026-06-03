@@ -761,5 +761,47 @@
       "success": "Step-up confirmed.",
       "denied": "Step-up denied."
     }
+  },
+  "sp": {
+    "cockpit": {
+      "title": "Service Provider Cockpit",
+      "subtitle": "Health summary across the tenants you administer.",
+      "loading": "Loading tenant data…",
+      "error": "Failed to load tenant data.",
+      "empty": "You don't administer any tenants yet.",
+      "tenantOverview": {
+        "ariaLabel": "Tenant health summary"
+      },
+      "metric": {
+        "openIncidents": "Open incidents",
+        "pendingChanges": "Pending changes",
+        "criticalCis": "Critical shared CIs"
+      }
+    },
+    "calendar": {
+      "allMyTenants": {
+        "label": "All my tenants",
+        "tooltip": "Show changes across every tenant you administer."
+      }
+    },
+    "cmdb": {
+      "sharedWith": {
+        "label": "Shared ({count})",
+        "tooltip": "Shared with {count, plural, one {# tenant} other {# tenants}}",
+        "popoverAriaLabel": "Tenants this CI is shared with"
+      },
+      "foreignTenant": {
+        "tooltip": "Foreign tenant: {tenant}"
+      }
+    },
+    "impersonation": {
+      "start": {
+        "button": "View as tenant",
+        "confirm": "Switch view"
+      },
+      "stop": {
+        "button": "Exit view-as"
+      }
+    }
   }
 }

@@ -3,11 +3,12 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
-import { changesListQuery } from "./api";
+import { changesListAllTenantsQuery, changesListQuery } from "./api";
 import type { ChangeRow } from "./types";
 import { CalendarView } from "./components/CalendarView";
 import { CalendarFilters, type CalendarFiltersValue } from "./components/CalendarFilters";
 import "./changes.css";
+import "../sp-cockpit/sp-cockpit.css";
 
 /**
  * `/changes/calendar` — Peter's CAB calendar.
@@ -31,14 +32,25 @@ export default function ChangeCalendarRoute() {
   const { t } = useTranslation("workspace");
   const { session } = useSession();
   const tenantId = session?.tenantId;
+  const roles = session?.roles ?? [];
 
-  const queryTenantId = tenantId ?? toTenantId("__pending__");
-  const query = useQuery({
-    ...changesListQuery(queryTenantId),
-    enabled: !!tenantId,
+  const [filters, setFilters] = useState<CalendarFiltersValue>({
+    risk: "ALL",
+    status: "ALL",
+    crossTenant: false,
   });
 
-  const [filters, setFilters] = useState<CalendarFiltersValue>({ risk: "ALL", status: "ALL" });
+  const queryTenantId = tenantId ?? toTenantId("__pending__");
+  const baseQuery = filters.crossTenant
+    ? changesListAllTenantsQuery(queryTenantId)
+    : changesListQuery(queryTenantId);
+  const query = useQuery({
+    queryKey: baseQuery.queryKey,
+    queryFn: baseQuery.queryFn,
+    refetchInterval: baseQuery.refetchInterval,
+    staleTime: baseQuery.staleTime,
+    enabled: !!tenantId,
+  });
   const [isMobile, setIsMobile] = useState(() =>
     typeof window === "undefined" ? false : window.matchMedia("(max-width: 900px)").matches,
   );
@@ -93,7 +105,7 @@ export default function ChangeCalendarRoute() {
         </span>
       </header>
 
-      <CalendarFilters value={filters} onChange={setFilters} />
+      <CalendarFilters value={filters} onChange={setFilters} roles={roles} />
 
       {query.isPending ? (
         <p className="sdm-calendar-state" data-testid="calendar-loading">
@@ -108,7 +120,7 @@ export default function ChangeCalendarRoute() {
           {t("changes.calendar.error")}
         </p>
       ) : (
-        <CalendarView rows={rows} />
+        <CalendarView rows={rows} crossTenant={filters.crossTenant} />
       )}
     </section>
   );

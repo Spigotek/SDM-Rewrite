@@ -4,8 +4,18 @@ import type { CabApproval, Change } from "@sdm/domain";
 import { paginate, readPageParams } from "../utils/pagination";
 import { parseTenantFromRequest } from "../utils/tenant";
 import { correlationIdFrom } from "../utils/correlation";
-import { badRequest, notFound } from "../utils/errors";
+import { badRequest, forbidden, notFound } from "../utils/errors";
 import { consumeStepUpTokenMock } from "./auth";
+import { getMswViewAsTenant, isSpAdmin, spAdminTenantIds } from "./sp";
+import { DEFAULT_USER_ID } from "../fixtures/users";
+
+const MSW_USER_HEADER = "x-msw-user-id";
+
+function resolveUserIdValue(request: Request): string {
+  const override = request.headers.get(MSW_USER_HEADER);
+  if (override && store.users.some((u) => u.id === override)) return override;
+  return DEFAULT_USER_ID;
+}
 
 interface ApproveBody {
   /** Legacy H.9 shape — `{ decision: "approve" | "reject" }` still accepted for back-compat. */
@@ -54,7 +64,30 @@ export const changeHandlers = [
   http.get("*/api/changes", ({ request }) => {
     const tenant = parseTenantFromRequest(request);
     const url = new URL(request.url);
-    const all = tenantChanges(tenant);
+    const correlationId = correlationIdFrom(request);
+    const tenantsParam = url.searchParams.get("tenants");
+    const userIdValue = resolveUserIdValue(request);
+
+    // I.5 — Cross-tenant query for sp_admin. `?tenants=all` returns changes
+    // from every tenant the caller has sp_admin in. Non-sp_admin callers get
+    // a 403 (existence non-leakage). Single-tenant callers fall through to
+    // the regular tenant-scoped path.
+    if (tenantsParam === "all") {
+      if (!isSpAdmin(userIdValue)) {
+        return forbidden("cross-tenant query requires sp_admin", correlationId);
+      }
+      const allowed = new Set(spAdminTenantIds(userIdValue));
+      const all = store.changes.filter((c) => allowed.has(c.tenantId));
+      const status = url.searchParams.get("status");
+      const filtered = status ? all.filter((c) => c.status === status) : all;
+      return HttpResponse.json(paginate(filtered, readPageParams(url)));
+    }
+
+    // Honour the BFF view-as state when present (sp_admin in single-tenant
+    // mode acting as another tenant). Default to header-driven tenant.
+    const viewAs = isSpAdmin(userIdValue) ? getMswViewAsTenant(userIdValue) : null;
+    const effectiveTenant = viewAs ?? tenant;
+    const all = tenantChanges(effectiveTenant);
     const status = url.searchParams.get("status");
     const filtered = status ? all.filter((c) => c.status === status) : all;
     return HttpResponse.json(paginate(filtered, readPageParams(url)));

@@ -1,10 +1,34 @@
 import { http, HttpResponse } from "msw";
 import { store } from "../db";
-import type { Ci } from "@sdm/domain";
+import type { Ci, TenantId } from "@sdm/domain";
 import { paginate, readPageParams } from "../utils/pagination";
 import { parseTenantFromRequest } from "../utils/tenant";
 import { correlationIdFrom } from "../utils/correlation";
-import { notFound } from "../utils/errors";
+import { forbidden, notFound } from "../utils/errors";
+import { crossTenantRelationshipsFixture, sharedCiIdsFixture } from "../fixtures/ci";
+import { DEFAULT_USER_ID } from "../fixtures/users";
+import { getMswViewAsTenant, isSpAdmin, spAdminTenantIds } from "./sp";
+
+const MSW_USER_HEADER = "x-msw-user-id";
+
+function resolveUserIdValue(request: Request): string {
+  const override = request.headers.get(MSW_USER_HEADER);
+  if (override && store.users.some((u) => u.id === override)) return override;
+  return DEFAULT_USER_ID;
+}
+
+/**
+ * I.5 — overlay the shared-tenant ids onto a CI when the caller is allowed to
+ * see them (`sp_admin` per the role-assignment check). The base fixture's
+ * `sharedWithTenantIds` is optional so non-sp_admin clients see an unchanged
+ * shape (single-tenant invariant per H.13/H.14).
+ */
+function withSharedMarker(ci: Ci, allowCrossTenant: boolean): Ci {
+  if (!allowCrossTenant) return ci;
+  const shared = sharedCiIdsFixture[ci.id];
+  if (!shared) return ci;
+  return { ...ci, sharedWithTenantIds: shared as readonly TenantId[] };
+}
 
 function tenantCis(tenant: string): Ci[] {
   return store.cis.filter((c) => c.tenantId === tenant);
@@ -105,39 +129,86 @@ export const cmdbHandlers = [
   http.get("*/api/ci", ({ request }) => {
     const tenant = parseTenantFromRequest(request);
     const url = new URL(request.url);
-    const all = tenantCis(tenant);
+    const correlationId = correlationIdFrom(request);
+    const tenantsParam = url.searchParams.get("tenants");
+    const userIdValue = resolveUserIdValue(request);
+    const sp = isSpAdmin(userIdValue);
+
+    // I.5 — cross-tenant CI query (`?tenants=all`) for sp_admin. The response
+    // pages over every tenant the caller has sp_admin in; the shared-marker
+    // overlay is applied so the FE can render the "Shared (N)" badge.
+    if (tenantsParam === "all") {
+      if (!sp) return forbidden("cross-tenant query requires sp_admin", correlationId);
+      const allowed = new Set(spAdminTenantIds(userIdValue));
+      const all = store.cis.filter((c) => allowed.has(c.tenantId));
+      const klass = url.searchParams.get("class");
+      const filtered = klass ? all.filter((c) => c.class === klass) : all;
+      const enriched = filtered.map((c) => withSharedMarker(c, true));
+      return HttpResponse.json(paginate(enriched, readPageParams(url)));
+    }
+
+    const viewAs = sp ? getMswViewAsTenant(userIdValue) : null;
+    const effectiveTenant = viewAs ?? tenant;
+    const all = tenantCis(effectiveTenant);
     const klass = url.searchParams.get("class");
     const filtered = klass ? all.filter((c) => c.class === klass) : all;
-    return HttpResponse.json(paginate(filtered, readPageParams(url)));
+    // Apply shared marker overlay for sp_admin callers even on single-tenant
+    // queries so the Marek/Robert view-as drill-in shows "Shared (N)".
+    const enriched = filtered.map((c) => withSharedMarker(c, sp));
+    return HttpResponse.json(paginate(enriched, readPageParams(url)));
   }),
 
   http.get("*/api/ci/:id", ({ params, request }) => {
     const tenant = parseTenantFromRequest(request);
     const id = String(params["id"] ?? "");
-    const found = tenantCis(tenant).find((c) => c.id === id);
-    if (!found) return notFound("ci", id, correlationIdFrom(request));
-    return HttpResponse.json(found);
+    const correlationId = correlationIdFrom(request);
+    const userIdValue = resolveUserIdValue(request);
+    const sp = isSpAdmin(userIdValue);
+
+    // sp_admin can look up a CI in any tenant they administer; we still keep
+    // the cross-tenant 404 contract for non-sp_admin callers.
+    const candidate = sp
+      ? store.cis.find((c) => c.id === id && spAdminTenantIds(userIdValue).includes(c.tenantId))
+      : tenantCis(tenant).find((c) => c.id === id);
+    if (!candidate) return notFound("ci", id, correlationId);
+    return HttpResponse.json(withSharedMarker(candidate, sp));
   }),
 
   http.get("*/api/ci/:id/relationships", ({ params, request }) => {
     const tenant = parseTenantFromRequest(request);
+    const url = new URL(request.url);
     const id = String(params["id"] ?? "");
-    const ci = tenantCis(tenant).find((c) => c.id === id);
+    const userIdValue = resolveUserIdValue(request);
+    const sp = isSpAdmin(userIdValue);
+    const ciScope = sp ? store.cis : tenantCis(tenant);
+    const ci = ciScope.find((c) => c.id === id);
     if (!ci) return notFound("ci", id, correlationIdFrom(request));
-    const relationships = store.ciRelationships.filter(
+
+    const sameTenantRels = store.ciRelationships.filter(
       (r) => r.sourceCiId === ci.id || r.targetCiId === ci.id,
     );
-    // H.14 graph renderer needs neighbour CIs (label + class) to render
-    // nodes — without them the Cytoscape graph would only show ids. We
-    // resolve neighbours from the same tenant scope so cross-tenant CIs
-    // never leak (sp_admin cross-tenant variant is a future chunk).
+
+    // I.5 — when sp_admin requests `?tenants=all`, include cross-tenant edges
+    // anchored on this CI so the graph can render foreign-tenant neighbours.
+    const wantsCross = url.searchParams.get("tenants") === "all" && sp;
+    const crossRels = wantsCross
+      ? crossTenantRelationshipsFixture.filter(
+          (r) => r.sourceCiId === ci.id || r.targetCiId === ci.id,
+        )
+      : [];
+    const relationships = [...sameTenantRels, ...crossRels];
+
     const neighbourIds = new Set<string>();
     for (const rel of relationships) {
       const other = rel.sourceCiId === ci.id ? rel.targetCiId : rel.sourceCiId;
       neighbourIds.add(other);
     }
-    const sameTenant = tenantCis(tenant);
-    const neighbours = sameTenant.filter((c) => neighbourIds.has(c.id));
+    // Neighbour resolution: same-tenant always, cross-tenant only for sp_admin
+    // with explicit `?tenants=all`.
+    const neighbourPool = wantsCross ? store.cis : tenantCis(tenant);
+    const neighbours = neighbourPool
+      .filter((c) => neighbourIds.has(c.id))
+      .map((c) => withSharedMarker(c, sp));
     return HttpResponse.json({ relationships, neighbours });
   }),
 

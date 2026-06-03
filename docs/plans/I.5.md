@@ -1,6 +1,6 @@
 # I.5 — SP cockpit / cross-tenant view (sp_admin "All my tenants" overlay)
 
-> **Status**: 🔜 (blokované na I.3 — uses tenant scoping infra)
+> **Status**: ⏳ in-review
 > **Branch**: `chunk/I.5-sp-cockpit` > **PR**: TBD
 > **Cieľ**: implementovať Service Provider admin cockpit — `sp_admin` persona
 > sees "All my tenants" overlay v change calendar (cross-tenant conflict detection),

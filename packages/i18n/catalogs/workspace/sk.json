@@ -761,5 +761,47 @@
       "success": "Step-up overený.",
       "denied": "Step-up zamietnutý."
     }
+  },
+  "sp": {
+    "cockpit": {
+      "title": "Cockpit poskytovateľa služieb",
+      "subtitle": "Prehľad zdravia naprieč spravovanými tenantmi.",
+      "loading": "Načítavam dáta tenantov…",
+      "error": "Načítanie dát tenantov zlyhalo.",
+      "empty": "Zatiaľ nespravuješ žiadny tenant.",
+      "tenantOverview": {
+        "ariaLabel": "Prehľad zdravia tenantov"
+      },
+      "metric": {
+        "openIncidents": "Otvorené incidenty",
+        "pendingChanges": "Čakajúce zmeny",
+        "criticalCis": "Kritické zdieľané CI"
+      }
+    },
+    "calendar": {
+      "allMyTenants": {
+        "label": "Všetci moji tenanti",
+        "tooltip": "Zobraziť zmeny naprieč všetkými spravovanými tenantmi."
+      }
+    },
+    "cmdb": {
+      "sharedWith": {
+        "label": "Zdieľané ({count})",
+        "tooltip": "Zdieľané s {count, plural, one {# tenantom} few {# tenantmi} other {# tenantmi}}",
+        "popoverAriaLabel": "Tenanti, s ktorými je toto CI zdieľané"
+      },
+      "foreignTenant": {
+        "tooltip": "Cudzí tenant: {tenant}"
+      }
+    },
+    "impersonation": {
+      "start": {
+        "button": "Zobraziť ako tenant",
+        "confirm": "Prepnúť pohľad"
+      },
+      "stop": {
+        "button": "Ukončiť pohľad ako"
+      }
+    }
   }
 }
