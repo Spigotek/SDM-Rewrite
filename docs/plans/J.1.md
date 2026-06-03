@@ -1,10 +1,23 @@
 # J.1 — Workspace image multi-arch via native arm64 runner
 
-> **Status**: 🔜 NEXT
-> **Branch**: `chunk/J.1-workspace-arm64-native` > **Cieľ**: graduate workspace image z amd64-only (I.7 workaround per commit `6ff143a`) na true
-> multi-arch (`linux/amd64` + `linux/arm64`) cez native `ubuntu-22.04-arm` GitHub-hosted runner +
-> matching `ubuntu-latest` amd64 runner + manifest merge step. Closes the lone amd64-only image
-> shipped in v1.0; aligns workspace with bff/portal multi-arch parity from v1.1.0 onwards.
+> **Status**: ✅ DONE (squash `20aa176`, PR #49)
+> **Branch**: `chunk/J.1-workspace-arm64-native` (deleted)
+> **Outcome**: `.github/workflows/release.yml` workspace-image refactored from single amd64-only job
+> into canonical Docker multi-platform 3-job pattern — `workspace-image-amd64` (ubuntu-latest) +
+> `workspace-image-arm64` (`ubuntu-22.04-arm` native runner) push by digest, `workspace-manifest`
+> merges them via `docker buildx imagetools create` over the metadata-action tag matrix. `helm-chart`
+> job `needs:` rewired from removed `workspace-image` → new `workspace-manifest`. RELEASE-NOTES-v1.0.md
+>
+> - CHANGELOG.md doc bug fixed (had falsely claimed v1.0 workspace was multi-arch — actually amd64-only
+>   per commit `6ff143a`); Known issues entry tracks the v1.0 constraint + v1.1 promise. 81 ins / 28 del
+>   across 3 files, all CI green (acceptance × chromium+firefox+webkit, lint+typecheck+test+build,
+>   CodeQL × 2, Trufflehog, helm chart lint, security browser scenarios). Native arm64 build not
+>   verified at PR time (release.yml triggers only on `v*.*.*` tag) — first real verification = J.9
+>   v1.1.0 tag push.
+>   **Cieľ**: graduate workspace image z amd64-only (I.7 workaround per commit `6ff143a`) na true
+>   multi-arch (`linux/amd64` + `linux/arm64`) cez native `ubuntu-22.04-arm` GitHub-hosted runner +
+>   matching `ubuntu-latest` amd64 runner + manifest merge step. Closes the lone amd64-only image
+>   shipped in v1.0; aligns workspace with bff/portal multi-arch parity from v1.1.0 onwards.
 
 ## Pivot vs ROADMAP
 
@@ -59,7 +72,7 @@ the matching variant from the multi-arch manifest at pull time.
       for workspace.
 - [ ] `docs/CHANGELOG.md` § Deployment updated same way; § Known issues gets a new bullet:
       `Workspace image is linux/amd64 only in v1.0 (QEMU SIGILL on cross-compile). Multi-arch
-    lands in v1.1 via native arm64 runner — tracked in J.1.`
+  lands in v1.1 via native arm64 runner — tracked in J.1.`
 - [ ] PR opened, CI green on PR (actionlint workflow if exists, plus the existing ci.yml).
 - [ ] No new runtime deps; no new GitHub Action versions outside `docker/*@v3-v6` already in use.
 - [ ] **No verification of arm64 build at PR time** — release.yml only triggers on `v*.*.*` tag

@@ -22,13 +22,13 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Status: 🚀 v1.0 RELEASED (2026-06-03)** — tag `v1.0.0` pushed; release.yml CI publishuje portal/workspace/BFF images + helm OCI chart + GitHub Release. Manual cluster deployment per `deploy_target.md` = separate ops step (currently **blocked** by missing container runtime on host — see J.0).
-- **Last merged:** Chunk I.7 (v1.0 cut — chart 1.0.0 + release.yml + CHANGELOG + release notes, PR #48). Predchádzajúce: PR #47 — I.6 release dry-run scaffolding.
-- **In flight:** Phase J kickoff — J.0 ⏸ deferred (cluster prerequisite), J.1 🔜 NEXT (workspace arm64 native runner).
+- **Last merged:** Chunk J.1 (workspace multi-arch via native arm64 runner, PR #49 squash `20aa176`). Predchádzajúce: PR #48 — I.7 v1.0 cut.
+- **In flight:** Phase J — J.0 ⏸ deferred (cluster prerequisite), J.1 ✅ DONE, J.2 🔜 NEXT (real BFF cross-tenant query).
 - **Phase I:** ✅ DONE (8/8 chunks: I.0 LHCI graduation, I.1 step-up 2FA, I.2 security audit, I.3 multi-tenancy edges, I.4 KB authoring, I.5 SP cockpit, I.6 release dry-run scaffolding, I.7 v1.0 cut).
-- **Phase J:** 🟡 IN PROGRESS — J.0 ⏸ deferred (no container runtime on 10.11.36.21; unblock criteria in [J.0.md](./plans/J.0.md)); J.1-J.9 sequenced per [J.md](./plans/J.md) §D2.
+- **Phase J:** 🟡 IN PROGRESS — J.0 ⏸ deferred (no container runtime on 10.11.36.21; unblock criteria in [J.0.md](./plans/J.0.md)); J.1 ✅ DONE; J.2-J.9 sequenced per [J.md](./plans/J.md) §D2.
 - **Project:** ✅ MVP COMPLETE — Phase 0/C/D/E/F/G/H/I all done. v1.0 released. Post-release scope = **Phase J** ([J.md](./plans/J.md) skeleton; full chunk plans písané pri spustení).
 
-Posledná revízia tohto dokumentu: Phase J kickoff (2026-06-04) — J.0 ⏸ deferred + J.1 NEXT.
+Posledná revízia tohto dokumentu: J.1 merged (2026-06-04) — workspace multi-arch via native arm64 runner.
 
 ---
 
@@ -206,8 +206,8 @@ Dispatch: strict sekvenčný I.0 → I.7 (per `feedback_pr_flow.md` PR-flow). Pr
 > [J.md](./plans/J.md).
 
 - **J.0 v1.0 staging deploy + live BFF smoke ⏸ DEFERRED** — read-only host probe 2026-06-04 revealed `10.11.36.21` has no container runtime (no docker / k8s / helm). Unblock criteria: k3s/microk8s/docker installed on host (or pre-existing cluster + kubeconfig), DNS + TLS + Sentry DSN provisioned. Operator-driven; autonomous claude declined cluster install on shared production-adjacent host per global CLAUDE.md "Ask before: server restarts / prod migrations". Plán: [J.0.md](./plans/J.0.md).
-- **J.1 Workspace arm64 image** 🔜 NEXT — graduates I.7 workspace amd64-only via native `ubuntu-22.04-arm` GHA runner (QEMU SIGILL during v1.0.0 cross-compile; native runner avoids emulation). Plán: [J.1.md](./plans/J.1.md).
-- **J.2 Real BFF cross-tenant query** — CA SDM 17.4 capability eval (`vueuser` test endpoint per `real-backend-contracts.md §6`). If unsupported → BFF-side aggregation + audit emit fallback. Plán TBD.
+- **J.1 Workspace arm64 image ✅ DONE** — `.github/workflows/release.yml` workspace job split into canonical Docker multi-platform 3-job pattern: `workspace-image-amd64` (ubuntu-latest) + `workspace-image-arm64` (`ubuntu-22.04-arm` native runner) push by digest, `workspace-manifest` merges via `docker buildx imagetools create` over metadata-action tag matrix. `helm-chart` `needs:` rewired. RELEASE-NOTES + CHANGELOG doc bug fixed (had falsely claimed v1.0 workspace was multi-arch). First real arm64 build verification = J.9 v1.1.0 tag push. Plán: [J.1.md](./plans/J.1.md), PR #49.
+- **J.2 Real BFF cross-tenant query** 🔜 NEXT — CA SDM 17.4 capability eval (`vueuser` test endpoint per `real-backend-contracts.md §6`). If unsupported → BFF-side aggregation + audit emit fallback. Plán TBD (pre-flight research + write per chunk).
 - **J.3 Real-time tenant push** — SSE-first via Hono `c.stream()` (WebSocket fallback if insufficient); replaces I.3 next-API-call detection. Plán TBD.
 - **J.4 KB analytics real ingest** — audit-log-derived aggregation in BFF (no CA SDM schema changes); replaces I.4 MSW fixture. Plán TBD.
 - **J.5 KB image upload binary** — graduates H.3 attachments deferral; `/api/attachments/kb` endpoint, 5MB max, PNG/JPG/SVG/GIF whitelist, EXIF strip, MIME sniff. Plán TBD.
