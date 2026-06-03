@@ -1,7 +1,8 @@
 # I.7 — v1.0 cut (semver tag + image push + OCI helm publish + release notes)
 
-> **Status**: 🔁 in-review (parent flips → ✅ DONE post-merge + tag push)
-> **Branch**: `chunk/I.7-v1.0-cut` > **PR**: TBD
+> **Status**: ✅ DONE (squash `e093ab7`, PR #48, tag `v1.0.0` pushed)
+> **Branch**: `chunk/I.7-v1.0-cut` (deleted)
+> **Outcome**: Chart 1.0.0-rc.1 → 1.0.0. `release.yml` tag-push triggers portal+workspace+bff multi-arch image push (`ghcr.io/spigotek/sdm-*:{semver,major-minor,latest}`) + helm OCI publish (`oci://ghcr.io/spigotek/charts/sdm:1.0.0`) + GitHub Release auto-created s `RELEASE-NOTES-v1.0.md` body + chart .tgz attached. `docs/CHANGELOG.md` + `docs/RELEASE-NOTES-v1.0.md` shipped. Phase I → ✅ DONE (8/8 chunks). **PROJECT v1.0 RELEASED**.
 > **Cieľ**: cut v1.0.0 — semver git tag, container images push do registry,
 > helm chart publish ako OCI artifact, CHANGELOG.md + RELEASE-NOTES-v1.0.md.
 > **Final Phase I chunk** — celá Phase I + projekt = **v1.0 RELEASED**.

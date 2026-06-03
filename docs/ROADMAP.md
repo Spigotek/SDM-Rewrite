@@ -21,11 +21,13 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk I.6 (Release v1.0 dry-run scaffolding — chart bump 1.0.0-rc.1 + values-staging + live workflow + dry-run/rollback scripts + post-mortem template, PR #47). Predchádzajúce: PR #46 — I.5 SP cockpit.
+- **Status: 🚀 v1.0 RELEASED (2026-06-03)** — tag `v1.0.0` pushed; release.yml CI publishuje portal/workspace/BFF images + helm OCI chart + GitHub Release. Manual cluster deployment per `deploy_target.md` = separate ops step.
+- **Last merged:** Chunk I.7 (v1.0 cut — chart 1.0.0 + release.yml + CHANGELOG + release notes, PR #48). Predchádzajúce: PR #47 — I.6 release dry-run scaffolding.
 - **In flight:** —
-- **Next up:** Chunk I.7 — v1.0 cut (semver tag + image push + OCI helm + release notes). Phase I in progress (7/8 chunks done). **18/18 acceptance journeys complete.** Manual live cluster execution per I.6 = separate post-merge ops step.
+- **Phase I:** ✅ DONE (8/8 chunks: I.0 LHCI graduation, I.1 step-up 2FA, I.2 security audit, I.3 multi-tenancy edges, I.4 KB authoring, I.5 SP cockpit, I.6 release dry-run scaffolding, I.7 v1.0 cut).
+- **Project:** ✅ MVP COMPLETE — Phase 0/C/D/E/F/G/H/I all done. v1.0 released. Post-release scope (mobile PWA offline, advanced calendar drag-resize, KB analytics widgets, bulk-ops, real-time tenant push, SSR portal LCP) = v1.1+ separate sequencing dokument.
 
-Posledná revízia tohto dokumentu: I.6 merged (2026-06-03).
+Posledná revízia tohto dokumentu: v1.0 RELEASED (2026-06-03).
 
 ---
 
