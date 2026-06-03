@@ -25,7 +25,7 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 - **Last merged:** Chunk I.7 (v1.0 cut — chart 1.0.0 + release.yml + CHANGELOG + release notes, PR #48). Predchádzajúce: PR #47 — I.6 release dry-run scaffolding.
 - **In flight:** —
 - **Phase I:** ✅ DONE (8/8 chunks: I.0 LHCI graduation, I.1 step-up 2FA, I.2 security audit, I.3 multi-tenancy edges, I.4 KB authoring, I.5 SP cockpit, I.6 release dry-run scaffolding, I.7 v1.0 cut).
-- **Project:** ✅ MVP COMPLETE — Phase 0/C/D/E/F/G/H/I all done. v1.0 released. Post-release scope (mobile PWA offline, advanced calendar drag-resize, KB analytics widgets, bulk-ops, real-time tenant push, SSR portal LCP) = v1.1+ separate sequencing dokument.
+- **Project:** ✅ MVP COMPLETE — Phase 0/C/D/E/F/G/H/I all done. v1.0 released. Post-release scope = **Phase J** ([J.md](./plans/J.md) skeleton; full chunk plans písané pri spustení): J.0 staging deploy + live smoke (P0 blocker), J.1-J.8 deferred items (workspace arm64, real cross-tenant query, real-time tenant push, KB analytics ingest + image upload, calendar drag-resize, mobile PWA offline, portal LCP via SSR), J.9 v1.1 cut.
 
 Posledná revízia tohto dokumentu: v1.0 RELEASED (2026-06-03).
 
