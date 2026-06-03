@@ -140,3 +140,34 @@ export const ciRelationshipsFixture: readonly CIRelationship[] = Array.from(
     };
   },
 );
+
+/**
+ * I.5 — Shared CI fixture map. Picks the first two acme CIs and tags them as
+ * "shared with globex" so SP-cockpit and shared-CI marker tests have a stable
+ * pair to assert on. The map is consulted by the cmdb handler to overlay
+ * `sharedWithTenantIds` onto the response shape when the caller is sp_admin
+ * (header-detected — see handlers/cmdb.ts).
+ *
+ * Cross-tenant relationship fixture: one extra `CIRelationship` whose source
+ * is an acme CI and target is a globex CI. The cmdb handler emits this only
+ * when `?tenants=all` is set, so single-tenant clients never see foreign
+ * neighbours (existing tenant-isolation contract holds).
+ */
+const sharedAcmeCis = cisFixture.filter((c) => c.tenantId === TENANT_ACME).slice(0, 2);
+export const sharedCiIdsFixture: Readonly<Record<string, readonly TenantId[]>> = Object.freeze(
+  Object.fromEntries(sharedAcmeCis.map((c) => [c.id, [TENANT_GLOBEX] as readonly TenantId[]])),
+);
+
+const firstAcme = cisFixture.find((c) => c.tenantId === TENANT_ACME);
+const firstGlobex = cisFixture.find((c) => c.tenantId === TENANT_GLOBEX);
+export const crossTenantRelationshipsFixture: readonly CIRelationship[] =
+  firstAcme && firstGlobex
+    ? [
+        {
+          id: relationshipId("rel:cross-tenant-1"),
+          sourceCiId: firstAcme.id,
+          targetCiId: firstGlobex.id,
+          type: "DEPENDS_ON",
+        },
+      ]
+    : [];

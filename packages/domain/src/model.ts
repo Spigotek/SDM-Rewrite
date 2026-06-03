@@ -626,6 +626,13 @@ interface CiBase {
   createdAt: IsoTimestamp;
   lastModifiedAt: IsoTimestamp;
   tenantId: TenantId;
+  /**
+   * I.5 — CIs that exist in multiple tenants (shared infrastructure such as a
+   * managed SaaS appliance or a backbone router). Optional: only populated for
+   * CIs that have a cross-tenant scope, and only surfaced to callers with
+   * `ci.read.cross-tenant`. When undefined, the CI is single-tenant only.
+   */
+  sharedWithTenantIds?: readonly TenantId[];
 }
 
 // Class-specific props — diskriminované varianty.

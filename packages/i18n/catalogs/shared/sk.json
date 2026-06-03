@@ -105,5 +105,10 @@
       "label": "Pozastavený",
       "tooltip": "Tenant je pozastavený — kontaktuj administrátora."
     }
+  },
+  "sp": {
+    "mode": {
+      "indicator": "SP režim"
+    }
   }
 }

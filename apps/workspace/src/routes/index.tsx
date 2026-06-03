@@ -117,6 +117,11 @@ export const router = createBrowserRouter([
         path: "kb/analytics",
         lazy: () => guardedLazy(import("../features/kb/editor/KbAnalyticsRoute"), "kb.analytics"),
       },
+      {
+        path: "sp/cockpit",
+        lazy: () =>
+          guardedLazy(import("../features/sp-cockpit/SpCockpitRoute"), "ci.read.cross-tenant"),
+      },
       { path: "*", element: <NotFoundElement /> },
     ],
   },

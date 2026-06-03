@@ -3,6 +3,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import type { CalendarOptions, EventInput } from "@fullcalendar/core";
 import type { RiskLevel } from "@sdm/domain";
+import { colorForTenant } from "../../sp-cockpit/components/CrossTenantCalendarOverlay";
 import type { ChangeRow } from "../types";
 
 /**
@@ -39,16 +40,24 @@ const RISK_COLOR: Record<RiskLevel, string> = {
  *
  * The `extendedProps` payload carries everything the click handler + tooltip
  * need, so neither has to round-trip through the row store.
+ *
+ * I.5 cross-tenant overlay: when `crossTenant` is true, the event background
+ * is the deterministic tenant color instead of the risk color so sp_admin can
+ * scan across tenants visually. The risk colour is preserved on the border so
+ * the conflict signal isn't lost.
  */
-export function changeToEvent(row: ChangeRow): EventInput | null {
+export function changeToEvent(row: ChangeRow, crossTenant: boolean = false): EventInput | null {
   if (!row.scheduledStartAt) return null;
-  const color = RISK_COLOR[row.risk];
+  const riskColor = RISK_COLOR[row.risk];
+  const tenantColor = crossTenant ? colorForTenant(row.tenantId) : riskColor;
   const event: EventInput = {
     id: row.id,
-    title: `${row.ref} · ${row.summary}`,
+    title: crossTenant
+      ? `${row.ref} · [${row.tenantId}] ${row.summary}`
+      : `${row.ref} · ${row.summary}`,
     start: row.scheduledStartAt,
-    backgroundColor: color,
-    borderColor: color,
+    backgroundColor: tenantColor,
+    borderColor: riskColor,
     textColor: "var(--color-text-on-severity, #fff)",
     extendedProps: {
       ref: row.ref,
@@ -58,6 +67,7 @@ export function changeToEvent(row: ChangeRow): EventInput | null {
       summary: row.summary,
       scheduledStartAt: row.scheduledStartAt,
       scheduledEndAt: row.scheduledEndAt,
+      tenantId: row.tenantId,
     },
   };
   if (row.scheduledEndAt) event.end = row.scheduledEndAt;
@@ -79,6 +89,10 @@ export interface BuildCalendarOptionsArgs {
   readonly onEventClick: (id: string) => void;
   readonly onEventDidMount: (id: string, el: HTMLElement) => void;
   readonly onEventWillUnmount: (id: string) => void;
+}
+
+export interface CalendarViewOptions {
+  readonly crossTenant?: boolean;
 }
 
 /**

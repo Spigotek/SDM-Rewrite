@@ -4,6 +4,8 @@ import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tan
 import { useTranslation } from "@sdm/i18n";
 import { StatusBadge, type TicketStatus } from "@sdm/design-system";
 import type { CiStatus } from "@sdm/domain";
+import { SharedCiMarker } from "../../sp-cockpit/components/SharedCiMarker";
+import "../../sp-cockpit/sp-cockpit.css";
 import type { CiRow } from "../types";
 
 /**
@@ -61,6 +63,10 @@ export function CmdbTable({ rows }: CmdbTableProps) {
         cell: (info) => (
           <span className="sdm-cmdb-cell-name" title={info.row.original.name}>
             {info.row.original.name}
+            <SharedCiMarker
+              sharedWithTenantIds={info.row.original.sharedWithTenantIds}
+              testId="cmdb-row-shared-marker"
+            />
           </span>
         ),
       },

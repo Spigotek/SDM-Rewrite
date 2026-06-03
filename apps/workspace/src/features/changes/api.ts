@@ -47,8 +47,11 @@ async function jsonOrThrow<T>(resp: Response, op: string): Promise<T> {
 
 const PAGE_SIZE = 100;
 
-async function fetchChanges(): Promise<ReadonlyArray<ChangeRow>> {
-  const resp = await fetch(`/api/changes?page=0&size=${PAGE_SIZE}`, {
+async function fetchChanges(crossTenant: boolean = false): Promise<ReadonlyArray<ChangeRow>> {
+  const url = crossTenant
+    ? `/api/changes?page=0&size=${PAGE_SIZE}&tenants=all`
+    : `/api/changes?page=0&size=${PAGE_SIZE}`;
+  const resp = await fetch(url, {
     credentials: "include",
     headers: { Accept: "application/json" },
   });
@@ -59,7 +62,22 @@ async function fetchChanges(): Promise<ReadonlyArray<ChangeRow>> {
 export function changesListQuery(tenantId: TenantId) {
   return {
     queryKey: ["changes-list", tenantId] as const,
-    queryFn: fetchChanges,
+    queryFn: () => fetchChanges(false),
+    refetchInterval: 30_000,
+    staleTime: 15_000,
+  };
+}
+
+/**
+ * I.5 — cross-tenant variant for sp_admin "All my tenants" calendar overlay.
+ * `tenantId` is still part of the key so the cache layer keeps single-tenant
+ * + cross-tenant entries independent (toggling the switch always re-fetches
+ * the right shape without polluting the other view's cache).
+ */
+export function changesListAllTenantsQuery(tenantId: TenantId) {
+  return {
+    queryKey: ["changes-list", tenantId, "all-tenants"] as const,
+    queryFn: () => fetchChanges(true),
     refetchInterval: 30_000,
     staleTime: 15_000,
   };

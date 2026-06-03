@@ -28,6 +28,11 @@ import { EventTooltip } from "./EventTooltip";
 
 export interface CalendarViewProps {
   readonly rows: ReadonlyArray<ChangeRow>;
+  /**
+   * I.5 — when true, events are color-coded by tenantId and the tooltip
+   * surfaces the tenant name so sp_admin can spot cross-tenant conflicts.
+   */
+  readonly crossTenant?: boolean;
 }
 
 interface HoverState {
@@ -35,7 +40,7 @@ interface HoverState {
   readonly anchor: DOMRect;
 }
 
-export function CalendarView({ rows }: CalendarViewProps) {
+export function CalendarView({ rows, crossTenant = false }: CalendarViewProps) {
   const { t, i18n } = useTranslation("workspace");
   const navigate = useNavigate();
   const calendarRef = useRef<FullCalendar | null>(null);
@@ -53,11 +58,11 @@ export function CalendarView({ rows }: CalendarViewProps) {
   const events = useMemo(() => {
     const out = [];
     for (const r of rows) {
-      const ev = changeToEvent(r);
+      const ev = changeToEvent(r, crossTenant);
       if (ev) out.push(ev);
     }
     return out;
-  }, [rows]);
+  }, [rows, crossTenant]);
 
   const openDetail = useCallback(
     (id: string) => navigate(`/changes/${encodeURIComponent(id)}`),

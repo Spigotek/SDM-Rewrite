@@ -1,6 +1,8 @@
 import { useTranslation } from "@sdm/i18n";
 import { StatusBadge, type TicketStatus } from "@sdm/design-system";
 import type { CiStatus } from "@sdm/domain";
+import { SharedCiMarker } from "../../sp-cockpit/components/SharedCiMarker";
+import "../../sp-cockpit/sp-cockpit.css";
 import type { CiDetail } from "../types";
 
 /**
@@ -30,6 +32,10 @@ export function CiHeader({ detail }: { readonly detail: CiDetail }) {
         <StatusBadge
           status={STATUS_MAP[detail.status]}
           label={t(`cmdb.statusLabel.${detail.status}`)}
+        />
+        <SharedCiMarker
+          sharedWithTenantIds={detail.sharedWithTenantIds}
+          testId="cmdb-header-shared-marker"
         />
       </div>
       <div className="sdm-cmdb-header-meta">

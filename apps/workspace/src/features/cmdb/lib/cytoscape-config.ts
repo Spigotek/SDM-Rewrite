@@ -59,6 +59,13 @@ export interface BuildElementsInput {
   readonly centerClass: CiClass | string;
   readonly relationships: ReadonlyArray<CIRelationship>;
   readonly neighbourLabels: ReadonlyMap<string, { name: string; ciClass: CiClass | string }>;
+  /**
+   * I.5 — set of neighbour CI ids that live in a different tenant than the
+   * centre. Edges to those ids get the `cross-tenant` styling class so
+   * Cytoscape paints them dashed-orange with a tooltip. Defaults to an empty
+   * set so existing single-tenant call sites keep the H.14 visual.
+   */
+  readonly crossTenantNeighbourIds?: ReadonlySet<string>;
 }
 
 /**
@@ -96,6 +103,7 @@ export function buildElements(input: BuildElementsInput): ReadonlyArray<ElementD
 
   pushNode(input.centerId, input.centerLabel, input.centerClass, true);
 
+  const crossTenantIds = input.crossTenantNeighbourIds ?? new Set<string>();
   for (const rel of input.relationships) {
     const otherId = rel.sourceCiId === input.centerId ? rel.targetCiId : rel.sourceCiId;
     const neighbour = input.neighbourLabels.get(otherId);
@@ -104,6 +112,7 @@ export function buildElements(input: BuildElementsInput): ReadonlyArray<ElementD
     if (seenEdges.has(edgeKey)) continue;
     seenEdges.add(edgeKey);
     const family = EDGE_STYLE_FAMILY[rel.type];
+    const isCrossTenant = crossTenantIds.has(otherId);
     elements.push({
       data: {
         id: rel.id,
@@ -112,7 +121,7 @@ export function buildElements(input: BuildElementsInput): ReadonlyArray<ElementD
         relType: rel.type,
         family,
       } satisfies GraphEdgeData,
-      classes: `family-${family}`,
+      classes: isCrossTenant ? `family-${family} cross-tenant` : `family-${family}`,
     });
   }
 
@@ -191,6 +200,21 @@ export const STYLESHEET: ReadonlyArray<StylesheetStyle> = [
     style: {
       "line-style": "dashed",
       width: 1.5,
+    },
+  },
+  /**
+   * I.5 — cross-tenant edge overlay. Dashed orange so it pops over the
+   * tenant-local solid/peers families per `components.md §CMDBGraph defaults`
+   * cross-tenant variant. The class composition (`family-* cross-tenant`)
+   * lets Cytoscape merge styles — width comes from the family rule, color +
+   * dash from this rule.
+   */
+  {
+    selector: "edge.cross-tenant",
+    style: {
+      "line-color": "var(--color-severity-medium, #f9a825)",
+      "target-arrow-color": "var(--color-severity-medium, #f9a825)",
+      "line-style": "dashed",
     },
   },
 ];
