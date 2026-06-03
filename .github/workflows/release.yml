@@ -154,7 +154,11 @@ jobs:
           context: .
           file: apps/workspace/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          # workspace = amd64 only — QEMU arm64 emulation hit "Illegal instruction" v1.0.0 first try
+          # (Cytoscape + FullCalendar + TipTap heavy build pravdepodobne trigger non-emulated SSE/AVX inst).
+          # Portal + BFF zostávajú multi-arch (their builds pass). Arm64 workspace deferred do v1.1+
+          # cez native arm64 runner (ubuntu-22.04-arm) namiesto QEMU.
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
