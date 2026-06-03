@@ -4,6 +4,12 @@
 > `scripts/rollback-test.sh` against the staging cluster. This file is the
 > go/no-go gate for I.7 (v1.0 cut). Empty checkboxes block the cut; any
 > P0/P1 failure routes back to a Phase I.x patch chunk.
+>
+> **I.6 scaffolding shipped (PR #47); I.7 cuts v1.0.0 with the chart and
+> workflow finalised.** Manual cluster execution (helm install + smoke +
+> rollback + post-mortem fill) is an ops responsibility per
+> `deploy_target.md` — this template stays empty in-repo and is filled by
+> the operator after each install.
 
 ## Metadata
 
