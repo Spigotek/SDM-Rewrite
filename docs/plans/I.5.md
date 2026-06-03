@@ -1,7 +1,8 @@
 # I.5 — SP cockpit / cross-tenant view (sp_admin "All my tenants" overlay)
 
-> **Status**: ⏳ in-review
-> **Branch**: `chunk/I.5-sp-cockpit` > **PR**: TBD
+> **Status**: ✅ DONE (squash `f51e3a6`, PR #46)
+> **Branch**: `chunk/I.5-sp-cockpit` (deleted)
+> **Outcome**: SP cockpit `/sp/cockpit` route s TenantOverview health cards (gated `ci.read.cross-tenant`). Cross-tenant calendar overlay. CMDB SharedCiMarker badge + cross-tenant graph edge style (dashed orange Cytoscape). BFF sp-impersonation (GET /me/sp-tenants, POST/DELETE /api/sp/view-as, step-up gated, 1h TTL) + 13 cases. TopBar "SP mode" badge. Permission key pivot: existujúce `change.read.calendar.cross-tenant` + `ci.read.cross-tenant` (no taxonomy churn). MSW step-up gate skipped (deterministic browser flow; BFF tests cover). `sharedWithTenantIds` overlay-only. Journeys #12 + #18 → pass. §4.2 `cross-tenant-view-sp-l14` → pass. **18/18 acceptance matrix complete** (Phase H exit #1 splnený).
 > **Cieľ**: implementovať Service Provider admin cockpit — `sp_admin` persona
 > sees "All my tenants" overlay v change calendar (cross-tenant conflict detection),
 > shared-CI marker v CMDB (CIs assigned to multiple tenants), cross-tenant
