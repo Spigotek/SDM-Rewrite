@@ -11,7 +11,7 @@
     "install-browsers": "playwright install chromium"
   },
   "dependencies": {
-    "@playwright/test": "1.49.1",
+    "@playwright/test": "1.60.0",
     "tsx": "4.19.2"
   },
   "devDependencies": {
