@@ -1,4 +1,5 @@
-import type { SessionPayload, SessionTenant, TenantStatus } from "../session/types";
+import { publishToAllSessionsWithTenant } from "../platform/event-bus";
+import type { SessionPayload, SessionStore, SessionTenant, TenantStatus } from "../session/types";
 import { AppErrorException } from "./errors";
 
 /**
@@ -75,4 +76,56 @@ export function assertTenantActive(target: SessionTenant, refs: SuspensionDenyDe
       targetTenantId: refs.targetTenantId,
     },
   });
+}
+
+// =============================================================================
+// J.3 — Runtime suspension override map + notify helper
+// =============================================================================
+
+/**
+ * Runtime override map for tenant status. This is the authoritative source
+ * for status changes made via the admin endpoint (`POST /api/admin/tenants/:id/
+ * {suspend,unsuspend}`). On `/me` and `/me/tenants` reads, `resolvedTenantStatus`
+ * applies this map's value when present; falls back to the embedded session value.
+ *
+ * Intentionally module-level (singleton per BFF process). Multi-instance
+ * deploys require a Redis-backed adapter — v2.0 scope.
+ */
+const runtimeStatusOverrides = new Map<string, TenantStatus>();
+
+/** Apply the runtime override map to a tenant's base status. */
+export function resolvedTenantStatus(tenant: Pick<SessionTenant, "id" | "status">): TenantStatus {
+  return runtimeStatusOverrides.get(tenant.id) ?? tenantStatus(tenant);
+}
+
+/** Flip the runtime status for a tenant. Called by the admin endpoint. */
+export function setTenantStatus(tenantId: string, status: TenantStatus): void {
+  runtimeStatusOverrides.set(tenantId, status);
+}
+
+/**
+ * Publish a `tenant.suspended` event to all sessions that have the tenant in
+ * their `tenants[]` array, then reset the override map for unsuspend.
+ *
+ * @param sessionStore - needed to find affected sessions via `findSessionIdsWithTenant`.
+ * @param tenantId - the tenant being (un)suspended.
+ * @param reason - human-readable reason (e.g. "admin.tenant.suspend").
+ */
+export async function notifyTenantSuspended(
+  sessionStore: SessionStore,
+  tenantId: string,
+  reason: string,
+): Promise<void> {
+  const sessionIds = await sessionStore.findSessionIdsWithTenant(tenantId);
+  publishToAllSessionsWithTenant(Array.from(sessionIds), {
+    type: "tenant.suspended",
+    tenantId,
+    reason,
+    at: new Date().toISOString(),
+  });
+}
+
+/** Exposed for tests — clear all runtime overrides. */
+export function _clearRuntimeOverrides(): void {
+  runtimeStatusOverrides.clear();
 }

@@ -9,6 +9,7 @@ import {
   userId as toUserId,
 } from "@sdm/domain";
 import { AUDIT_EVENTS, type AuditEmitter } from "../platform/audit";
+import { publishSessionExpired } from "../platform/event-bus";
 import type { RuntimeConfig } from "../config/schema";
 import { clearSessionCookie, getSessionCookie, setSessionCookie } from "../security/cookies";
 import type { CookieConfig } from "../security/cookies";
@@ -160,6 +161,8 @@ export function registerAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
       if (payload) {
         await deps.broker.revoke(payload.accessKey, payload.accessKeyId, correlationId);
       }
+      // J.3 — notify SSE clients before session is destroyed.
+      if (sid) publishSessionExpired(sid);
       await deps.sessionStore.destroy(sid);
     }
     clearSessionCookie(c, cookieCfg);
@@ -184,6 +187,7 @@ export function registerAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
     if (!payload) return unauthorized(c, correlationId, "no_session");
     const nowMs = Date.now();
     if (nowMs > payload.absoluteExpiresAt) {
+      publishSessionExpired(sid);
       await deps.sessionStore.destroy(sid);
       deps.audit(
         c,
@@ -198,6 +202,7 @@ export function registerAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
       return unauthorized(c, correlationId, "absolute_timeout");
     }
     if (nowMs - payload.lastSeenAt > deps.config.session.idleSec * 1000) {
+      publishSessionExpired(sid);
       await deps.sessionStore.destroy(sid);
       deps.audit(
         c,

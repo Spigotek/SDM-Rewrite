@@ -54,4 +54,14 @@ export class MemorySessionStore implements SessionStore {
     }
     this.entries.clear();
   }
+
+  async findSessionIdsWithTenant(tenantId: string): Promise<readonly string[]> {
+    const result: string[] = [];
+    for (const [id, entry] of this.entries) {
+      if (entry.payload.tenants.some((t) => t.id === tenantId)) {
+        result.push(id);
+      }
+    }
+    return result;
+  }
 }

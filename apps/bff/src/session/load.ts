@@ -1,6 +1,7 @@
 import type { Context } from "hono";
 import type { Logger } from "pino";
 import { AppErrorException } from "../auth/errors";
+import { publishSessionExpired } from "../platform/event-bus";
 import type { RuntimeConfig } from "../config/schema";
 import { getSessionCookie } from "../security/cookies";
 import type { SessionPayload, SessionStore } from "./types";
@@ -32,10 +33,12 @@ export async function requireActiveSession(
 
   const nowMs = Date.now();
   if (nowMs > payload.absoluteExpiresAt) {
+    publishSessionExpired(sid);
     await deps.sessionStore.destroy(sid);
     throw unauthenticated("absolute expiry");
   }
   if (nowMs - payload.lastSeenAt > deps.config.session.idleSec * 1000) {
+    publishSessionExpired(sid);
     await deps.sessionStore.destroy(sid);
     throw unauthenticated("idle expiry");
   }

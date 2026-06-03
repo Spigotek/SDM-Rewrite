@@ -13,6 +13,7 @@
 import { createBrowserRouter, Outlet, redirect } from "react-router-dom";
 import { AppShell } from "../shell/app-shell";
 import { ErrorBoundary } from "../shell/error-boundary";
+import { EventSourceProvider } from "../shell/event-source";
 import { SessionProvider } from "../shell/session-context";
 import { RootErrorBoundary, NotFoundElement } from "./error-boundaries";
 import { guardedLazy } from "./guards";
@@ -21,9 +22,11 @@ function RootLayout() {
   return (
     <ErrorBoundary>
       <SessionProvider>
-        <AppShell appName="Service Desk Workspace">
-          <Outlet />
-        </AppShell>
+        <EventSourceProvider>
+          <AppShell appName="Service Desk Workspace">
+            <Outlet />
+          </AppShell>
+        </EventSourceProvider>
       </SessionProvider>
     </ErrorBoundary>
   );
