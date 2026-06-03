@@ -1,7 +1,8 @@
 # I.4 — KB authoring (TipTap + DOMPurify + publish + visibility + analytics)
 
-> **Status**: 🚧 in-flight
-> **Branch**: `chunk/I.4-kb-authoring` > **PR**: TBD
+> **Status**: ✅ DONE (squash `bb06931`, PR #45)
+> **Branch**: `chunk/I.4-kb-authoring` (deleted)
+> **Outcome**: H.15 workspace KB graduated read-only → full write. `/kb/editor` + `/kb/editor/:id` + `/kb/analytics` routes (gated `kb.edit`/`kb.analytics`). TipTap 2.27 lazy chunk `vendor-editor` 127.89 KB gz (cap raised 120→130). Markdown canonical persist via hand-rolled bridge. Sanitizer dep pivot BFF + MSW: `isomorphic-dompurify` → `sanitize-html` (CI Node 22 ESM resolution issue v `html-encoding-sniffer` transitive + CodeQL incomplete-multi-character-sanitization findings v pôvodnom regex). FE keeps DOMPurify. BFF kb-write endpoints (POST/PATCH/DELETE/draft/publish/analytics) + 12 cases. MSW write/draft/publish/analytics handlers + draft localStorage store + `x-msw-user-id` persona header (reusable v I.5). Journeys #13/#14/#15 graduated `deferred/partial → pass`. `@security:kb-markdown-sanitization` covered.
 > **Cieľ**: rozšíriť H.15 workspace KB z read-only na full write — TipTap editor
 > route `/kb/editor` + `/kb/editor/:id`, DOMPurify sanitization pipeline, publish
 > flow s visibility selector (public / tenant / sp_only), draft auto-save,
