@@ -62,5 +62,8 @@ jobs:
           path: ./
           # Compare full git history vs working tree — equivalent to scanning
           # all commits + uncommitted changes. `--only-verified` filters out
-          # documented test seeds (e.g. the RFC 4226 TOTP seed in I.1).
-          extra_args: --only-verified --fail
+          # documented test seeds (e.g. the RFC 4226 TOTP seed in I.1). The
+          # action injects `--fail` on its own; passing it again here triggers
+          # `flag 'fail' cannot be repeated`, so `extra_args` carries only the
+          # verification filter.
+          extra_args: --only-verified
