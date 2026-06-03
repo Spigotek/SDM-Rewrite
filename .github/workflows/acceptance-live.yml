@@ -1,0 +1,135 @@
+name: acceptance-live
+
+# I.6 — 18-journey acceptance suite against the live BFF in the staging
+# cluster (CA SDM 17.4 backend at 10.11.35.35:8050 per `real_backend.md`).
+#
+# Trigger surface:
+#   - `workflow_dispatch`  — manual one-shot from the Actions UI.
+#   - `pull_request: labeled`  — adding the `release-dry-run` label on any
+#     PR fans this workflow out (label removal stops further runs).
+#   - `push: branches: [main]` — only for `chore(release): …` commits, gated
+#     by the per-step `if:` predicate below. Lets the release engineer
+#     append the live smoke to the same merge as the chart bump without
+#     spinning up a manual workflow_dispatch.
+#
+# Distinct from `acceptance.yml` (MSW mode): live smoke runs chromium-only
+# at 10 s expect timeout with 1 retry, fronting the staging ingress
+# (`BASE_URL` secret/env). The MSW matrix remains the per-PR merge gate;
+# this workflow is a release-cut gate.
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Staging base URL (overrides BASE_URL secret)"
+        required: false
+        default: ""
+  pull_request:
+    types: [labeled, synchronize, reopened]
+  push:
+    branches: [main]
+
+concurrency:
+  group: acceptance-live-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22.11.0"
+  PNPM_VERSION: "9.12.0"
+
+jobs:
+  live-smoke:
+    name: 18 journey scenarios (live BFF)
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Gate the trigger explicitly:
+    #   - workflow_dispatch        — always run.
+    #   - pull_request             — only when the `release-dry-run` label is
+    #                                present (re-evaluated on every labeled/
+    #                                synchronize/reopened event).
+    #   - push to main             — only `chore(release): …` commit subjects.
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'release-dry-run')) ||
+      (github.event_name == 'push' && startsWith(github.event.head_commit.message, 'chore(release):'))
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: ${{ env.PNPM_VERSION }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Resolve Playwright version
+        id: pw-version
+        run: |
+          v=$(node -p "require('./tools/browser-test/package.json').dependencies['@playwright/test']")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers (chromium)
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-chromium-${{ steps.pw-version.outputs.version }}
+
+      - name: Install Playwright chromium (with system deps)
+        run: pnpm --filter @sdm/browser-test exec playwright install --with-deps chromium
+
+      - name: Resolve BASE_URL
+        id: base
+        run: |
+          url="${{ github.event.inputs.base_url }}"
+          if [ -z "$url" ]; then
+            url="${{ secrets.STAGING_BASE_URL }}"
+          fi
+          if [ -z "$url" ]; then
+            url="https://sdm-staging.example.com"
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+
+      - name: Wait for BFF /readyz
+        run: |
+          set -e
+          url="${{ steps.base.outputs.url }}/readyz"
+          echo "Probing $url"
+          for i in $(seq 1 12); do
+            if curl -fsS "$url" >/dev/null; then
+              echo "$url ready"
+              break
+            fi
+            if [ "$i" = "12" ]; then
+              echo "$url never became ready"
+              exit 1
+            fi
+            sleep 5
+          done
+
+      - name: Live acceptance suite (chromium)
+        env:
+          SDM_BROWSER_TEST_RUN_ID: "live-${{ github.run_id }}"
+          BASE_URL: ${{ steps.base.outputs.url }}
+          SDM_BROWSER_TEST_BASE_URL: ${{ steps.base.outputs.url }}
+        working-directory: tools/browser-test
+        run: |
+          pnpm exec playwright test \
+            scenarios/acceptance/ \
+            --config=playwright.config.live.ts \
+            --project=chromium \
+            --reporter=list
+
+      - name: Upload Playwright report
+        if: success() || failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acceptance-live-report
+          path: |
+            .playwright/runs/live-${{ github.run_id }}/
+            tools/browser-test/test-results/
+          retention-days: 14

@@ -1,6 +1,6 @@
 # I.6 — Release v1.0 dry-run (helm staging + live BFF smoke + rollback test)
 
-> **Status**: 🔜 (blokované na I.0-I.5 — full stack must be validated)
+> **Status**: 🚧 Scaffolding merged (chart bump, values-staging, scripts, live workflow, post-mortem template). Manual live execution by operator pending — flips to ✅ DONE when `docs/RELEASE-DRY-RUN.md` is filled out with GO decision.
 > **Branch**: `chunk/I.6-release-dry-run` > **PR**: TBD
 > **Cieľ**: deploy full stack do staging cluster via helm chart, validate **live**
 > 18-journey acceptance smoke proti **real CA SDM 17.4** (10.11.35.35:8050),
