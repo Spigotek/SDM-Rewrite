@@ -206,7 +206,9 @@ jobs:
 
       - name: helm push (OCI)
         run: |
-          helm push dist/sdm-*.tgz oci://${{ env.REGISTRY }}/${{ github.repository_owner }}/charts
+          # GHCR OCI references must be lowercase — github.repository_owner is case-preserved.
+          OWNER_LC="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          helm push dist/sdm-*.tgz "oci://${{ env.REGISTRY }}/${OWNER_LC}/charts"
 
       - name: Upload chart artifact
         uses: actions/upload-artifact@v4
