@@ -95,6 +95,32 @@ export function CalendarView({ rows }: CalendarViewProps) {
     };
   }, []);
 
+  /**
+   * I.2 a11y — FullCalendar renders the prev/next toolbar buttons with a child
+   * `<span class="fc-icon fc-icon-chevron-{left,right}" role="img">` that has
+   * no accessible name. axe flags this as `role-img-alt` serious. The parent
+   * button already carries `aria-label="prev"/"next"` and `title`, so the
+   * icons are decorative — strip the `role` so axe + assistive tech treat
+   * them as presentational `<span>`s instead of empty images. We observe DOM
+   * mutations because FullCalendar re-renders the toolbar on every view
+   * switch + locale change.
+   */
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const root = document.querySelector(".sdm-calendar-container") as HTMLElement | null;
+    if (!root) return;
+    const patch = () => {
+      for (const node of root.querySelectorAll<HTMLElement>('.fc-icon[role="img"]')) {
+        node.removeAttribute("role");
+        node.setAttribute("aria-hidden", "true");
+      }
+    };
+    patch();
+    const obs = new MutationObserver(patch);
+    obs.observe(root, { subtree: true, childList: true });
+    return () => obs.disconnect();
+  }, []);
+
   const locale = i18n.language === "en" ? "en" : "sk";
   const options = useMemo(
     () =>

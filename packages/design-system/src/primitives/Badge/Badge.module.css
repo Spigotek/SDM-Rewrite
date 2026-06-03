@@ -46,27 +46,31 @@
   border-color: var(--color-border-default);
 }
 
+/* I.2 — use `-solid` foregrounds (Tailwind *-700/*-800 equivalents) so small
+   badge text clears WCAG AA 4.5:1 on the corresponding `-bg` tones. The
+   lighter `-fg` tokens are designed for icons + large text, not for the
+   sm/xs badge font-size (var(--font-size-xs) ≈ 11 px). */
 .info {
   background-color: var(--color-info-bg);
-  color: var(--color-info-fg);
+  color: var(--color-info-solid);
   border-color: var(--color-info-border);
 }
 
 .success {
   background-color: var(--color-success-bg);
-  color: var(--color-success-fg);
+  color: var(--color-success-solid);
   border-color: var(--color-success-border);
 }
 
 .warning {
   background-color: var(--color-warning-bg);
-  color: var(--color-warning-fg);
+  color: var(--color-warning-solid);
   border-color: var(--color-warning-border);
 }
 
 .danger {
   background-color: var(--color-danger-bg);
-  color: var(--color-danger-fg);
+  color: var(--color-danger-solid);
   border-color: var(--color-danger-border);
 }
 

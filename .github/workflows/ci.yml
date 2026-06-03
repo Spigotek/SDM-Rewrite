@@ -36,6 +36,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # I.2 — block PR on advisories at `high` severity or above.
+      # `pnpm audit` exits non-zero when ≥ 1 advisory of the given level is
+      # present; PR authors can request a waiver via a `.npm-audit-allow.json`
+      # patch (out-of-scope for I.2). `critical` is implicitly covered (≥ high).
+      - name: pnpm audit (high+ advisories block PR)
+        run: pnpm audit --audit-level=high
+
       - name: Cache Turborepo
         uses: actions/cache@v4
         with:
