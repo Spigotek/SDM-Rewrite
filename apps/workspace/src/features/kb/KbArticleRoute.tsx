@@ -1,4 +1,4 @@
-import { Link, useLocation, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
@@ -32,6 +32,7 @@ export default function KbArticleRoute() {
   const tenantId = session?.tenantId ?? TENANT_PLACEHOLDER;
   const roles = session?.roles ?? [];
   const location = useLocation();
+  const navigate = useNavigate();
 
   const query = useQuery({
     ...kbArticleQuery(tenantId, id ?? ""),
@@ -81,11 +82,7 @@ export default function KbArticleRoute() {
             variant="secondary"
             size="sm"
             data-testid="kb-article-edit"
-            onClick={() => {
-              // Editor route is v1+; same pattern as the browse "New article"
-              // CTA — the button is only rendered for permission holders.
-              window.location.assign(`/kb/editor/${encodeURIComponent(article.id)}`);
-            }}
+            onClick={() => navigate(`/kb/editor/${encodeURIComponent(article.id)}`)}
           >
             {t("kb.actions.editArticle")}
           </Button>

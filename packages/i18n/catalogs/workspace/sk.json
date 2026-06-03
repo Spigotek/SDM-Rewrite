@@ -441,7 +441,8 @@
     },
     "actions": {
       "newArticle": "Nový článok",
-      "editArticle": "Upraviť článok"
+      "editArticle": "Upraviť článok",
+      "analytics": "Analytika"
     },
     "article": {
       "back": "← Späť na KB",
@@ -468,6 +469,103 @@
       "title": "Pripojiť k ticketu #{ticket}",
       "hint": "Tento článok môžeš pripojiť k aktívnemu ticketu ako referenciu pre žiadateľa.",
       "cta": "Pripojiť k #{ticket}"
+    },
+    "editor": {
+      "titleNew": "Nový KB článok",
+      "titleEdit": "Upraviť KB článok",
+      "back": "← Späť do KB",
+      "save": "Uložiť",
+      "create": "Vytvoriť draft",
+      "publish": "Publikovať",
+      "side": {
+        "aria": "Nastavenia článku"
+      },
+      "fields": {
+        "title": "Názov",
+        "titlePlaceholder": "Krátky výstižný titulok…",
+        "category": "Kategória",
+        "categoryNone": "— bez kategórie —",
+        "tags": "Tagy",
+        "tagsPlaceholder": "vpn, reset, sieť (oddelené čiarkami)"
+      },
+      "body": {
+        "aria": "Telo článku",
+        "placeholder": "Začni písať obsah článku…"
+      },
+      "toolbar": {
+        "aria": "Formátovanie",
+        "bold": "Tučné",
+        "italic": "Kurzíva",
+        "bulletList": "• zoznam",
+        "orderedList": "1. zoznam",
+        "codeBlock": "Kód",
+        "blockquote": "Citát",
+        "link": "Odkaz",
+        "image": "Obrázok",
+        "table": "Tabuľka",
+        "hr": "──",
+        "linkPrompt": "URL odkazu (prázdne pre odstránenie):",
+        "imagePrompt": "URL obrázka (markdown paste only):"
+      },
+      "visibility": {
+        "title": "Viditeľnosť",
+        "public": {
+          "label": "Verejné",
+          "hint": "Viditeľné aj na anonymnom portáli (po sp_admin schválení)."
+        },
+        "tenant": {
+          "label": "Tenant",
+          "hint": "Viditeľné pre používateľov aktívneho tenanta."
+        },
+        "sp_only": {
+          "label": "Iba SP admin",
+          "hint": "Viditeľné iba pre service provider adminov (cross-tenant)."
+        }
+      },
+      "publishModal": {
+        "title": "Publikovať „{title}\"",
+        "body": "Po publikovaní bude článok viditeľný podľa zvoleného scope. Drafty potom zmiznú z editora.",
+        "tagsLabel": "Tagy",
+        "tagsPlaceholder": "vpn, reset, sieť",
+        "submit": "Publikovať teraz"
+      },
+      "autosave": {
+        "idle": "Pripravené.",
+        "saving": "Ukladám draft…",
+        "error": "Auto-save zlyhal. Skús Uložiť manuálne.",
+        "savedJustNow": "Uložené pred chvíľou",
+        "savedMinutesAgo": "Uložené pred {minutes} min",
+        "savedHoursAgo": "Uložené pred {hours} h"
+      },
+      "errors": {
+        "save": "Článok sa nepodarilo uložiť. Skús znova.",
+        "publish": "Publikovanie zlyhalo. Skús znova alebo kontaktuj admina.",
+        "publishNoId": "Najprv ulož draft, potom publikuj."
+      }
+    },
+    "analytics": {
+      "title": "KB analytika",
+      "rangeAria": "Časové obdobie",
+      "range": {
+        "7d": "Posledných 7 dní",
+        "30d": "Posledných 30 dní",
+        "90d": "Posledných 90 dní"
+      },
+      "loading": "Načítavam dáta…",
+      "error": "Analytiku sa nepodarilo načítať.",
+      "top": {
+        "title": "Top 10 článkov (zobrazenia)",
+        "views": "{views} zobrazení"
+      },
+      "bottom": {
+        "title": "Spodných 5 (helpfulness)",
+        "ratio": "{ratio}% helpful",
+        "noData": "Žiadne dáta"
+      },
+      "searchMiss": {
+        "title": "Search miss (queries bez výsledkov)",
+        "hits": "{hits}× hľadané"
+      }
     }
   },
   "cmdb": {

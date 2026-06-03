@@ -21,11 +21,11 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Last merged:** Chunk I.3 (Multi-tenancy edge cases — tenant suspension + cross-tenant sweep + HttpClient race detector + Sentry tag scrub, PR #44). Predchádzajúce: PR #43 — I.2 security audit sweep.
-- **In flight:** —
-- **Next up:** Chunk I.4 — KB authoring (TipTap + DOMPurify + publish + analytics). Phase I in progress (4/8 chunks done).
+- **Last merged:** Chunk I.3 (Multi-tenancy edge cases — tenant suspension + cross-tenant sweep + HttpClient race detector + Sentry tag scrub, PR #44).
+- **In flight:** Chunk I.4 — KB authoring (TipTap + DOMPurify + publish + visibility + analytics). PR TBD.
+- **Next up:** Chunk I.5 — SP cockpit / cross-tenant view. Phase I in progress (5/8 chunks done after I.4 merge).
 
-Posledná revízia tohto dokumentu: I.3 merged (2026-06-03).
+Posledná revízia tohto dokumentu: I.4 in flight (2026-06-03).
 
 ---
 

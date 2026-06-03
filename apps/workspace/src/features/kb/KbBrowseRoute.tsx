@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
@@ -50,6 +50,7 @@ export default function KbBrowseRoute() {
   const tenantId = session?.tenantId;
   const roles = session?.roles ?? [];
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const attachToTicket = searchParams.get("attachToTicket");
 
   const { filters, setCategory, setLanguage, reset } = useKbFilters();
@@ -87,17 +88,24 @@ export default function KbBrowseRoute() {
             {t("placeholders.activeTenant")}{" "}
             <strong data-testid="active-tenant">{tenantId ?? ""}</strong>
           </span>
+          <Can roles={roles} permission="kb.analytics" fallback={null}>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              data-testid="kb-analytics"
+              onClick={() => navigate("/kb/analytics")}
+            >
+              {t("kb.actions.analytics")}
+            </Button>
+          </Can>
           <Can roles={roles} permission="kb.write" fallback={null}>
             <Button
               type="button"
               variant="primary"
               size="sm"
               data-testid="kb-new-article"
-              onClick={() => {
-                // Editor route is v1+; the CTA only renders for permission
-                // holders so this branch is never hit by Jana (read-only).
-                window.location.assign("/kb/editor/new");
-              }}
+              onClick={() => navigate("/kb/editor")}
             >
               {t("kb.actions.newArticle")}
             </Button>

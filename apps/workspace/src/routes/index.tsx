@@ -15,6 +15,7 @@ import { AppShell } from "../shell/app-shell";
 import { ErrorBoundary } from "../shell/error-boundary";
 import { SessionProvider } from "../shell/session-context";
 import { RootErrorBoundary, NotFoundElement } from "./error-boundaries";
+import { guardedLazy } from "./guards";
 
 function RootLayout() {
   return (
@@ -103,6 +104,18 @@ export const router = createBrowserRouter([
         lazy: async () => ({
           Component: (await import("../features/kb/KbArticleRoute")).default,
         }),
+      },
+      {
+        path: "kb/editor",
+        lazy: () => guardedLazy(import("../features/kb/editor/KbEditorRoute"), "kb.write"),
+      },
+      {
+        path: "kb/editor/:id",
+        lazy: () => guardedLazy(import("../features/kb/editor/KbEditorRoute"), "kb.write"),
+      },
+      {
+        path: "kb/analytics",
+        lazy: () => guardedLazy(import("../features/kb/editor/KbAnalyticsRoute"), "kb.analytics"),
       },
       { path: "*", element: <NotFoundElement /> },
     ],

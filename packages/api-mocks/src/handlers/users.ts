@@ -54,6 +54,19 @@ const TENANT_ENV: Record<string, TenantEnvironment> = {
   globex: "staging",
 };
 
+/**
+ * I.4 — explicit persona override for browser tests that need a non-default
+ * session (e.g. journey-13 needs `kb_editor_jana` for `kb.write` access).
+ * The header is consumed by `/me`, `/whoami`, and `/me/active-tenant`. If
+ * unset (the normal case), the handlers fall back to `DEFAULT_USER_ID`.
+ */
+const MSW_USER_HEADER = "x-msw-user-id";
+function resolveUserId(request: Request): string {
+  const override = request.headers.get(MSW_USER_HEADER);
+  if (override && store.users.some((u) => u.id === override)) return override;
+  return DEFAULT_USER_ID;
+}
+
 function meResponseForUser(userIdValue: string, requestedTenant: TenantId) {
   const user = store.users.find((u) => u.id === userIdValue);
   if (!user) return null;
@@ -126,13 +139,13 @@ function meResponseForUser(userIdValue: string, requestedTenant: TenantId) {
 export const userHandlers = [
   http.get("*/me", ({ request }) => {
     const requestedTenant = parseTenantFromRequest(request);
-    const me = meResponseForUser(DEFAULT_USER_ID, requestedTenant);
+    const me = meResponseForUser(resolveUserId(request), requestedTenant);
     if (!me) return unauthorized("session user missing", correlationIdFrom(request));
     return HttpResponse.json(me);
   }),
 
   http.get("*/whoami", ({ request }) => {
-    const user = store.users.find((u) => u.id === DEFAULT_USER_ID);
+    const user = store.users.find((u) => u.id === resolveUserId(request));
     if (!user) return unauthorized("session user missing", correlationIdFrom(request));
     return HttpResponse.json({
       id: user.id,
@@ -147,7 +160,7 @@ export const userHandlers = [
     const correlationId = correlationIdFrom(request);
     const body = (await request.json().catch(() => ({}))) as ActiveTenantBody;
     if (!body.tenantId) return badRequest("tenantId is required", correlationId);
-    const user = store.users.find((u) => u.id === DEFAULT_USER_ID);
+    const user = store.users.find((u) => u.id === resolveUserId(request));
     if (!user) return unauthorized("session user missing", correlationId);
     const hasAccess = user.roleAssignments.some((r) => r.tenantId === body.tenantId);
     if (!hasAccess) return forbidden(`user has no role in tenant ${body.tenantId}`, correlationId);

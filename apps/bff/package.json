@@ -22,9 +22,11 @@
     "fast-xml-parser": "^4.5.0",
     "hono": "4.12.23",
     "pino": "9.5.0",
+    "sanitize-html": "2.17.4",
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@types/sanitize-html": "2.16.1",
     "msw": "2.6.6",
     "tsup": "8.3.5",
     "tsx": "4.19.2",
