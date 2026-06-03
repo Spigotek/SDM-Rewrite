@@ -3,6 +3,7 @@ import type { Logger } from "pino";
 import type { MyTenantsResponse } from "@sdm/api-types";
 import { TtlCache } from "../api/cache";
 import { AppErrorException } from "../auth/errors";
+import { filterActiveTenants } from "../auth/tenant-suspension";
 import type { RuntimeConfig } from "../config/schema";
 import { requireActiveSession } from "../session/load";
 import type { SessionPayload, SessionStore } from "../session/types";
@@ -60,7 +61,10 @@ export function registerMeTenantsRoutes(
 
     let tenants = state.cache.get(session.userId);
     if (!tenants) {
-      tenants = session.tenants.map((t) => ({
+      // I.3 — strip suspended tenants from the switcher payload. The session
+      // store still tracks every allowed tenant (so admin restore is a status
+      // flip, no re-login), but the FE never sees the suspended ones.
+      tenants = filterActiveTenants(session.tenants).map((t) => ({
         id: t.id,
         name: t.name,
         isServiceProvider: false,

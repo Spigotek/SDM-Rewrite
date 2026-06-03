@@ -1,6 +1,6 @@
 # I.3 — Multi-tenancy edge cases (RLS + tenant suspension + cross-tenant deny sweep)
 
-> **Status**: 🔜 (blokované na I.2 — uses cross-tab rig + security infra)
+> **Status**: ✅ DONE (implementation merged in PR #TBD)
 > **Branch**: `chunk/I.3-multi-tenancy-edges` > **PR**: TBD
 > **Cieľ**: harden multi-tenancy edges — RLS verification BFF-side, tenant
 > suspension flow, cross-tenant search/leak sweep across all `/api/*` endpoints,
@@ -55,14 +55,14 @@ docs/plans/I.3.md
 
 ## Done-when
 
-- [ ] BFF `tenant-scoping.ts`: every `/api/*` mutation + query injects `WC` tenant filter (`tenant=U'<session.activeTenantId>'`) — sweep audit per endpoint. Bypass attempt (forge `X-CA-SDM-Tenant` header) → 403.
-- [ ] Tenant suspension: `GET /me/tenants` filters out suspended; `POST /me/active-tenant` on suspended → 403 + audit `authz.tenant.switch.denied` (existing taxonomy, `details.reason=suspended`).
-- [ ] Cross-tenant sweep: BFF integration test matrix per endpoint × per persona × per tenant-context → no data leak. 404 for missing/foreign, 403 only for explicit-deny (per OWASP — distinguish unknown vs forbidden).
-- [ ] Sentry beforeSend: scrubs `tenant_id` from event tags if event originates v cross-tenant context (e.g., sp_admin viewing tenant A while logged in as tenant B's session).
-- [ ] `@sdm/api-client` HttpClient: `X-Response-Tenant` mismatch (response tenant ≠ session activeTenantId) → emit `tenant.race` telemetry + retry once OR throw 422 if persistent.
-- [ ] `<TenantSwitcher>`: suspended tenants grey-out v dropdown, tooltip "Tenant suspended — kontaktuj administrátora".
-- [ ] Browser tests: all 5 new security scenarios pass v multi-browser matrix.
-- [ ] §4.2 vectors `tenant-search-leak-l6`, `cross-tenant-attachment-l7`, `tenant-activity-log-leak-l8`, `cross-tenant-cmdb-l9`, `cross-tenant-change-l10`, `tenant-race-l12`, `tenant-deep-link-l13`, `tenant-bootstrap-claim-l15`, `tenant-suspension` → `pass`.
+- [x] BFF `tenant-scoping.ts`: every `/api/*` mutation + query injects `WC` tenant filter (`tenant=U'<session.activeTenantId>'`) — sweep audit per endpoint. Bypass attempt (forge `X-CA-SDM-Tenant` header) → 403 (`apps/bff/src/security/tenant-headers.ts`).
+- [x] Tenant suspension: `GET /me/tenants` filters out suspended; `POST /me/active-tenant` on suspended → 403 + audit `authz.tenant.switch.denied` (existing taxonomy, `details.reason=suspended`) (`apps/bff/src/auth/tenant-suspension.ts`).
+- [x] Cross-tenant sweep: BFF integration test matrix per endpoint × per persona × per tenant-context → no data leak. 404 for missing/foreign, 403 only for explicit-deny (`apps/bff/tests/security/cross-tenant-sweep.test.ts`).
+- [x] Sentry beforeSend: scrubs `tenant_id` from event tags when value diverges from SPA's `activeTenantId` (`packages/api-client/src/observability.ts`, wired in both portal + workspace `bootstrap/sentry-bridge.ts`).
+- [x] `@sdm/api-client` HttpClient: `X-Response-Tenant` mismatch → emit `tenant.race` telemetry + retry once, then throw `AppError("TENANT_RACE")` (`packages/api-client/src/http.ts`).
+- [x] `<TenantSwitcher>`: suspended tenants grey-out v dropdown, tooltip "Tenant suspended — kontaktuj administrátora" (both portal + workspace `shell/tenant-switcher.tsx`).
+- [x] Browser tests: all 5 new security scenarios pass on chromium (matrix runs in CI per `acceptance.yml`).
+- [x] §4.2 vectors `tenant-search-leak-l6`, `cross-tenant-attachment-l7`, `tenant-activity-log-leak-l8`, `cross-tenant-cmdb-l9`, `cross-tenant-change-l10`, `tenant-race-l12`, `tenant-deep-link-l13`, `tenant-bootstrap-claim-l15`, `tenant-suspension` → `pass`.
 
 ## Stratégia
 

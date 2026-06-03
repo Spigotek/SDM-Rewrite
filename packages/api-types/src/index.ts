@@ -111,10 +111,19 @@ export interface UiActivityEntry {
   readonly createdAt: string | null;
 }
 
+/**
+ * I.3 — Tenant lifecycle status surfaced to the FE. `"active"` is the default
+ * + only value the BFF emits today (`GET /me/tenants` already strips suspended
+ * tenants server-side), but the field is exposed so the FE can grey-out a
+ * tenant entry if a parent admin endpoint future-emits a suspended one.
+ */
+export type TenantStatus = "active" | "suspended";
+
 export interface MyTenant {
   readonly id: string;
   readonly name: string;
   readonly isServiceProvider: boolean;
+  readonly status?: TenantStatus;
   readonly roles: ReadonlyArray<{
     readonly id: string;
     readonly name: string;

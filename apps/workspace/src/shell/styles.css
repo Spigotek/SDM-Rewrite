@@ -149,6 +149,30 @@
   color: var(--color-success-fg);
 }
 
+/* I.3 — suspended tenant entry grey-out + tooltip cue. */
+.sdm-tenant-row.is-suspended {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.sdm-tenant-row.is-suspended:hover {
+  background-color: transparent;
+}
+
+.sdm-tenant-suspended-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--spacing-1_5);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-wide);
+  background-color: var(--color-background-muted);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  line-height: 1.4;
+}
+
 .sdm-tenant-name {
   flex: 1 1 auto;
 }

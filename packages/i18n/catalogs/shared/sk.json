@@ -64,7 +64,10 @@
   },
   "session": {
     "idleTitle": "Relácia čoskoro vyprší",
-    "idleBody": "Tvoja relácia vyprší o {count, plural, one {# sekundu} few {# sekundy} other {# sekúnd}}. Chceš pokračovať?"
+    "idleBody": "Tvoja relácia vyprší o {count, plural, one {# sekundu} few {# sekundy} other {# sekúnd}}. Chceš pokračovať?",
+    "tenantSuspended": {
+      "toast": "Aktívny tenant bol pozastavený. Prihlás sa znova alebo si zvoľ iný tenant."
+    }
   },
   "plurals": {
     "tickets": "{count, plural, =0 {žiadne tickety} one {1 ticket} few {# tickety} other {# ticketov}}"
@@ -97,6 +100,10 @@
       "staging": "Staging",
       "development": "Development",
       "sandbox": "Sandbox"
+    },
+    "suspended": {
+      "label": "Pozastavený",
+      "tooltip": "Tenant je pozastavený — kontaktuj administrátora."
     }
   }
 }

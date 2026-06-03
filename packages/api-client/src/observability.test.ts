@@ -120,6 +120,58 @@ describe("sanitizeSentryEvent", () => {
   it("does not crash on a sparse event", () => {
     expect(() => sanitizeSentryEvent({})).not.toThrow();
   });
+
+  // I.3 — cross-tenant tag scrub.
+  it("scrubs tenant tag when it does not match the SPA active tenant", () => {
+    const event = {
+      tags: { tenantId: "tenant-leaked", route: "/queue", locale: "sk" },
+    };
+    const cleaned = sanitizeSentryEvent(event, { activeTenantId: "tenant-active" });
+    expect(cleaned.tags?.tenantId).toBe(REDACTED_SENTINEL);
+    expect(cleaned.tags?.route).toBe("/queue");
+    expect(cleaned.tags?.locale).toBe("sk");
+  });
+
+  it("preserves the tenant tag when it matches the SPA active tenant", () => {
+    const cleaned = sanitizeSentryEvent(
+      { tags: { tenantId: "tenant-A", route: "/queue" } },
+      { activeTenantId: "tenant-A" },
+    );
+    expect(cleaned.tags?.tenantId).toBe("tenant-A");
+  });
+
+  it("ignores tenant scrubbing when no active tenant is supplied (bootstrap path)", () => {
+    const cleaned = sanitizeSentryEvent({ tags: { tenantId: "tenant-foo" } });
+    expect(cleaned.tags?.tenantId).toBe("tenant-foo");
+  });
+
+  it("handles all three tenant tag key variants (tenantId / tenant_id / tenant)", () => {
+    const cleaned = sanitizeSentryEvent(
+      { tags: { tenantId: "x", tenant_id: "x", tenant: "x" } },
+      { activeTenantId: "y" },
+    );
+    expect(cleaned.tags?.tenantId).toBe(REDACTED_SENTINEL);
+    expect(cleaned.tags?.tenant_id).toBe(REDACTED_SENTINEL);
+    expect(cleaned.tags?.tenant).toBe(REDACTED_SENTINEL);
+  });
+
+  // I.3 perf gate — `beforeSend` runs per event. Sub-millisecond on a modern
+  // laptop; CI bound is generous (5 ms) so a slow runner doesn't flake.
+  it("scrub overhead stays under the 5ms per-event ceiling", () => {
+    const iterations = 1000;
+    const event = {
+      tags: { tenantId: "tenant-other", env: "prod" },
+      extra: { description: "x", count: 1 },
+      contexts: { ticket: { summary: "y" } },
+    };
+    const start = performance.now();
+    for (let i = 0; i < iterations; i++) {
+      sanitizeSentryEvent({ ...event, tags: { ...event.tags } }, { activeTenantId: "tenant-self" });
+    }
+    const totalMs = performance.now() - start;
+    const perEventMs = totalMs / iterations;
+    expect(perEventMs).toBeLessThan(5);
+  });
 });
 
 describe("pseudonymize", () => {

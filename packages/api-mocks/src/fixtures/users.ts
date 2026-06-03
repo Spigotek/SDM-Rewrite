@@ -6,7 +6,7 @@ import {
   type UIRole,
   type User,
 } from "@sdm/domain";
-import { TENANT_ACME, TENANT_GLOBEX } from "./tenants";
+import { TENANT_ACME, TENANT_GLOBEX, TENANT_INITECH } from "./tenants";
 
 interface UserSeed {
   id: string;
@@ -28,9 +28,14 @@ const seeds: readonly UserSeed[] = [
     email: "anna.analyst@acme-corp.example",
     jobTitle: "L1 Analyst",
     defaultTenant: TENANT_ACME,
+    // I.3 — Anna also holds a role in the suspended Initech tenant so the
+    // `/me/tenants` filter has something to strip in tests. The switcher
+    // will never surface it (filter applies before render) and the
+    // POST /me/active-tenant gate denies the switch.
     roles: [
       { tenant: TENANT_ACME, role: "agent_l1" },
       { tenant: TENANT_GLOBEX, role: "agent_l1" },
+      { tenant: TENANT_INITECH, role: "agent_l1" },
     ],
   },
   {

@@ -22,7 +22,7 @@ import { useHotkeys } from "react-hotkeys-hook";
 import type { TenantId } from "@sdm/domain";
 import { useTranslation } from "@sdm/i18n";
 import { useActiveTenant } from "../features/tenants/hooks";
-import type { TenantEnvironment } from "../bootstrap/session";
+import type { TenantEnvironment, TenantStatus } from "../bootstrap/session";
 import { usePendingChanges } from "./pending-changes";
 import { useSession } from "./session-context";
 
@@ -30,6 +30,7 @@ interface TenantRow {
   readonly id: TenantId;
   readonly name: string;
   readonly environment?: TenantEnvironment;
+  readonly status?: TenantStatus;
 }
 
 const ENV_TOKEN: Record<TenantEnvironment, string> = {
@@ -132,6 +133,7 @@ export function TenantSwitcher() {
         const row: TenantRow = { id: tenant.id, name: tenant.name };
         if (tenant.environment)
           (row as { environment?: TenantEnvironment }).environment = tenant.environment;
+        if (tenant.status) (row as { status?: TenantStatus }).status = tenant.status;
         return row;
       }),
     [tenants],
@@ -160,13 +162,17 @@ export function TenantSwitcher() {
         setOpen(false);
         return;
       }
+      // I.3 — suspended tenants are inert: the click is a no-op so a stray
+      // pointer event can't bypass the disabled state via keyboard activation.
+      const row = tenantList.find((r) => r.id === target);
+      if (row?.status === "suspended") return;
       if (hasDirtyForms) {
         setPendingTargetId(target);
         return;
       }
       performSwitch(target);
     },
-    [session, hasDirtyForms, performSwitch],
+    [session, hasDirtyForms, performSwitch, tenantList],
   );
 
   // Close on outside click.
@@ -291,22 +297,43 @@ export function TenantSwitcher() {
               )}
               {filteredList.map((row) => {
                 const isActive = row.id === session.tenantId;
+                const isSuspended = row.status === "suspended";
+                const rowLabel = isSuspended
+                  ? t("tenantSwitcher.suspended.label")
+                  : t("tenantSwitcher.switchTo", { name: row.name });
                 return (
-                  <li key={row.id} role="option" aria-selected={isActive}>
+                  <li
+                    key={row.id}
+                    role="option"
+                    aria-selected={isActive}
+                    {...(isSuspended ? { "aria-disabled": true } : {})}
+                  >
                     <button
                       type="button"
-                      className={`sdm-tenant-row${isActive ? " is-active" : ""}`}
+                      className={`sdm-tenant-row${isActive ? " is-active" : ""}${
+                        isSuspended ? " is-suspended" : ""
+                      }`}
                       aria-current={isActive ? "true" : undefined}
-                      aria-label={t("tenantSwitcher.switchTo", { name: row.name })}
+                      aria-label={rowLabel}
                       onClick={() => onSelect(row.id)}
-                      disabled={isPending}
+                      disabled={isPending || isSuspended}
+                      title={isSuspended ? t("tenantSwitcher.suspended.tooltip") : undefined}
                       data-testid={`tenant-row-${row.id}`}
+                      data-suspended={isSuspended ? "true" : undefined}
                     >
                       <span className="sdm-tenant-dot" aria-hidden="true">
                         {isActive ? "●" : "○"}
                       </span>
                       <span className="sdm-tenant-name">{row.name}</span>
                       {row.environment && <TenantEnvBadge env={row.environment} />}
+                      {isSuspended && (
+                        <span
+                          className="sdm-tenant-suspended-badge"
+                          data-testid="tenant-suspended-badge"
+                        >
+                          {t("tenantSwitcher.suspended.label")}
+                        </span>
+                      )}
                     </button>
                   </li>
                 );

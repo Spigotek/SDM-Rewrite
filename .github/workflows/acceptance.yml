@@ -239,7 +239,7 @@ jobs:
             done
           done
 
-      - name: Portal security scenarios (axe + cross-tab + csrf + refresh)
+      - name: Portal security scenarios (axe + cross-tab + csrf + refresh + I.3 tenancy edges)
         env:
           SDM_BROWSER_TEST_RUN_ID: "sec-portal"
           SDM_BROWSER_TEST_BASE_URL: "http://localhost:5173"
@@ -251,6 +251,11 @@ jobs:
             scenarios/security/cross-tab-tenant-sync.spec.ts \
             scenarios/security/csrf-mutation.spec.ts \
             scenarios/security/session-refresh-silent.spec.ts \
+            scenarios/security/tenant-search-leak.spec.ts \
+            scenarios/security/tenant-deep-link.spec.ts \
+            scenarios/security/tenant-race-condition.spec.ts \
+            scenarios/security/tenant-suspension.spec.ts \
+            scenarios/security/tenant-bootstrap-claim.spec.ts \
             --config=playwright.config.ts \
             --project=chromium \
             --reporter=list

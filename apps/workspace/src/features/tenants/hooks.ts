@@ -16,10 +16,16 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { TenantId } from "@sdm/domain";
 import { switchTenantRequest } from "./api";
 import { useSession } from "../../shell/session-context";
-import type { SessionLoadResult } from "../../bootstrap/session";
+import { TenantSuspendedError, type SessionLoadResult } from "../../bootstrap/session";
 
 const ME_QUERY_KEY = "me" as const;
 const TENANT_SWITCH_ERROR_EVENT = "sdm:tenant-switch-error";
+/**
+ * I.3 — Fired when the BFF rejects a switch because the target tenant is
+ * suspended. The session-context listens for this to drop to anonymous +
+ * surface a toast.
+ */
+const TENANT_SUSPENDED_EVENT = "sdm:tenant-suspended";
 
 export interface TenantSwitchError {
   readonly tenantId: TenantId;
@@ -52,6 +58,16 @@ export function useActiveTenant(): UseActiveTenantResult {
       applySwitchedSession(result);
     },
     onError: (err, tenantId) => {
+      // I.3 — Distinguish suspension (its own UX path) from generic switch
+      // errors. The session-context listens for `sdm:tenant-suspended`.
+      if (err instanceof TenantSuspendedError) {
+        window.dispatchEvent(
+          new CustomEvent(TENANT_SUSPENDED_EVENT, {
+            detail: { tenantId: err.targetTenantId },
+          }),
+        );
+        return;
+      }
       const detail: TenantSwitchError = {
         tenantId,
         message: err instanceof Error ? err.message : "tenant switch failed",
@@ -67,4 +83,4 @@ export function useActiveTenant(): UseActiveTenantResult {
   };
 }
 
-export { TENANT_SWITCH_ERROR_EVENT };
+export { TENANT_SWITCH_ERROR_EVENT, TENANT_SUSPENDED_EVENT };
