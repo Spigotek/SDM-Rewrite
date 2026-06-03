@@ -1,7 +1,8 @@
 # I.6 — Release v1.0 dry-run (helm staging + live BFF smoke + rollback test)
 
-> **Status**: 🚧 Scaffolding merged (chart bump, values-staging, scripts, live workflow, post-mortem template). Manual live execution by operator pending — flips to ✅ DONE when `docs/RELEASE-DRY-RUN.md` is filled out with GO decision.
-> **Branch**: `chunk/I.6-release-dry-run` > **PR**: TBD
+> **Status**: ✅ DONE — scaffolding (squash `ab83c3c`, PR #47). Manual live execution by operator (cluster access via `deploy_target.md`) je separate post-merge step.
+> **Branch**: `chunk/I.6-release-dry-run` (deleted)
+> **Outcome**: Chart bump 0.1.0 → 1.0.0-rc.1. `values-staging.yaml` (vault-ref placeholders, no secrets). `.github/workflows/acceptance-live.yml` (workflow_dispatch + `release-dry-run` label + `chore(release):` push trigger). `scripts/release-dry-run.sh` + `scripts/rollback-test.sh` (top-5 critical paths #1/#4/#5/#6/#12). `playwright.config.live.ts` (chromium, 90s timeout, BASE_URL env). `docs/RELEASE-DRY-RUN.md` post-mortem template + GO/NO-GO matrix. Acceptance matrix "Live BFF" column (TBD per row). Registry: `ghcr.io/spigotek/sdm-bff:1.0.0-rc.1` (on-prem OCI deferred per `deploy_target.md`).
 > **Cieľ**: deploy full stack do staging cluster via helm chart, validate **live**
 > 18-journey acceptance smoke proti **real CA SDM 17.4** (10.11.35.35:8050),
 > validate rollback flow (helm rollback k previous chart version). Pre-flight pre
