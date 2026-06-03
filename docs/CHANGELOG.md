@@ -250,9 +250,15 @@ The following items are intentionally deferred and tracked for v1.1+:
   requires SSR (planned for v1.1+).
 - **Real-time tenant suspension push** — currently detected on the next API
   call. WebSocket-driven push planned for v1.1+.
-- **Real BFF cross-tenant query support** (SP cockpit) — currently
-  MSW-fixture. Native CA SDM cross-tenant support deferred to v1+ (subject
-  to CA SDM customisation).
+- **Real BFF cross-tenant query support** (SP cockpit) — pre-flight eval
+  (J.2, 2026-06-04) confirmed the dev/test CA SDM 17.4 instance at
+  `10.11.35.35:8050` is single-tenant (`/tenant` collection returns
+  `COUNT=0` rows per `real-backend-contracts.md §6`). I.5 (PR #46) already
+  shipped the BFF cross-tenant surface (`sp-impersonation.ts`,
+  `?tenants=all` aggregation, audit emit) + MSW overlay; on this instance
+  the MSW path is the production path because zero-tenant backend has
+  nothing to aggregate. If a multi-tenant CA SDM is configured later, the
+  follow-up is verification of the existing I.5 code path, not new build.
 
 ### Migration notes
 
