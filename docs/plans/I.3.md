@@ -1,7 +1,8 @@
 # I.3 — Multi-tenancy edge cases (RLS + tenant suspension + cross-tenant deny sweep)
 
-> **Status**: ✅ DONE (implementation merged in PR #TBD)
-> **Branch**: `chunk/I.3-multi-tenancy-edges` > **PR**: TBD
+> **Status**: ✅ DONE (squash `15c680f`, PR #44)
+> **Branch**: `chunk/I.3-multi-tenancy-edges` (deleted)
+> **Outcome**: BFF tenant-scoping audit + suspension flow (`tenantStatus: active|suspended`, filtering, 403 + `details.reason: "suspended"`). `@sdm/api-client` race detector (`TENANT_RACE` AppError, retry-once) + `X-Response-Tenant` middleware. Sentry beforeSend cross-tenant tag scrubber. FE: TenantSuspendedError class, TenantSwitcher grey-out + tooltip, SessionContext 403 → /login + toast. MSW fixture `TENANT_INITECH` suspended (reusable v I.5). Test deltas: BFF security tests +29, api-client +10, browser scenarios +11 (5 specs). Acceptance §4.2 9 rows `deferred → pass` + C3 updated.
 > **Cieľ**: harden multi-tenancy edges — RLS verification BFF-side, tenant
 > suspension flow, cross-tenant search/leak sweep across all `/api/*` endpoints,
 > Sentry beforeSend tenant scrubbing audit, X-Response-Tenant mismatch handling
