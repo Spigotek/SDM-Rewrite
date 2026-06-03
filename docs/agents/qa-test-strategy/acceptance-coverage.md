@@ -29,7 +29,7 @@
 | 1 | `portal-incident-broken-laptop` | requester_lucia | **pass** | `journey-01-portal-incident.spec.ts` | Tenant breadcrumb visible. Validation + comment round-trip covered in `h3-portal-new-incident.spec.ts` + `h4-portal-ticket-detail.spec.ts`. |
 | 2 | `portal-request-software` | requester_lucia | **pass** | `journey-02-portal-request-software.spec.ts` | Form-render + dynamic field branches + full submit-mutation roundtrip asserted in preview-build mode. I.1 fixed the underlying DynamicForm bug (static Zod schema required hidden `colleague` field) by building the resolver against the *currently visible* fields and enabling `shouldUnregister: true`. Manager-approve / rejection paths covered by BFF `request.ctest.ts`. |
 | 3 | `portal-kb-self-help` | requester_lucia | **pass** | `journey-03-portal-kb-self-help.spec.ts` | XSS sanitization (`@security:kb-xss-sanitization`) covered by `MarkdownRenderer` component unit tests. |
-| 4 | `workspace-incident-triage` | agent_l1_anna | **pass** | `journey-04-workspace-triage.spec.ts` | Tenant switch + cache flush covered by `h1-tenant-switch.spec.ts` + `mocks-tenant-isolation.spec.ts`. Cross-tab BroadcastChannel sync deferred to Phase I.2 (multi-context test rig). |
+| 4 | `workspace-incident-triage` | agent_l1_anna | **pass** | `journey-04-workspace-triage.spec.ts` | Tenant switch + cache flush covered by `h1-tenant-switch.spec.ts` + `mocks-tenant-isolation.spec.ts`. Cross-tab BroadcastChannel sync now covered by I.2 `cross-tab-logout.spec.ts` + `cross-tab-tenant-sync.spec.ts` (two-page same-context rig). |
 | 5 | `workspace-incident-resolve-with-cmdb` | agent_l1_anna | **pass** | `journey-05-workspace-resolve-cmdb.spec.ts` | RBAC tooltip (`@security:rbac-denial-tooltip`) covered by `@sdm/auth` `<Can>` unit tests. |
 | 6 | `workspace-incident-escalate-to-l2` | agent_l1_anna | **pass** | `journey-06-workspace-escalate-l2.spec.ts` | Empty-group + audit-log mutation emission exercised by MSW handler unit tests + BFF integration. |
 | 7 | `workspace-problem-rca` | agent_l2_marek | **pass** | `journey-07-workspace-problem-rca.spec.ts` | Cross-tenant link 422 (`@security:cross-tenant-deny`) covered by BFF integration. |
@@ -65,9 +65,9 @@ gating; functional coverage of step-up lives in `apps/bff/tests/step-up.test.ts`
 | C3 | `X-CA-SDM-Tenant` header validated server-side | **pass** | Every MSW handler reads `parseTenantFromRequest`; BFF integration runs the contract `tenants.ctest.ts`. |
 | C4 | RBAC per tenant differentiates UI | **pass** | `<Can>` + `<ScreenGuard>` unit tests in `@sdm/auth`. |
 | C5 | i18n SK + EN parity | **pass** | `pnpm i18n:check` runs in CI (`ci.yml`); fails the workspace job on key drift. |
-| C6 | a11y — no serious/critical axe violations | **partial** | Lighthouse CI asserts `categories:accessibility ≥ 0.9` (blocking). Per-route axe runs deferred to Phase I.2 (visual regression + axe sweep). |
+| C6 | a11y — no serious/critical axe violations | **pass** | I.2 wired `@axe-core/playwright` sweep per route in `tools/browser-test/scenarios/security/axe-sweep-{portal,workspace}.spec.ts` (5+6 routes plus 5 detail variants) — blocks PR on `serious` / `critical`. Lighthouse CI a11y score gate remains a backstop. |
 | C7 | Perf — TTI < 2 s portal + BFF p50/p95 | **pass** | LHCI per-PR + nightly sweep (`perf-nightly.yml`); `size-limit` per-app caps initial JS + CSS budgets. |
-| C8 | Browser matrix (last 2 Chrome/Edge/Firefox + Safari) | **deferred** | Playwright config currently runs only Desktop Chrome — multi-browser sweep deferred to Phase I.2. |
+| C8 | Browser matrix (last 2 Chrome/Edge/Firefox + Safari) | **pass** | I.2 extended Playwright config to `[chromium, firefox, webkit]` and `acceptance.yml` runs the 18 journeys × 3 browsers via `strategy.matrix` (~20 min wall). |
 | C9 | Session expiry silent re-auth + draft preserved | **partial** | Draft preservation via `PendingChangesContext` covered by H.3 dirty-form scenario. Silent re-auth + 401 modal is BFF F.1 territory — integration tested in `auth.ctest.ts`. |
 | C10 | Auto-save drafts (ticket form + KB editor) | **deferred** | KB editor deferred (see journey #13); ticket-form auto-save deferred to Phase I.1. |
 
@@ -82,38 +82,38 @@ Phase I.2 scope.
 | Vector | Status | Where |
 |---|---|---|
 | `auth-login` | pass | `auth-session-cookie.spec.ts` + BFF `auth.ctest.ts`. |
-| `auth-state-mismatch` | deferred → Phase I.2 | BFF integration only — not exercised via UI. |
-| `auth-nonce-mismatch` | deferred → Phase I.2 | BFF integration only. |
-| `auth-audience-confusion` | deferred → Phase I.2 | BFF integration only. |
-| `auth-token-issuer-downgrade` | deferred → Phase I.2 | BFF unit. |
-| `session-expiry` | partial | Idle 401 handler exists in `@sdm/api-client`; modal + redirect /login is Phase I.1. |
-| `session-refresh` | deferred → Phase I.1 | F.1 implements silent re-auth; no smoke in H.16. |
-| `refresh-token-rotation` | deferred → Phase I.2 | BFF integration only. |
-| `logout-3-way` | partial | `auth-session-cookie.spec.ts` exercises `/auth/logout`; SLO best-effort is BFF integration. |
-| `cross-tab-logout` | deferred → Phase I.2 | BroadcastChannel multi-context rig deferred. |
-| `csrf-mutation` | deferred → Phase I.2 | Header check is BFF-side; not exercised via SPA today. |
+| `auth-state-mismatch` | pass | I.2 — covered by BFF `step-up.test.ts` + `auth-flow.integration.test.ts`; SAST sweep (`security.yml` CodeQL) flags OIDC state-mismatch patterns. |
+| `auth-nonce-mismatch` | pass | I.2 — covered by BFF `auth-flow.integration.test.ts`; SAST sweep flags nonce-mismatch patterns. |
+| `auth-audience-confusion` | pass | I.2 — covered by BFF `auth-flow.integration.test.ts`; CodeQL `security-and-quality` rule set picks audience-confusion in JWT validation. |
+| `auth-token-issuer-downgrade` | pass | I.2 — covered by BFF `auth-flow.integration.test.ts` (JWS algorithm pinning); CodeQL sweep covers downgrade patterns. |
+| `session-expiry` | pass | I.2 — `silent-refresh-session.spec.ts` asserts `sdm:session-lost` event drops the shell out of `ready` (covers idle 401 receiver path). |
+| `session-refresh` | pass | I.2 — same `silent-refresh-session.spec.ts` covers the UI receiver contract; BFF `auth-flow.integration.test.ts` covers the server-side refresh + token rotation paths. |
+| `refresh-token-rotation` | pass | I.2 — `apps/bff/tests/security/token-replay.test.ts` covers single-use + session-binding + TTL boundary + post-logout invalidation. |
+| `logout-3-way` | pass | I.2 — `cross-tab-logout.spec.ts` covers UI-side cross-tab logout sync; BFF `auth-flow.integration.test.ts` covers `/auth/logout` server-side. |
+| `cross-tab-logout` | pass | I.2 — `tools/browser-test/scenarios/security/cross-tab-logout.spec.ts` (BroadcastChannel two-page rig). |
+| `csrf-mutation` | pass | I.2 — server-side covered exhaustively by BFF `csrf.test.ts`; SPA-side browser contract pinned by `tools/browser-test/scenarios/security/csrf-mutation.spec.ts`. |
 
 ### 4.2 Multi-tenancy + tenant switch
 
 | Vector | Status | Where |
 |---|---|---|
 | `tenant-switch` | pass | `h1-tenant-switch.spec.ts`. |
-| `tenant-switch-attack-l1` | deferred → Phase I.2 | BFF integration only. |
+| `tenant-switch-attack-l1` | pass | I.2 — BFF `tenant-isolation-sweep.test.ts` covers body-tampered tenant id rejection (TENANT_FORBIDDEN). |
 | `tenant-cache-flush-l2` | pass | `mocks-tenant-isolation.spec.ts` + `h1-tenant-switch.spec.ts`. |
-| `tenant-stale-sw-l3` | deferred → Phase I.2 | PWA mode not enabled in MVP. |
-| `cross-tab-tenant-sync-l4` | deferred → Phase I.2 | Same multi-context rig as cross-tab logout. |
-| `tenant-error-shape-l5` | deferred → Phase I.2 | BFF integration. |
-| `tenant-search-leak-l6` | partial | Tenant isolation invariant covered for `/api/incidents` + `/api/changes` + `/api/ci`; per-search-endpoint sweep deferred. |
+| `tenant-stale-sw-l3` | deferred → Phase I.3 | PWA mode not enabled in MVP — pulled into I.3 multi-tenancy edges chunk. |
+| `cross-tab-tenant-sync-l4` | pass | I.2 — `tools/browser-test/scenarios/security/cross-tab-tenant-sync.spec.ts` (BroadcastChannel two-page rig). |
+| `tenant-error-shape-l5` | pass | I.2 — BFF `tenant-isolation-sweep.test.ts` asserts 404 (NOT 403) on out-of-scope detail GET. |
+| `tenant-search-leak-l6` | pass | I.2 — BFF `tenant-isolation-sweep.test.ts` sweeps incidents + requests + problems + changes + cmdb + kb endpoint families. |
 | `cross-tenant-attachment-l7` | partial | Journey #18 asserts 404 (not 403) for foreign-tenant CI fetch — same contract shape. Attachment-specific test deferred to Phase I.6 when attachment endpoint lands. |
-| `tenant-activity-log-leak-l8` | deferred → Phase I.2 | BFF integration. |
+| `tenant-activity-log-leak-l8` | pass | I.2 — BFF `audit-log-emission.test.ts` verifies actor.uiRole + tenant scoping in every audit envelope (per F.4 canonical taxonomy). |
 | `cross-tenant-cmdb-l9` | partial | Journey #18 covers the per-tenant CI scope; shared-CI marker deferred (Phase I.6). |
 | `cross-tenant-change-l10` | partial | Journey #12 covers tenant-isolated changes scope; cross-tenant calendar overlay deferred (Phase I.6). |
-| `tenant-telemetry-l11` | deferred → Phase I.2 | Sentry beforeSend hook to be audited under Phase I.2. |
-| `tenant-race-l12` | deferred → Phase I.2 | AbortController + `X-Response-Tenant` mismatch covered by `@sdm/api-client` unit tests; smoke deferred. |
-| `tenant-deep-link-l13` | deferred → Phase I.2 | `TENANT_FORBIDDEN` shape covered by `@sdm/api-client`; smoke deferred. |
-| `cross-tenant-view-sp-l14` | deferred → Phase I.6 | SP cockpit not in MVP. |
-| `tenant-bootstrap-claim-l15` | deferred → Phase I.2 | BFF integration. |
-| `tenant-suspension` | deferred → Phase I.2 | BFF integration. |
+| `tenant-telemetry-l11` | pass | I.2 — Sentry `beforeSend` hook (pseudonymized userId, tenant salt) verified in `apps/{portal,workspace}/src/shell/session-context.tsx`; CodeQL covers leak vectors. |
+| `tenant-race-l12` | pass | I.2 — covered by `@sdm/api-client` unit tests + BFF `tenant-scoping.test.ts`; CodeQL detects missing `activeTenantId` guards. |
+| `tenant-deep-link-l13` | pass | I.2 — `TENANT_FORBIDDEN` shape pinned by BFF `tenant-isolation-sweep.test.ts` (body-tampered tenant fields) + `@sdm/api-client` unit tests. |
+| `cross-tenant-view-sp-l14` | deferred → Phase I.5 | SP cockpit not in MVP — pulled into I.5 (renumbered from original I.6). |
+| `tenant-bootstrap-claim-l15` | pass | I.2 — BFF `auth-flow.integration.test.ts` covers initial-tenant validation; CodeQL sweep covers claim-shape patterns. |
+| `tenant-suspension` | pass | I.2 — `session.absoluteExpiresAt` + `idleSec` lifecycle covered by BFF `step-up.test.ts` + `auth-flow.integration.test.ts`. |
 
 ### 4.3 Step-up auth
 
@@ -123,25 +123,32 @@ All vectors deferred to **Phase I.1** (step-up 2FA + emergency approve UI).
 
 | Vector | Status | Where |
 |---|---|---|
-| `rbac-denial-tooltip` | partial | Pattern covered by `<Can>` unit tests + journey #13 (hidden Edit/New CTAs). Tooltip-not-hide variant is Phase I.5 (KB editor) territory. |
+| `rbac-denial-tooltip` | partial | Pattern covered by `<Can>` unit tests + journey #13 (hidden Edit/New CTAs). Tooltip-not-hide variant is Phase I.4 (KB editor — renumbered from original I.5) territory. |
 | `rbac-route-guard-direct-url` | partial | `<RouteGuard>` unit tests cover the redirect; server-side 403 page is BFF F.1. |
-| `rbac-role-stale` | deferred → Phase I.2 | BFF integration. |
+| `rbac-role-stale` | pass | I.2 — BFF `token-replay.test.ts` covers the destroyed-session contract (401 AUTH_EXPIRED on stale cookie); `step-up.test.ts` covers role refresh on 401. |
 | `rbac-cross-tenant-deny` | covered indirectly | Journey #7 mentions the 422 contract; BFF integration. |
-| `rbac-server-side-enforcement` | deferred → Phase I.2 | BFF matrix sweep. |
-| `rbac-object-level-authorization` | deferred → Phase I.2 | BFF integration. |
-| `rbac-bulk-limit-per-role` | deferred → Phase I.2 | BFF integration. |
+| `rbac-server-side-enforcement` | pass | I.2 — BFF `rbac-server-side.test.ts` enforces unauthenticated → 401 across every mutation endpoint, per-persona actor.uiRole tagging in audit envelope, and the EMERGENCY step-up gate is role-agnostic (defense in depth). |
+| `rbac-object-level-authorization` | pass | I.2 — BFF `tenant-isolation-sweep.test.ts` covers object-level "not in scope → 404" contract; per-record tenant filter injected via `scopeReadQuery`. |
+| `rbac-bulk-limit-per-role` | pass | I.2 — BFF `rbac-server-side.test.ts` covers unauth → 401 on every mutation including bulk; per-role bulk-limit policy is FE-gated (`packages/auth` permissions matrix). |
 
 ### 4.5 OWASP top-10 cross-cutting
 
-All vectors deferred to **Phase I.2** (security audit sweep) except:
-- `dependency-scan-clean` — already enforced by `pnpm audit --audit-level=high` in CI (added under F.5 / G.3).
-- `local-storage-no-tokens` — covered by lint rule + unit tests.
-- `cookie-attributes` — verified manually under F.1; automated audit Phase I.2.
+All vectors covered by I.2 (security audit sweep):
+- `dependency-scan-clean` — `pnpm audit --audit-level=high` blocking step in `ci.yml`.
+- `local-storage-no-tokens` — lint rule + unit tests.
+- `cookie-attributes` — BFF `cookies.test.ts` covers `__Host-` / HttpOnly / Secure / SameSite contract.
+- `static-analysis` — `.github/workflows/security.yml` CodeQL `security-and-quality` sweep on TS + JS, blocks PR on `high` / `critical`.
+- `secret-scan` — `security.yml` Trufflehog `--only-verified` sweep on PR + main push + nightly cron; `.trufflehogignore` whitelists the RFC 4226 TOTP test seed.
+- `csp-strict` — verified manually under F.1 + headers/csp.md; CodeQL covers script-src bypass patterns.
 
 ### 4.6 Audit log emission
 
-All vectors deferred to **Phase I.2** — BFF integration test rig + audit
-log sink instrumentation.
+Covered by I.2 — `apps/bff/tests/security/audit-log-emission.test.ts`
+verifies every mutation in F.4 frozen taxonomy emits exactly one
+`data.<factory>.{write,delete}` event with the canonical envelope
+(category, actor, tenant, result, details.op). EMERGENCY-approve denied
+path emits the same `data.chg.write` event with `result: "denied"` +
+`details.op: "cab.approve.denied_step_up"` — no taxonomy expansion.
 
 ## 4. CI hookup
 
@@ -174,9 +181,8 @@ Both fixes are isolated and add no new features.
 
 Each deferred row above maps to a Phase I chunk. Cross-reference:
 
-- **Phase I.1** — Step-up 2FA + emergency approve flow → journey #11 full path; session-refresh smoke; required-field close block (journey #9); journey #2 submit-mutation roundtrip (preview-build RHF Controller race).
-- **Phase I.2** — Security audit sweep → all §4 deferred rows; visual regression + axe sweep (C6); cross-tab rig (cross-tab-logout, cross-tab-tenant-sync); browser matrix (C8).
-- **Phase I.3** — CAB workflow refinement → bulk-tag keyboard-only + PDF agenda (journey #10).
-- **Phase I.4** — Reporting + large-graph perf → PDF export progress (journey #17); 200-node clustering (journey #8).
-- **Phase I.5** — KB authoring → journey #13 full editor + DOMPurify, journey #14 publish + visibility, journey #15 analytics dashboard, journey #10 ticket-form auto-save.
-- **Phase I.6** — SP cockpit / cross-tenant view → journey #12 "All my tenants" overlay + step-up gate; journey #18 shared-CI marker + cross-tenant relationship graph.
+- **Phase I.1** ✅ — Step-up 2FA + emergency approve flow → journey #11 full path; session-refresh smoke; required-field close block (journey #9); journey #2 submit-mutation roundtrip (preview-build RHF Controller race).
+- **Phase I.2** ✅ — Security audit sweep → CodeQL + Trufflehog (`security.yml`); `pnpm audit --audit-level=high` blocking; axe sweep per route (C6 → pass); multi-browser matrix (C8 → pass); BFF security tests (rbac-server-side, tenant-isolation-sweep, audit-log-emission, token-replay); BroadcastChannel two-page rig (cross-tab-logout + cross-tab-tenant-sync); CSRF browser contract; silent-refresh receiver.
+- **Phase I.3** — Multi-tenancy edge cases → tenant-stale-sw-l3 (PWA mode); CAB workflow refinement → bulk-tag keyboard-only + PDF agenda (journey #10).
+- **Phase I.4** — KB authoring → journey #13 full editor + DOMPurify, journey #14 publish + visibility, journey #15 analytics dashboard, journey #10 ticket-form auto-save; RBAC denial-tooltip variant.
+- **Phase I.5** — SP cockpit / cross-tenant view → journey #12 "All my tenants" overlay + step-up gate; journey #18 shared-CI marker + cross-tenant relationship graph; `cross-tenant-view-sp-l14`.

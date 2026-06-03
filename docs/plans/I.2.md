@@ -1,6 +1,6 @@
 # I.2 — Security audit sweep (CodeQL + Trufflehog + axe + multi-browser)
 
-> **Status**: 🔜 (blokované na I.1 — uses step-up infra)
+> **Status**: 🚧 in-flight (PR open)
 > **Branch**: `chunk/I.2-security-audit` > **PR**: TBD
 > **Cieľ**: enable automated security scanning (CodeQL workflow, Trufflehog
 > secret scan, pnpm audit hardening), pridať axe browser sweep per route, rozšíriť

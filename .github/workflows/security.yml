@@ -1,0 +1,66 @@
+name: security
+
+# I.2 — static-analysis sweep. CodeQL covers SAST for TS/JS surface
+# (apps/ + packages/ + tools/); Trufflehog scans full git history for
+# verified-only secrets. Both jobs run per PR + per main push, and a
+# nightly cron picks up newly-disclosed CVE patterns from the upstream
+# action databases. `pnpm audit --audit-level=high` already runs as a
+# blocking step in `ci.yml`; this file owns the SAST + secret-scan gates.
+
+on:
+  pull_request: {}
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 3 * * *"
+
+concurrency:
+  group: security-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  codeql:
+    name: CodeQL (javascript + typescript)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Perform CodeQL analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+
+  trufflehog:
+    name: Trufflehog (verified secrets)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history required so historical commits (deleted secrets) are
+          # also scanned. `--only-verified` filters out inert / test seeds.
+          fetch-depth: 0
+
+      - name: Trufflehog secret scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          # Compare full git history vs working tree — equivalent to scanning
+          # all commits + uncommitted changes. `--only-verified` filters out
+          # documented test seeds (e.g. the RFC 4226 TOTP seed in I.1).
+          extra_args: --only-verified --fail

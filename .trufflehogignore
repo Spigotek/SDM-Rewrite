@@ -1,0 +1,14 @@
+# I.2 — documented test seeds that look like secrets but are inert.
+#
+# Trufflehog's `--only-verified` flag already filters out non-live findings,
+# but this file is a belt-and-braces for the few canonical RFC test vectors
+# embedded directly in source. Keep path-scoped — never blanket-allow.
+
+# RFC 4226 / Google Authenticator base32 test seed used for step-up 2FA
+# (I.1). Live verification is dev-only; production wiring against the
+# corp IdP MFA backend is deferred to I.6.
+apps/bff/src/auth/step-up.ts
+apps/bff/tests/step-up.test.ts
+docs/agents/security/auth-flow.md
+docs/plans/I.1.md
+docs/plans/I.2.md

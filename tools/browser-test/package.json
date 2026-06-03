@@ -13,5 +13,8 @@
   "dependencies": {
     "@playwright/test": "1.49.1",
     "tsx": "4.19.2"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.3"
   }
 }

@@ -467,6 +467,10 @@ importers:
       tsx:
         specifier: 4.19.2
         version: 4.19.2
+    devDependencies:
+      '@axe-core/playwright':
+        specifier: ^4.11.3
+        version: 4.11.3(playwright-core@1.49.1)
 
   tools/eslint-config: {}
 
@@ -494,6 +498,11 @@ packages:
 
   '@adobe/css-tools@4.5.0':
     resolution: {integrity: sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q==}
+
+  '@axe-core/playwright@4.11.3':
+    resolution: {integrity: sha512-h/kfksv4F0cVIDlKpT4700OehdRgpvuVskuQ2nb7/JmtWUXpe9ftHAPtwyXGvVSsa6SJ64A9ER7Zrzc/sIvC4w==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.29.0':
     resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
@@ -5323,6 +5332,11 @@ packages:
 snapshots:
 
   '@adobe/css-tools@4.5.0': {}
+
+  '@axe-core/playwright@4.11.3(playwright-core@1.49.1)':
+    dependencies:
+      axe-core: 4.11.4
+      playwright-core: 1.49.1
 
   '@babel/code-frame@7.29.0':
     dependencies:
