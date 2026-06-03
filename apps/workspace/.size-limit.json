@@ -71,5 +71,11 @@
     "path": "dist/assets/vendor-graph-*.js",
     "limit": "200 KB",
     "gzip": true
+  },
+  {
+    "name": "Workspace — vendor-editor chunk (lazy, /kb/editor/:id? only)",
+    "path": "dist/assets/vendor-editor-*.js",
+    "limit": "130 KB",
+    "gzip": true
   }
 ]

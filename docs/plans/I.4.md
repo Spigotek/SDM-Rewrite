@@ -1,6 +1,6 @@
 # I.4 — KB authoring (TipTap + DOMPurify + publish + visibility + analytics)
 
-> **Status**: 🔜 (blokované na I.0 — uses MSW-in-LHCI for editor LHCI graduation)
+> **Status**: 🚧 in-flight
 > **Branch**: `chunk/I.4-kb-authoring` > **PR**: TBD
 > **Cieľ**: rozšíriť H.15 workspace KB z read-only na full write — TipTap editor
 > route `/kb/editor` + `/kb/editor/:id`, DOMPurify sanitization pipeline, publish

@@ -14,7 +14,9 @@
         "http://localhost:5181/cmdb",
         "http://localhost:5181/cmdb/ci/ci:60000",
         "http://localhost:5181/kb",
-        "http://localhost:5181/kb/article/kb:50000"
+        "http://localhost:5181/kb/article/kb:50000",
+        "http://localhost:5181/kb/editor",
+        "http://localhost:5181/kb/analytics"
       ],
       "numberOfRuns": 3,
       "settings": {
@@ -125,6 +127,25 @@
             "interactive": ["error", { "maxNumericValue": 2200 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 1700 }],
             "categories:performance": ["error", { "minScore": 0.88 }]
+          }
+        },
+        {
+          "_comment": "I.4 — `/kb/editor` heavy route (TipTap lazy chunk ~128 KB gz; route is also gated, so unauthenticated load hits the route guard and renders fast, but for the kb_editor session the editor lazy chunk parse dominates TTI). Thresholds aligned with `performance.md §2 workspace heavy table` for editor surfaces.",
+          "matchingUrlPattern": "http://localhost:5181/kb/editor$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 3000 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2400 }],
+            "total-blocking-time": ["error", { "maxNumericValue": 400 }],
+            "categories:performance": ["error", { "minScore": 0.8 }]
+          }
+        },
+        {
+          "_comment": "I.4 — `/kb/analytics` dashboard route. Three lazy cards + range selector. No editor lazy chunk. Numbers aligned with `performance.md §2` workspace analytics table (medium).",
+          "matchingUrlPattern": "http://localhost:5181/kb/analytics$",
+          "assertions": {
+            "interactive": ["error", { "maxNumericValue": 2800 }],
+            "largest-contentful-paint": ["error", { "maxNumericValue": 2200 }],
+            "categories:performance": ["error", { "minScore": 0.82 }]
           }
         }
       ]

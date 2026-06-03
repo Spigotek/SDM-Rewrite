@@ -441,7 +441,8 @@
     },
     "actions": {
       "newArticle": "New article",
-      "editArticle": "Edit article"
+      "editArticle": "Edit article",
+      "analytics": "Analytics"
     },
     "article": {
       "back": "← Back to KB",
@@ -468,6 +469,103 @@
       "title": "Attach to ticket #{ticket}",
       "hint": "Attach this article to the active ticket as a reference for the requester.",
       "cta": "Attach to #{ticket}"
+    },
+    "editor": {
+      "titleNew": "New KB article",
+      "titleEdit": "Edit KB article",
+      "back": "← Back to KB",
+      "save": "Save",
+      "create": "Create draft",
+      "publish": "Publish",
+      "side": {
+        "aria": "Article settings"
+      },
+      "fields": {
+        "title": "Title",
+        "titlePlaceholder": "Short descriptive title…",
+        "category": "Category",
+        "categoryNone": "— no category —",
+        "tags": "Tags",
+        "tagsPlaceholder": "vpn, reset, network (comma-separated)"
+      },
+      "body": {
+        "aria": "Article body",
+        "placeholder": "Start writing the article content…"
+      },
+      "toolbar": {
+        "aria": "Formatting",
+        "bold": "Bold",
+        "italic": "Italic",
+        "bulletList": "• list",
+        "orderedList": "1. list",
+        "codeBlock": "Code",
+        "blockquote": "Quote",
+        "link": "Link",
+        "image": "Image",
+        "table": "Table",
+        "hr": "──",
+        "linkPrompt": "Link URL (empty to remove):",
+        "imagePrompt": "Image URL (markdown paste only):"
+      },
+      "visibility": {
+        "title": "Visibility",
+        "public": {
+          "label": "Public",
+          "hint": "Visible on the anonymous portal (sp_admin approval required)."
+        },
+        "tenant": {
+          "label": "Tenant",
+          "hint": "Visible to active-tenant users in portal + workspace."
+        },
+        "sp_only": {
+          "label": "SP admin only",
+          "hint": "Visible only to service provider admins (cross-tenant)."
+        }
+      },
+      "publishModal": {
+        "title": "Publish \"{title}\"",
+        "body": "After publishing, the article becomes visible per the chosen scope. The draft is then cleared.",
+        "tagsLabel": "Tags",
+        "tagsPlaceholder": "vpn, reset, network",
+        "submit": "Publish now"
+      },
+      "autosave": {
+        "idle": "Ready.",
+        "saving": "Saving draft…",
+        "error": "Auto-save failed. Try Save manually.",
+        "savedJustNow": "Saved just now",
+        "savedMinutesAgo": "Saved {minutes} min ago",
+        "savedHoursAgo": "Saved {hours} h ago"
+      },
+      "errors": {
+        "save": "Could not save article. Try again.",
+        "publish": "Publish failed. Try again or contact admin.",
+        "publishNoId": "Save the draft first, then publish."
+      }
+    },
+    "analytics": {
+      "title": "KB analytics",
+      "rangeAria": "Time range",
+      "range": {
+        "7d": "Last 7 days",
+        "30d": "Last 30 days",
+        "90d": "Last 90 days"
+      },
+      "loading": "Loading data…",
+      "error": "Could not load analytics.",
+      "top": {
+        "title": "Top 10 articles (views)",
+        "views": "{views} views"
+      },
+      "bottom": {
+        "title": "Bottom 5 (helpfulness)",
+        "ratio": "{ratio}% helpful",
+        "noData": "No data"
+      },
+      "searchMiss": {
+        "title": "Search misses (no-result queries)",
+        "hits": "{hits} searches"
+      }
     }
   },
   "cmdb": {

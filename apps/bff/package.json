@@ -21,6 +21,7 @@
     "@sdm/domain": "workspace:*",
     "fast-xml-parser": "^4.5.0",
     "hono": "4.12.23",
+    "isomorphic-dompurify": "^2",
     "pino": "9.5.0",
     "zod": "^3.23.8"
   },

@@ -38,16 +38,18 @@
 | 10 | `workspace-change-cab-prep` | change_manager_peter | **pass** | `journey-10-workspace-change-cab-prep.spec.ts` | Bulk-tag keyboard-only + PDF agenda export deferred to Phase I.3 (CAB workflow refinement). |
 | 11 | `workspace-change-emergency-approve` | change_manager_peter | **pass** | `journey-11-workspace-change-emergency.spec.ts` | I.1 wires step-up 2FA end-to-end: `POST /auth/step-up` (TOTP via `node:crypto`, single-use 15-min token), `<StepUpModal>` gate inside `<ApproveModal>` for EMERGENCY in production tenants, and BFF approve handler that enforces `X-Step-Up-Token` for EMERGENCY changes. Browser test branches on whether the role grants `cab.approve`; full enforcement coverage in `apps/bff/tests/step-up.test.ts` + `changes-approval.test.ts`. CSRF header enforcement covered by BFF integration. |
 | 12 | `workspace-change-cross-tenant-conflict` | change_manager_peter | **partial** | `journey-12-workspace-change-cross-tenant.spec.ts` | "All my tenants" overlay (`@security:cross-tenant-view-sp`) deferred to Phase I.6 (SP cockpit). Tenant-isolation invariant verified as a sibling assertion. |
-| 13 | `workspace-kb-author-new` | kb_editor_jana | **deferred** | `journey-13-workspace-kb-author-new.spec.ts` | KB editor + DOMPurify pipeline (`@security:kb-markdown-sanitization`) deferred to Phase I.5 (KB authoring). Spec confirms `kb.write` permission gating today. |
-| 14 | `workspace-kb-from-incident` | kb_editor_jana | **partial** | `journey-14-workspace-kb-from-incident.spec.ts` | `?attachToTicket` CTA round-trip covered. Publish-from-editor + visibility selector (`@security:kb-visibility-scope`) deferred to Phase I.5. |
-| 15 | `workspace-kb-analytics-review` | kb_editor_jana | **partial** | `journey-15-workspace-kb-analytics.spec.ts` | Per-article stats panel covered. Full analytics dashboard (top-10 / bottom-5 / search-miss) deferred to Phase I.5. |
+| 13 | `workspace-kb-author-new` | kb_editor_jana | **pass** | `journey-13-workspace-kb-author-new.spec.ts` | I.4 — full TipTap + DOMPurify editor flow: Jana creates draft → publishes → article surfaces on `/kb`. `@security:kb-markdown-sanitization` covered (XSS payload stripped both FE + BFF). |
+| 14 | `workspace-kb-from-incident` | kb_editor_jana | **pass** | `journey-14-workspace-kb-from-incident.spec.ts` | I.4 — `?attachToTicket` CTA round-trip + publish-from-editor leg with `@security:kb-visibility-scope` (visibility radio scoped to public/tenant/sp_only). |
+| 15 | `workspace-kb-analytics-review` | kb_editor_jana | **pass** | `journey-15-workspace-kb-analytics.spec.ts` | I.4 — full `/kb/analytics` dashboard (top-10 / bottom-5 / search-miss × 7d/30d/90d range selector) + per-article stats panel. |
 | 16 | `workspace-cmdb-ci-detail` | cmdb_owner_robert | **pass** | `journey-16-workspace-cmdb-ci-detail.spec.ts` | All 4 tabs + collapse round-trip + history empty/list branch covered. |
 | 17 | `workspace-cmdb-relationship-impact` | cmdb_owner_robert | **pass** | `journey-17-workspace-cmdb-relationships.spec.ts` | PDF export progress bar deferred to Phase I.4 (reporting). |
 | 18 | `workspace-cmdb-cross-tenant-shared` | cmdb_owner_robert | **partial** | `journey-18-workspace-cmdb-cross-tenant.spec.ts` | Tenant-scoped CI list + 404 non-leakage covered. "Shared ownership" badge + cross-tenant relationship marker (`@security:cross-tenant-cmdb`) deferred to Phase I.6 (SP cockpit / cross-tenant view). |
 
-**Totals**: 18 / 18 covered — **14 pass**, **3 partial**, **1 deferred**.
+**Totals**: 18 / 18 covered — **17 pass**, **1 partial**, **0 deferred**.
 
-Every partial / deferred row carries an explicit Phase I follow-up.
+I.4 graduated journeys #13/#14/#15 from deferred/partial → pass (full
+TipTap editor + DOMPurify pipeline + analytics dashboard). Only journey
+#12 remains `partial` (cross-tenant overlay deferred to I.5 SP cockpit).
 
 **CI run summary** (latest): 20 of 20 Playwright tests pass against the
 build-mode MSW preview servers. I.1 graduated journeys #2/#9/#11 from
@@ -69,7 +71,7 @@ gating; functional coverage of step-up lives in `apps/bff/tests/step-up.test.ts`
 | C7 | Perf — TTI < 2 s portal + BFF p50/p95 | **pass** | LHCI per-PR + nightly sweep (`perf-nightly.yml`); `size-limit` per-app caps initial JS + CSS budgets. |
 | C8 | Browser matrix (last 2 Chrome/Edge/Firefox + Safari) | **pass** | I.2 extended Playwright config to `[chromium, firefox, webkit]` and `acceptance.yml` runs the 18 journeys × 3 browsers via `strategy.matrix` (~20 min wall). |
 | C9 | Session expiry silent re-auth + draft preserved | **partial** | Draft preservation via `PendingChangesContext` covered by H.3 dirty-form scenario. Silent re-auth + 401 modal is BFF F.1 territory — integration tested in `auth.ctest.ts`. |
-| C10 | Auto-save drafts (ticket form + KB editor) | **deferred** | KB editor deferred (see journey #13); ticket-form auto-save deferred to Phase I.1. |
+| C10 | Auto-save drafts (ticket form + KB editor) | **partial** | I.4 — KB editor 5s debounced draft auto-save wired via `<DraftAutoSave>`; `PATCH /api/kb/articles/:id/draft` emits `data.kd.write op=kb.draft` audit. Ticket-form auto-save remains deferred. |
 
 ## 3. Security test vectors (`acceptance-criteria.md §4`) — read-only verification
 
@@ -184,5 +186,5 @@ Each deferred row above maps to a Phase I chunk. Cross-reference:
 - **Phase I.1** ✅ — Step-up 2FA + emergency approve flow → journey #11 full path; session-refresh smoke; required-field close block (journey #9); journey #2 submit-mutation roundtrip (preview-build RHF Controller race).
 - **Phase I.2** ✅ — Security audit sweep → CodeQL + Trufflehog (`security.yml`); `pnpm audit --audit-level=high` blocking; axe sweep per route (C6 → pass); multi-browser matrix (C8 → pass); BFF security tests (rbac-server-side, tenant-isolation-sweep, audit-log-emission, token-replay); BroadcastChannel two-page rig (cross-tab-logout + cross-tab-tenant-sync); CSRF browser contract; silent-refresh receiver.
 - **Phase I.3** — Multi-tenancy edge cases → tenant-stale-sw-l3 (PWA mode); CAB workflow refinement → bulk-tag keyboard-only + PDF agenda (journey #10).
-- **Phase I.4** — KB authoring → journey #13 full editor + DOMPurify, journey #14 publish + visibility, journey #15 analytics dashboard, journey #10 ticket-form auto-save; RBAC denial-tooltip variant.
+- **Phase I.4** ✅ — KB authoring → journey #13 full TipTap editor + DOMPurify (XSS sanitization FE+BFF, `data.kd.write op=kb.create|update|publish|draft|delete` audit), journey #14 publish + visibility selector (public/tenant/sp_only), journey #15 analytics dashboard (top-10/bottom-5/search-miss × 7d/30d/90d) — all pass. Ticket-form auto-save still deferred; RBAC denial-tooltip variant deferred.
 - **Phase I.5** — SP cockpit / cross-tenant view → journey #12 "All my tenants" overlay + step-up gate; journey #18 shared-CI marker + cross-tenant relationship graph; `cross-tenant-view-sp-l14`.

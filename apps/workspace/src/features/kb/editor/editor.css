@@ -1,0 +1,341 @@
+/*
+ * KB editor + analytics styles (I.4). Inherits the workspace tokens from
+ * `app-shell.css` and the read-side `kb.css`. The grid is the same 70/30
+ * split the wireframe specifies, collapsing to a single column under
+ * 1024 px.
+ */
+
+.sdm-kb-editor-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 24px 32px;
+}
+
+.sdm-kb-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.sdm-kb-editor-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sdm-kb-editor-title {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.sdm-kb-editor-autosave {
+  font-size: 0.85rem;
+  color: var(--sdm-color-text-secondary, #93a1b0);
+}
+
+.sdm-kb-editor-autosave[data-status="error"] {
+  color: var(--sdm-color-danger, #e57373);
+}
+
+.sdm-kb-editor-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sdm-kb-editor-error {
+  padding: 8px 12px;
+  background: var(--sdm-color-danger-bg, #4a2222);
+  color: var(--sdm-color-danger, #f08080);
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.sdm-kb-editor-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 24px;
+}
+
+@media (max-width: 1024px) {
+  .sdm-kb-editor-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sdm-kb-editor-main {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sdm-kb-editor-title-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sdm-kb-editor-title-row > span {
+  font-size: 0.85rem;
+  color: var(--sdm-color-text-secondary, #93a1b0);
+}
+
+.sdm-kb-editor-title-row > input {
+  font-size: 1rem;
+  padding: 8px 12px;
+  background: var(--sdm-color-bg-input, #1f2530);
+  color: var(--sdm-color-text, #e6e6e6);
+  border: 1px solid var(--sdm-color-border, #303a47);
+  border-radius: 6px;
+}
+
+.sdm-kb-editor-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--sdm-color-border, #303a47);
+  border-radius: 6px;
+  background: var(--sdm-color-bg-input, #1f2530);
+  min-height: 320px;
+}
+
+.sdm-kb-editor-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 6px;
+  border-bottom: 1px solid var(--sdm-color-border, #303a47);
+  background: var(--sdm-color-bg-elevated, #232a36);
+}
+
+.sdm-kb-editor-toolbar button[data-active] {
+  background: var(--sdm-color-accent-bg, #2a4a6b);
+}
+
+.sdm-kb-editor-prose {
+  min-height: 280px;
+  padding: 12px 16px;
+  outline: none;
+  font-family: var(--sdm-font-body, system-ui, sans-serif);
+  line-height: 1.55;
+  color: var(--sdm-color-text, #e6e6e6);
+}
+
+.sdm-kb-editor-prose h1 {
+  font-size: 1.5rem;
+  margin: 1em 0 0.5em;
+}
+.sdm-kb-editor-prose h2 {
+  font-size: 1.25rem;
+  margin: 1em 0 0.5em;
+}
+.sdm-kb-editor-prose h3 {
+  font-size: 1.1rem;
+  margin: 1em 0 0.5em;
+}
+.sdm-kb-editor-prose ul,
+.sdm-kb-editor-prose ol {
+  margin: 0.5em 0 0.5em 1.5em;
+}
+.sdm-kb-editor-prose code {
+  background: var(--sdm-color-bg-code, #16191e);
+  padding: 0 4px;
+  border-radius: 3px;
+  font-family: var(--sdm-font-mono, ui-monospace, monospace);
+}
+.sdm-kb-editor-prose pre {
+  background: var(--sdm-color-bg-code, #16191e);
+  padding: 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+.sdm-kb-editor-prose blockquote {
+  border-left: 3px solid var(--sdm-color-border, #303a47);
+  padding-left: 12px;
+  color: var(--sdm-color-text-secondary, #93a1b0);
+}
+.sdm-kb-editor-prose table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 0.5em 0;
+}
+.sdm-kb-editor-prose th,
+.sdm-kb-editor-prose td {
+  border: 1px solid var(--sdm-color-border, #303a47);
+  padding: 6px 10px;
+  text-align: left;
+}
+.sdm-kb-editor-prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+.sdm-kb-editor-side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sdm-kb-editor-fieldset {
+  border: 1px solid var(--sdm-color-border, #303a47);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.sdm-kb-editor-fieldset > legend {
+  padding: 0 6px;
+  font-size: 0.85rem;
+  color: var(--sdm-color-text-secondary, #93a1b0);
+}
+
+.sdm-kb-editor-fieldset > select,
+.sdm-kb-editor-fieldset > input {
+  width: 100%;
+  padding: 6px 10px;
+  background: var(--sdm-color-bg-input, #1f2530);
+  color: var(--sdm-color-text, #e6e6e6);
+  border: 1px solid var(--sdm-color-border, #303a47);
+  border-radius: 4px;
+}
+
+.sdm-kb-editor-visibility {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid var(--sdm-color-border, #303a47);
+  border-radius: 6px;
+  padding: 12px;
+}
+
+.sdm-kb-editor-visibility-legend {
+  padding: 0 6px;
+  font-size: 0.85rem;
+  color: var(--sdm-color-text-secondary, #93a1b0);
+}
+
+.sdm-kb-editor-visibility-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.sdm-kb-editor-visibility-label {
+  display: flex;
+  flex-direction: column;
+}
+
+.sdm-kb-editor-visibility-hint {
+  font-size: 0.8rem;
+  color: var(--sdm-color-text-secondary, #93a1b0);
+}
+
+.sdm-kb-editor-tags-label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+}
+
+.sdm-kb-editor-tags-label > input {
+  padding: 6px 10px;
+  background: var(--sdm-color-bg-input, #1f2530);
+  color: var(--sdm-color-text, #e6e6e6);
+  border: 1px solid var(--sdm-color-border, #303a47);
+  border-radius: 4px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────── */
+/* Analytics dashboard */
+
+.sdm-kb-analytics-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 24px 32px;
+}
+
+.sdm-kb-analytics-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sdm-kb-analytics-title {
+  font-size: 1.4rem;
+  margin: 0;
+}
+
+.sdm-kb-analytics-range {
+  display: inline-flex;
+  gap: 4px;
+  background: var(--sdm-color-bg-elevated, #232a36);
+  border-radius: 6px;
+  padding: 4px;
+}
+
+.sdm-kb-analytics-range > button {
+  padding: 4px 12px;
+  border: none;
+  background: transparent;
+  color: var(--sdm-color-text-secondary, #93a1b0);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.sdm-kb-analytics-range > button[data-active] {
+  background: var(--sdm-color-accent-bg, #2a4a6b);
+  color: var(--sdm-color-text, #e6e6e6);
+}
+
+.sdm-kb-analytics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.sdm-kb-analytics-card {
+  border: 1px solid var(--sdm-color-border, #303a47);
+  border-radius: 6px;
+  padding: 16px;
+  background: var(--sdm-color-bg-elevated, #232a36);
+}
+
+.sdm-kb-analytics-card > h2 {
+  font-size: 1rem;
+  margin: 0 0 12px;
+  color: var(--sdm-color-text, #e6e6e6);
+}
+
+.sdm-kb-analytics-card ol {
+  list-style: decimal;
+  margin: 0 0 0 1.5em;
+  padding: 0;
+}
+
+.sdm-kb-analytics-card li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 4px 0;
+  font-size: 0.9rem;
+}
+
+.sdm-kb-analytics-row-meta {
+  color: var(--sdm-color-text-secondary, #93a1b0);
+  font-size: 0.8rem;
+}
+
+.sdm-kb-analytics-state {
+  font-size: 0.9rem;
+  color: var(--sdm-color-text-secondary, #93a1b0);
+}
+
+.sdm-kb-analytics-state--error {
+  color: var(--sdm-color-danger, #e57373);
+}

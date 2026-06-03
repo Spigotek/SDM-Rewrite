@@ -109,6 +109,26 @@ export default defineConfig(({ mode }) => {
             ) {
               return "vendor-markdown";
             }
+            // TipTap editor stack — used only on `/kb/editor/:id?` (I.4
+            // workspace KB authoring). Grouping `@tiptap/*` + ProseMirror
+            // (transitive) + `isomorphic-dompurify` + the underlying
+            // `dompurify` into one `vendor-editor` lazy chunk keeps the
+            // workspace initial JS untouched. Per `performance.md §3 heavy
+            // chunks`, this chunk is capped at 120 KB gzip in
+            // `.size-limit.json`.
+            //
+            // pnpm flattens packages under `node_modules/.pnpm/<pkg>@<ver>/
+            // node_modules/<pkg>` — the regex matches either the `.pnpm/`
+            // outer dir name (which uses `+` to escape `/`, e.g.
+            // `@tiptap+core@...`) or the final `node_modules/@tiptap/...`
+            // segment to catch both flat and resolved paths.
+            if (
+              /[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:@tiptap[+\\/]|prosemirror-|isomorphic-dompurify|dompurify|orderedmap|rope-sequence|w3c-keyname|linkifyjs|@linkify)/i.test(
+                id,
+              )
+            ) {
+              return "vendor-editor";
+            }
             if (/[\\/]node_modules[\\/](?:\.pnpm[\\/])?(?:@radix-ui[\\/]|lucide-react)/.test(id)) {
               return "vendor-ds";
             }
