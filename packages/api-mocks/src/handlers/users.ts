@@ -7,6 +7,7 @@ import {
   type UIRole,
 } from "@sdm/domain";
 import { store } from "../db";
+import { tenantStatusFixture } from "../fixtures/tenants";
 import { DEFAULT_USER_ID } from "../fixtures/users";
 import { correlationIdFrom } from "../utils/correlation";
 import { badRequest, forbidden, unauthorized } from "../utils/errors";
@@ -67,6 +68,8 @@ function meResponseForUser(userIdValue: string, requestedTenant: TenantId) {
 
   const tenants = store.tenants
     .filter((t) => accessibleTenantIds.has(t.id))
+    // I.3 — strip suspended tenants so the FE switcher never enumerates them.
+    .filter((t) => (tenantStatusFixture[t.id] ?? "active") === "active")
     .map((t) => {
       const assignments = user.roleAssignments.filter((r) => r.tenantId === t.id);
       const tenant: {
@@ -148,6 +151,25 @@ export const userHandlers = [
     if (!user) return unauthorized("session user missing", correlationId);
     const hasAccess = user.roleAssignments.some((r) => r.tenantId === body.tenantId);
     if (!hasAccess) return forbidden(`user has no role in tenant ${body.tenantId}`, correlationId);
+
+    // I.3 — block switch into a suspended tenant. The reason discriminator
+    // mirrors the BFF response shape (`details.reason: "tenant_suspended"`)
+    // so the SPA session-context handler treats both runtimes identically.
+    const targetStatus = tenantStatusFixture[body.tenantId] ?? "active";
+    if (targetStatus === "suspended") {
+      return HttpResponse.json(
+        {
+          error: "TENANT_FORBIDDEN",
+          message: "Tenant is suspended — switch denied",
+          correlationId,
+          details: { reason: "tenant_suspended" },
+        },
+        {
+          status: 403,
+          headers: { "Content-Type": "application/json" },
+        },
+      );
+    }
 
     const newTenant = toTenantId(body.tenantId);
     ACTIVE_TENANT_BY_USER.set(user.id, newTenant);

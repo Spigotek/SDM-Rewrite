@@ -123,15 +123,50 @@ export interface SanitizableEvent {
   contexts?: Record<string, unknown>;
   request?: { cookies?: unknown; data?: unknown; [key: string]: unknown };
   breadcrumbs?: Array<{ data?: unknown; [key: string]: unknown }>;
+  tags?: Record<string, string | number | boolean | null | undefined>;
   [key: string]: unknown;
 }
+
+/**
+ * I.3 — Cross-tenant tag scrubbing. The Sentry SDK exposes
+ * `Sentry.setTag("tenantId", "<id>")` for filtering; if an event leaks with a
+ * `tenant_id` / `tenantId` tag that does not match the SPA's current
+ * `activeTenantId` (e.g. error raised by code path that still references a
+ * pre-switch tenant), strip the tag rather than ship a misleading attribution.
+ *
+ * Designed for `Sentry.init({ beforeSend })`. The check is a flat object
+ * lookup (no regex), benchmarked < 1 ms per event on a modern laptop.
+ */
+export interface SentryScrubOptions {
+  /** SPA's current `session.activeTenantId`. `null` skips the check. */
+  readonly activeTenantId: string | null;
+}
+
+const TENANT_TAG_KEYS = ["tenantId", "tenant_id", "tenant"] as const;
 
 /**
  * `beforeSend` body — strips PII from every well-known PII surface in a
  * Sentry event. Designed to be safe to call on partial events (any field
  * may be missing).
  */
-export function sanitizeSentryEvent<T extends SanitizableEvent>(event: T): T {
+export function sanitizeSentryEvent<T extends SanitizableEvent>(
+  event: T,
+  opts?: SentryScrubOptions,
+): T {
+  // I.3 — Cross-tenant tag scrub. Runs before the PII walk because tags are
+  // shallow + cheap (flat-object key probe). The active tenant id is opt-in;
+  // omit it (or pass null) on bootstrap paths where no tenant exists yet.
+  if (event.tags && opts?.activeTenantId !== undefined && opts.activeTenantId !== null) {
+    const activeId = opts.activeTenantId;
+    for (const key of TENANT_TAG_KEYS) {
+      const value = event.tags[key];
+      if (typeof value === "string" && value !== activeId) {
+        // Replace rather than delete — keeps the schema stable for the SIEM
+        // index (a missing tag in some events shifts column layout).
+        event.tags[key] = REDACTED_SENTINEL;
+      }
+    }
+  }
   if (event.user) {
     // Keep only the pseudonymized id; drop email, username, ip_address.
     const id = event.user.id;

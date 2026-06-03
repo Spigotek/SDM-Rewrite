@@ -15,6 +15,14 @@ import type { Session } from "@sdm/auth";
 
 export type TenantEnvironment = "production" | "staging" | "development" | "sandbox";
 
+/**
+ * I.3 — Lifecycle status surfaced by the BFF for the tenant switcher. The
+ * happy path strips suspended tenants server-side, but the field is still
+ * threaded through so admin / SP cockpit views (post-MVP) can render the
+ * suspended state with a tooltip instead of removing the entry.
+ */
+export type TenantStatus = "active" | "suspended";
+
 export interface MeResponse {
   user: {
     id: string;
@@ -28,6 +36,7 @@ export interface MeResponse {
     name: string;
     isServiceProvider: boolean;
     environment?: TenantEnvironment;
+    status?: TenantStatus;
     roles: Array<{ id: string; name: string; uiRole: string }>;
   }>;
   activeTenant: {
@@ -45,7 +54,12 @@ export interface MeResponse {
 
 export interface SessionLoadResult {
   readonly session: Session;
-  readonly tenants: ReadonlyArray<{ id: TenantId; name: string; environment?: TenantEnvironment }>;
+  readonly tenants: ReadonlyArray<{
+    id: TenantId;
+    name: string;
+    environment?: TenantEnvironment;
+    status?: TenantStatus;
+  }>;
 }
 
 // H.1: `X-CA-SDM-Tenant` removed. The BFF resolves the active tenant from the
@@ -57,6 +71,18 @@ export class UnauthorizedError extends Error {
   constructor(public readonly reason?: string) {
     super(reason ? `unauthorized: ${reason}` : "unauthorized");
     this.name = "UnauthorizedError";
+  }
+}
+
+/**
+ * I.3 — Thrown when the BFF rejects a tenant switch because the target tenant
+ * is suspended. Distinct from `UnauthorizedError` (401) and a generic 403 —
+ * the SessionContext maps this to a toast + a forced sign-out flow.
+ */
+export class TenantSuspendedError extends Error {
+  constructor(public readonly targetTenantId: string) {
+    super(`tenant suspended: ${targetTenantId}`);
+    this.name = "TenantSuspendedError";
   }
 }
 
@@ -145,11 +171,17 @@ export function shapeMeResponseToSession(me: MeResponse): SessionLoadResult {
   return {
     session,
     tenants: me.tenants.map((t) => {
-      const opt: { id: TenantId; name: string; environment?: TenantEnvironment } = {
+      const opt: {
+        id: TenantId;
+        name: string;
+        environment?: TenantEnvironment;
+        status?: TenantStatus;
+      } = {
         id: toTenantId(t.id),
         name: t.name,
       };
       if (t.environment) opt.environment = t.environment;
+      if (t.status) opt.status = t.status;
       return opt;
     }),
   };
@@ -175,6 +207,18 @@ export async function postActiveTenant(tenantId: TenantId): Promise<SessionLoadR
   if (response.status === 401) {
     const body = (await response.json().catch(() => null)) as { reason?: string } | null;
     throw new UnauthorizedError(body?.reason);
+  }
+  // I.3 — 403 with `details.reason: "tenant_suspended"` is its own failure
+  // mode: the FE drops to anonymous + surfaces a toast, then the user
+  // re-authenticates.
+  if (response.status === 403) {
+    const body = (await response.json().catch(() => null)) as {
+      details?: { reason?: string };
+    } | null;
+    if (body?.details?.reason === "tenant_suspended") {
+      throw new TenantSuspendedError(tenantId);
+    }
+    throw new Error(`[session] tenant switch forbidden`);
   }
   if (!response.ok) {
     throw new Error(`[session] tenant switch failed: HTTP ${response.status}`);

@@ -18,6 +18,7 @@ import {
   logout as doLogout,
   type SessionLoadResult,
   type TenantEnvironment,
+  type TenantStatus,
   UnauthorizedError,
 } from "../bootstrap/session";
 import { consumePreloadedSession } from "../bootstrap/session-preload";
@@ -26,6 +27,7 @@ interface TenantOption {
   readonly id: TenantId;
   readonly name: string;
   readonly environment?: TenantEnvironment;
+  readonly status?: TenantStatus;
 }
 
 type Status = "loading" | "ready" | "anonymous" | "error";
@@ -131,6 +133,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     }
     window.addEventListener("sdm:session-lost", onSessionLost);
     return () => window.removeEventListener("sdm:session-lost", onSessionLost);
+  }, []);
+
+  // I.3 — tenant suspension drops the SPA to anonymous (re-auth required to
+  // pick a different tenant). The toast itself is dispatched by the same
+  // event so the global toast layer can pick it up; the session-context just
+  // wipes its own state so guarded routes don't keep rendering with the now-
+  // invalid tenant.
+  useEffect(() => {
+    function onTenantSuspended() {
+      setSession(null);
+      setTenants([]);
+      setStatus("anonymous");
+    }
+    window.addEventListener("sdm:tenant-suspended", onTenantSuspended);
+    return () => window.removeEventListener("sdm:tenant-suspended", onTenantSuspended);
   }, []);
 
   // Sentry user context per ADR-09 §1 — never raw userId / email / displayName.

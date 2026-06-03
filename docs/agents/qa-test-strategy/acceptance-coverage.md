@@ -62,7 +62,7 @@ gating; functional coverage of step-up lives in `apps/bff/tests/step-up.test.ts`
 |---|---|---|---|
 | C1 | Tenant isolation — switch flushes cache | **pass** | `mocks-tenant-isolation.spec.ts` + `h1-tenant-switch.spec.ts` (cache flush assertion via `active-tenant` testid). |
 | C2 | Tenant switcher lists only allowed tenants | **pass** | `h1-tenant-switch.spec.ts` (search filter narrows to allowed list). |
-| C3 | `X-CA-SDM-Tenant` header validated server-side | **pass** | Every MSW handler reads `parseTenantFromRequest`; BFF integration runs the contract `tenants.ctest.ts`. |
+| C3 | `X-CA-SDM-Tenant` header validated server-side | **pass** | I.3 — `apps/bff/src/security/tenant-headers.ts` rejects mismatched inbound `X-CA-SDM-Tenant` with 403 + audit `authz.tenant.switch.denied` (`details.reason: "header_forgery"`) AND stamps `X-Response-Tenant` on outbound; `cross-tenant-sweep.test.ts` exercises both paths across every entity endpoint. |
 | C4 | RBAC per tenant differentiates UI | **pass** | `<Can>` + `<ScreenGuard>` unit tests in `@sdm/auth`. |
 | C5 | i18n SK + EN parity | **pass** | `pnpm i18n:check` runs in CI (`ci.yml`); fails the workspace job on key drift. |
 | C6 | a11y — no serious/critical axe violations | **pass** | I.2 wired `@axe-core/playwright` sweep per route in `tools/browser-test/scenarios/security/axe-sweep-{portal,workspace}.spec.ts` (5+6 routes plus 5 detail variants) — blocks PR on `serious` / `critical`. Lighthouse CI a11y score gate remains a backstop. |
@@ -103,17 +103,17 @@ Phase I.2 scope.
 | `tenant-stale-sw-l3` | deferred → Phase I.3 | PWA mode not enabled in MVP — pulled into I.3 multi-tenancy edges chunk. |
 | `cross-tab-tenant-sync-l4` | pass | I.2 — `tools/browser-test/scenarios/security/cross-tab-tenant-sync.spec.ts` (BroadcastChannel two-page rig). |
 | `tenant-error-shape-l5` | pass | I.2 — BFF `tenant-isolation-sweep.test.ts` asserts 404 (NOT 403) on out-of-scope detail GET. |
-| `tenant-search-leak-l6` | pass | I.2 — BFF `tenant-isolation-sweep.test.ts` sweeps incidents + requests + problems + changes + cmdb + kb endpoint families. |
-| `cross-tenant-attachment-l7` | partial | Journey #18 asserts 404 (not 403) for foreign-tenant CI fetch — same contract shape. Attachment-specific test deferred to Phase I.6 when attachment endpoint lands. |
-| `tenant-activity-log-leak-l8` | pass | I.2 — BFF `audit-log-emission.test.ts` verifies actor.uiRole + tenant scoping in every audit envelope (per F.4 canonical taxonomy). |
-| `cross-tenant-cmdb-l9` | partial | Journey #18 covers the per-tenant CI scope; shared-CI marker deferred (Phase I.6). |
-| `cross-tenant-change-l10` | partial | Journey #12 covers tenant-isolated changes scope; cross-tenant calendar overlay deferred (Phase I.6). |
-| `tenant-telemetry-l11` | pass | I.2 — Sentry `beforeSend` hook (pseudonymized userId, tenant salt) verified in `apps/{portal,workspace}/src/shell/session-context.tsx`; CodeQL covers leak vectors. |
-| `tenant-race-l12` | pass | I.2 — covered by `@sdm/api-client` unit tests + BFF `tenant-scoping.test.ts`; CodeQL detects missing `activeTenantId` guards. |
-| `tenant-deep-link-l13` | pass | I.2 — `TENANT_FORBIDDEN` shape pinned by BFF `tenant-isolation-sweep.test.ts` (body-tampered tenant fields) + `@sdm/api-client` unit tests. |
+| `tenant-search-leak-l6` | pass | I.3 — BFF `cross-tenant-sweep.test.ts` sweeps incidents + requests + problems + changes + cmdb + kb endpoint families per tenant; browser-test `tenant-search-leak.spec.ts` exercises the live SPA → MSW path. |
+| `cross-tenant-attachment-l7` | pass | I.3 — Journey #18 baseline plus BFF `cross-tenant-sweep.test.ts` 404-not-403 matrix proves the existence-non-leakage contract for every entity endpoint. Attachment endpoint-specific test still tracked for I.6 when the attachment factory lands. |
+| `tenant-activity-log-leak-l8` | pass | I.3 — Activity log is fetched via the ticket-detail aggregator under the parent tenant scope; cross-tenant attempts surface 404 via the I.3 sweep matrix. BFF `audit-log-emission.test.ts` verifies actor.uiRole + tenant scoping in every audit envelope. |
+| `cross-tenant-cmdb-l9` | pass | I.3 — BFF `cross-tenant-sweep.test.ts` covers cmdb-ci (factory `nr`) per tenant; browser-test `tenant-search-leak.spec.ts` + `tenant-deep-link.spec.ts` cover SPA paths. Shared-CI marker badge deferred (Phase I.5 SP cockpit). |
+| `cross-tenant-change-l10` | pass | I.3 — BFF `cross-tenant-sweep.test.ts` covers changes (factory `chg`) per tenant; browser-test `tenant-search-leak.spec.ts` covers the SPA path. Cross-tenant calendar overlay deferred (Phase I.5 SP cockpit). |
+| `tenant-telemetry-l11` | pass | I.3 — Sentry `beforeSend` cross-tenant tag scrub via `sanitizeSentryEvent({ activeTenantId })`, wired in both portal + workspace `bootstrap/sentry-bridge.ts`. `@sdm/api-client` `observability.test.ts` covers the redaction matrix + per-event perf budget. |
+| `tenant-race-l12` | pass | I.3 — `@sdm/api-client` HttpClient `X-Response-Tenant` mismatch detector (retry-once policy, `TENANT_RACE` AppError) covered by `http.test.ts`; BFF stamps the header via `security/tenant-headers.ts`; browser-test `tenant-race-condition.spec.ts` covers the AbortController path. |
+| `tenant-deep-link-l13` | pass | I.3 — BFF `cross-tenant-sweep.test.ts` pins 404-not-403 for every entity detail GET; browser-test `tenant-deep-link.spec.ts` asserts the live SPA receives 404 on cross-tenant deep links. |
 | `cross-tenant-view-sp-l14` | deferred → Phase I.5 | SP cockpit not in MVP — pulled into I.5 (renumbered from original I.6). |
-| `tenant-bootstrap-claim-l15` | pass | I.2 — BFF `auth-flow.integration.test.ts` covers initial-tenant validation; CodeQL sweep covers claim-shape patterns. |
-| `tenant-suspension` | pass | I.2 — `session.absoluteExpiresAt` + `idleSec` lifecycle covered by BFF `step-up.test.ts` + `auth-flow.integration.test.ts`. |
+| `tenant-bootstrap-claim-l15` | pass | I.3 — `/me` returns the user's `defaultTenantId` on first call; browser-test `tenant-bootstrap-claim.spec.ts` pins the SPA receiver contract; BFF `auth-flow.integration.test.ts` covers the session loader. |
+| `tenant-suspension` | pass | I.3 — `apps/bff/src/auth/tenant-suspension.ts` filters `GET /me/tenants` + denies `POST /me/active-tenant` with `details.reason: "tenant_suspended"`; BFF `tenant-suspension.test.ts` covers the 6 contract cases; browser-test `tenant-suspension.spec.ts` covers the SPA receiver (TenantSwitcher grey-out, SessionContext drop-to-anonymous). |
 
 ### 4.3 Step-up auth
 

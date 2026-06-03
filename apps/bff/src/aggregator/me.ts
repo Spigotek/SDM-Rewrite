@@ -7,7 +7,8 @@ import type { RuntimeConfig } from "../config/schema";
 import { AUDIT_EVENTS, type AuditEmitter } from "../platform/audit";
 import { getSessionCookie } from "../security/cookies";
 import type { SessionPayload, SessionStore } from "../session/types";
-import { toAppErrorBody } from "../auth/errors";
+import { AppErrorException, toAppErrorBody } from "../auth/errors";
+import { assertTenantActive, filterActiveTenants } from "../auth/tenant-suspension";
 
 export interface MeRouteDeps {
   readonly config: RuntimeConfig;
@@ -67,7 +68,11 @@ function shapeMeResponse(
       email: payload.email,
       displayName: payload.displayName,
     },
-    tenants: payload.tenants.map((t) => ({
+    // I.3 — suspended tenants are filtered server-side so the FE switcher
+    // never enumerates them. The activeTenant is still emitted verbatim
+    // (the active session can't have become suspended without a re-login
+    // round-trip — admin actions land in the store on next /me poll).
+    tenants: filterActiveTenants(payload.tenants).map((t) => ({
       id: t.id,
       name: t.name,
       isServiceProvider: false,
@@ -174,9 +179,48 @@ export function registerMeRoutes(app: Hono, deps: MeRouteDeps): void {
           message: "Tenant not in user's allowed list",
           httpStatus: 403,
           correlationId,
+          details: { reason: "tenant_not_in_allowed_list" },
         }),
         403,
       );
+    }
+
+    // I.3 — tenant suspension gate. The tenant is in the allowed list but
+    // its status is "suspended" (admin action) — deny the switch and emit
+    // the same `authz.tenant.switch.denied` event with `details.reason`
+    // discriminator (D6 — no new event names in Phase I).
+    try {
+      assertTenantActive(allowed, {
+        sourceTenantId: payload.activeTenantId,
+        targetTenantId: allowed.id,
+      });
+    } catch (err) {
+      if (err instanceof AppErrorException) {
+        deps.audit(
+          c,
+          {
+            category: "authz",
+            event: AUDIT_EVENTS.authz.TENANT_SWITCH_DENIED,
+            result: "denied",
+            resultCode: 403,
+            reason: "suspended",
+            tenant: { sourceTenantId: payload.activeTenantId, targetTenantId: allowed.id },
+            details: { reason: "suspended" },
+          },
+          payload,
+        );
+        return c.json(
+          toAppErrorBody({
+            code: err.code,
+            message: err.message,
+            httpStatus: err.httpStatus,
+            correlationId,
+            details: { reason: "tenant_suspended" },
+          }),
+          403,
+        );
+      }
+      throw err;
     }
 
     await deps.sessionStore.update(sid, {

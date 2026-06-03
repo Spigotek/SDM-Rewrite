@@ -1,5 +1,6 @@
 import { http, HttpResponse } from "msw";
 import { store } from "../db";
+import { tenantStatusFixture } from "../fixtures/tenants";
 import { DEFAULT_USER_ID } from "../fixtures/users";
 import { correlationIdFrom } from "../utils/correlation";
 import { unauthorized } from "../utils/errors";
@@ -18,6 +19,10 @@ export const tenantHandlers = [
     const accessibleTenantIds = new Set(user.roleAssignments.map((r) => r.tenantId));
     const tenants = store.tenants
       .filter((t) => accessibleTenantIds.has(t.id))
+      // I.3 — strip suspended tenants per `multi-tenancy.md §7`. The BFF
+      // applies the same filter; the MSW handler mirrors it so the build-mode
+      // FE never sees them either (tests + dev shell are deterministic).
+      .filter((t) => (tenantStatusFixture[t.id] ?? "active") === "active")
       .map((t) => {
         const assignments = user.roleAssignments.filter((r) => r.tenantId === t.id);
         return {

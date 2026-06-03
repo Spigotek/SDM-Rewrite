@@ -10,6 +10,7 @@ export type AppErrorKind =
   | "RATE_LIMIT" // 429
   | "NETWORK" // fetch zlyhalo, timeout
   | "SERVER" // 5xx
+  | "TENANT_RACE" // I.3 — X-Response-Tenant != session.activeTenantId post-retry
   | "UNKNOWN";
 
 export interface AppErrorPayload {

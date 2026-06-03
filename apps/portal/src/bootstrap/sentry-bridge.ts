@@ -31,6 +31,13 @@ type SentryUser = Parameters<SentryNamespace["setUser"]>[0];
 let modulePromise: Promise<SentryNamespace> | null = null;
 let initialised = false;
 let initialiseStarted = false;
+/**
+ * I.3 — Current SPA active tenant, mirrored from the SessionProvider via
+ * `setSentryTag("tenantId", <id>)`. The bridge keeps a copy so `beforeSend`
+ * can pass it into `sanitizeSentryEvent` for cross-tenant tag scrubbing
+ * without re-entering the React tree.
+ */
+let activeTenantId: string | null = null;
 
 interface QueuedCall {
   readonly kind: "capture" | "setUser" | "setTag";
@@ -75,7 +82,9 @@ export function scheduleSentryInit(opts: InitSentryOptions): void {
       integrations: [Sentry.browserTracingIntegration()],
       tracesSampleRate: opts.observability.sentrySampleRate ?? 0.1,
       beforeSend(event) {
-        return sanitizeSentryEvent(event as never) as never;
+        // I.3 — pass the live `activeTenantId` so cross-tenant tag leakage is
+        // scrubbed before Sentry persists the event.
+        return sanitizeSentryEvent(event as never, { activeTenantId }) as never;
       },
       beforeBreadcrumb(breadcrumb) {
         if (breadcrumb.data) {
@@ -139,6 +148,12 @@ export function setSentryUser(user: { id: string } | null): void {
 }
 
 export function setSentryTag(key: string, value: string | undefined): void {
+  // I.3 — mirror tenant tag locally so `beforeSend` can scrub cross-tenant
+  // leakage even before Sentry is initialised (queued events still flow
+  // through `sanitizeSentryEvent` with the right active tenant).
+  if (key === "tenantId") {
+    activeTenantId = value ?? null;
+  }
   if (initialised) {
     void loadModule().then((Sentry) => Sentry.setTag(key, value));
     return;
@@ -152,4 +167,5 @@ export function __resetSentryBridgeForTests(): void {
   initialiseStarted = false;
   modulePromise = null;
   queue.length = 0;
+  activeTenantId = null;
 }

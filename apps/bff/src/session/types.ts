@@ -6,10 +6,20 @@ export interface SessionTenantRole {
   readonly uiRole: UIRole;
 }
 
+/**
+ * I.3 — Tenant lifecycle status. `"active"` is the default; `"suspended"` is
+ * surfaced by tenant admin (CA SDM `delete_flag=1` or equivalent v1+ admin UI)
+ * and blocks both `GET /me/tenants` exposure and `POST /me/active-tenant`
+ * switching. Backward-compat: missing field is treated as `"active"` so older
+ * session payloads in flight at deploy time keep working.
+ */
+export type TenantStatus = "active" | "suspended";
+
 export interface SessionTenant {
   readonly id: TenantId;
   readonly name: string;
   readonly roles: ReadonlyArray<SessionTenantRole>;
+  readonly status?: TenantStatus;
 }
 
 export interface SessionPayload {

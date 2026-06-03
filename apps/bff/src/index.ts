@@ -18,6 +18,7 @@ import { createAuditEmitter } from "./platform/audit";
 import { registerConfigRoute } from "./platform/config";
 import { registerHealthRoutes } from "./platform/health";
 import { csrfMiddleware } from "./security/csrf";
+import { tenantHeaderMiddleware } from "./security/tenant-headers";
 import { createSessionStore } from "./session";
 import type { SessionStore } from "./session/types";
 
@@ -41,6 +42,17 @@ export function buildApp(deps: BuildAppDeps): Hono {
   app.use(
     "*",
     csrfMiddleware({ trustedOrigins: deps.config.bff.trustedOrigins, log: deps.log, audit }),
+  );
+  // I.3 — inbound tenant-header forgery rejection + outbound X-Response-Tenant
+  // stamping. Reads the session cookie only (no idle-expiry side effects);
+  // missing cookie short-circuits to anonymous handling.
+  app.use(
+    "*",
+    tenantHeaderMiddleware({
+      config: deps.config,
+      sessionStore: deps.sessionStore,
+      audit,
+    }),
   );
 
   const apiClient = new SdmHttpClient(
