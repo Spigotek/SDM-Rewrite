@@ -23,8 +23,8 @@ export function tenantStatus(tenant: Pick<SessionTenant, "status">): TenantStatu
   return tenant.status ?? "active";
 }
 
-export function isActiveTenant(tenant: Pick<SessionTenant, "status">): boolean {
-  return tenantStatus(tenant) === "active";
+export function isActiveTenant(tenant: Pick<SessionTenant, "id" | "status">): boolean {
+  return resolvedTenantStatus(tenant) === "active";
 }
 
 /**

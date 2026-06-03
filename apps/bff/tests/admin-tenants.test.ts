@@ -1,7 +1,7 @@
 /**
  * J.3 — POST /api/admin/tenants/:id/suspend + /unsuspend tests.
  *
- * 6+ cases per Done-when:
+ * 9 cases:
  *  1. Suspend happy path → 204 + sets tenant status.
  *  2. Unsuspend happy path → 204 + restores tenant status.
  *  3. Permission gate — non-admin session → 403 + audit emitted.
@@ -9,6 +9,8 @@
  *  5. Suspended tenant event emitted on event bus after suspend call.
  *  6. No session → 401.
  *  7. Unsuspend emits correct audit discriminator.
+ *  8. `filterActiveTenants` honours runtime override → strips runtime-suspended on /me + /me/tenants reads.
+ *  9. `assertTenantActive` honours runtime override → POST /me/active-tenant rejects runtime-suspended target.
  */
 
 import { Hono } from "hono";
@@ -20,7 +22,14 @@ import type { RuntimeConfig } from "../src/config/schema";
 import { createAuditEmitter } from "../src/platform/audit";
 import { subscribe } from "../src/platform/event-bus";
 import { registerAdminTenantsRoutes } from "../src/api/admin-tenants";
-import { _clearRuntimeOverrides, resolvedTenantStatus } from "../src/auth/tenant-suspension";
+import {
+  _clearRuntimeOverrides,
+  assertTenantActive,
+  filterActiveTenants,
+  resolvedTenantStatus,
+  setTenantStatus,
+} from "../src/auth/tenant-suspension";
+import { AppErrorException } from "../src/auth/errors";
 import { createSessionStore } from "../src/session";
 import type { SessionPayload, SessionStore } from "../src/session/types";
 
@@ -245,5 +254,39 @@ describe("POST /api/admin/tenants/:id/suspend", () => {
         (log as { details?: { op?: string } })["details"]?.["op"] === "admin.tenant.unsuspend",
     );
     expect(unsuspendAudit).toBeDefined();
+  });
+
+  it("8. filterActiveTenants honours runtime override map (strips runtime-suspended tenants)", () => {
+    // Session-embedded status is "active" for both — only the override map says otherwise.
+    // This is the /me + /me/tenants read path: BFF must surface admin-flipped state without
+    // waiting for session re-bootstrap, otherwise FE switcher shows stale entries.
+    const activeId = tenantId("active-tenant");
+    const suspendedId = tenantId("runtime-suspended");
+    const tenants = [
+      { id: activeId, name: "Active", roles: [], status: "active" as const },
+      { id: suspendedId, name: "Runtime-suspended", roles: [], status: "active" as const },
+    ];
+    setTenantStatus(suspendedId, "suspended");
+
+    const result = filterActiveTenants(tenants);
+    expect(result.map((t) => t.id)).toEqual([activeId]);
+  });
+
+  it("9. assertTenantActive honours runtime override map (throws TENANT_FORBIDDEN for runtime-suspended)", () => {
+    // POST /me/active-tenant switch path — if admin suspended via runtime endpoint, BFF
+    // must reject the switch even though the session-embedded status is still "active".
+    const sourceId = tenantId("active-tenant");
+    const suspendedId = tenantId("runtime-suspended");
+    const target = {
+      id: suspendedId,
+      name: "Runtime-suspended",
+      roles: [],
+      status: "active" as const,
+    };
+    setTenantStatus(suspendedId, "suspended");
+
+    expect(() =>
+      assertTenantActive(target, { sourceTenantId: sourceId, targetTenantId: suspendedId }),
+    ).toThrow(AppErrorException);
   });
 });
