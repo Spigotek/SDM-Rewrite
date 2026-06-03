@@ -1,7 +1,8 @@
 # I.1 — Step-up 2FA + emergency approve + RHF Controller race fix
 
-> **Status**: 🔜 (blokované na I.0 merge)
-> **Branch**: `chunk/I.1-step-up-emergency` > **PR**: TBD
+> **Status**: ✅ DONE (squash `bc0dc95`, PR #42)
+> **Branch**: `chunk/I.1-step-up-emergency` (deleted)
+> **Outcome**: BFF `POST /auth/step-up` (RFC 6238 TOTP via `node:crypto`, single-use 15-min tokens) + EMERGENCY-category gate v `/api/changes/:id/approve` server-side. FE: `<StepUpModal>` wired do `<ApproveModal>` keď `category === "EMERGENCY" && tenant.environment === "production"`. Journey-02 root cause divergence: nie radio Controller race, ale static Zod schema requiring hidden conditional fields v `DynamicForm.tsx` — fix = `shouldUnregister: true` + dynamic resolver via `safeParse` proti visible-fields schema. Journey-09 ResolveModal Zod refinement: Solution + Category required when status → CL + Radix Select `__none` sentinel pattern. Journey-11: full FE wiring + BFF unit-test coverage (10/10), browser-test passes via skip-when-denied path (anna.analyst lacks `cab.approve`; functional coverage v BFF tests). Audit taxonomy: nové `auth.step_up.success`/`auth.step_up.denied` constants per `events.ts` reserved namespace (F.4 frozen taxonomy honoured). Tenant.environment ostáva FE-only — BFF gate triggeruje na `change.category === "EMERGENCY"` defence-in-depth.
 > **Cieľ**: implementovať F.1 step-up 2FA flow (documented but never built),
 > wire-up emergency approve modal v H.11 ApproveModal (production env + risk_tier
 > critical triggers step-up), fix journey-02 portal request submit RHF Controller
