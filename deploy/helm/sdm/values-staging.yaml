@@ -1,0 +1,103 @@
+# Staging overrides for the sdm chart (I.6 release dry-run target).
+#
+# Used by `scripts/release-dry-run.sh` and `.github/workflows/acceptance-live.yml`.
+# Every secret-shaped field is a `<vault-ref:...>` placeholder — the operator
+# substitutes real values from the deploy environment before `helm install`.
+# Real CA SDM credentials live in operator memory (`real_backend.md`,
+# `deploy_target.md`) and are NEVER committed to this repo.
+#
+# Reference Chart.yaml appVersion: 1.0.0-rc.1.
+
+image:
+  # On-prem registry per docs/plans/I.md §D10 (10.11.36.21). GHCR fallback used
+  # when the on-prem registry is not OCI-ready; flip back to `10.11.36.21:88`
+  # once the internal registry serves OCI artefacts.
+  registry: ghcr.io
+  pullPolicy: IfNotPresent
+  pullSecrets: []
+  tag: "1.0.0-rc.1"
+
+# ----- BFF -------------------------------------------------------------------
+bff:
+  enabled: true
+  image:
+    repository: spigotek/sdm-bff
+    tag: "1.0.0-rc.1"
+  replicaCount: 1
+
+  env:
+    NODE_ENV: production
+    BFF_PORT: "5174"
+    BFF_SESSION_STORE_MODE: in-memory
+    BFF_CA_SDM_USE_MOCKS: "false"
+    PM_LOG_LEVEL: info
+
+  # Non-sensitive runtime config — surfaces as ConfigMap.
+  config:
+    CA_SDM_BASE_URL: "http://10.11.35.35:8050"
+    CA_SDM_USER: "vueuser"
+    CORRELATION_HEADER: X-Correlation-ID
+    TENANT_HEADER: X-CA-SDM-Tenant
+    SENTRY_ENVIRONMENT: staging
+    SENTRY_SAMPLE_RATE: "1.0"
+
+  # Sensitive — surfaces as Secret. Vault refs are resolved by the deploy
+  # tooling (External-Secrets / sealed-secrets / Ansible templating).
+  secret:
+    CA_SDM_PASSWORD: "<vault-ref:sdm-staging/ca-sdm-password>"
+    CA_SDM_ACCESS_KEY: "<vault-ref:sdm-staging/ca-sdm-access-key>"
+    SESSION_SECRET: "<vault-ref:sdm-staging/session-secret>"
+    SENTRY_DSN: "<vault-ref:sdm-staging/sentry-dsn>"
+    BFF_REDIS_URL: "<vault-ref:sdm-staging/redis-url>"
+
+  resources:
+    requests: { cpu: 200m, memory: 256Mi }
+    limits: { cpu: 800m, memory: 768Mi }
+
+# ----- Portal SPA ------------------------------------------------------------
+portal:
+  enabled: true
+  image:
+    repository: spigotek/sdm-portal
+    tag: "1.0.0-rc.1"
+  replicaCount: 1
+
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 200m, memory: 128Mi }
+
+# ----- Workspace SPA ---------------------------------------------------------
+workspace:
+  enabled: true
+  image:
+    repository: spigotek/sdm-workspace
+    tag: "1.0.0-rc.1"
+  replicaCount: 1
+
+  resources:
+    requests: { cpu: 50m, memory: 64Mi }
+    limits: { cpu: 200m, memory: 128Mi }
+
+# ----- Ingress ---------------------------------------------------------------
+# Two hosts share the BFF (portal + workspace). Replace placeholders with the
+# real staging hostnames during deploy.
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+  hosts:
+    - host: sdm-staging.example.com
+      service: portal
+    - host: workspace-staging.example.com
+      service: workspace
+  bffPathPrefixes:
+    - /api
+    - /auth
+    - /me
+  tls:
+    - hosts:
+        - sdm-staging.example.com
+        - workspace-staging.example.com
+      secretName: sdm-staging-tls
