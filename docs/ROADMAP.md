@@ -21,13 +21,14 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Status: 🚀 v1.0 RELEASED (2026-06-03)** — tag `v1.0.0` pushed; release.yml CI publishuje portal/workspace/BFF images + helm OCI chart + GitHub Release. Manual cluster deployment per `deploy_target.md` = separate ops step.
+- **Status: 🚀 v1.0 RELEASED (2026-06-03)** — tag `v1.0.0` pushed; release.yml CI publishuje portal/workspace/BFF images + helm OCI chart + GitHub Release. Manual cluster deployment per `deploy_target.md` = separate ops step (currently **blocked** by missing container runtime on host — see J.0).
 - **Last merged:** Chunk I.7 (v1.0 cut — chart 1.0.0 + release.yml + CHANGELOG + release notes, PR #48). Predchádzajúce: PR #47 — I.6 release dry-run scaffolding.
-- **In flight:** —
+- **In flight:** Phase J kickoff — J.0 ⏸ deferred (cluster prerequisite), J.1 🔜 NEXT (workspace arm64 native runner).
 - **Phase I:** ✅ DONE (8/8 chunks: I.0 LHCI graduation, I.1 step-up 2FA, I.2 security audit, I.3 multi-tenancy edges, I.4 KB authoring, I.5 SP cockpit, I.6 release dry-run scaffolding, I.7 v1.0 cut).
-- **Project:** ✅ MVP COMPLETE — Phase 0/C/D/E/F/G/H/I all done. v1.0 released. Post-release scope = **Phase J** ([J.md](./plans/J.md) skeleton; full chunk plans písané pri spustení): J.0 staging deploy + live smoke (P0 blocker), J.1-J.8 deferred items (workspace arm64, real cross-tenant query, real-time tenant push, KB analytics ingest + image upload, calendar drag-resize, mobile PWA offline, portal LCP via SSR), J.9 v1.1 cut.
+- **Phase J:** 🟡 IN PROGRESS — J.0 ⏸ deferred (no container runtime on 10.11.36.21; unblock criteria in [J.0.md](./plans/J.0.md)); J.1-J.9 sequenced per [J.md](./plans/J.md) §D2.
+- **Project:** ✅ MVP COMPLETE — Phase 0/C/D/E/F/G/H/I all done. v1.0 released. Post-release scope = **Phase J** ([J.md](./plans/J.md) skeleton; full chunk plans písané pri spustení).
 
-Posledná revízia tohto dokumentu: v1.0 RELEASED (2026-06-03).
+Posledná revízia tohto dokumentu: Phase J kickoff (2026-06-04) — J.0 ⏸ deferred + J.1 NEXT.
 
 ---
 
@@ -196,6 +197,26 @@ Granularita: 1 PR ≈ 1 (modul, app) dvojica. Odhad: **~25-35 PR** pre MVP scope
 - **I.7 v1.0 cut ✅ DONE** — chart bump `1.0.0-rc.1` → `1.0.0`; `.github/workflows/release.yml` extended to build + push portal/workspace/BFF images (multi-arch `linux/amd64` + `linux/arm64`) with tag matrix `{semver, semver-major-minor, latest}` and helm chart OCI publish to `oci://ghcr.io/spigotek/charts` on `v*.*.*` tag push; GitHub Release auto-creates with `docs/RELEASE-NOTES-v1.0.md` body when present. NEW `docs/CHANGELOG.md` (Keep-a-Changelog, phases E/F/G/H/I aggregated) + NEW `docs/RELEASE-NOTES-v1.0.md` (per-persona, security, performance, compatibility, deployment, known issues, roadmap). `actionlint` clean, `helm lint` + `helm template` clean. Subagent does NOT push tag — parent creates `v1.0.0` annotated tag post-merge to trigger CI publish. Plán: [I.7.md](./plans/I.7.md), PR TBD.
 
 Dispatch: strict sekvenčný I.0 → I.7 (per `feedback_pr_flow.md` PR-flow). Prompt template pre `/clear` workflow: [I-prompt.md](./plans/I-prompt.md).
+
+### Phase J — Post-v1.0 deferred items + production hardening v1.1 🟡 IN PROGRESS
+
+> Cieľ: dotiahnuť deferred items z v1.0 RELEASE-NOTES (mobile PWA, advanced calendar, KB analytics +
+> image upload, portal LCP, real-time tenant push, workspace arm64), enable real BFF cross-tenant
+> query proti CA SDM 17.4, validate v1.0 deploy proti staging cluster, cut v1.1. Detail:
+> [J.md](./plans/J.md).
+
+- **J.0 v1.0 staging deploy + live BFF smoke ⏸ DEFERRED** — read-only host probe 2026-06-04 revealed `10.11.36.21` has no container runtime (no docker / k8s / helm). Unblock criteria: k3s/microk8s/docker installed on host (or pre-existing cluster + kubeconfig), DNS + TLS + Sentry DSN provisioned. Operator-driven; autonomous claude declined cluster install on shared production-adjacent host per global CLAUDE.md "Ask before: server restarts / prod migrations". Plán: [J.0.md](./plans/J.0.md).
+- **J.1 Workspace arm64 image** 🔜 NEXT — graduates I.7 workspace amd64-only via native `ubuntu-22.04-arm` GHA runner (QEMU SIGILL during v1.0.0 cross-compile; native runner avoids emulation). Plán: [J.1.md](./plans/J.1.md).
+- **J.2 Real BFF cross-tenant query** — CA SDM 17.4 capability eval (`vueuser` test endpoint per `real-backend-contracts.md §6`). If unsupported → BFF-side aggregation + audit emit fallback. Plán TBD.
+- **J.3 Real-time tenant push** — SSE-first via Hono `c.stream()` (WebSocket fallback if insufficient); replaces I.3 next-API-call detection. Plán TBD.
+- **J.4 KB analytics real ingest** — audit-log-derived aggregation in BFF (no CA SDM schema changes); replaces I.4 MSW fixture. Plán TBD.
+- **J.5 KB image upload binary** — graduates H.3 attachments deferral; `/api/attachments/kb` endpoint, 5MB max, PNG/JPG/SVG/GIF whitelist, EXIF strip, MIME sniff. Plán TBD.
+- **J.6 Calendar drag-resize** — `@fullcalendar/interaction` plugin graduation (H.10 disabled `editable: false`). Plán TBD.
+- **J.7 Mobile PWA offline mode** — Workbox precache + IndexedDB offline ticket queue. Plán TBD.
+- **J.8 Portal LCP fix** — copy/UX redesign first (multi-line HeroGreeting subtitle), SSR via Vite SSR plugin fallback if insufficient. Plán TBD.
+- **J.9 v1.1 cut** — semver tag + image push + OCI helm + release notes; requires J.0 GO before tag. Plán TBD.
+
+Dispatch: strict sekvenčný J.0 → J.9 (per `feedback_pr_flow.md` PR-flow). Per-chunk plans písané pre-execution per chunk (NIE upfront — reflects learnings from prior chunks). Prompt template pre `/clear` workflow: [J-prompt.md](./plans/J-prompt.md).
 
 ---
 
