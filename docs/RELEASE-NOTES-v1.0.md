@@ -183,6 +183,9 @@ Multi-arch (`linux/amd64` + `linux/arm64`):
 
 - `ghcr.io/spigotek/sdm-bff:1.0.0` (also `1.0`, `latest`)
 - `ghcr.io/spigotek/sdm-portal:1.0.0` (also `1.0`, `latest`)
+
+Single-arch (`linux/amd64` only — multi-arch lands in v1.1 via native arm64 runner, see CHANGELOG Known issues):
+
 - `ghcr.io/spigotek/sdm-workspace:1.0.0` (also `1.0`, `latest`)
 
 The `1.0` tag tracks the latest 1.0.x patch; `latest` tracks the most

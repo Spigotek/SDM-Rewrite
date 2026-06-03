@@ -217,10 +217,11 @@ Detailed release notes: [`RELEASE-NOTES-v1.0.md`](./RELEASE-NOTES-v1.0.md).
 
 ### Deployment
 
-- Container images (multi-arch `linux/amd64` + `linux/arm64`):
+- Container images — multi-arch (`linux/amd64` + `linux/arm64`):
   - `ghcr.io/spigotek/sdm-bff:1.0.0` (also tagged `1.0`, `latest`)
   - `ghcr.io/spigotek/sdm-portal:1.0.0` (also tagged `1.0`, `latest`)
-  - `ghcr.io/spigotek/sdm-workspace:1.0.0` (also tagged `1.0`, `latest`)
+- Container images — single-arch (`linux/amd64` only):
+  - `ghcr.io/spigotek/sdm-workspace:1.0.0` (also tagged `1.0`, `latest`) — multi-arch in v1.1 (J.1)
 - Helm chart (OCI): `oci://ghcr.io/spigotek/charts/sdm` version `1.0.0`.
 - Staging values reference: `deploy/helm/sdm/values-staging.yaml` (vault-ref
   placeholders for secrets; on-prem deployment per
@@ -230,6 +231,11 @@ Detailed release notes: [`RELEASE-NOTES-v1.0.md`](./RELEASE-NOTES-v1.0.md).
 
 The following items are intentionally deferred and tracked for v1.1+:
 
+- **Workspace image is `linux/amd64` only in v1.0.** Cross-compile failed
+  with QEMU SIGILL during release; ships single-arch via the workaround
+  in `release.yml`. Multi-arch lands in v1.1 via native `ubuntu-22.04-arm`
+  GitHub-hosted runner (J.1). Impact: arm64 clusters cannot run v1.0
+  workspace; arm64 BFF + portal are unaffected.
 - **Mobile PWA offline mode** — draft auto-save and service-worker cache
   planned for v1.1.
 - **Advanced change-calendar interactions** — drag-resize of events and
