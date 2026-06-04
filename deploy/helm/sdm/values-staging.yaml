@@ -6,7 +6,7 @@
 # Real CA SDM credentials live in operator memory (`real_backend.md`,
 # `deploy_target.md`) and are NEVER committed to this repo.
 #
-# Reference Chart.yaml appVersion: 1.0.0-rc.1.
+# Reference Chart.yaml appVersion: 1.1.0.
 
 image:
   # On-prem registry per docs/plans/I.md §D10 (10.11.36.21). GHCR fallback used
@@ -15,14 +15,14 @@ image:
   registry: ghcr.io
   pullPolicy: IfNotPresent
   pullSecrets: []
-  tag: "1.0.0-rc.1"
+  tag: "1.1.0"
 
 # ----- BFF -------------------------------------------------------------------
 bff:
   enabled: true
   image:
     repository: spigotek/sdm-bff
-    tag: "1.0.0-rc.1"
+    tag: "1.1.0"
   replicaCount: 1
 
   env:
@@ -59,7 +59,7 @@ portal:
   enabled: true
   image:
     repository: spigotek/sdm-portal
-    tag: "1.0.0-rc.1"
+    tag: "1.1.0"
   replicaCount: 1
 
   resources:
@@ -71,7 +71,7 @@ workspace:
   enabled: true
   image:
     repository: spigotek/sdm-workspace
-    tag: "1.0.0-rc.1"
+    tag: "1.1.0"
   replicaCount: 1
 
   resources:

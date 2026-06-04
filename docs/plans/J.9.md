@@ -1,6 +1,6 @@
 # J.9 — v1.1 cut (Phase J closure release)
 
-> **Status**: 🔜 NEXT
+> **Status**: ✅ DONE (PR #TBD — parent fills post-merge)
 > **Branch**: `chunk/J.9-v1.1-cut` > **Cieľ**: cut v1.1.0 release artifacts — Chart.yaml bump 1.0.0 → 1.1.0, `docs/RELEASE-NOTES-v1.1.md`
 > per-persona + per-J-chunk changes, `docs/CHANGELOG.md` `[1.1.0]` section, `values-staging.yaml` tag bump.
 > After merge, **parent agent** creates + pushes annotated `v1.1.0` tag — `release.yml` CI fires
