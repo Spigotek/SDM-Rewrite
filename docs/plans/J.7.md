@@ -1,7 +1,9 @@
 # J.7 — Mobile PWA offline mode (portal — read-only, no mutation queue)
 
-> **Status**: ✅ DONE — PR #TBD
-> **Branch**: `chunk/J.7-portal-pwa-precache` > **Cieľ**: ship installable PWA + offline-read for the portal (Lucia persona, mobile-first).
+> **Status**: ✅ DONE (squash `4d29353`, PR #53)
+> **Branch**: `chunk/J.7-portal-pwa-precache` (deleted)
+> **Outcome**: `vite-plugin-pwa` 1.3.0 + `workbox-window` + `workbox-build` added as devDeps only. VitePWA plugin in `apps/portal/vite.config.ts`: manifest (name "Service Desk Management", short_name "SDM", display standalone, theme_color #4f46e5, background_color #f8fafc, lang sk, 4 icons), workbox (precache glob + 3 runtime cache rules: SWR `/api/*` GET, NetworkFirst `/me`+`/config`, CacheFirst `/api/attachments/kb/*`), `devOptions.enabled: false`. Conditional registration in `main.tsx` via new `src/pwa/register-sw.ts` — `VITE_USE_MOCKS=true` skips Workbox, MSW SW stays sole controller for dev + CI. 4 PNG icons hand-crafted via ImageMagick (no `docs/logo.svg` in repo — source SVGs committed). Portal initial JS gzip 161 KB / 180 KB (Workbox runtime in separate `sw.js`). 18 MSW-mode acceptance × 3 browsers still pass — coexistence verified. 3 browser specs (manifest reachable, SW registered, offline shell fallback). 20 files / 5632 ins / 3594 del (bulk is pnpm-lock churn).
+> **Cieľ**: ship installable PWA + offline-read for the portal (Lucia persona, mobile-first).
 > Workbox-generated service worker via `vite-plugin-pwa` (build-time dev dep). Manifest +
 > icons + precache app shell + runtime cache strategies (stale-while-revalidate on `/api/*`
 > GET; network-first on `/me` + `/config`). NO IndexedDB mutation queue — offline submit is
@@ -83,10 +85,10 @@ docs/plans/J.7.md                                   # Status NEXT → DONE; PR #
 - [ ] Icons in `apps/portal/public/icons/`: - `icon-192.png` (192×192) - `icon-512.png` (512×512) - `icon-maskable-512.png` (512×512 with safe-zone) - `apple-touch-icon-180.png` (180×180)
 - [ ] `apps/portal/index.html` head includes (if not auto-injected by plugin):
     `html
-  <link rel="manifest" href="/manifest.webmanifest" />
-  <meta name="theme-color" content="..." />
-  <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
-  `
+<link rel="manifest" href="/manifest.webmanifest" />
+<meta name="theme-color" content="..." />
+<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
+`
 - [ ] `apps/portal/tsconfig.json` `compilerOptions.types` includes `"vite-plugin-pwa/client"`.
 - [ ] i18n: +3 portal keys (`pwa.offlineReady`, `pwa.updateAvailable`, `pwa.updateReload`). SK + EN parity (`pnpm i18n:check` green).
 - [ ] Browser test `j7-portal-pwa-installable.spec.ts`: - Case 1: After portal build + serve, `GET /manifest.webmanifest` returns 200 + valid JSON (name, start_url, icons). - Case 2: After first page load, `navigator.serviceWorker.getRegistration()` returns a registration with scope `/`. - Case 3: Offline navigation (Playwright `page.context().setOffline(true)`) to `/` falls back to precached `index.html` (no error page). - (Optional) Case 4: MSW dev mode (`VITE_USE_MOCKS=true`) does NOT register Workbox SW (verify via `getRegistrations()` returns only the MSW SW).
