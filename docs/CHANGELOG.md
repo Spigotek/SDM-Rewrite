@@ -238,8 +238,13 @@ The following items are intentionally deferred and tracked for v1.1+:
   workspace; arm64 BFF + portal are unaffected.
 - **Mobile PWA offline mode** — draft auto-save and service-worker cache
   planned for v1.1.
-- **Advanced change-calendar interactions** — drag-resize of events and
-  cross-tenant conflict overlay (heavy mode) planned for v1.1.
+- ~~**Advanced change-calendar interactions (drag-resize)** — deferred to v1+
+  per H.10 plan.~~ Shipped in J.6: FullCalendar `editable: true` when caller
+  has `change.schedule` permission; `eventDrop` + `eventResize` wire to new
+  BFF `PATCH /api/changes/:id/schedule`; client-side conflict detection with
+  `<ConflictConfirmModal>`; `info.revert()` on cancel or PATCH failure.
+  **Cross-tenant heavy overlay** (drag across tenant boundaries in sp_admin
+  overlay mode) remains deferred to v2.0.
 - **KB analytics widgets** — MSW-fixture is the production behaviour on
   the dev/test backend (CA SDM 17.4 has no native KB analytics surface;
   current BFF endpoint returns identical synthetic snapshots as MSW). J.4

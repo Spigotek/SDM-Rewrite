@@ -328,7 +328,14 @@
         "dayGridMonth": "Mesiac"
       },
       "mobileFallback": "Pre kalendár otvor desktop. Na mobile použi zoznam zmien.",
-      "mobileFallbackLink": "Otvoriť zoznam zmien"
+      "mobileFallbackLink": "Otvoriť zoznam zmien",
+      "reschedule": {
+        "confirm": "Presunúť",
+        "conflictDetected": "Zistený konflikt",
+        "conflictDescription": "{count, plural, one {1 zmena prekrýva nový čas} few {{count} zmeny prekrývajú nový čas} other {{count} zmien prekrýva nový čas}}",
+        "error": "Presun zlyhal — zmena vrátená",
+        "keepOriginal": "Ponechať pôvodný čas"
+      }
     }
   },
   "problems": {

@@ -1,7 +1,7 @@
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
-import type { CalendarOptions, EventInput } from "@fullcalendar/core";
+import type { CalendarOptions, EventInput, EventDropArg, EventApi } from "@fullcalendar/core";
 import type { RiskLevel } from "@sdm/domain";
 import { colorForTenant } from "../../sp-cockpit/components/CrossTenantCalendarOverlay";
 import type { ChangeRow } from "../types";
@@ -12,9 +12,10 @@ import type { ChangeRow } from "../types";
  * Plugin set per `library-recommendation.md §Calendar` (r2 canonical):
  *  - `daygrid` — month view block grid.
  *  - `timegrid` — day + week views with time-of-day axis.
- *  - `interaction` — click/hover wiring (drag-resize is deferred to v1+ per
- *    H.10 plan §Open questions; we import the plugin but leave `editable`
- *    false so the drag handles never render).
+ *  - `interaction` — drag-resize enabled when caller has `change.schedule`
+ *    permission (J.6); `editable` is passed from the caller so non-schedule
+ *    roles never see drag handles (client-side defence-in-depth on top of
+ *    the BFF permission gate).
  *
  * The Scheduler plugin is commercial and intentionally NOT used.
  *
@@ -82,13 +83,29 @@ export const CALENDAR_VIEWS: ReadonlyArray<CalendarViewName> = [
   "dayGridMonth",
 ];
 
+export type { EventDropArg };
+
+/** Minimal interface for the resize-done callback. Only the properties the
+ *  CalendarView handler actually accesses are declared here. FullCalendar 6
+ *  exposes these through `CalendarOptions.eventResize`. */
+export interface EventResizeDoneArg {
+  readonly event: EventApi;
+  readonly oldEvent: EventApi;
+  readonly revert: () => void;
+}
+
 export interface BuildCalendarOptionsArgs {
   readonly events: ReadonlyArray<EventInput>;
   readonly initialView: CalendarViewName;
   readonly locale: "sk" | "en";
+  /** J.6 — when true the interaction plugin renders drag handles. Pass false for
+   *  users without `change.schedule` so the read-only view is unchanged. */
+  readonly editable: boolean;
   readonly onEventClick: (id: string) => void;
   readonly onEventDidMount: (id: string, el: HTMLElement) => void;
   readonly onEventWillUnmount: (id: string) => void;
+  readonly onEventDrop?: (info: EventDropArg) => void;
+  readonly onEventResize?: (info: EventResizeDoneArg) => void;
 }
 
 export interface CalendarViewOptions {
@@ -100,9 +117,10 @@ export interface CalendarViewOptions {
  * const) because event lists + locale + click handlers are render-time
  * inputs.
  *
- * `editable: false` is the load-bearing flag — even though the interaction
- * plugin is loaded, MVP scope forbids drag-resize per H.10 open questions
- * resolution. The plugin still gives us reliable click/hover hooks.
+ * `editable` is driven by the `change.schedule` permission of the active
+ * session (J.6). The interaction plugin is always loaded (it's in the shared
+ * `vendor-calendar` chunk per the vite.config manualChunks rule) — the flag
+ * controls whether drag handles render on the event blocks.
  *
  * The header toolbar is intentionally minimal — the route owns the view
  * switcher (it lives in a route-level Tabs, not inside the FullCalendar
@@ -116,7 +134,7 @@ export function buildCalendarOptions(args: BuildCalendarOptionsArgs): CalendarOp
     firstDay: 1,
     weekNumbers: false,
     nowIndicator: true,
-    editable: false,
+    editable: args.editable,
     selectable: false,
     headerToolbar: {
       left: "prev,next today",
@@ -135,5 +153,7 @@ export function buildCalendarOptions(args: BuildCalendarOptionsArgs): CalendarOp
     eventWillUnmount(info) {
       args.onEventWillUnmount(info.event.id);
     },
+    ...(args.onEventDrop ? { eventDrop: args.onEventDrop } : {}),
+    ...(args.onEventResize ? { eventResize: args.onEventResize } : {}),
   };
 }

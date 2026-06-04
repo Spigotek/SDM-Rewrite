@@ -1,4 +1,5 @@
 import type { Hono } from "hono";
+import { z } from "zod";
 import { AppErrorException } from "../../auth/errors";
 import { consumeStepUpToken } from "../../auth/step-up-token";
 import { AUDIT_EVENTS } from "../../platform/audit";
@@ -6,6 +7,8 @@ import { requireActiveSession } from "../../session/load";
 import type { RestProxyDeps } from "../rest-proxy";
 import { registerEntityRoutes } from "./_entity-routes";
 import { epochSecToIso, liftAttrs, toFkRef, type CaSdmFk } from "./_shape";
+import { hasPermission, type Permission, type UIRole } from "@sdm/domain";
+import type { SessionPayload } from "../../session/types";
 
 /**
  * /api/changes — proxies to CA SDM factory `chg`.
@@ -104,6 +107,21 @@ function mapUpdate(body: ChangeUpdateFe): Record<string, unknown> {
   };
 }
 
+function rolesOf(session: SessionPayload): readonly UIRole[] {
+  const active = session.tenants.find((t) => t.id === session.activeTenantId);
+  return active ? active.roles.map((r) => r.uiRole) : [];
+}
+
+function requirePermission(session: SessionPayload, permission: Permission): void {
+  if (!hasPermission(rolesOf(session), permission)) {
+    throw new AppErrorException({
+      code: "AUTH_FORBIDDEN",
+      httpStatus: 403,
+      message: `permission ${permission} required`,
+    });
+  }
+}
+
 export function registerChangeRoutes(app: Hono, deps: RestProxyDeps): void {
   registerEntityRoutes<ChangeRowFe, ChangeCreateFe, ChangeUpdateFe>(app, deps, {
     factory: "chg",
@@ -117,6 +135,7 @@ export function registerChangeRoutes(app: Hono, deps: RestProxyDeps): void {
   });
 
   registerCabApprovalRoutes(app, deps);
+  registerScheduleRoute(app, deps);
 }
 
 /**
@@ -279,5 +298,161 @@ function registerCabApprovalRoutes(app: Hono, deps: RestProxyDeps): void {
       session,
     );
     return c.json({ ok: true, approverId }, 200);
+  });
+}
+
+/**
+ * J.6 — calendar drag-resize PATCH endpoint.
+ *
+ * Graduates H.10 `editable: false`. Requires `change.schedule` permission
+ * (semantically tighter than `change.update.plan`). Pre-fetches the current
+ * change BEFORE writing so `previous_start_at` / `previous_end_at` are
+ * captured for audit completeness per F.4 frozen taxonomy.
+ *
+ * No new audit event names — composes under `data.chg.write` factory with
+ * `details.op="schedule.update"` discriminator.
+ */
+
+const ScheduleBody = z
+  .object({
+    scheduledStartAt: z.string().datetime(),
+    scheduledEndAt: z.string().datetime(),
+  })
+  .refine((d) => new Date(d.scheduledEndAt) > new Date(d.scheduledStartAt), {
+    message: "scheduledEndAt must be after scheduledStartAt",
+    path: ["scheduledEndAt"],
+  });
+
+function registerScheduleRoute(app: Hono, deps: RestProxyDeps): void {
+  app.patch("/api/changes/:id/schedule", async (c) => {
+    const session = await requireActiveSession(c, deps);
+    requirePermission(session, "change.schedule");
+
+    const id = c.req.param("id");
+
+    let bodyRaw: unknown;
+    try {
+      bodyRaw = await c.req.json();
+    } catch {
+      throw new AppErrorException({
+        code: "VALIDATION",
+        httpStatus: 400,
+        message: "Request body must be valid JSON",
+      });
+    }
+
+    const parsed = ScheduleBody.safeParse(bodyRaw);
+    if (!parsed.success) {
+      const firstIssue = parsed.error.issues[0];
+      const field = firstIssue?.path?.join(".") ?? "unknown";
+      throw new AppErrorException({
+        code: "VALIDATION",
+        httpStatus: 400,
+        message: firstIssue?.message ?? "Invalid schedule body",
+        details: { field },
+      });
+    }
+
+    const { scheduledStartAt, scheduledEndAt } = parsed.data;
+
+    // Pre-fetch current change to capture previous timestamps for audit.
+    // F.2 entity proxy returns 404 for cross-tenant or missing IDs — bubble up.
+    const getResp = await deps.client.request({
+      method: "GET",
+      path: `/chg/${encodeURIComponent(id)}?attrs=${DEFAULT_ATTRS}`,
+      headers: {
+        "X-AccessKey": session.accessKey,
+        Accept: "application/json",
+      },
+    });
+
+    if (getResp.status === 404) {
+      throw new AppErrorException({
+        code: "NOT_FOUND",
+        httpStatus: 404,
+        message: `Change ${id} not found`,
+      });
+    }
+    if (getResp.status < 200 || getResp.status >= 300) {
+      throw new AppErrorException({
+        code: "BACKEND_UNAVAILABLE",
+        httpStatus: 502,
+        message: `CA SDM GET /chg/${id} returned HTTP ${getResp.status}`,
+      });
+    }
+
+    let currentRaw: Record<string, unknown>;
+    try {
+      currentRaw = JSON.parse(getResp.text) as Record<string, unknown>;
+    } catch {
+      currentRaw = {};
+    }
+    // Extract attributes (CA SDM wraps in { chg: { ... } })
+    const currentAttrs = (currentRaw["chg"] as Record<string, unknown> | undefined) ?? currentRaw;
+    const previousStartAt = epochSecToIso(
+      currentAttrs["schedule_start_date"] as string | number | null | undefined,
+    );
+    const previousEndAt = epochSecToIso(
+      currentAttrs["schedule_end_date"] as string | number | null | undefined,
+    );
+
+    // Convert ISO timestamps to epoch seconds for CA SDM PATCH.
+    const startEpoch = Math.floor(new Date(scheduledStartAt).getTime() / 1000);
+    const endEpoch = Math.floor(new Date(scheduledEndAt).getTime() / 1000);
+
+    const patchBody = JSON.stringify({
+      chg: {
+        schedule_start_date: startEpoch,
+        schedule_end_date: endEpoch,
+      },
+    });
+
+    const patchResp = await deps.client.request({
+      method: "PUT",
+      path: `/chg/${encodeURIComponent(id)}`,
+      headers: {
+        "X-AccessKey": session.accessKey,
+        Accept: "application/json",
+        "Content-Type": "application/json",
+      },
+      body: patchBody,
+    });
+
+    if (patchResp.status < 200 || patchResp.status >= 300) {
+      throw new AppErrorException({
+        code: "BACKEND_UNAVAILABLE",
+        httpStatus: 502,
+        message: `CA SDM PUT /chg/${id} returned HTTP ${patchResp.status}`,
+      });
+    }
+
+    // Emit audit under frozen F.4 taxonomy.
+    deps.audit?.(
+      c,
+      {
+        category: "data",
+        event: AUDIT_EVENTS.data.write("chg"),
+        result: "success",
+        resultCode: 200,
+        details: {
+          op: "schedule.update",
+          recordId: id,
+          scheduled_start_at: scheduledStartAt,
+          scheduled_end_at: scheduledEndAt,
+          previous_start_at: previousStartAt,
+          previous_end_at: previousEndAt,
+        },
+      },
+      session,
+    );
+
+    // Build updated DTO from current attrs + new schedule.
+    const updatedDto: ChangeRowFe = {
+      ...mapRow(currentAttrs),
+      scheduledStartAt,
+      scheduledEndAt,
+    };
+
+    return c.json(updatedDto, 200);
   });
 }

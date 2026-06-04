@@ -35,6 +35,11 @@ interface ReminderBody {
   approverId?: string;
 }
 
+interface ScheduleBody {
+  scheduledStartAt?: string;
+  scheduledEndAt?: string;
+}
+
 function tenantChanges(tenant: string): Change[] {
   return store.changes.filter((c) => c.tenantId === tenant);
 }
@@ -194,6 +199,49 @@ export const changeHandlers = [
       approvalState: rollupApprovalState(approvers),
       cabApprovers: approvers,
       lastModifiedAt: ts,
+    };
+    store.changes[idx] = updated;
+    return HttpResponse.json(updated);
+  }),
+
+  /**
+   * J.6 — PATCH /api/changes/:id/schedule.
+   * Updates scheduledStartAt + scheduledEndAt on the in-memory fixture.
+   * Returns the updated change DTO. Validates end-after-start (mirrors BFF zod refinement).
+   */
+  http.patch("*/api/changes/:id/schedule", async ({ params, request }) => {
+    const tenant = parseTenantFromRequest(request);
+    const correlationId = correlationIdFrom(request);
+    const id = String(params["id"] ?? "");
+    const idx = store.changes.findIndex((c) => c.id === id && c.tenantId === tenant);
+    if (idx === -1) return notFound("change", id, correlationId);
+
+    const body = (await request.json().catch(() => ({}))) as ScheduleBody;
+
+    if (!body.scheduledStartAt || !body.scheduledEndAt) {
+      return badRequest("scheduledStartAt and scheduledEndAt are required", correlationId);
+    }
+
+    const startMs = Date.parse(body.scheduledStartAt);
+    const endMs = Date.parse(body.scheduledEndAt);
+
+    if (Number.isNaN(startMs) || Number.isNaN(endMs)) {
+      return badRequest(
+        "scheduledStartAt and scheduledEndAt must be valid ISO 8601",
+        correlationId,
+      );
+    }
+
+    if (endMs <= startMs) {
+      return badRequest("scheduledEndAt must be after scheduledStartAt", correlationId);
+    }
+
+    const existing = store.changes[idx]!;
+    const updated: Change = {
+      ...existing,
+      scheduledStartAt: body.scheduledStartAt,
+      scheduledEndAt: body.scheduledEndAt,
+      lastModifiedAt: new Date().toISOString(),
     };
     store.changes[idx] = updated;
     return HttpResponse.json(updated);

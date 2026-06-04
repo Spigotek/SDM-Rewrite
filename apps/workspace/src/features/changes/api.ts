@@ -223,3 +223,31 @@ export function postReminder(id: string, payload: ReminderPayload): Promise<Remi
     "change-reminder",
   );
 }
+
+// ── J.6 Schedule mutation ────────────────────────────────────────────────────
+
+export interface SchedulePayload {
+  readonly scheduledStartAt: string;
+  readonly scheduledEndAt: string;
+}
+
+async function patchJson<T>(path: string, body: unknown, op: string): Promise<T> {
+  const resp = await fetch(path, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  return jsonOrThrow<T>(resp, op);
+}
+
+export function patchChangeSchedule(id: string, payload: SchedulePayload): Promise<ChangeRow> {
+  return patchJson<ChangeRow>(
+    `/api/changes/${encodeURIComponent(id)}/schedule`,
+    payload,
+    "change-schedule",
+  );
+}
