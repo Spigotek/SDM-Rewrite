@@ -1,6 +1,6 @@
 # J.6 — Calendar drag-resize (graduates H.10 editable: false)
 
-> **Status**: 🔜 NEXT
+> **Status**: ✅ DONE (PR open — chunk/J.6-calendar-drag-resize)
 > **Branch**: `chunk/J.6-calendar-drag-resize` > **Cieľ**: enable drag-and-drop + edge-resize on the `/changes/calendar` route by flipping
 > `editable: true` in the FullCalendar config and wiring `eventDrop` + `eventResize` to a new
 > BFF endpoint `PATCH /api/changes/:id/schedule`. Conflict detection runs client-side against

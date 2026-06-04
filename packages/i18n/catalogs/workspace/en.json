@@ -328,7 +328,14 @@
         "dayGridMonth": "Month"
       },
       "mobileFallback": "Open the desktop app to use the calendar. On mobile use the changes list.",
-      "mobileFallbackLink": "Open changes list"
+      "mobileFallbackLink": "Open changes list",
+      "reschedule": {
+        "confirm": "Reschedule",
+        "conflictDetected": "Conflict detected",
+        "conflictDescription": "{count, plural, one {1 change overlaps the new time slot} other {{count} changes overlap the new time slot}}",
+        "error": "Reschedule failed — change reverted",
+        "keepOriginal": "Keep original"
+      }
     }
   },
   "problems": {

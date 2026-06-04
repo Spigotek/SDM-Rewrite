@@ -1,15 +1,22 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "@sdm/i18n";
+import { hasPermission } from "@sdm/domain";
+import type { EventApi } from "@fullcalendar/core";
 import FullCalendar from "@fullcalendar/react";
 import {
   buildCalendarOptions,
   CALENDAR_VIEWS,
   changeToEvent,
   type CalendarViewName,
+  type EventDropArg,
+  type EventResizeDoneArg,
 } from "../lib/full-calendar-config";
 import type { ChangeRow } from "../types";
 import { EventTooltip } from "./EventTooltip";
+import { ConflictConfirmModal } from "./ConflictConfirmModal";
+import { useReschedule } from "../hooks/useReschedule";
+import { useSession } from "../../../shell/session-context";
 
 /**
  * `<CalendarView>` — owns the FullCalendar instance, the view-switch tab
@@ -24,6 +31,13 @@ import { EventTooltip } from "./EventTooltip";
  * listeners through those hooks instead of binding via `eventMouseEnter`
  * because the latter doesn't fire reliably across day/week/month view
  * switches (FullCalendar issue documented in their migration guide).
+ *
+ * J.6 drag-resize: `editable` is driven by the `change.schedule` permission
+ * of the active session. On drop/resize the handler:
+ *  1. Detects conflicts against the visible event set.
+ *  2. Opens `<ConflictConfirmModal>` when overlaps exist.
+ *  3. Calls `reschedule()` on confirm or directly when no conflict.
+ *  4. Calls `info.revert()` on cancel or PATCH failure.
  */
 
 export interface CalendarViewProps {
@@ -40,12 +54,49 @@ interface HoverState {
   readonly anchor: DOMRect;
 }
 
+interface ConflictModalState {
+  readonly conflicts: ReadonlyArray<ChangeRow>;
+  readonly onConfirm: () => void;
+  readonly onCancel: () => void;
+}
+
+/** Default event duration when `end` is missing — 1 hour. */
+const DEFAULT_DURATION_MS = 60 * 60 * 1000;
+
+/**
+ * Detect conflicts for a moved/resized event against the full event set.
+ * Excludes the dragged event itself. overlap = (other.start < newEnd) && (other.end > newStart).
+ * Foreign-tenant events (in sp_admin overlay) are excluded from conflict
+ * consideration because the active user cannot reschedule them.
+ */
+function detectConflicts(
+  rows: ReadonlyArray<ChangeRow>,
+  movedId: string,
+  activeTenantId: string | undefined,
+  newStart: Date,
+  newEnd: Date,
+): ReadonlyArray<ChangeRow> {
+  return rows.filter((r) => {
+    if (r.id === movedId) return false;
+    // In sp_admin overlay mode, skip foreign-tenant events from conflict check.
+    if (activeTenantId && r.tenantId !== activeTenantId) return false;
+    if (!r.scheduledStartAt) return false;
+    const otherStart = new Date(r.scheduledStartAt);
+    const otherEnd = r.scheduledEndAt
+      ? new Date(r.scheduledEndAt)
+      : new Date(otherStart.getTime() + DEFAULT_DURATION_MS);
+    return otherStart < newEnd && otherEnd > newStart;
+  });
+}
+
 export function CalendarView({ rows, crossTenant = false }: CalendarViewProps) {
   const { t, i18n } = useTranslation("workspace");
   const navigate = useNavigate();
+  const { session } = useSession();
   const calendarRef = useRef<FullCalendar | null>(null);
   const [view, setView] = useState<CalendarViewName>("timeGridWeek");
   const [hover, setHover] = useState<HoverState | null>(null);
+  const [conflictModal, setConflictModal] = useState<ConflictModalState | null>(null);
   /** map of event id → element listener handles for clean unmount */
   const listenerMap = useRef<Map<string, () => void>>(new Map());
   /** row lookup for the tooltip */
@@ -55,14 +106,29 @@ export function CalendarView({ rows, crossTenant = false }: CalendarViewProps) {
     return m;
   }, [rows]);
 
+  const { reschedule } = useReschedule();
+
+  // J.6 — permission gate (client-side defence-in-depth).
+  const roles = useMemo(() => session?.roles ?? [], [session]);
+  const canSchedule = useMemo(() => hasPermission(roles, "change.schedule"), [roles]);
+  const activeTenantId = session?.tenantId ? String(session.tenantId) : undefined;
+
   const events = useMemo(() => {
     const out = [];
     for (const r of rows) {
       const ev = changeToEvent(r, crossTenant);
-      if (ev) out.push(ev);
+      if (ev) {
+        // J.6 — per-event editable override: disable drag on foreign-tenant events
+        // in sp_admin overlay mode to prevent accidental reschedule of another tenant's change.
+        if (crossTenant && activeTenantId && r.tenantId !== activeTenantId) {
+          out.push({ ...ev, editable: false });
+        } else {
+          out.push(ev);
+        }
+      }
     }
     return out;
-  }, [rows, crossTenant]);
+  }, [rows, crossTenant, activeTenantId]);
 
   const openDetail = useCallback(
     (id: string) => navigate(`/changes/${encodeURIComponent(id)}`),
@@ -101,6 +167,71 @@ export function CalendarView({ rows, crossTenant = false }: CalendarViewProps) {
   }, []);
 
   /**
+   * J.6 — shared handler for eventDrop + eventResize.
+   * FullCalendar applies the move visually first (optimistic). We call
+   * `info.revert()` on cancel or PATCH failure to roll back the visual state.
+   */
+  const handleEventChange = useCallback(
+    (info: { event: EventApi; revert: () => void }) => {
+      if (!canSchedule) {
+        info.revert();
+        return;
+      }
+
+      const newStart = info.event.start;
+      if (!newStart) {
+        info.revert();
+        return;
+      }
+      const newEnd = info.event.end ?? new Date(newStart.getTime() + DEFAULT_DURATION_MS);
+
+      // Client-side end-before-start guard (matches BFF zod refinement).
+      if (newEnd <= newStart) {
+        info.revert();
+        return;
+      }
+
+      const newStartIso = newStart.toISOString();
+      const newEndIso = newEnd.toISOString();
+
+      const conflicts = detectConflicts(rows, info.event.id, activeTenantId, newStart, newEnd);
+
+      const doReschedule = () => {
+        reschedule(info.event.id, newStartIso, newEndIso).catch(() => {
+          info.revert();
+        });
+      };
+
+      if (conflicts.length > 0) {
+        setConflictModal({
+          conflicts,
+          onConfirm: () => {
+            setConflictModal(null);
+            doReschedule();
+          },
+          onCancel: () => {
+            setConflictModal(null);
+            info.revert();
+          },
+        });
+      } else {
+        doReschedule();
+      }
+    },
+    [canSchedule, rows, activeTenantId, reschedule],
+  );
+
+  const handleEventDrop = useCallback(
+    (info: EventDropArg) => handleEventChange({ event: info.event, revert: info.revert }),
+    [handleEventChange],
+  );
+
+  const handleEventResize = useCallback(
+    (info: EventResizeDoneArg) => handleEventChange({ event: info.event, revert: info.revert }),
+    [handleEventChange],
+  );
+
+  /**
    * I.2 a11y — FullCalendar renders the prev/next toolbar buttons with a child
    * `<span class="fc-icon fc-icon-chevron-{left,right}" role="img">` that has
    * no accessible name. axe flags this as `role-img-alt` serious. The parent
@@ -126,19 +257,36 @@ export function CalendarView({ rows, crossTenant = false }: CalendarViewProps) {
     return () => obs.disconnect();
   }, []);
 
-  const locale = i18n.language === "en" ? "en" : "sk";
-  const options = useMemo(
-    () =>
-      buildCalendarOptions({
-        events,
-        initialView: view,
-        locale,
-        onEventClick: openDetail,
-        onEventDidMount: handleEventDidMount,
-        onEventWillUnmount: handleEventWillUnmount,
-      }),
-    [events, view, locale, openDetail, handleEventDidMount, handleEventWillUnmount],
-  );
+  const locale = (i18n.language === "en" ? "en" : "sk") as "en" | "sk";
+  const options = useMemo(() => {
+    const baseArgs = {
+      events,
+      initialView: view,
+      locale,
+      editable: canSchedule,
+      onEventClick: openDetail,
+      onEventDidMount: handleEventDidMount,
+      onEventWillUnmount: handleEventWillUnmount,
+    };
+    if (canSchedule) {
+      return buildCalendarOptions({
+        ...baseArgs,
+        onEventDrop: handleEventDrop,
+        onEventResize: handleEventResize,
+      });
+    }
+    return buildCalendarOptions(baseArgs);
+  }, [
+    events,
+    view,
+    locale,
+    canSchedule,
+    openDetail,
+    handleEventDidMount,
+    handleEventWillUnmount,
+    handleEventDrop,
+    handleEventResize,
+  ]);
 
   const switchView = useCallback((next: CalendarViewName) => {
     setView(next);
@@ -173,6 +321,13 @@ export function CalendarView({ rows, crossTenant = false }: CalendarViewProps) {
         <FullCalendar ref={calendarRef} {...options} />
       </div>
       {hoveredRow && hover ? <EventTooltip row={hoveredRow} anchor={hover.anchor} /> : null}
+      {conflictModal ? (
+        <ConflictConfirmModal
+          conflicts={conflictModal.conflicts}
+          onConfirm={conflictModal.onConfirm}
+          onCancel={conflictModal.onCancel}
+        />
+      ) : null}
     </div>
   );
 }

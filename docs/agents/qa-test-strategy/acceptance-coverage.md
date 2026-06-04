@@ -54,6 +54,12 @@ to `pass` / `fail` once the live smoke has run and the post-mortem in
 
 **Totals**: 18 / 18 covered — **18 pass**, **0 partial**, **0 deferred**.
 
+## 1b. Post-v1.0 Phase J — ad-hoc feature coverage
+
+| Feature | Status | Spec | Notes |
+|---|---|---|---|
+| `change-calendar-drag-resize` | **pass** | `j6-calendar-drag-resize.spec.ts` | J.6 — FullCalendar `editable: true` when caller has `change.schedule`; `eventDrop` + `eventResize` → BFF `PATCH /api/changes/:id/schedule`; conflict modal on overlap; `info.revert()` on cancel/failure. Foreign-tenant events non-draggable in sp_admin overlay. Cross-tenant heavy overlay deferred to v2.0. |
+
 I.5 graduated journeys #12 + #18 from `partial` → `pass`: sp_admin
 "All my tenants" calendar overlay, shared-CI marker in the CMDB list +
 detail header, cross-tenant Cytoscape edges, and BFF SP impersonation
