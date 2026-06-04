@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Full bleed background (maskable icons must fill the entire canvas) -->
+  <rect width="512" height="512" fill="#4f46e5"/>
+  <!-- Content placed within the ~80% safe zone (56px padding each side → 400x400 centered) -->
+  <!-- Top bar -->
+  <rect x="196" y="160" width="120" height="36" rx="18" fill="#ffffff"/>
+  <!-- Middle bar -->
+  <rect x="196" y="238" width="120" height="36" rx="18" fill="#ffffff"/>
+  <!-- Bottom bar -->
+  <rect x="196" y="316" width="120" height="36" rx="18" fill="#ffffff"/>
+  <!-- Left top connector (top half left side) -->
+  <rect x="196" y="160" width="36" height="78" fill="#4f46e5"/>
+  <!-- Right bottom connector (bottom half right side) -->
+  <rect x="280" y="274" width="36" height="78" fill="#4f46e5"/>
+</svg>

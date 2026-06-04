@@ -242,5 +242,10 @@
       "closedHint": "Ticket je uzavretý — nové komentáre nie sú možné.",
       "error": "Komentár sa nepodarilo odoslať. Skús to znova."
     }
+  },
+  "pwa": {
+    "offlineReady": "Aplikácia je dostupná offline.",
+    "updateAvailable": "Dostupná nová verzia — aktualizuje sa automaticky.",
+    "updateReload": "Aktualizovať teraz"
   }
 }

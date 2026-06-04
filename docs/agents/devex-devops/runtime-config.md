@@ -521,6 +521,57 @@ BFF_ATTACHMENTS_DIR=/var/lib/sdm/attachments-kb
 
 **Orphan attachments**: deleting a KB article does not purge its attachment files. Periodic garbage collection is deferred to v1.2. Manual cleanup acceptable on dev/test.
 
+## PWA / service worker (J.7)
+
+Portal (`apps/portal`) ships an installable PWA with read-only offline support via `vite-plugin-pwa`
+(devDependency only; Workbox runtime travels inside the generated `sw.js`).
+
+### Registration — conditional on `VITE_USE_MOCKS`
+
+Only one service worker may be active per scope at a time.
+
+| Mode | Active SW | Reason |
+|---|---|---|
+| `VITE_USE_MOCKS=true` (dev, CI) | MSW (`mockServiceWorker.js`) | MSW intercepts API calls; Workbox must not compete. |
+| `VITE_USE_MOCKS` unset / `"false"` (production) | Workbox (`sw.js`) | Real BFF; offline cache valid. |
+
+`apps/portal/src/pwa/register-sw.ts` lazy-imports `virtual:pwa-register` and guards on
+`import.meta.env.VITE_USE_MOCKS === "true"`. The registration is called from `main.tsx`
+**after** `createRoot().render()` (no first-paint blocking).
+
+`devOptions.enabled: false` in the VitePWA config prevents the plugin from registering a SW
+during `vite dev` — avoids collision with MSW during local development.
+
+### Cache strategies
+
+| URL pattern | Strategy | Cache name | Entries / TTL |
+|---|---|---|---|
+| `/api/*` GET (excl. `/api/attachments/kb/*`) | StaleWhileRevalidate | `api-v1` | 50 / 1 day |
+| `/me`, `/config` | NetworkFirst (5 s timeout) | `session-v1` | — |
+| `/api/attachments/kb/*` | CacheFirst | `kb-attachments-v1` | 200 / 30 days |
+| App shell (JS, CSS, HTML, fonts, icons) | Precache (Workbox default) | `workbox-precache-v2` | — |
+
+KB attachments use CacheFirst because J.5 declared the storage URL contract immutable
+(content-addressed paths — a URL change means new content).
+
+### Cache name versioning
+
+Cache names are suffixed with `-v1`. Increment the suffix (e.g. `api-v2`) when the response
+shape changes in a backwards-incompatible way. `cleanupOutdatedCaches: true` ensures stale
+precache entries from previous SW versions are purged on activation.
+
+### Workspace exemption
+
+`apps/workspace` does NOT ship a PWA (desktop-first, per H.10 outcome). Do not add `VitePWA`
+to `apps/workspace/vite.config.ts`.
+
+### NOT in scope (v1.1)
+
+- IndexedDB mutation queue / offline write path — deferred to v1.2+.
+- Background sync — coupled with the deferred mutation queue.
+- Lighthouse PWA score gating in CI — LHCI runs over HTTP; PWA install audit requires HTTPS.
+  Verified via browser spec (`j7-portal-pwa-installable.spec.ts`) instead.
+
 ## Otvorené závislosti
 
 - `[05-security]` Auth mode default — `[resolved-in-round-2]`. Production: `sso-oidc` (OIDC redirect cez BFF). Dev: `rest-access-key` (permissive mock). Schema podporuje všetky 3, 05 dodá reálnu implementáciu loaderov v `packages/auth/`.

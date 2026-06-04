@@ -4,6 +4,7 @@ import { defineConfig, loadEnv, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { visualizer } from "rollup-plugin-visualizer";
+import { VitePWA } from "vite-plugin-pwa";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -38,6 +39,77 @@ export default defineConfig(({ mode }) => {
       gzipSize: true,
       brotliSize: true,
       template: "treemap",
+    }) as PluginOption,
+  );
+
+  // PWA — Workbox-generated service worker via `vite-plugin-pwa`.
+  // `devOptions.enabled: false` prevents collision with MSW in `vite dev`.
+  // Conditional registration in `main.tsx` keeps MSW as sole SW controller
+  // when `VITE_USE_MOCKS=true` (dev + CI acceptance journeys).
+  // theme_color = --color-brand-600 (#4f46e5); background_color = --color-neutral-50 (#f8fafc, light default).
+  plugins.push(
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["icons/*.png", "fonts/*.woff2"],
+      manifest: {
+        name: "Service Desk Management",
+        short_name: "SDM",
+        description: "Self-service portal for incidents, requests, knowledge base, and tickets.",
+        theme_color: "#4f46e5",
+        background_color: "#f8fafc",
+        display: "standalone",
+        start_url: "/",
+        scope: "/",
+        lang: "sk",
+        dir: "ltr",
+        icons: [
+          { src: "/icons/icon-192.png", sizes: "192x192", type: "image/png" },
+          { src: "/icons/icon-512.png", sizes: "512x512", type: "image/png" },
+          {
+            src: "/icons/icon-maskable-512.png",
+            sizes: "512x512",
+            type: "image/png",
+            purpose: "maskable",
+          },
+          { src: "/icons/apple-touch-icon-180.png", sizes: "180x180", type: "image/png" },
+        ],
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,svg,png,woff2,webmanifest}"],
+        navigateFallback: "/index.html",
+        cleanupOutdatedCaches: true,
+        runtimeCaching: [
+          // /api/* GET (excluding KB attachments) — stale-while-revalidate, 1-day TTL, 50 entries.
+          {
+            urlPattern: /^https?:\/\/[^/]+\/api\/(?!attachments\/kb\/)/,
+            handler: "StaleWhileRevalidate" as const,
+            options: {
+              cacheName: "api-v1",
+              expiration: { maxEntries: 50, maxAgeSeconds: 86400 },
+            },
+          },
+          // /me + /config — network-first with 5 s timeout; fall back to cache.
+          {
+            urlPattern: /^https?:\/\/[^/]+\/(me|config)(\/|$|\?|#)/,
+            handler: "NetworkFirst" as const,
+            options: {
+              cacheName: "session-v1",
+              networkTimeoutSeconds: 5,
+            },
+          },
+          // /api/attachments/kb/* — cache-first (J.5 storage immutable contract), 30-day TTL, 200 entries.
+          {
+            urlPattern: /^https?:\/\/[^/]+\/api\/attachments\/kb\//,
+            handler: "CacheFirst" as const,
+            options: {
+              cacheName: "kb-attachments-v1",
+              expiration: { maxEntries: 200, maxAgeSeconds: 2592000 },
+            },
+          },
+        ],
+      },
+      // SW disabled in `vite dev` to avoid MSW collision. Only build outputs get a SW.
+      devOptions: { enabled: false },
     }) as PluginOption,
   );
 

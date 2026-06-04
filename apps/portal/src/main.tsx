@@ -11,6 +11,7 @@ import { setPreloadedSession } from "./bootstrap/session-preload";
 import { prefetchHome } from "./features/home/api";
 import { queryClient } from "./lib/query-client";
 import { preloadRouteForPath } from "./bootstrap/route-preload";
+import { registerPwa } from "./pwa/register-sw";
 
 /**
  * Bootstrap critical path — I.0 perf fix.
@@ -133,6 +134,11 @@ async function bootstrap(): Promise<void> {
   requestAnimationFrame(() => {
     document.getElementById("portal-prerender")?.remove();
   });
+
+  // Register the Workbox service worker AFTER React mounts so it never
+  // competes with first paint. Skipped when VITE_USE_MOCKS=true (MSW SW
+  // remains the sole controller in dev + CI acceptance-test mode).
+  void registerPwa();
 }
 
 bootstrap().catch((err: unknown) => {
