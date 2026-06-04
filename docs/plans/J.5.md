@@ -1,7 +1,31 @@
 # J.5 — KB image upload binary (graduates H.3 attachments deferral)
 
-> **Status**: 🔜 NEXT
-> **Branch**: `chunk/J.5-kb-image-upload` > **Cieľ**: ship binary image upload for KB editor — `POST /api/attachments/kb` multipart
+> **Status**: ✅ DONE (squash `d6bf6be`, PR #51)
+> **Branch**: `chunk/J.5-kb-image-upload` (deleted)
+> **Outcome**: BFF `POST /api/attachments/kb` multipart upload + `GET /api/attachments/kb/:id`
+> serve shipped. 5 MB Hono `bodyLimit`. Magic-number sniff (PNG/JPG/GIF/SVG) is authoritative;
+> client `Content-Type` is cross-checked AFTER sniff — mismatch returns 400. JPG: APP markers
+> stripped (EXIF/IPTC/XMP/vendor) via hand-rolled `stripJpgMetadata` (~93 LOC, no dep). SVG:
+> strict `sanitize-html` allowlist (no script, no foreignObject, no event handlers, no
+> dangerous xlink:href). ULID attachment IDs with strict regex validation BEFORE `fs` ops —
+> path traversal defended. Storage keyed by `(tenantId, attachmentId)`; extension derived from
+> sniffed MIME, not client filename. Audit composed under existing `data.kb.write` factory +
+> `details.op="attachment.upload"` (F.4 frozen taxonomy honoured). GET handler returns 404
+> (never 403) on cross-tenant miss — caller cannot distinguish "not in tenant" from "does
+> not exist". Permission `kb.write` (correct disk reality; plan's `kb.edit` was aspirational
+> — `kb.write` is what I.4 kb-write.ts uses + permissions.ts taxonomy lists). Workspace
+> TipTap editor gained drag-drop + paste-clipboard handlers via new `upload.ts` helper +
+> `EditorShell` mod (66 LOC route + 51 LOC shell). Drop-zone hover state in `kb.css`. MSW
+> handler returns inline `data:` URI for dev parity. **41 BFF cases** (attachments-kb ×14,
+> magic-sniff ×11, exif-strip ×7, svg-sanitize ×9) + browser scenario `j5-kb-image-upload`
+> ×3 specs. **No new runtime deps** (existing `sanitize-html` 2.17.4 reused; hand-rolled
+> magic sniff + EXIF strip). Workspace initial JS gzip unchanged (upload code in lazy
+> `vendor-editor` chunk from I.4). CHANGELOG Known issues entry "KB editor image upload"
+> struck through. H.3 deferral comment in `NewIncidentForm.tsx:41-46` narrowed (incident
+> attachments stay v1.2+). 24 files / 2059 ins / 17 del. All CI green (acceptance × 3
+> browsers, lint+typecheck+test+build, CodeQL × 2, Trufflehog, helm chart lint, security
+> browser scenarios).
+> **Cieľ**: ship binary image upload for KB editor — `POST /api/attachments/kb` multipart
 > endpoint with 5 MB size cap, magic-number-validated MIME (PNG / JPG / SVG / GIF whitelist),
 > SVG sanitization via existing `sanitize-html`, JPG EXIF strip (manual APP-marker drop, no
 > new runtime deps), file-system storage under configurable path, `GET /api/attachments/kb/:id`
