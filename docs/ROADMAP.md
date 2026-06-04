@@ -22,13 +22,13 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Status: 🚀 v1.0 RELEASED (2026-06-03)** — tag `v1.0.0` pushed; release.yml CI publishuje portal/workspace/BFF images + helm OCI chart + GitHub Release. Manual cluster deployment per `deploy_target.md` = separate ops step (currently **blocked** by missing container runtime on host — see J.0).
-- **Last merged:** Chunk J.3 (SSE tenant push, PR #50 squash `0676d77`). Predchádzajúce: PR #49 (J.1 workspace multi-arch), J.2 closed N/A (docs-only on main).
-- **In flight:** Phase J — J.0 ⏸ deferred (cluster prerequisite), J.1 ✅ DONE, J.2 ✅ N/A, J.3 ✅ DONE, J.4 🔜 NEXT (KB analytics real ingest).
+- **Last merged:** Chunk J.3 (SSE tenant push, PR #50 squash `0676d77`). J.4 closed as N/A (docs-only on main). Predchádzajúce: PR #49 (J.1 workspace multi-arch), J.2 closed N/A.
+- **In flight:** Phase J — J.0 ⏸ deferred, J.1 ✅ DONE, J.2 ✅ N/A, J.3 ✅ DONE, J.4 ✅ N/A, J.5 🔜 NEXT (KB image upload binary).
 - **Phase I:** ✅ DONE (8/8 chunks: I.0 LHCI graduation, I.1 step-up 2FA, I.2 security audit, I.3 multi-tenancy edges, I.4 KB authoring, I.5 SP cockpit, I.6 release dry-run scaffolding, I.7 v1.0 cut).
-- **Phase J:** 🟡 IN PROGRESS — J.0 ⏸ deferred (no container runtime on 10.11.36.21; unblock criteria in [J.0.md](./plans/J.0.md)); J.1 ✅ DONE; J.2 ✅ N/A; J.3 ✅ DONE; J.4-J.9 sequenced per [J.md](./plans/J.md) §D2.
+- **Phase J:** 🟡 IN PROGRESS — J.0 ⏸ deferred; J.1 ✅ DONE; J.2 ✅ N/A; J.3 ✅ DONE; J.4 ✅ N/A (MSW fixture canonical + F.4 frozen taxonomy blocks audit-derivation path per [J.4.md](./plans/J.4.md)); J.5-J.9 sequenced per [J.md](./plans/J.md) §D2.
 - **Project:** ✅ MVP COMPLETE — Phase 0/C/D/E/F/G/H/I all done. v1.0 released. Post-release scope = **Phase J** ([J.md](./plans/J.md) skeleton; full chunk plans písané pri spustení).
 
-Posledná revízia tohto dokumentu: J.3 merged (2026-06-04) — SSE tenant push graduates I.3 next-API-call detection.
+Posledná revízia tohto dokumentu: J.4 closed N/A (2026-06-04) — MSW fixture canonical + F.4 frozen taxonomy blocks audit-derivation.
 
 ---
 
@@ -209,8 +209,8 @@ Dispatch: strict sekvenčný I.0 → I.7 (per `feedback_pr_flow.md` PR-flow). Pr
 - **J.1 Workspace arm64 image ✅ DONE** — `.github/workflows/release.yml` workspace job split into canonical Docker multi-platform 3-job pattern: `workspace-image-amd64` (ubuntu-latest) + `workspace-image-arm64` (`ubuntu-22.04-arm` native runner) push by digest, `workspace-manifest` merges via `docker buildx imagetools create` over metadata-action tag matrix. `helm-chart` `needs:` rewired. RELEASE-NOTES + CHANGELOG doc bug fixed (had falsely claimed v1.0 workspace was multi-arch). First real arm64 build verification = J.9 v1.1.0 tag push. Plán: [J.1.md](./plans/J.1.md), PR #49.
 - **J.2 Real BFF cross-tenant query ✅ N/A** — pre-flight eval 2026-06-04 confirmed dev/test CA SDM 17.4 (`10.11.35.35:8050`) is single-tenant (tenant collection `COUNT=0` per `real-backend-contracts.md §6`); I.5 (PR #46) already shipped BFF cross-tenant surface (`sp-impersonation.ts` + `tenant-scoping.ts` `?tenants=all` + audit emit) + MSW overlay. No unique J.2 delta exists on this instance. Plán: [J.2.md](./plans/J.2.md), no PR (docs-only on main).
 - **J.3 Real-time tenant push ✅ DONE** — Hono `streamSSE` SSE endpoint `GET /api/events` + module-level event-bus keyed by sessionId. Two event types: `tenant.suspended` (admin-driven via new `POST /api/admin/tenants/:id/{suspend,unsuspend}`, audit-composed under `authz.tenant.switch.denied` with `details.op` discriminator) + `session.expired`. Runtime override map in `tenant-suspension.ts` authoritative for `filterActiveTenants` + `assertTenantActive` post fix-up commit `6fb08f3`. FE `AppEventSource` (api-client) + shell provider; backoff 1-30 s, no reconnect on session.expired. Bundle delta <2 KB initial. 26 new test cases + browser scenario verifying push delivery <5 s. Plán: [J.3.md](./plans/J.3.md), PR #50.
-- **J.4 KB analytics real ingest** 🔜 NEXT — audit-log-derived aggregation in BFF (data.kb.read / data.kb.search events from F.4 taxonomy); replaces I.4 MSW fixture. No CA SDM schema changes. Plán TBD.
-- **J.5 KB image upload binary** — graduates H.3 attachments deferral; `/api/attachments/kb` endpoint, 5MB max, PNG/JPG/SVG/GIF whitelist, EXIF strip, MIME sniff. Plán TBD.
+- **J.4 KB analytics real ingest ✅ N/A** — pre-flight inventory 2026-06-04 found zero `data.kb.read`/`data.kb.search` audit emissions in codebase; adding them would expand F.4 frozen taxonomy (banned by Hard rules). No production traffic source on dev/test backend (J.0 cluster deferred). MSW fixture is the production behaviour; swap point at `kb-analytics.ts:103` ready for v2.0 when real signal source comes online. Plán: [J.4.md](./plans/J.4.md), no PR (docs-only on main).
+- **J.5 KB image upload binary** 🔜 NEXT — graduates H.3 attachments deferral; `/api/attachments/kb` endpoint, 5MB max, PNG/JPG/SVG/GIF whitelist, EXIF strip, MIME sniff. Plán TBD (substantive feature work).
 - **J.6 Calendar drag-resize** — `@fullcalendar/interaction` plugin graduation (H.10 disabled `editable: false`). Plán TBD.
 - **J.7 Mobile PWA offline mode** — Workbox precache + IndexedDB offline ticket queue. Plán TBD.
 - **J.8 Portal LCP fix** — copy/UX redesign first (multi-line HeroGreeting subtitle), SSR via Vite SSR plugin fallback if insufficient. Plán TBD.

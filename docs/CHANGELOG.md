@@ -240,8 +240,14 @@ The following items are intentionally deferred and tracked for v1.1+:
   planned for v1.1.
 - **Advanced change-calendar interactions** — drag-resize of events and
   cross-tenant conflict overlay (heavy mode) planned for v1.1.
-- **KB analytics widgets** — currently MSW-fixture only. Real analytics
-  ingest planned for v1.1+.
+- **KB analytics widgets** — MSW-fixture is the production behaviour on
+  the dev/test backend (CA SDM 17.4 has no native KB analytics surface;
+  current BFF endpoint returns identical synthetic snapshots as MSW). J.4
+  (2026-06-04) closed as N/A because (a) F.4 audit taxonomy is frozen for
+  Phase J — adding `data.kb.read` / `data.kb.search` would violate the
+  Hard rules, and (b) no production traffic source exists yet (J.0 staging
+  deploy deferred). Real ingest = v2.0 scope (purpose-built telemetry
+  channel + FE beacons + aggregation). Swap point in `kb-analytics.ts:103`.
 - **KB editor image upload** — markdown URL paste only; binary upload
   deferred to v1.1+.
 - **LCP on portal mobile** — Lighthouse picker prefers multi-line text
