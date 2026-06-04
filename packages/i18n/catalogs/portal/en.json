@@ -242,5 +242,10 @@
       "closedHint": "This ticket is closed — new comments are disabled.",
       "error": "Couldn't send the comment. Please try again."
     }
+  },
+  "pwa": {
+    "offlineReady": "App is available offline.",
+    "updateAvailable": "New version available — updating automatically.",
+    "updateReload": "Update now"
   }
 }

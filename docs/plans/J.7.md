@@ -1,6 +1,6 @@
 # J.7 — Mobile PWA offline mode (portal — read-only, no mutation queue)
 
-> **Status**: 🔜 NEXT
+> **Status**: ✅ DONE — PR #TBD
 > **Branch**: `chunk/J.7-portal-pwa-precache` > **Cieľ**: ship installable PWA + offline-read for the portal (Lucia persona, mobile-first).
 > Workbox-generated service worker via `vite-plugin-pwa` (build-time dev dep). Manifest +
 > icons + precache app shell + runtime cache strategies (stale-while-revalidate on `/api/*`
@@ -82,11 +82,11 @@ docs/plans/J.7.md                                   # Status NEXT → DONE; PR #
 - [ ] `register-sw.ts` calls `registerSW({ onNeedRefresh, onOfflineReady })` from `virtual:pwa-register`. Stub toasts (or use existing toast system if H.x provided one).
 - [ ] Icons in `apps/portal/public/icons/`: - `icon-192.png` (192×192) - `icon-512.png` (512×512) - `icon-maskable-512.png` (512×512 with safe-zone) - `apple-touch-icon-180.png` (180×180)
 - [ ] `apps/portal/index.html` head includes (if not auto-injected by plugin):
-      `html
-    <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="..." />
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
-    `
+    `html
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <meta name="theme-color" content="..." />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
+  `
 - [ ] `apps/portal/tsconfig.json` `compilerOptions.types` includes `"vite-plugin-pwa/client"`.
 - [ ] i18n: +3 portal keys (`pwa.offlineReady`, `pwa.updateAvailable`, `pwa.updateReload`). SK + EN parity (`pnpm i18n:check` green).
 - [ ] Browser test `j7-portal-pwa-installable.spec.ts`: - Case 1: After portal build + serve, `GET /manifest.webmanifest` returns 200 + valid JSON (name, start_url, icons). - Case 2: After first page load, `navigator.serviceWorker.getRegistration()` returns a registration with scope `/`. - Case 3: Offline navigation (Playwright `page.context().setOffline(true)`) to `/` falls back to precached `index.html` (no error page). - (Optional) Case 4: MSW dev mode (`VITE_USE_MOCKS=true`) does NOT register Workbox SW (verify via `getRegistrations()` returns only the MSW SW).

@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Background with brand indigo fill -->
+  <rect width="512" height="512" rx="96" fill="#4f46e5"/>
+  <!-- Stylized "S" lettermark using paths to avoid font dependency -->
+  <!-- Top bar of S -->
+  <rect x="156" y="128" width="200" height="52" rx="26" fill="#ffffff"/>
+  <!-- Middle bar of S -->
+  <rect x="156" y="230" width="200" height="52" rx="26" fill="#ffffff"/>
+  <!-- Bottom bar of S -->
+  <rect x="156" y="332" width="200" height="52" rx="26" fill="#ffffff"/>
+  <!-- Left side top connector -->
+  <rect x="156" y="128" width="52" height="154" rx="0" fill="#4f46e5"/>
+  <rect x="156" y="128" width="52" height="128" rx="0" fill="#ffffff" opacity="0.0"/>
+  <!-- Left top arc -->
+  <rect x="156" y="130" width="52" height="100" fill="#4f46e5"/>
+  <!-- Right bottom arc -->
+  <rect x="304" y="282" width="52" height="100" fill="#4f46e5"/>
+</svg>

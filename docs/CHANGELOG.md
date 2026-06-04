@@ -236,8 +236,12 @@ The following items are intentionally deferred and tracked for v1.1+:
   in `release.yml`. Multi-arch lands in v1.1 via native `ubuntu-22.04-arm`
   GitHub-hosted runner (J.1). Impact: arm64 clusters cannot run v1.0
   workspace; arm64 BFF + portal are unaffected.
-- **Mobile PWA offline mode** — draft auto-save and service-worker cache
-  planned for v1.1.
+- ~~**Mobile PWA offline mode** — draft auto-save and service-worker cache planned for v1.1.~~
+  **Portal PWA — installability + read-only offline shipped in v1.1 (J.7)** (portal only;
+  workspace exempt per desktop-first H.10 outcome). Workbox SW via `vite-plugin-pwa` precaches
+  app shell; runtime caches: SWR `/api/*` GET, NetworkFirst `/me`+`/config`, CacheFirst
+  `/api/attachments/kb/*`. **Offline mutation queue** (draft auto-save + replay) deferred to
+  v1.2+ — requires production mobile traffic signal (J.0 staging cluster still pending).
 - ~~**Advanced change-calendar interactions (drag-resize)** — deferred to v1+
   per H.10 plan.~~ Shipped in J.6: FullCalendar `editable: true` when caller
   has `change.schedule` permission; `eventDrop` + `eventResize` wire to new
