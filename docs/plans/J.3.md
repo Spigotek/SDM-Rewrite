@@ -1,7 +1,29 @@
 # J.3 — Real-time tenant push via SSE (graduates I.3 next-API-call detection)
 
-> **Status**: 🔜 NEXT
-> **Branch**: `chunk/J.3-sse-tenant-push` > **Cieľ**: replace I.3's "next-API-call detection" pattern for tenant suspension + session
+> **Status**: ✅ DONE (squash `0676d77`, PR #50)
+> **Branch**: `chunk/J.3-sse-tenant-push` (deleted)
+> **Outcome**: BFF `GET /api/events` Hono `streamSSE` endpoint + module-level event-bus
+> (`apps/bff/src/platform/event-bus.ts`) keyed by sessionId. Emits two event types:
+> `tenant.suspended` (admin-driven via new `POST /api/admin/tenants/:id/{suspend,unsuspend}`,
+> gated by `tenant.admin` permission, audited under existing `authz.tenant.switch.denied` with
+> `details.op` discriminator — F.4 taxonomy frozen) + `session.expired` (emitted before session
+> destroy in F.1 middleware). Runtime override map `runtimeStatusOverrides` in
+> `tenant-suspension.ts` is authoritative — `isActiveTenant` (post-merge fix `6fb08f3`) reads
+> via `resolvedTenantStatus` so `filterActiveTenants` (/me, /me/tenants) + `assertTenantActive`
+> (/me/active-tenant switch) honour admin-driven flips without session re-bootstrap.
+> Heartbeat every 30 s via SSE comment. Stream-abort cleanup unsubscribes from bus + clears
+> heartbeat. FE: `AppEventSource` (api-client, exponential backoff 1-30 s, no reconnect on
+> `session.expired`) + `EventSourceProvider` wired into portal + workspace shells; on
+> `tenant.suspended` for active tenant calls existing I.3 redirect /login + toast handler,
+> for non-active tenant invalidates `/me/tenants` TanStack Query. MSW SSE handler + admin
+> mirror for browser-test fixture seam. Browser test `j3-sse-tenant-push.spec.ts` (3 specs)
+> verifies push delivery <5 s vs I.3 next-API-call up to 30 s. Bundle delta <2 KB initial
+> (provider lazy after session bootstrap) — portal/workspace budgets unchanged. 26 new test
+> cases (events.test.ts ×9, admin-tenants.test.ts ×9, event-source.test.ts ×7, browser ×3),
+> 372/372 BFF tests + all CI checks green (acceptance × 3 browsers, lint+typecheck+test+build,
+> CodeQL × 2, Trufflehog, helm-chart-lint, security browser scenarios). No new runtime deps
+> (`streamSSE` in `hono/streaming` already transitive; EventSource native).
+> **Cieľ**: replace I.3's "next-API-call detection" pattern for tenant suspension + session
 > expiry with a push channel (Server-Sent Events) so the FE learns about state changes within
 > seconds instead of waiting for the next user-initiated API call. SSE per prompt rec
 > (half-duplex sufficient, Hono native `streamSSE` from `hono/streaming`, no new runtime deps,
