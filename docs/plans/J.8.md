@@ -1,7 +1,9 @@
 # J.8 — Portal LCP fix via HeroGreeting copy redesign (no SSR)
 
-> **Status**: 🔜 NEXT
-> **Branch**: `chunk/J.8-portal-lcp-copy` > **Cieľ**: close the GOAL.md sub-3s portal mobile LCP gap via low-risk copy/UX redesign per
+> **Status**: ✅ DONE (squash `c3182e7`, PR #54)
+> **Branch**: `chunk/J.8-portal-lcp-copy` (deleted)
+> **Outcome**: `home.subgreeting` expanded in SK + EN from single short line (~22 chars) to a multi-line welcoming paragraph (~200 chars covering incident report, catalog request, KB lookup, ticket status, "one click away" framing). `.sdm-home-hero-sub` CSS gained `max-width: 28rem` + `line-height: var(--line-height-relaxed, 1.5)` so the new copy reliably wraps to 2-3 lines on Lighthouse mobile preset. HeroGreeting render path unchanged — anonymous + signed-in variants both paint synchronously at first React paint per I.0 fix, so the new larger multi-line subtitle wins LCP picker race and LCP ≈ FCP for cold loads. `docs/agents/qa-test-strategy/performance.md` gained §2.1 documenting the LCP target rationale. CHANGELOG Known issues entry struck — replaced with "Portal mobile LCP closed via HeroGreeting copy redesign in v1.1 (J.8); SSR remains an option for v2.0". 5 files / 19 ins / 6 del — smallest Phase J chunk. NO new deps. NO new tests (i18n contents not asserted by acceptance). LHCI measurement deferred to nightly `perf-nightly.yml` workflow on `main` (LHCI not in per-PR CI). One flake on `cross-tab.test.ts` BroadcastChannel timing — unrelated to J.8 (i18n + CSS + docs); resolved by CI rerun on second attempt.
+> **Cieľ**: close the GOAL.md sub-3s portal mobile LCP gap via low-risk copy/UX redesign per
 > prompt §Open questions J.8 recommendation. Expand the `home.subgreeting` text in SK + EN
 > from a single short line to a multi-line welcoming paragraph so the Lighthouse LCP picker
 > selects it as the LCP target. Because the HeroGreeting (including its anonymous variant)
@@ -71,7 +73,7 @@ slot.
 - [ ] `.sdm-home-hero-sub` CSS confirms the paragraph renders as multi-line on 375 px wide
       mobile viewport (Lighthouse mobile preset uses 412×823 or 375×667 — both should
       reliably wrap a 150+ char paragraph). Suggested: `max-width: 28rem` + `line-height:
-    1.45` (verify against existing tokens).
+  1.45` (verify against existing tokens).
 - [ ] HeroGreeting component **behaviour unchanged** — same anonymous + signed-in variants,
       same `useTranslation`, same i18n keys (only the string value of `subgreeting` grows).
 - [ ] `pnpm i18n:check` green (SK ↔ EN parity).

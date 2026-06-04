@@ -22,13 +22,13 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Status: 🚀 v1.0 RELEASED (2026-06-03)** — tag `v1.0.0` pushed; release.yml CI publishuje portal/workspace/BFF images + helm OCI chart + GitHub Release. Manual cluster deployment per `deploy_target.md` = separate ops step (currently **blocked** by missing container runtime on host — see J.0).
-- **Last merged:** Chunk J.7 (portal PWA + read-only offline, PR #53 squash `4d29353`). Predchádzajúce: J.6 PR #52, J.5 PR #51, J.4 closed N/A, J.3 PR #50, J.1 PR #49.
-- **In flight:** Phase J — J.0 ⏸ deferred, J.1 ✅ DONE, J.2 ✅ N/A, J.3 ✅ DONE, J.4 ✅ N/A, J.5 ✅ DONE, J.6 ✅ DONE, J.7 ✅ DONE, J.8 🔜 NEXT (portal LCP fix).
+- **Last merged:** Chunk J.8 (portal LCP via HeroGreeting copy redesign, PR #54 squash `c3182e7`). Predchádzajúce: J.7 PR #53, J.6 PR #52, J.5 PR #51, J.4 closed N/A, J.3 PR #50, J.1 PR #49.
+- **In flight:** Phase J — J.0 ⏸ deferred, J.1-J.8 ✅ DONE (5 feature + 2 N/A + 1 done-now), J.9 🔜 NEXT (v1.1 cut — meta-decision pending given J.0 deferred).
 - **Phase I:** ✅ DONE (8/8 chunks: I.0 LHCI graduation, I.1 step-up 2FA, I.2 security audit, I.3 multi-tenancy edges, I.4 KB authoring, I.5 SP cockpit, I.6 release dry-run scaffolding, I.7 v1.0 cut).
-- **Phase J:** 🟡 IN PROGRESS — J.0 ⏸ deferred; J.1 ✅ DONE; J.2 ✅ N/A; J.3 ✅ DONE; J.4 ✅ N/A; J.5 ✅ DONE; J.6 ✅ DONE; J.7 ✅ DONE; J.8-J.9 sequenced per [J.md](./plans/J.md) §D2.
+- **Phase J:** 🟡 IN PROGRESS — J.0 ⏸ deferred; J.1 ✅ DONE; J.2 ✅ N/A; J.3 ✅ DONE; J.4 ✅ N/A; J.5 ✅ DONE; J.6 ✅ DONE; J.7 ✅ DONE; J.8 ✅ DONE; J.9 🔜 NEXT (v1.1 cut — gates on user decision given J.0 deferred).
 - **Project:** ✅ MVP COMPLETE — Phase 0/C/D/E/F/G/H/I all done. v1.0 released. Post-release scope = **Phase J** ([J.md](./plans/J.md) skeleton; full chunk plans písané pri spustení).
 
-Posledná revízia tohto dokumentu: J.7 merged (2026-06-04) — portal PWA installable + read-only offline; MSW vs Workbox SW coexistence resolved via VITE_USE_MOCKS gate.
+Posledná revízia tohto dokumentu: J.8 merged (2026-06-04) — portal mobile LCP closed via HeroGreeting copy redesign.
 
 ---
 
@@ -213,7 +213,7 @@ Dispatch: strict sekvenčný I.0 → I.7 (per `feedback_pr_flow.md` PR-flow). Pr
 - **J.5 KB image upload binary ✅ DONE** — `POST /api/attachments/kb` multipart + `GET /api/attachments/kb/:id` serve. 5 MB Hono bodyLimit; magic-number sniff is authoritative (client Content-Type cross-checked); JPG EXIF stripped via hand-rolled APP-marker drop; SVG sanitized via existing `sanitize-html` strict allowlist; ULID attachment IDs path-validated before fs ops; audit composed under `data.kb.write` + `details.op="attachment.upload"`. TipTap drag-drop + paste handlers in workspace KB editor. **41 BFF cases** + 3 browser specs. **No new runtime deps.** Bundle: workspace initial JS unchanged (upload code in lazy vendor-editor chunk from I.4). Plán: [J.5.md](./plans/J.5.md), PR #51.
 - **J.6 Calendar drag-resize ✅ DONE** — BFF `PATCH /api/changes/:id/schedule` (zod end-after-start, pre-fetched previous timestamps in audit, F.2 entity proxy PUT internally, audit under `data.chg.write` + `details.op="schedule.update"`). FE `editable: true` gated on `change.schedule`; `eventDrop`+`eventResize` → `useReschedule` + `ConflictConfirmModal`. Foreign-tenant events non-draggable in sp_admin overlay. 10 BFF cases + 3 browser specs. No new deps. Plán: [J.6.md](./plans/J.6.md), PR #52.
 - **J.7 Mobile PWA offline mode ✅ DONE** — `vite-plugin-pwa` (devDep) + workbox-window/build generate Workbox SW at build time. Manifest + 4 PNG icons (192, 512, 512-maskable, 180-apple). Precache app shell; runtime cache: SWR `/api/*` GET, NetworkFirst `/me`+`/config`, CacheFirst `/api/attachments/kb/*`. Conditional registration via `VITE_USE_MOCKS` gate — MSW SW stays sole controller for dev/CI, Workbox wins production. Portal initial JS 161 KB / 180 KB (Workbox runtime in separate `sw.js`). 18 MSW-mode acceptance × 3 browsers still pass. NO IndexedDB mutation queue — deferred to v1.2+ per user decision. 3 browser specs. Plán: [J.7.md](./plans/J.7.md), PR #53.
-- **J.8 Portal LCP fix** 🔜 NEXT — copy/UX redesign first (multi-line HeroGreeting subtitle becomes LCP target, paint-uje at FCP), SSR via Vite SSR plugin fallback if insufficient. Plán TBD.
+- **J.8 Portal LCP fix ✅ DONE** — `home.subgreeting` expanded SK+EN (~22 → ~200 chars) to multi-line welcoming paragraph. `.sdm-home-hero-sub` CSS gained `max-width: 28rem` + `line-height: 1.5`. HeroGreeting renders synchronously per I.0 fix → new larger subtitle wins LCP picker race, LCP ≈ FCP for cold loads. Smallest Phase J chunk (5 files, +19/-6). NO new deps, NO new tests. LHCI measurement runs nightly on main via perf-nightly.yml. Plán: [J.8.md](./plans/J.8.md), PR #54.
 - **J.9 v1.1 cut** — semver tag + image push + OCI helm + release notes; requires J.0 GO before tag. Plán TBD.
 
 Dispatch: strict sekvenčný J.0 → J.9 (per `feedback_pr_flow.md` PR-flow). Per-chunk plans písané pre-execution per chunk (NIE upfront — reflects learnings from prior chunks). Prompt template pre `/clear` workflow: [J-prompt.md](./plans/J-prompt.md).
