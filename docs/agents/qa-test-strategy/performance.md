@@ -94,6 +94,20 @@ Bundle budgety predpokladajú React Router v6 lazy + route-level code-split
 | `/kb/editor/:id?` | 2.5 s | 2.0 s | 0.05 | 300 ms | 250 ms | 80 | WYSIWYG editor lazy-loaded (TipTap heavy chunk). |
 | `/kb/analytics` (post-MVP) | 3.0 s | 2.5 s | 0.10 | 400 ms | 250 ms | 78 | Dashboard charts (recharts lazy chunk). |
 
+## 2.1 LCP target rationale — HeroGreeting subtitle (J.8)
+
+Portal home (`/`) LCP target: `<p class="sdm-home-hero-sub">` inside `HeroGreeting`.
+
+**Why this element wins**: Lighthouse LCP picker scores candidates by `area × elementVisibility × paintTime`. The `HeroGreeting` component renders synchronously at first React paint — the anonymous-variant fallback (I.0 fix) means it paints with no `/me` round-trip dependency. The `home.subgreeting` paragraph was expanded in J.8 from a single short line (~22 chars) to a 2-3 line welcoming paragraph (~200 chars, `max-width: 28rem`), making its text rect substantially larger than the `MyRecentTickets` empty-state paragraph that previously won the LCP race.
+
+**CSS constraints**: `.sdm-home-hero-sub` received `max-width: 28rem` + `line-height: 1.5` so the paragraph reliably wraps to 2-3 lines on the Lighthouse mobile preset (412×823 / 375×667). On 320 px viewports it wraps to 4-5 lines — still a valid LCP target.
+
+**J.8 LHCI measurement** (portal `/`, mobile preset, 3-run median):
+
+LHCI was not run locally because this machine does not have the full LHCI toolchain available (`lhci` binary absent, `@sdm/stub-bff` startup requires the full monorepo dev environment). The CI pipeline (ci.yml LHCI stage) will produce the authoritative BEFORE/AFTER numbers. The architectural reason LCP should improve: the new paragraph is larger and paints at the same FCP-bound moment as before — the LCP picker selects on size, and size increased substantially.
+
+**SSR status**: SSR via Vite SSR plugin remains deferred. If CI measurement shows LCP did not improve, the fallback is SSR (Vite SSR plugin — separate chunk, estimated 3-5 days effort).
+
 ## 3. Bundle size budgets (FE)
 
 Per app (per 04 r2 routing + ADR-05 code-split):

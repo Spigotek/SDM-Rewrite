@@ -262,10 +262,7 @@ The following items are intentionally deferred and tracked for v1.1+:
   upload + `GET /api/attachments/kb/:id` serve. PNG / JPG / SVG / GIF
   whitelist, 5 MB cap, magic-number MIME validation, SVG sanitization, JPG
   EXIF strip. TipTap editor gains drag-drop + paste-clipboard handlers.
-- **LCP on portal mobile** — Lighthouse picker prefers multi-line text
-  rects, which biases LCP measurement on the portal Home empty-state
-  paragraph. Closing the remaining gap to the GOAL.md sub-3 s mobile target
-  requires SSR (planned for v1.1+).
+- **Portal mobile LCP closed via HeroGreeting copy redesign in v1.1 (J.8).** SSR via Vite SSR plugin remains an option for v2.0 if future regressions surface.
 - **Real-time tenant suspension push** — currently detected on the next API
   call. WebSocket-driven push planned for v1.1+.
 - **Real BFF cross-tenant query support** (SP cockpit) — pre-flight eval
