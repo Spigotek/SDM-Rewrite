@@ -20,7 +20,7 @@
   "home": {
     "greeting": "Ahoj, {name} 👋",
     "greetingAnonymous": "Ahoj 👋",
-    "subgreeting": "Ako ti môžem pomôcť?",
+    "subgreeting": "Vitaj v Service Desk Manageri. Tu môžeš nahlásiť incident, požiadať o vybavenie zo služobného katalógu, nájsť návod v znalostnej báze alebo sledovať stav svojich žiadostí. Pomoc s prvým ticketom je vždy len jeden klik od teba.",
     "actions": {
       "ariaLabel": "Rýchle akcie",
       "newIncident": {

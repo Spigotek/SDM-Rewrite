@@ -49,6 +49,8 @@
 .sdm-home-hero-sub {
   margin: 0;
   color: var(--color-text-muted);
+  max-width: 28rem;
+  line-height: var(--line-height-relaxed, 1.5);
 }
 
 /* ─── Action cards ────────────────────────────────────────────────────── */

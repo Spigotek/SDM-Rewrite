@@ -20,7 +20,7 @@
   "home": {
     "greeting": "Hi, {name} 👋",
     "greetingAnonymous": "Hi 👋",
-    "subgreeting": "How can I help you?",
+    "subgreeting": "Welcome to Service Desk Manager. You can report an incident, request a catalog item, find a how-to in the knowledge base, or check the status of any ticket you've raised. Help with your first ticket is one click away.",
     "actions": {
       "ariaLabel": "Quick actions",
       "newIncident": {
