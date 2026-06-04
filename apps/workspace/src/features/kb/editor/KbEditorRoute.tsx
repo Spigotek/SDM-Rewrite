@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
@@ -11,6 +11,9 @@ import { EditorShell } from "./components/EditorShell";
 import { VisibilitySelector } from "./components/VisibilitySelector";
 import { PublishModal } from "./components/PublishModal";
 import { DraftAutoSave } from "./components/DraftAutoSave";
+import { uploadKbImage, AttachmentError } from "./upload";
+import type { Editor } from "@tiptap/react";
+
 import type { KbVisibility } from "./types";
 import "../kb.css";
 import "./editor.css";
@@ -53,7 +56,40 @@ export default function KbEditorRoute() {
   const [tags, setTags] = useState<readonly string[]>([]);
   const [publishOpen, setPublishOpen] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const editorRef = useRef<Editor | null>(null);
   const queryClient = useQueryClient();
+
+  const onEditorReady = useCallback((ed: Editor) => {
+    editorRef.current = ed;
+  }, []);
+
+  const onImageFile = useCallback(
+    async (file: File) => {
+      setUploadError(null);
+      setUploading(true);
+      try {
+        const result = await uploadKbImage(file);
+        editorRef.current?.commands.setImage({ src: result.url, alt: file.name });
+      } catch (err) {
+        if (err instanceof AttachmentError) {
+          const codeMap: Record<string, string> = {
+            ATTACHMENT_TOO_LARGE: t("kb.editor.upload.error.size"),
+            ATTACHMENT_UNSUPPORTED_MIME: t("kb.editor.upload.error.mime"),
+            ATTACHMENT_MIME_MISMATCH: t("kb.editor.upload.error.mime"),
+            ATTACHMENT_SVG_REJECTED: t("kb.editor.upload.error.svg"),
+          };
+          setUploadError(codeMap[err.code] ?? t("kb.editor.upload.error.generic"));
+        } else {
+          setUploadError(t("kb.editor.upload.error.generic"));
+        }
+      } finally {
+        setUploading(false);
+      }
+    },
+    [t],
+  );
 
   // Hydrate local form state once per loaded article. `useRef` keyed on the
   // article id avoids re-hydrating when the user edits subsequent fields.
@@ -173,6 +209,11 @@ export default function KbEditorRoute() {
           {serverError}
         </p>
       ) : null}
+      {uploadError ? (
+        <p role="alert" className="sdm-kb-editor-error" data-testid="kb-editor-upload-error">
+          {uploadError}
+        </p>
+      ) : null}
 
       <div className="sdm-kb-editor-grid">
         <div className="sdm-kb-editor-main">
@@ -187,11 +228,24 @@ export default function KbEditorRoute() {
               required
             />
           </label>
-          <EditorShell
-            value={body}
-            onMarkdownChange={setBody}
-            placeholder={t("kb.editor.body.placeholder")}
-          />
+          <div className="sdm-kb-editor-shell-wrapper">
+            {uploading ? (
+              <div
+                className="sdm-kb-editor-upload-overlay"
+                data-testid="kb-editor-uploading"
+                aria-live="polite"
+              >
+                {t("kb.editor.upload.uploading")}
+              </div>
+            ) : null}
+            <EditorShell
+              value={body}
+              onMarkdownChange={setBody}
+              placeholder={t("kb.editor.body.placeholder")}
+              onEditorReady={onEditorReady}
+              onImageFile={onImageFile}
+            />
+          </div>
         </div>
 
         <aside className="sdm-kb-editor-side" aria-label={t("kb.editor.side.aria")}>

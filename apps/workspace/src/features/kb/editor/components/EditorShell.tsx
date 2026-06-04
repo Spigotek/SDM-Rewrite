@@ -1,4 +1,4 @@
-import { useEditor, EditorContent, type JSONContent } from "@tiptap/react";
+import { useEditor, EditorContent, type Editor, type JSONContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
@@ -32,9 +32,20 @@ export interface EditorShellProps {
   readonly onMarkdownChange: (markdown: string) => void;
   readonly placeholder?: string;
   readonly testId?: string;
+  /** Called once the TipTap editor instance is ready. */
+  readonly onEditorReady?: (editor: Editor) => void;
+  /** Called with a File when the user drops or pastes an image. */
+  readonly onImageFile?: (file: File) => void;
 }
 
-export function EditorShell({ value, onMarkdownChange, placeholder, testId }: EditorShellProps) {
+export function EditorShell({
+  value,
+  onMarkdownChange,
+  placeholder,
+  testId,
+  onEditorReady,
+  onImageFile,
+}: EditorShellProps) {
   const { t } = useTranslation("workspace");
   const editor = useEditor({
     extensions: [
@@ -79,8 +90,42 @@ export function EditorShell({ value, onMarkdownChange, placeholder, testId }: Ed
     );
   }, [value, editor]);
 
+  // Notify parent when editor is ready.
+  useEffect(() => {
+    if (editor && onEditorReady) onEditorReady(editor);
+  }, [editor, onEditorReady]);
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    if (!onImageFile) return;
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find((f) => f.type.startsWith("image/"));
+    if (imageFile) {
+      e.preventDefault();
+      onImageFile(imageFile);
+    }
+  }
+
+  function handlePaste(e: React.ClipboardEvent<HTMLDivElement>) {
+    if (!onImageFile) return;
+    const items = Array.from(e.clipboardData.items);
+    const imageItem = items.find((item) => item.kind === "file" && item.type.startsWith("image/"));
+    if (imageItem) {
+      const file = imageItem.getAsFile();
+      if (file) {
+        e.preventDefault();
+        onImageFile(file);
+      }
+    }
+  }
+
   return (
-    <div className="sdm-kb-editor-shell" data-testid="kb-editor-shell">
+    <div
+      className="sdm-kb-editor-shell"
+      data-testid="kb-editor-shell"
+      onDrop={onImageFile ? handleDrop : undefined}
+      onDragOver={onImageFile ? (e) => e.preventDefault() : undefined}
+      onPaste={onImageFile ? handlePaste : undefined}
+    >
       <EditorToolbar editor={editor} />
       <EditorContent editor={editor} />
     </div>

@@ -359,3 +359,38 @@
 .sdm-kb-attach-cta:hover {
   filter: brightness(1.1);
 }
+
+/* ── J.5 — KB image upload drop-zone ──────────────────────────────────── */
+
+.sdm-kb-editor-shell-wrapper {
+  position: relative;
+}
+
+/* Show drop-zone border when the user drags a file over the editor shell. */
+.sdm-kb-editor-shell[data-testid="kb-editor-shell"]:has(+ *):focus-within,
+.sdm-kb-editor-shell-wrapper:focus-within .sdm-kb-editor-shell {
+  border-color: var(--color-border-default);
+}
+
+/* Drop-zone hover state — activated by DragOver on the shell wrapper. */
+.sdm-kb-editor-shell-wrapper:drop-active .sdm-kb-editor-shell,
+.sdm-kb-editor-shell.sdm-kb-dropzone--active {
+  border: 2px dashed var(--color-accent, #7c3aed);
+  background: var(--color-surface-subtle, rgba(124, 58, 237, 0.04));
+}
+
+/* Upload spinner overlay */
+.sdm-kb-editor-upload-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface-default, rgba(255, 255, 255, 0.7));
+  opacity: 0.85;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md);
+  pointer-events: none;
+}

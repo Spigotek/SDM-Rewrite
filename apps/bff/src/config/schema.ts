@@ -41,6 +41,13 @@ export const RuntimeConfigSchema = z.object({
     absoluteSec: z.coerce.number().int().positive().default(28800),
     cookieMaxAgeSec: z.coerce.number().int().positive().default(28800),
   }),
+  attachments: z
+    .object({
+      kbDir: z.string().min(1),
+    })
+    .default({
+      kbDir: "./.attachments-kb",
+    }),
   uiRoleMapping: z
     .record(
       z.string(),

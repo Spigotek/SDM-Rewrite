@@ -541,6 +541,16 @@
         "save": "Could not save article. Try again.",
         "publish": "Publish failed. Try again or contact admin.",
         "publishNoId": "Save the draft first, then publish."
+      },
+      "upload": {
+        "dropZone": "Drop image here or paste from clipboard",
+        "uploading": "Uploading image…",
+        "error": {
+          "size": "Image is too large (max 5 MB).",
+          "mime": "Unsupported file type. Only PNG, JPEG, GIF, SVG allowed.",
+          "svg": "SVG failed security validation.",
+          "generic": "Image upload failed. Try again."
+        }
       }
     },
     "analytics": {

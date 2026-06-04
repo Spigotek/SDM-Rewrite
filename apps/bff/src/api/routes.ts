@@ -1,5 +1,6 @@
 import type { Hono } from "hono";
 import { registerAdminTenantsRoutes, type AdminTenantsRouteDeps } from "./admin-tenants";
+import { registerAttachmentsKbRoutes, type AttachmentsKbDeps } from "./endpoints/attachments-kb";
 import { registerCatalogRoutes } from "./endpoints/catalog";
 import { registerChangeRoutes } from "./endpoints/changes";
 import { registerCmdbRoutes } from "./endpoints/cmdb";
@@ -25,7 +26,10 @@ export function createApiRoutesState(): ApiRoutesState {
   return { reference: createReferenceState() };
 }
 
-export type ApiRouteDeps = RestProxyDeps & EventsRouteDeps & AdminTenantsRouteDeps;
+export type ApiRouteDeps = RestProxyDeps &
+  EventsRouteDeps &
+  AdminTenantsRouteDeps &
+  Pick<AttachmentsKbDeps, "storage">;
 
 export function registerApiRoutes(
   app: Hono,
@@ -35,6 +39,9 @@ export function registerApiRoutes(
   // J.3 — SSE + admin endpoints registered first (specific paths take priority).
   registerEventsRoute(app, deps);
   registerAdminTenantsRoutes(app, deps);
+
+  // J.5 — KB image attachments (before KB proxy to take priority on /api/attachments/kb/*)
+  registerAttachmentsKbRoutes(app, deps);
 
   registerIncidentRoutes(app, deps);
   registerRequestRoutes(app, deps);

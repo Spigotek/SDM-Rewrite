@@ -541,6 +541,16 @@
         "save": "Článok sa nepodarilo uložiť. Skús znova.",
         "publish": "Publikovanie zlyhalo. Skús znova alebo kontaktuj admina.",
         "publishNoId": "Najprv ulož draft, potom publikuj."
+      },
+      "upload": {
+        "dropZone": "Pretiahni obrázok sem alebo vlož zo schránky",
+        "uploading": "Nahrávam obrázok…",
+        "error": {
+          "size": "Obrázok je príliš veľký (max 5 MB).",
+          "mime": "Nepodporovaný typ súboru. Povolené: PNG, JPEG, GIF, SVG.",
+          "svg": "SVG neprešlo bezpečnostnou validáciou.",
+          "generic": "Nahranie obrázka zlyhalo. Skús znova."
+        }
       }
     },
     "analytics": {
