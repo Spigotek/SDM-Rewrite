@@ -49,4 +49,10 @@ export interface SessionStore {
   ): Promise<void>;
   destroy(id: string): Promise<void>;
   close(): Promise<void>;
+  /**
+   * J.3 — Return all session IDs whose `tenants[]` array contains the given
+   * tenantId. Used by the event bus to fan out `tenant.suspended` events to
+   * every session that could be affected by a runtime suspension.
+   */
+  findSessionIdsWithTenant(tenantId: string): Promise<readonly string[]>;
 }

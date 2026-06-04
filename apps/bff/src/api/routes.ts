@@ -1,4 +1,5 @@
 import type { Hono } from "hono";
+import { registerAdminTenantsRoutes, type AdminTenantsRouteDeps } from "./admin-tenants";
 import { registerCatalogRoutes } from "./endpoints/catalog";
 import { registerChangeRoutes } from "./endpoints/changes";
 import { registerCmdbRoutes } from "./endpoints/cmdb";
@@ -13,6 +14,7 @@ import {
   type ReferenceState,
 } from "./endpoints/reference";
 import { registerRequestRoutes } from "./endpoints/requests";
+import { registerEventsRoute, type EventsRouteDeps } from "./events";
 import type { RestProxyDeps } from "./rest-proxy";
 
 export interface ApiRoutesState {
@@ -23,11 +25,17 @@ export function createApiRoutesState(): ApiRoutesState {
   return { reference: createReferenceState() };
 }
 
+export type ApiRouteDeps = RestProxyDeps & EventsRouteDeps & AdminTenantsRouteDeps;
+
 export function registerApiRoutes(
   app: Hono,
-  deps: RestProxyDeps,
+  deps: ApiRouteDeps,
   state: ApiRoutesState = createApiRoutesState(),
 ): void {
+  // J.3 — SSE + admin endpoints registered first (specific paths take priority).
+  registerEventsRoute(app, deps);
+  registerAdminTenantsRoutes(app, deps);
+
   registerIncidentRoutes(app, deps);
   registerRequestRoutes(app, deps);
   registerProblemRoutes(app, deps);

@@ -1,5 +1,11 @@
 import { setupWorker } from "msw/browser";
 import { handlers } from "./handlers";
+import { sseEmitFromTest } from "./handlers/events";
+
+// J.3 — expose SSE test seam so Playwright evaluate() can push events.
+if (typeof window !== "undefined") {
+  (window as unknown as Record<string, unknown>)["__sdm_sse_emit"] = sseEmitFromTest;
+}
 
 export const worker = setupWorker(...handlers);
 
