@@ -1,7 +1,9 @@
 # J.6 — Calendar drag-resize (graduates H.10 editable: false)
 
-> **Status**: ✅ DONE (PR open — chunk/J.6-calendar-drag-resize)
-> **Branch**: `chunk/J.6-calendar-drag-resize` > **Cieľ**: enable drag-and-drop + edge-resize on the `/changes/calendar` route by flipping
+> **Status**: ✅ DONE (squash `6d716af`, PR #52)
+> **Branch**: `chunk/J.6-calendar-drag-resize` (deleted)
+> **Outcome**: BFF `PATCH /api/changes/:id/schedule` shipped — `change.schedule` permission gate, zod body validation with end-after-start refinement, pre-fetch current change to capture previous_start/end for audit completeness, F.2 entity proxy mutation uses PUT internally per `real-backend-contracts.md §15` while client-facing verb stays PATCH. Audit composed under `data.chg.write` + `details.op="schedule.update"` + previous + new timestamps (F.4 frozen taxonomy honoured). FE calendar `editable: true` gated on `change.schedule`; `eventDrop` + `eventResize` → `useReschedule` hook + `ConflictConfirmModal` (G.1 Card + Button) on overlap with visible events. Foreign-tenant events non-draggable + excluded from conflict consideration in sp_admin overlay. `info.revert()` on every failure path. MSW PATCH mirror; +5 i18n keys with ICU plural for conflict-count message. 10 BFF cases + 3 browser specs. Bundle: workspace initial JS unchanged. 14 files / 1217 ins / 28 del. Minor type deviation: `EventResizeDoneArg` not exported from FullCalendar 6.1.20 — defined inline using `EventApi`.
+> **Cieľ**: enable drag-and-drop + edge-resize on the `/changes/calendar` route by flipping
 > `editable: true` in the FullCalendar config and wiring `eventDrop` + `eventResize` to a new
 > BFF endpoint `PATCH /api/changes/:id/schedule`. Conflict detection runs client-side against
 > the in-memory event set; user gets a confirm dialog when the drop overlaps another change

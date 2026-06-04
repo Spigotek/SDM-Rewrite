@@ -22,13 +22,13 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 ## Aktuálny stav
 
 - **Status: 🚀 v1.0 RELEASED (2026-06-03)** — tag `v1.0.0` pushed; release.yml CI publishuje portal/workspace/BFF images + helm OCI chart + GitHub Release. Manual cluster deployment per `deploy_target.md` = separate ops step (currently **blocked** by missing container runtime on host — see J.0).
-- **Last merged:** Chunk J.5 (KB image upload binary, PR #51 squash `d6bf6be`). Predchádzajúce: J.4 closed N/A, J.3 PR #50, J.1 PR #49.
-- **In flight:** Phase J — J.0 ⏸ deferred, J.1 ✅ DONE, J.2 ✅ N/A, J.3 ✅ DONE, J.4 ✅ N/A, J.5 ✅ DONE, J.6 🔜 NEXT (calendar drag-resize).
+- **Last merged:** Chunk J.6 (calendar drag-resize, PR #52 squash `6d716af`). Predchádzajúce: J.5 PR #51, J.4 closed N/A, J.3 PR #50, J.1 PR #49.
+- **In flight:** Phase J — J.0 ⏸ deferred, J.1 ✅ DONE, J.2 ✅ N/A, J.3 ✅ DONE, J.4 ✅ N/A, J.5 ✅ DONE, J.6 ✅ DONE, J.7 🔜 NEXT (mobile PWA offline mode).
 - **Phase I:** ✅ DONE (8/8 chunks: I.0 LHCI graduation, I.1 step-up 2FA, I.2 security audit, I.3 multi-tenancy edges, I.4 KB authoring, I.5 SP cockpit, I.6 release dry-run scaffolding, I.7 v1.0 cut).
-- **Phase J:** 🟡 IN PROGRESS — J.0 ⏸ deferred; J.1 ✅ DONE; J.2 ✅ N/A; J.3 ✅ DONE; J.4 ✅ N/A; J.5 ✅ DONE; J.6-J.9 sequenced per [J.md](./plans/J.md) §D2.
+- **Phase J:** 🟡 IN PROGRESS — J.0 ⏸ deferred; J.1 ✅ DONE; J.2 ✅ N/A; J.3 ✅ DONE; J.4 ✅ N/A; J.5 ✅ DONE; J.6 ✅ DONE; J.7-J.9 sequenced per [J.md](./plans/J.md) §D2.
 - **Project:** ✅ MVP COMPLETE — Phase 0/C/D/E/F/G/H/I all done. v1.0 released. Post-release scope = **Phase J** ([J.md](./plans/J.md) skeleton; full chunk plans písané pri spustení).
 
-Posledná revízia tohto dokumentu: J.5 merged (2026-06-04) — KB image upload binary; H.3 attachments deferral graduated for KB scope.
+Posledná revízia tohto dokumentu: J.6 merged (2026-06-04) — calendar drag-resize closes H.10 editable: false deferral.
 
 ---
 
@@ -211,8 +211,8 @@ Dispatch: strict sekvenčný I.0 → I.7 (per `feedback_pr_flow.md` PR-flow). Pr
 - **J.3 Real-time tenant push ✅ DONE** — Hono `streamSSE` SSE endpoint `GET /api/events` + module-level event-bus keyed by sessionId. Two event types: `tenant.suspended` (admin-driven via new `POST /api/admin/tenants/:id/{suspend,unsuspend}`, audit-composed under `authz.tenant.switch.denied` with `details.op` discriminator) + `session.expired`. Runtime override map in `tenant-suspension.ts` authoritative for `filterActiveTenants` + `assertTenantActive` post fix-up commit `6fb08f3`. FE `AppEventSource` (api-client) + shell provider; backoff 1-30 s, no reconnect on session.expired. Bundle delta <2 KB initial. 26 new test cases + browser scenario verifying push delivery <5 s. Plán: [J.3.md](./plans/J.3.md), PR #50.
 - **J.4 KB analytics real ingest ✅ N/A** — pre-flight inventory 2026-06-04 found zero `data.kb.read`/`data.kb.search` audit emissions in codebase; adding them would expand F.4 frozen taxonomy (banned by Hard rules). No production traffic source on dev/test backend (J.0 cluster deferred). MSW fixture is the production behaviour; swap point at `kb-analytics.ts:103` ready for v2.0 when real signal source comes online. Plán: [J.4.md](./plans/J.4.md), no PR (docs-only on main).
 - **J.5 KB image upload binary ✅ DONE** — `POST /api/attachments/kb` multipart + `GET /api/attachments/kb/:id` serve. 5 MB Hono bodyLimit; magic-number sniff is authoritative (client Content-Type cross-checked); JPG EXIF stripped via hand-rolled APP-marker drop; SVG sanitized via existing `sanitize-html` strict allowlist; ULID attachment IDs path-validated before fs ops; audit composed under `data.kb.write` + `details.op="attachment.upload"`. TipTap drag-drop + paste handlers in workspace KB editor. **41 BFF cases** + 3 browser specs. **No new runtime deps.** Bundle: workspace initial JS unchanged (upload code in lazy vendor-editor chunk from I.4). Plán: [J.5.md](./plans/J.5.md), PR #51.
-- **J.6 Calendar drag-resize** 🔜 NEXT — `@fullcalendar/interaction` plugin graduation (H.10 disabled `editable: false`). Plán TBD.
-- **J.7 Mobile PWA offline mode** — Workbox precache + IndexedDB offline ticket queue. Plán TBD.
+- **J.6 Calendar drag-resize ✅ DONE** — BFF `PATCH /api/changes/:id/schedule` (zod end-after-start, pre-fetched previous timestamps in audit, F.2 entity proxy PUT internally, audit under `data.chg.write` + `details.op="schedule.update"`). FE `editable: true` gated on `change.schedule`; `eventDrop`+`eventResize` → `useReschedule` + `ConflictConfirmModal`. Foreign-tenant events non-draggable in sp_admin overlay. 10 BFF cases + 3 browser specs. No new deps. Plán: [J.6.md](./plans/J.6.md), PR #52.
+- **J.7 Mobile PWA offline mode** 🔜 NEXT — Workbox precache + IndexedDB offline ticket queue. Plán TBD (substantive feature work).
 - **J.8 Portal LCP fix** — copy/UX redesign first (multi-line HeroGreeting subtitle), SSR via Vite SSR plugin fallback if insufficient. Plán TBD.
 - **J.9 v1.1 cut** — semver tag + image push + OCI helm + release notes; requires J.0 GO before tag. Plán TBD.
 
