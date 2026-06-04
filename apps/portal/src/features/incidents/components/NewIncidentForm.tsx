@@ -38,11 +38,11 @@ import type { Incident } from "@sdm/domain";
  * unmount or after successful submit (the success screen is a sibling of this
  * form). The tenant switcher uses this to prompt before discarding the draft.
  *
- * TODO(H+): Attachments. The wireframe §UI prvky #4 spec'd drag-drop + 25 MB
- * cap; F.6 §23.6 documents the `POST /api/attachments` BFF endpoint but it
- * is not yet implemented (no multipart streaming handler). Adding it is a
- * scoped follow-up: BFF endpoint + virus-scan policy decision + DS
- * `FileUpload` primitive. Out of scope for H.3.
+ * Incident attachments — still deferred (v1.2+). The wireframe §UI prvky #4
+ * spec'd drag-drop + 25 MB cap; F.6 §23.6 documents `POST /api/attachments`
+ * but the endpoint is not yet implemented for incidents (no multipart handler,
+ * no virus-scan policy, no DS `FileUpload` primitive). KB attachments shipped
+ * separately in J.5 (POST /api/attachments/kb) — see docs/plans/J.5.md.
  */
 
 const FORM_ID = "portal-new-incident";

@@ -1,4 +1,5 @@
 import type { RequestHandler } from "msw";
+import { attachmentHandlers } from "./attachments";
 import { adminTenantHandlers } from "./admin-tenants";
 import { auditHandlers } from "./audit";
 import { authHandlers } from "./auth";
@@ -20,6 +21,8 @@ export const handlers: readonly RequestHandler[] = [
   // J.3 — SSE + admin endpoints registered first (specific paths take priority).
   ...sseHandlers,
   ...adminTenantHandlers,
+  // J.5 — KB attachment upload/serve
+  ...attachmentHandlers,
   ...authHandlers,
   ...spHandlers,
   ...userHandlers,
@@ -37,6 +40,7 @@ export const handlers: readonly RequestHandler[] = [
 ];
 
 export {
+  attachmentHandlers,
   adminTenantHandlers,
   auditHandlers,
   authHandlers,

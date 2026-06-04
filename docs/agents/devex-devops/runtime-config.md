@@ -500,6 +500,27 @@ zachytávajú migration.
 `config.json` momentálne nemá explicit `version` field — to je zámerne, schema
 je single-version. Pri breaking change pridáme `meta.configSchemaVersion`.
 
+## BFF environment variables
+
+### `BFF_ATTACHMENTS_DIR` (J.5)
+
+File-system directory where KB image attachments are stored.
+
+| Environment | Default | Notes |
+|---|---|---|
+| Development | `./.attachments-kb` | Relative to BFF working directory. Auto-created on first upload. |
+| Container / production | `/var/lib/sdm/attachments-kb` | Must be a persistent volume mount. |
+
+Set via env var:
+
+```sh
+BFF_ATTACHMENTS_DIR=/var/lib/sdm/attachments-kb
+```
+
+**Multi-instance warning**: `BFF_ATTACHMENTS_DIR` is a local directory. Multi-instance BFF deployments (horizontal scaling) require a shared persistent volume (NFS / EFS) or migration to object storage (S3) — planned for v2.0. Document as a Known Issue in the Helm chart values when J.0 staging cluster comes online.
+
+**Orphan attachments**: deleting a KB article does not purge its attachment files. Periodic garbage collection is deferred to v1.2. Manual cleanup acceptable on dev/test.
+
 ## Otvorené závislosti
 
 - `[05-security]` Auth mode default — `[resolved-in-round-2]`. Production: `sso-oidc` (OIDC redirect cez BFF). Dev: `rest-access-key` (permissive mock). Schema podporuje všetky 3, 05 dodá reálnu implementáciu loaderov v `packages/auth/`.

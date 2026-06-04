@@ -45,6 +45,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig 
       cookieMaxAgeSec: env.SESSION_COOKIE_MAX_AGE_SEC,
     },
     uiRoleMapping: parseRoleMapping(env.UI_ROLE_MAPPING_JSON),
+    attachments: env.BFF_ATTACHMENTS_DIR ? { kbDir: env.BFF_ATTACHMENTS_DIR } : undefined,
   };
 
   // Strip undefined values so Zod defaults apply (exactOptionalPropertyTypes hygiene).

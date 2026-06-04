@@ -248,8 +248,11 @@ The following items are intentionally deferred and tracked for v1.1+:
   Hard rules, and (b) no production traffic source exists yet (J.0 staging
   deploy deferred). Real ingest = v2.0 scope (purpose-built telemetry
   channel + FE beacons + aggregation). Swap point in `kb-analytics.ts:103`.
-- **KB editor image upload** — markdown URL paste only; binary upload
-  deferred to v1.1+.
+- ~~**KB editor image upload** — markdown URL paste only; binary upload
+  deferred to v1.1+.~~ Shipped in J.5: `POST /api/attachments/kb` multipart
+  upload + `GET /api/attachments/kb/:id` serve. PNG / JPG / SVG / GIF
+  whitelist, 5 MB cap, magic-number MIME validation, SVG sanitization, JPG
+  EXIF strip. TipTap editor gains drag-drop + paste-clipboard handlers.
 - **LCP on portal mobile** — Lighthouse picker prefers multi-line text
   rects, which biases LCP measurement on the portal Home empty-state
   paragraph. Closing the remaining gap to the GOAL.md sub-3 s mobile target
