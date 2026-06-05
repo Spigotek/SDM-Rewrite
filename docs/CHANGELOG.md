@@ -9,6 +9,100 @@ per-chunk plans under `docs/plans/`. Sources of truth for design decisions live
 in `docs/spec/` and `docs/agents/`; this changelog tracks **what shipped** to the
 release artefact, not why.
 
+## [1.1.0] - 2026-MM-DD
+
+Phase J closure release. 8 merged chunks (J.1-J.8) graduate v1.0 deferred items + add
+real-time tenant push, KB binary upload, portal PWA, calendar drag-resize, and portal mobile
+LCP fix. J.0 (staging validation) remains deferred until cluster provisioned. J.2 + J.4
+closed as N/A. See [`RELEASE-NOTES-v1.1.md`](./RELEASE-NOTES-v1.1.md) for the full
+per-persona view.
+
+### Added
+
+- **J.1** Workspace `linux/arm64` image via native `ubuntu-22.04-arm` GHA runner (PR #49).
+  `release.yml` workspace job split into canonical Docker multi-platform 3-job pattern:
+  `workspace-image-amd64` + `workspace-image-arm64` push by digest; `workspace-manifest`
+  merges via `docker buildx imagetools create` over metadata-action tag matrix.
+- **J.3** Server-Sent Events tenant push — `GET /api/events` (`streamSSE`) emits
+  `tenant.suspended` + `session.expired` (PR #50). New
+  `apps/bff/src/platform/event-bus.ts` module-level pub/sub keyed by `sessionId`.
+  Dev/admin endpoints `POST /api/admin/tenants/:id/{suspend,unsuspend}` gated by
+  `tenant.admin` permission. FE: `AppEventSource` (api-client) + `EventSourceProvider` in
+  portal + workspace shells. Audit composed under `authz.tenant.switch.denied` +
+  `details.op` discriminators (no new event names).
+- **J.5** KB binary image upload (PR #51): `POST /api/attachments/kb` multipart (5 MB cap,
+  magic-number-validated MIME, SVG `sanitize-html` allowlist, JPG EXIF APP-marker strip) +
+  `GET /api/attachments/kb/:id` serve (404 on cross-tenant). Hand-rolled
+  `apps/bff/src/platform/attachments/` — zero new runtime deps. TipTap drag-drop +
+  paste-clipboard handlers in workspace KB editor. Audit under `data.kb.write` +
+  `details.op="attachment.upload"`.
+- **J.6** Calendar drag-resize on `/changes/calendar` (PR #52) — `editable: true` when
+  `change.schedule` permission present; `eventDrop` + `eventResize` → `useReschedule` hook +
+  `ConflictConfirmModal` on overlap. BFF `PATCH /api/changes/:id/schedule` with zod
+  end-after-start refinement; pre-fetches current change for `previous_*` audit fields.
+  Audit under `data.chg.write` + `details.op="schedule.update"`.
+- **J.7** Portal installable PWA + read-only offline (PR #53): `vite-plugin-pwa` devDep
+  generates Workbox SW with precache + runtime cache strategies (SWR `/api/*` GET,
+  NetworkFirst `/me` + `/config`, CacheFirst `/api/attachments/kb/*`). Conditional
+  registration via `VITE_USE_MOCKS` gate so MSW remains the dev/CI controller. 4 PNG icons.
+  Workspace exempt (desktop-first).
+
+### Changed
+
+- **J.1** v1.0 workspace was `linux/amd64` only (QEMU SIGILL on cross-compile, workaround
+  per commit `6ff143a`); v1.1 ships true multi-arch via native arm64 runner.
+  `RELEASE-NOTES-v1.0.md` + `CHANGELOG.md` [1.0.0] doc bug corrected (had falsely claimed
+  v1.0 workspace was multi-arch).
+- **J.3** `isActiveTenant` / `filterActiveTenants` / `assertTenantActive` now route through
+  `resolvedTenantStatus` so admin-suspended tenants disappear from `/me/tenants` reads
+  without session re-bootstrap (post-merge patch `6fb08f3`).
+- **J.6** `lib/full-calendar-config.ts` `editable: false` → permission-gated `editable`
+  flag.
+- **J.7** `apps/portal/index.html` head gained `<link rel="apple-touch-icon">` (manifest +
+  theme-color auto-injected by `vite-plugin-pwa`).
+- **J.8** Portal `home.subgreeting` i18n string expanded from ~22 chars to multi-line
+  welcoming paragraph (~200 chars) in SK + EN (PR #54). `.sdm-home-hero-sub` CSS gained
+  `max-width: 28rem` + `line-height: 1.5` so the paragraph wraps to 2-3 lines on mobile
+  preset.
+
+### Documentation
+
+- **J.0** deferred — no container runtime on deploy host (`10.11.36.21`); unblock criteria
+  in `docs/plans/J.0.md`.
+- **J.2** closed N/A — covered by I.5; CA SDM 17.4 dev backend single-tenant per
+  `real-backend-contracts.md §6`.
+- **J.4** closed N/A — F.4 audit taxonomy frozen; no production traffic signal source.
+- `docs/agents/devex-devops/runtime-config.md` updated with `BFF_ATTACHMENTS_DIR` env var
+  (J.5) + PWA / service worker section (J.7).
+- `docs/agents/performance/performance.md` gained §2.1 — LCP target rationale (J.8).
+- `docs/agents/qa-test-strategy/acceptance-coverage.md` drag-resize row → pass (J.6).
+
+### Deployment
+
+Multi-arch (`linux/amd64` + `linux/arm64`):
+
+- `ghcr.io/spigotek/sdm-bff:1.1.0` (also `1.1`, `latest`)
+- `ghcr.io/spigotek/sdm-portal:1.1.0` (also `1.1`, `latest`)
+- `ghcr.io/spigotek/sdm-workspace:1.1.0` (also `1.1`, `latest`) — **NEW multi-arch; v1.0
+  workspace was amd64-only.**
+
+Helm chart (OCI): `oci://ghcr.io/spigotek/charts/sdm` version `1.1.0`.
+
+### Known issues
+
+See [`RELEASE-NOTES-v1.1.md`](./RELEASE-NOTES-v1.1.md) § Known issues. Notably: J.0
+staging validation pending — cluster runtime not provisioned on the on-prem host as of
+2026-06-04. Attachments storage (`BFF_ATTACHMENTS_DIR`) requires operator-mounted PVC for
+persistence; Helm chart does not provision one by default.
+
+### Migration notes
+
+None — v1.0 → v1.1 is an in-place chart upgrade with no API breaking changes.
+
+[1.1.0]: https://github.com/Spigotek/SDM-Rewrite/releases/tag/v1.1.0
+
+---
+
 ## [1.0.0] - 2026-06-03
 
 Initial public release — **MVP**. Modern multi-tenant SDM frontend for CA Service
