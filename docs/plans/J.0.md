@@ -1,9 +1,9 @@
 # J.0 — v1.1 staging deploy + live BFF smoke + rollback test
 
 > **Status**: 🟡 PARTIAL — runtime provisioned, stack stands up cleanly for portal + workspace,
-> BFF v1.1.1 boots correctly post-hotfix, but a network-layer firewall between subnets
-> `10.11.36.0/24` (deploy host) and `10.11.35.0/24` (CA SDM) prevents the BFF from completing its
-> CA SDM broker bootstrap. Live smoke + rollback + GO/NO-GO **gated on B2 network ACL fix**.
+> BFF v1.1.1 boots correctly post-hotfix, but an intra-/19 firewall/ACL/VLAN-isolation rule
+> prevents `10.11.36.21` from reaching CA SDM `10.11.35.35:8050` over TCP, so the BFF cannot
+> complete its broker bootstrap. Live smoke + rollback + GO/NO-GO **gated on B2 network fix**.
 > **Branch**: docs-only on `main`; one upstream PR `fix/bff-dockerfile-cmd` (#57) cut as the J.0.1
 > v1.1.1 hotfix for the BFF image defect this chunk surfaced.
 > **Outcome**: significant progress vs the 2026-06-04 deferred state. Container runtime is live
@@ -12,9 +12,11 @@
 > shipped as **v1.1.1 hotfix** (PR #57 → tag `v1.1.1`). Portal + workspace `1.1.1` images
 > healthy on host. BFF `1.1.1` boots cleanly to `bff: started` log line in ~1 s. `/readyz`
 > remains 503 because CA SDM 17.4 dev backend `10.11.35.35:8050` is **TCP-unreachable** from
-> `10.11.36.21` — confirmed firewall/ACL gap between the two /24 subnets (routing OK; nc/curl
-> timeout from host shell and container alike). This is the "separate network/routing concern"
-> the original J.0 prompt flagged; resolution is operator-side via the network team.
+> `10.11.36.21` — both hosts share the `10.11.32.0/19` supernet, so this is not an inter-subnet
+> routing problem but an intra-/19 ACL (likely a host firewall on `10.11.35.35`, a VLAN
+> isolation rule on the L2 fabric, or an IPS policy). Routing OK; nc/curl timeout from host
+> shell and BFF container alike. This is the "separate network/routing concern" the original
+> J.0 prompt flagged; resolution is operator-side via the network team.
 
 ## Cieľ
 
@@ -231,9 +233,11 @@ Diagnosis from host shell:
 - `ip route get 10.11.35.35` → routed via `ens18`, same /19 (10.11.32.0/19)
 - From this dev Mac → `curl http://10.11.35.35:8050/caisd-rest/` returns HTTP 404 within 100 ms
 
-→ **L3/L4 firewall (or switch ACL) blocks `10.11.36.0/24` → `10.11.35.0/24` traffic entirely.**
-Not host-resolvable; requires the network team to open `10.11.36.21 → 10.11.35.35:8050`
-(TCP) or the whole CA SDM subnet, whichever scope the security policy allows.
+→ **Intra-/19 ACL blocks the path `10.11.36.21 → 10.11.35.35:8050` entirely.** Both hosts share
+the `10.11.32.0/19` supernet, so this is not an inter-subnet routing issue; the candidates are
+a per-host firewall on `10.11.35.35`, a VLAN-isolation rule on the L2 fabric, or an IPS
+policy. Not host-resolvable; requires the network team to open `10.11.36.21 → 10.11.35.35:8050`
+(TCP) at whichever layer is enforcing the denial.
 
 ### Fáza D — Hotfix dispatch (PR #57 → v1.1.1, 2026-06-06)
 
@@ -258,8 +262,9 @@ Hotfix release notes: [`RELEASE-NOTES-v1.1.1.md`](../RELEASE-NOTES-v1.1.1.md).
 
 ### Remaining work (gated on B2 network ACL fix)
 
-1. Operator escalates to the network team: open `10.11.36.21 → 10.11.35.35:8050` (or the whole
-   `10.11.35.0/24` subnet).
+1. Operator escalates to the network team: open `10.11.36.21 → 10.11.35.35:8050` (TCP) at
+   whichever layer enforces the current denial — both hosts already share the same `10.11.32.0/19`
+   supernet, so this is an intra-/19 ACL, not an inter-subnet routing issue.
 2. Validate from host shell: `curl http://10.11.35.35:8050/caisd-rest/` returns a 200/404 within
    a second (anything that's not a TCP timeout).
 3. `cd /home/soisd/sdm-staging && docker compose -f compose.staging.yml --env-file .env.staging
