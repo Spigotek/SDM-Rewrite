@@ -131,13 +131,18 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compute lowercased image name
+        id: img
+        run: |
+          OWNER_LC="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "name=ghcr.io/${OWNER_LC}/sdm-workspace" >> "$GITHUB_OUTPUT"
       - id: push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/workspace/Dockerfile
           platforms: linux/amd64
-          outputs: type=image,name=${{ env.IMAGE_WORKSPACE }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ steps.img.outputs.name }},push-by-digest=true,name-canonical=true,push=true
           build-args: |
             GIT_SHA=${{ github.sha }}
             VERSION=${{ github.ref_name }}
@@ -159,13 +164,18 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compute lowercased image name
+        id: img
+        run: |
+          OWNER_LC="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "name=ghcr.io/${OWNER_LC}/sdm-workspace" >> "$GITHUB_OUTPUT"
       - id: push
         uses: docker/build-push-action@v6
         with:
           context: .
           file: apps/workspace/Dockerfile
           platforms: linux/arm64
-          outputs: type=image,name=${{ env.IMAGE_WORKSPACE }},push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=${{ steps.img.outputs.name }},push-by-digest=true,name-canonical=true,push=true
           build-args: |
             GIT_SHA=${{ github.sha }}
             VERSION=${{ github.ref_name }}
@@ -187,11 +197,16 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Compute lowercased image name
+        id: img
+        run: |
+          OWNER_LC="$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "name=ghcr.io/${OWNER_LC}/sdm-workspace" >> "$GITHUB_OUTPUT"
       - name: Compute image tags
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.IMAGE_WORKSPACE }}
+          images: ${{ steps.img.outputs.name }}
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -200,8 +215,8 @@ jobs:
       - id: manifest
         name: Create multi-arch manifest
         run: |
-          AMD64_REF="${{ env.IMAGE_WORKSPACE }}@${{ needs.workspace-image-amd64.outputs.digest }}"
-          ARM64_REF="${{ env.IMAGE_WORKSPACE }}@${{ needs.workspace-image-arm64.outputs.digest }}"
+          AMD64_REF="${{ steps.img.outputs.name }}@${{ needs.workspace-image-amd64.outputs.digest }}"
+          ARM64_REF="${{ steps.img.outputs.name }}@${{ needs.workspace-image-arm64.outputs.digest }}"
           while IFS= read -r TAG_REF; do
             [ -z "$TAG_REF" ] && continue
             echo "Creating manifest for $TAG_REF"
