@@ -61,8 +61,10 @@ USER sdm
 
 EXPOSE 5174
 
-# Stub uses tsx to run TS source directly. Chunk 2 switches to `node dist/index.js`.
-CMD ["node", "--import", "tsx/esm", "src/index.ts"]
+# Production CMD — runs the tsup-bundled BFF entrypoint. The dev-only `tsx`
+# loader is pruned by `pnpm deploy --prod` above, so the previous stub form
+# (`node --import tsx/esm src/index.ts`) crashes immediately at boot.
+CMD ["node", "dist/index.js"]
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --quiet --tries=1 --spider "http://127.0.0.1:${BFF_PORT}/health" || exit 1
