@@ -9,6 +9,32 @@ per-chunk plans under `docs/plans/`. Sources of truth for design decisions live
 in `docs/spec/` and `docs/agents/`; this changelog tracks **what shipped** to the
 release artefact, not why.
 
+## [1.1.1] - 2026-MM-DD
+
+Hotfix release. Single-line `apps/bff/Dockerfile` `CMD` fix to make the BFF
+production image actually startable. See
+[`RELEASE-NOTES-v1.1.1.md`](./RELEASE-NOTES-v1.1.1.md) for the full
+post-mortem.
+
+### Fixed
+
+- BFF Dockerfile `CMD` switched from the chunk-1-era stub
+  `node --import tsx/esm src/index.ts` to the production
+  `node dist/index.js`. The stub crashed every container start with
+  `ERR_MODULE_NOT_FOUND: Cannot find package 'tsx'` because
+  `pnpm deploy --prod` correctly prunes `tsx` (a dev dep). The defect was
+  present in every BFF image since v1.0; J.0 staging smoke surfaced it on
+  2026-06-05 (first time the image was exercised against a real runtime).
+
+### Deployment
+
+- `ghcr.io/spigotek/sdm-bff:1.1.1` (also `1.1`, `latest`) — multi-arch.
+- `ghcr.io/spigotek/sdm-portal:1.1.1` / `sdm-workspace:1.1.1` — unchanged
+  source, re-cut at the new tag for chart parity.
+- Helm chart (OCI): `oci://ghcr.io/spigotek/charts/sdm` version `1.1.1`.
+
+[1.1.1]: https://github.com/Spigotek/SDM-Rewrite/releases/tag/v1.1.1
+
 ## [1.1.0] - 2026-MM-DD
 
 Phase J closure release. 8 merged chunks (J.1-J.8) graduate v1.0 deferred items + add
