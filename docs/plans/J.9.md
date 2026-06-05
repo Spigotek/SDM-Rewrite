@@ -1,7 +1,9 @@
 # J.9 — v1.1 cut (Phase J closure release)
 
-> **Status**: ✅ DONE (PR #TBD — parent fills post-merge)
-> **Branch**: `chunk/J.9-v1.1-cut` > **Cieľ**: cut v1.1.0 release artifacts — Chart.yaml bump 1.0.0 → 1.1.0, `docs/RELEASE-NOTES-v1.1.md`
+> **Status**: ✅ DONE (PR #55 squash `b90148c`; J.9.1 hotfix PR #56 squash `813b99c`; v1.1.0 re-tagged 2026-06-05 18:50 on `813b99c`)
+> **Branch**: `chunk/J.9-v1.1-cut` (deleted) + `chunk/J.9.1-workspace-lowercase-fix` (deleted)
+> **Outcome**: Chart.yaml + values-staging.yaml bumped 1.0.0 → 1.1.0. `docs/RELEASE-NOTES-v1.1.md` NEW (293 lines, per-persona + per-J-chunk + Known issues). `docs/CHANGELOG.md` `[1.1.0]` section prepended. **First tag push** (2026-06-05 17:35) hit J.1 lowercase bug — `outputs: type=image,name=${{ env.IMAGE_WORKSPACE }}` leaked uppercase `Spigotek` from `github.repository_owner`; workspace amd64 + arm64 failed → manifest, helm-chart, github-release all skipped; bff + portal published OK. **J.9.1 hotfix** (PR #56) added `OWNER_LC` computation step to all 3 workspace jobs (mirror of helm-chart pattern from commit `6978478`). Parent deleted v1.1.0 tag remote + local, re-tagged latest main `813b99c` as v1.1.0, pushed. **Second release.yml run** (27033862491) succeeded all 7 jobs in ~3 min. Published: `ghcr.io/spigotek/sdm-{bff,portal,workspace}:1.1.0` (workspace multi-arch incl. native arm64 — J.1 verified in production), `oci://ghcr.io/spigotek/charts/sdm:1.1.0` (4.9 KB, sha256 `e45afba...`), [GitHub Release v1.1.0](https://github.com/Spigotek/SDM-Rewrite/releases/tag/v1.1.0) with `RELEASE-NOTES-v1.1.md` body. v1.0.0 artifacts untouched. v1.0/v1.1 share J.0 deferred (cluster runtime missing on `10.11.36.21`).
+> **Cieľ**: cut v1.1.0 release artifacts — Chart.yaml bump 1.0.0 → 1.1.0, `docs/RELEASE-NOTES-v1.1.md`
 > per-persona + per-J-chunk changes, `docs/CHANGELOG.md` `[1.1.0]` section, `values-staging.yaml` tag bump.
 > After merge, **parent agent** creates + pushes annotated `v1.1.0` tag — `release.yml` CI fires
 > (already proven on v1.0.0 + I.7-shipped + extended by J.1 multi-arch workspace) and publishes:
