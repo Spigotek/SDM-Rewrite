@@ -27,7 +27,9 @@ test-results/
 .env
 .env.local
 .env.*.local
+deploy/docker/.env.staging
 !.env.example
+!.env.staging.example
 
 # Editor
 .idea/

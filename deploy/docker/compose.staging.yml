@@ -1,0 +1,81 @@
+name: sdm-staging
+
+services:
+  bff:
+    image: ghcr.io/spigotek/sdm-bff:${SDM_TAG:-1.1.1}
+    container_name: sdm-bff
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      BFF_PORT: "5174"
+      BFF_LOG_LEVEL: info
+      BFF_TRUSTED_ORIGINS: "${BFF_TRUSTED_ORIGINS}"
+      CASDM_BASE_URL: "${CASDM_BASE_URL}"
+      CASDM_BASIC_AUTH_USER: "${CASDM_BASIC_AUTH_USER}"
+      CASDM_BASIC_AUTH_PASS: "${CASDM_BASIC_AUTH_PASS}"
+      CASDM_REQUEST_TIMEOUT_MS: "15000"
+      SESSION_DRIVER: memory
+      SESSION_COOKIE_NAME: sdm.sid
+      SESSION_COOKIE_SECURE: "false"
+      SESSION_SAME_SITE: Lax
+      SESSION_IDLE_SEC: "1800"
+      SESSION_ABSOLUTE_SEC: "28800"
+      BFF_ATTACHMENTS_DIR: /var/lib/sdm/attachments-kb
+    volumes:
+      - bff-attachments:/var/lib/sdm/attachments-kb
+    networks: [sdm]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:5174/readyz"]
+      interval: 30s
+      timeout: 3s
+      start_period: 15s
+      retries: 3
+
+  portal:
+    image: ghcr.io/spigotek/sdm-portal:${SDM_TAG:-1.1.1}
+    container_name: sdm-portal
+    restart: unless-stopped
+    networks: [sdm]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+  workspace:
+    image: ghcr.io/spigotek/sdm-workspace:${SDM_TAG:-1.1.1}
+    container_name: sdm-workspace
+    restart: unless-stopped
+    networks: [sdm]
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 3s
+      start_period: 5s
+      retries: 3
+
+  frontdoor:
+    image: nginx:1.27-alpine
+    container_name: sdm-frontdoor
+    restart: unless-stopped
+    ports:
+      - "88:80"
+      - "89:81"
+    volumes:
+      - ./nginx-frontdoor.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      bff:
+        condition: service_healthy
+      portal:
+        condition: service_healthy
+      workspace:
+        condition: service_healthy
+    networks: [sdm]
+
+volumes:
+  bff-attachments:
+
+networks:
+  sdm:
+    driver: bridge

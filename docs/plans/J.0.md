@@ -1,10 +1,20 @@
-# J.0 — v1.0 staging deploy + live BFF smoke + rollback test
+# J.0 — v1.1 staging deploy + live BFF smoke + rollback test
 
-> **Status**: 🔁 DEFERRED until cluster/runtime provisioned on deploy host.
-> **Branch**: TBD (no branch yet — deferred chunk; docs-only commit on `main` capture defer reason).
-> **Outcome**: not started — read-only host probe on 2026-06-04 revealed the deploy target lacks any
-> container runtime, so the v1.0 helm chart + GHCR images shipped in I.7 cannot be exercised against
-> a live cluster yet. Unblock criteria documented below; chunk re-opens when criteria are met.
+> **Status**: 🟡 PARTIAL — runtime provisioned, stack stands up cleanly for portal + workspace,
+> BFF v1.1.1 boots correctly post-hotfix, but a network-layer firewall between subnets
+> `10.11.36.0/24` (deploy host) and `10.11.35.0/24` (CA SDM) prevents the BFF from completing its
+> CA SDM broker bootstrap. Live smoke + rollback + GO/NO-GO **gated on B2 network ACL fix**.
+> **Branch**: docs-only on `main`; one upstream PR `fix/bff-dockerfile-cmd` (#57) cut as the J.0.1
+> v1.1.1 hotfix for the BFF image defect this chunk surfaced.
+> **Outcome**: significant progress vs the 2026-06-04 deferred state. Container runtime is live
+> (Docker 29.1.3 + compose v2.40.3 + containerd 2.2.1 on Ubuntu 24.04.4 LTS). Compose-based
+> deploy shape designed + transferred (`deploy/docker/`). v1.1.0 BFF Dockerfile bug found +
+> shipped as **v1.1.1 hotfix** (PR #57 → tag `v1.1.1`). Portal + workspace `1.1.1` images
+> healthy on host. BFF `1.1.1` boots cleanly to `bff: started` log line in ~1 s. `/readyz`
+> remains 503 because CA SDM 17.4 dev backend `10.11.35.35:8050` is **TCP-unreachable** from
+> `10.11.36.21` — confirmed firewall/ACL gap between the two /24 subnets (routing OK; nc/curl
+> timeout from host shell and container alike). This is the "separate network/routing concern"
+> the original J.0 prompt flagged; resolution is operator-side via the network team.
 
 ## Cieľ
 
@@ -160,3 +170,117 @@ Read-only SSH probe of `soisd@10.11.36.21` produced this inventory:
 Autonomous claude declined to install k3s/docker via sudo — shared host running production legacy
 SoimcoDesk + Postgres + Redis, blast radius too high for an autonomous session per global CLAUDE.md
 "Ask before: server restarts / prod migrations" rule.
+
+## Smoke session — 2026-06-06 (parent agent, operator-approved)
+
+Operator selected **Docker compose** as the runtime path (single deploy unit, no k8s overhead;
+ports 80/443 stay with the legacy SoimcoDesk nginx so the SDM stack lives on `:88` / `:89` via a
+front-door nginx container). Plan was author-then-confirm, then execute the whole sequence under
+single GO authorization.
+
+### Fáza A — Compose stack design (committed in this chunk)
+
+`deploy/docker/`:
+
+- `compose.staging.yml` — 4 services: `bff` (Hono on `:5174` internal), `portal` (nginx-alpine
+  serving the portal SPA on `:8080` internal), `workspace` (same shape for the workspace SPA),
+  `frontdoor` (nginx:1.27-alpine reverse-proxy, the only service publishing host ports `88` and
+  `89`). Healthchecks on all three backends; `depends_on: service_healthy` on the front-door so
+  the public ports never accept traffic before the backends pass a probe. `bff-attachments` named
+  volume mounts at `/var/lib/sdm/attachments-kb` (the J.5 storage path).
+- `nginx-frontdoor.conf` — path-based routing on each public port: `/api/*`, `/auth/*`, `/me`,
+  `/me/*`, `/config`, `/health*`, `/readyz` → BFF; `/api/events` carved out with `proxy_buffering
+off` + `proxy_read_timeout 24h` to honour the J.3 SSE channel; everything else → portal (on
+  :88) or workspace (on :89). `X-Forwarded-*` headers set, `client_max_body_size 16M` to clear
+  the J.5 5 MB cap.
+- `.env.staging.example` — env template only. Real `.env.staging` lives host-side at
+  `/home/soisd/sdm-staging/.env.staging` mode 0600, never committed. `.gitignore` extended to
+  block `deploy/docker/.env.staging` defensively.
+
+The actual env contract used by BFF code (`apps/bff/src/config/load.ts`) is `CASDM_*` not the
+`CA_SDM_*` names the helm chart `values-staging.yaml` uses — that long-standing chart-vs-code
+divergence is **not fixed here** (out of J.0 scope), but the compose env block uses the
+canonical names so the BFF actually reads them.
+
+### Fáza B — Runtime provisioning (operator-approved, executed)
+
+`sudo apt-get install -y docker.io docker-compose-v2` on `10.11.36.21` → Docker 29.1.3 +
+containerd 2.2.1 + compose 2.40.3. `systemctl enable --now docker` → daemon active.
+`usermod -aG docker soisd` → compose runs as `soisd` without sudo on the next login. Hello-world
+container OK.
+
+No nginx config on the host was touched; the legacy SoimcoDesk vhosts on `:80/:443` are
+untouched. The front-door container binds only to `:88` and `:89`, both confirmed free at probe
+time.
+
+### Fáza C — Smoke (against v1.1.0, then v1.1.1)
+
+First attempt against `1.1.0` failed instantly with `ERR_MODULE_NOT_FOUND: Cannot find package
+'tsx'` in the BFF container. Root cause: `apps/bff/Dockerfile` shipped a chunk-1-era stub
+`CMD ["node", "--import", "tsx/esm", "src/index.ts"]` against the dev-only `tsx` loader. The
+image build actually produces `dist/index.js` via tsup and `pnpm deploy --prod` strips `tsx`, so
+every BFF image since v1.0 crashed on boot — but the chart had never been exercised against a
+real runtime (J.0 deferred all the way to today), so the defect was invisible to CI.
+
+A one-line `command:` override in compose got the BFF process up locally, after which `/readyz`
+exposed a second failure: BFF `fetch failed` against `http://10.11.35.35:8050/rest_access`.
+Diagnosis from host shell:
+
+- `nc -zv -w 5 10.11.35.35 8050` → timeout
+- `nc -zv -w 3 10.11.35.{1,35,100}:22` → all timeout
+- `ip route get 10.11.35.35` → routed via `ens18`, same /19 (10.11.32.0/19)
+- From this dev Mac → `curl http://10.11.35.35:8050/caisd-rest/` returns HTTP 404 within 100 ms
+
+→ **L3/L4 firewall (or switch ACL) blocks `10.11.36.0/24` → `10.11.35.0/24` traffic entirely.**
+Not host-resolvable; requires the network team to open `10.11.36.21 → 10.11.35.35:8050`
+(TCP) or the whole CA SDM subnet, whichever scope the security policy allows.
+
+### Fáza D — Hotfix dispatch (PR #57 → v1.1.1, 2026-06-06)
+
+User chose "fix the BFF Dockerfile + push a v1.1.1 hotfix now" over "document and defer".
+Branch `fix/bff-dockerfile-cmd`, single-line CMD fix (`node dist/index.js`) + release-notes +
+changelog entry, 10/10 CI checks green, squash `--admin --delete-branch` merge, tag `v1.1.1`,
+release.yml run `27042436416` succeeded all 7 jobs (BFF + portal + workspace amd64/arm64 +
+manifest + helm + GitHub release).
+
+Re-pulled `:1.1.1` images on host, dropped the compose `command:` override, restarted the
+stack. Result:
+
+- `sdm-portal:1.1.1` — Healthy.
+- `sdm-workspace:1.1.1` — Healthy.
+- `sdm-bff:1.1.1` — boots cleanly in ~1 s (`bff: started` on `:5174`); `/readyz` returns 503
+  on every probe because the CA SDM bootstrap still times out (B2 network gap). Manually
+  stopped to suppress retry-log spam; container restart is a 2-second op once B2 is fixed.
+- `sdm-frontdoor` — never created (`depends_on: bff service_healthy` gate). Will start
+  automatically once BFF is healthy.
+
+Hotfix release notes: [`RELEASE-NOTES-v1.1.1.md`](../RELEASE-NOTES-v1.1.1.md).
+
+### Remaining work (gated on B2 network ACL fix)
+
+1. Operator escalates to the network team: open `10.11.36.21 → 10.11.35.35:8050` (or the whole
+   `10.11.35.0/24` subnet).
+2. Validate from host shell: `curl http://10.11.35.35:8050/caisd-rest/` returns a 200/404 within
+   a second (anything that's not a TCP timeout).
+3. `cd /home/soisd/sdm-staging && docker compose -f compose.staging.yml --env-file .env.staging
+up -d` → expect BFF to bootstrap, frontdoor to start, `:88` to serve the portal.
+4. Run the 18-journey live suite from the dev Mac:
+   `BASE_URL=http://10.11.36.21:88 bash scripts/release-dry-run.sh` (the script targets
+   `helm install`; for the compose path we run only the post-deploy `curl /readyz` + Playwright
+   block).
+5. Rollback test — `docker compose down` then up with `SDM_TAG=1.1.0` (the broken image, to
+   verify rollback orchestration; expect known failure since v1.1.0 has the BFF CMD bug). Or
+   skip until a second healthy revision exists.
+6. Out-of-band checks (Sentry / SSE / multi-tenancy / step-up 2FA / KB upload / PWA / LCP) per
+   §4 of `RELEASE-DRY-RUN.md`.
+7. Fill `docs/RELEASE-DRY-RUN.md` GO/NO-GO matrix; flip `acceptance-coverage.md` Live BFF column
+   per row; toggle this plan + ROADMAP to ✅ DONE.
+
+### Sentry deviation
+
+Prod GHCR images do not carry a Sentry DSN — `release.yml` does not pass `VITE_SENTRY_DSN` at
+build time, so the SPA bundles initialise Sentry against an empty DSN and never POST to the
+ingest endpoint. This is acceptable for the J.0 staging smoke (Sentry capture verification is
+explicitly listed as deviation-tolerant in this plan's §Open questions). Production-grade
+release will need a release.yml change to thread the staging DSN into the SPA builds, but that
+is **out of J.0 scope** (separate v1.2+ ticket).

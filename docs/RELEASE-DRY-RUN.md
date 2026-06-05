@@ -1,15 +1,51 @@
-# Release v1.0 dry-run — post-mortem
+# Release dry-run — post-mortem template
 
 > Filled out by the operator after running `scripts/release-dry-run.sh` and
 > `scripts/rollback-test.sh` against the staging cluster. This file is the
-> go/no-go gate for I.7 (v1.0 cut). Empty checkboxes block the cut; any
-> P0/P1 failure routes back to a Phase I.x patch chunk.
+> go/no-go gate for each cut (v1.0 / v1.1.x / future). Empty checkboxes
+> block the cut; any P0/P1 failure routes back to a Phase I.x or Phase J.x
+> patch chunk.
 >
-> **I.6 scaffolding shipped (PR #47); I.7 cuts v1.0.0 with the chart and
-> workflow finalised.** Manual cluster execution (helm install + smoke +
+> **I.6 scaffolding shipped (PR #47); I.7 cut v1.0.0 with the chart and
+> workflow finalised; J.9 cut v1.1.0; J.0.1 cut v1.1.1 hotfix.** Manual
+> cluster execution (helm install or docker compose stack + smoke +
 > rollback + post-mortem fill) is an ops responsibility per
 > `deploy_target.md` — this template stays empty in-repo and is filled by
 > the operator after each install.
+
+## Status as of 2026-06-06 — J.0 partial smoke
+
+The first live exercise of the chart artefacts happened on 2026-06-06 against the on-prem host
+`10.11.36.21` using a Docker compose stack (per operator decision; on-prem cluster is single-host).
+Two blockers surfaced; one is fixed in v1.1.1, the second is operator-side.
+
+| #   | Blocker                                                                                                                                                                                                                                   | Status                                                                                               |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| B1  | `apps/bff/Dockerfile` `CMD` referenced the dev-only `tsx` loader; `pnpm deploy --prod` pruned it; image crash-looped on boot. Defect was present since v1.0 — chart had never been exercised against a real runtime.                      | ✅ Fixed in **v1.1.1** (PR #57, tag `v1.1.1`).                                                       |
+| B2  | CA SDM dev backend `10.11.35.35:8050` is **TCP-unreachable** from `10.11.36.21` — L3/L4 firewall blocks `10.11.36.0/24` → `10.11.35.0/24` traffic. Routing OK (same /19), but `nc/curl` time out from host shell and BFF container alike. | 🔴 Operator-side. Open ticket with the network team to allow `10.11.36.21 → 10.11.35.35:8050` (TCP). |
+
+Compose stack files in `deploy/docker/` (transferred to host at `/home/soisd/sdm-staging/`):
+
+- `compose.staging.yml` — bff + portal + workspace + frontdoor nginx
+- `nginx-frontdoor.conf` — `:88` portal / `:89` workspace, both with `/api/* /auth/* /me /config /readyz /health* /api/events → bff`
+- `.env.staging.example` — env template (real `.env.staging` lives host-side, mode 0600)
+
+Smoke evidence (2026-06-06 against v1.1.1):
+
+- `sdm-portal:1.1.1` — Healthy in ~5 s on host port `88`.
+- `sdm-workspace:1.1.1` — Healthy in ~5 s on host port `89`.
+- `sdm-bff:1.1.1` — process boots in ~1 s (`{"msg":"bff: started","port":5174}`), `/readyz` returns 503
+  because CA SDM broker bootstrap fails on B2.
+- `sdm-frontdoor` — pending (`depends_on: bff service_healthy`).
+
+Full per-session detail in [`docs/plans/J.0.md`](./plans/J.0.md) "Smoke session — 2026-06-06".
+
+Resume points once B2 is fixed:
+
+- `cd /home/soisd/sdm-staging && docker compose -f compose.staging.yml --env-file .env.staging up -d`
+  — BFF healthcheck passes, frontdoor starts, `:88` serves the portal.
+- Run live 18-journey via `BASE_URL=http://10.11.36.21:88` + manual `:89` pass for workspace journeys.
+- Fill §Metadata + §Sequence onwards in this template.
 
 ## Metadata
 
