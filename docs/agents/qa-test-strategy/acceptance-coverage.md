@@ -26,36 +26,42 @@
 
 The **Live BFF** column tracks the live-mode result captured by
 `scripts/release-dry-run.sh` (or `.github/workflows/acceptance-live.yml`).
-`blocked — J.0 B2` indicates the journey **cannot be live-exercised yet**
-because the BFF cannot reach the CA SDM 17.4 backend from the deploy host
-— this is the network-ACL blocker surfaced by the 2026-06-06 J.0 partial
-smoke (see [`docs/plans/J.0.md`](../../plans/J.0.md) §Smoke session
-2026-06-06 + [`docs/RELEASE-DRY-RUN.md`](../../RELEASE-DRY-RUN.md)
-§Status). The row is gated by the MSW `Status` column on the merge path.
-Flip cells to `pass` / `fail` once B2 is fixed, the stack stands up
-end-to-end, and the post-mortem in `docs/RELEASE-DRY-RUN.md` is filled
-out.
+`N/A — MSW suite (v2.0)` indicates the journey **cannot be live-exercised
+end-to-end with the current suite**: every journey uses `isolatedPageAs`
+which sets a `x-msw-user-id` request header to swap personas, and the real
+production BFF doesn't honour that header (it's MSW-only magic). Without a
+real OIDC auth flow + UIRole mapping + persona handoff (v2.0 scope), live
+runs against the real CA SDM 17.4 backend land on an auth wall or render
+the signed-out shell, so every assertion times out on missing testids.
+Functional coverage of v1.1.1 surface rides on the green MSW journey matrix
+(this column's `Status`, per PR + per merge) plus BFF unit + integration
+tests against real CA SDM (F.1 onwards, green per merge). End-to-end live
+journey coverage will be implemented as part of v2.0 alongside the real
+auth work. See [`docs/plans/J.0.md`](../../plans/J.0.md) §Smoke session
+2026-06-07 + [`docs/RELEASE-DRY-RUN.md`](../../RELEASE-DRY-RUN.md) §Filled
+fill — v1.1.1 staging (2026-06-07) for the captured 23/23 fail pattern and
+GO decision with documented deviations.
 
 | # | Journey ID | Persona | Status | Live BFF | Spec file | Notes / Phase I follow-up |
 |---|---|---|---|---|---|---|
-| 1 | `portal-incident-broken-laptop` | requester_lucia | **pass** | blocked — J.0 B2 | `journey-01-portal-incident.spec.ts` | Tenant breadcrumb visible. Validation + comment round-trip covered in `h3-portal-new-incident.spec.ts` + `h4-portal-ticket-detail.spec.ts`. |
-| 2 | `portal-request-software` | requester_lucia | **pass** | blocked — J.0 B2 | `journey-02-portal-request-software.spec.ts` | Form-render + dynamic field branches + full submit-mutation roundtrip asserted in preview-build mode. I.1 fixed the underlying DynamicForm bug (static Zod schema required hidden `colleague` field) by building the resolver against the *currently visible* fields and enabling `shouldUnregister: true`. Manager-approve / rejection paths covered by BFF `request.ctest.ts`. |
-| 3 | `portal-kb-self-help` | requester_lucia | **pass** | blocked — J.0 B2 | `journey-03-portal-kb-self-help.spec.ts` | XSS sanitization (`@security:kb-xss-sanitization`) covered by `MarkdownRenderer` component unit tests. |
-| 4 | `workspace-incident-triage` | agent_l1_anna | **pass** | blocked — J.0 B2 | `journey-04-workspace-triage.spec.ts` | Tenant switch + cache flush covered by `h1-tenant-switch.spec.ts` + `mocks-tenant-isolation.spec.ts`. Cross-tab BroadcastChannel sync now covered by I.2 `cross-tab-logout.spec.ts` + `cross-tab-tenant-sync.spec.ts` (two-page same-context rig). |
-| 5 | `workspace-incident-resolve-with-cmdb` | agent_l1_anna | **pass** | blocked — J.0 B2 | `journey-05-workspace-resolve-cmdb.spec.ts` | RBAC tooltip (`@security:rbac-denial-tooltip`) covered by `@sdm/auth` `<Can>` unit tests. |
-| 6 | `workspace-incident-escalate-to-l2` | agent_l1_anna | **pass** | blocked — J.0 B2 | `journey-06-workspace-escalate-l2.spec.ts` | Empty-group + audit-log mutation emission exercised by MSW handler unit tests + BFF integration. |
-| 7 | `workspace-problem-rca` | agent_l2_marek | **pass** | blocked — J.0 B2 | `journey-07-workspace-problem-rca.spec.ts` | Cross-tenant link 422 (`@security:cross-tenant-deny`) covered by BFF integration. |
-| 8 | `workspace-cmdb-impact-analysis` | agent_l2_marek | **pass** | blocked — J.0 B2 | `journey-08-workspace-cmdb-impact.spec.ts` | 200-node cluster + PDF export deferred to Phase I.4 (large-graph perf + reporting). |
-| 9 | `workspace-incident-deep-dive` | agent_l2_marek | **pass** | blocked — J.0 B2 | `journey-09-workspace-incident-deepdive.spec.ts` | Required-field close block now exercised — I.1 added the ResolveModal close-block predicate (Solution + Category required when status → CL) with an inline `ticket-resolve-required-error` alert. Reviewer fallback still deferred to Phase I.4 KB editor. |
-| 10 | `workspace-change-cab-prep` | change_manager_peter | **pass** | blocked — J.0 B2 | `journey-10-workspace-change-cab-prep.spec.ts` | Bulk-tag keyboard-only + PDF agenda export deferred to Phase I.3 (CAB workflow refinement). |
-| 11 | `workspace-change-emergency-approve` | change_manager_peter | **pass** | blocked — J.0 B2 | `journey-11-workspace-change-emergency.spec.ts` | I.1 wires step-up 2FA end-to-end: `POST /auth/step-up` (TOTP via `node:crypto`, single-use 15-min token), `<StepUpModal>` gate inside `<ApproveModal>` for EMERGENCY in production tenants, and BFF approve handler that enforces `X-Step-Up-Token` for EMERGENCY changes. Browser test branches on whether the role grants `cab.approve`; full enforcement coverage in `apps/bff/tests/step-up.test.ts` + `changes-approval.test.ts`. CSRF header enforcement covered by BFF integration. |
-| 12 | `workspace-change-cross-tenant-conflict` | sp_admin | **pass** | blocked — J.0 B2 | `journey-12-workspace-change-cross-tenant.spec.ts` | I.5 — sp_admin lands on `/changes/calendar`, toggles "All my tenants" → BFF/MSW returns changes from every administered tenant with per-tenant color overlay; non-sp_admin still 403s on `?tenants=all` (existence non-leakage). |
-| 13 | `workspace-kb-author-new` | kb_editor_jana | **pass** | blocked — J.0 B2 | `journey-13-workspace-kb-author-new.spec.ts` | I.4 — full TipTap + DOMPurify editor flow: Jana creates draft → publishes → article surfaces on `/kb`. `@security:kb-markdown-sanitization` covered (XSS payload stripped both FE + BFF). |
-| 14 | `workspace-kb-from-incident` | kb_editor_jana | **pass** | blocked — J.0 B2 | `journey-14-workspace-kb-from-incident.spec.ts` | I.4 — `?attachToTicket` CTA round-trip + publish-from-editor leg with `@security:kb-visibility-scope` (visibility radio scoped to public/tenant/sp_only). |
-| 15 | `workspace-kb-analytics-review` | kb_editor_jana | **pass** | blocked — J.0 B2 | `journey-15-workspace-kb-analytics.spec.ts` | I.4 — full `/kb/analytics` dashboard (top-10 / bottom-5 / search-miss × 7d/30d/90d range selector) + per-article stats panel. |
-| 16 | `workspace-cmdb-ci-detail` | cmdb_owner_robert | **pass** | blocked — J.0 B2 | `journey-16-workspace-cmdb-ci-detail.spec.ts` | All 4 tabs + collapse round-trip + history empty/list branch covered. |
-| 17 | `workspace-cmdb-relationship-impact` | cmdb_owner_robert | **pass** | blocked — J.0 B2 | `journey-17-workspace-cmdb-relationships.spec.ts` | PDF export progress bar deferred to Phase I.4 (reporting). |
-| 18 | `workspace-cmdb-cross-tenant-shared` | sp_admin | **pass** | blocked — J.0 B2 | `journey-18-workspace-cmdb-cross-tenant.spec.ts` | I.5 — sp_admin sees the "Shared (N)" marker on cross-tenant CIs in the CMDB list + detail header; `?tenants=all` exposes foreign-tenant neighbours with the dashed-orange Cytoscape edge style; non-sp_admin still 404s on cross-tenant CI fetches. |
+| 1 | `portal-incident-broken-laptop` | requester_lucia | **pass** | N/A — MSW suite (v2.0) | `journey-01-portal-incident.spec.ts` | Tenant breadcrumb visible. Validation + comment round-trip covered in `h3-portal-new-incident.spec.ts` + `h4-portal-ticket-detail.spec.ts`. |
+| 2 | `portal-request-software` | requester_lucia | **pass** | N/A — MSW suite (v2.0) | `journey-02-portal-request-software.spec.ts` | Form-render + dynamic field branches + full submit-mutation roundtrip asserted in preview-build mode. I.1 fixed the underlying DynamicForm bug (static Zod schema required hidden `colleague` field) by building the resolver against the *currently visible* fields and enabling `shouldUnregister: true`. Manager-approve / rejection paths covered by BFF `request.ctest.ts`. |
+| 3 | `portal-kb-self-help` | requester_lucia | **pass** | N/A — MSW suite (v2.0) | `journey-03-portal-kb-self-help.spec.ts` | XSS sanitization (`@security:kb-xss-sanitization`) covered by `MarkdownRenderer` component unit tests. |
+| 4 | `workspace-incident-triage` | agent_l1_anna | **pass** | N/A — MSW suite (v2.0) | `journey-04-workspace-triage.spec.ts` | Tenant switch + cache flush covered by `h1-tenant-switch.spec.ts` + `mocks-tenant-isolation.spec.ts`. Cross-tab BroadcastChannel sync now covered by I.2 `cross-tab-logout.spec.ts` + `cross-tab-tenant-sync.spec.ts` (two-page same-context rig). |
+| 5 | `workspace-incident-resolve-with-cmdb` | agent_l1_anna | **pass** | N/A — MSW suite (v2.0) | `journey-05-workspace-resolve-cmdb.spec.ts` | RBAC tooltip (`@security:rbac-denial-tooltip`) covered by `@sdm/auth` `<Can>` unit tests. |
+| 6 | `workspace-incident-escalate-to-l2` | agent_l1_anna | **pass** | N/A — MSW suite (v2.0) | `journey-06-workspace-escalate-l2.spec.ts` | Empty-group + audit-log mutation emission exercised by MSW handler unit tests + BFF integration. |
+| 7 | `workspace-problem-rca` | agent_l2_marek | **pass** | N/A — MSW suite (v2.0) | `journey-07-workspace-problem-rca.spec.ts` | Cross-tenant link 422 (`@security:cross-tenant-deny`) covered by BFF integration. |
+| 8 | `workspace-cmdb-impact-analysis` | agent_l2_marek | **pass** | N/A — MSW suite (v2.0) | `journey-08-workspace-cmdb-impact.spec.ts` | 200-node cluster + PDF export deferred to Phase I.4 (large-graph perf + reporting). |
+| 9 | `workspace-incident-deep-dive` | agent_l2_marek | **pass** | N/A — MSW suite (v2.0) | `journey-09-workspace-incident-deepdive.spec.ts` | Required-field close block now exercised — I.1 added the ResolveModal close-block predicate (Solution + Category required when status → CL) with an inline `ticket-resolve-required-error` alert. Reviewer fallback still deferred to Phase I.4 KB editor. |
+| 10 | `workspace-change-cab-prep` | change_manager_peter | **pass** | N/A — MSW suite (v2.0) | `journey-10-workspace-change-cab-prep.spec.ts` | Bulk-tag keyboard-only + PDF agenda export deferred to Phase I.3 (CAB workflow refinement). |
+| 11 | `workspace-change-emergency-approve` | change_manager_peter | **pass** | N/A — MSW suite (v2.0) | `journey-11-workspace-change-emergency.spec.ts` | I.1 wires step-up 2FA end-to-end: `POST /auth/step-up` (TOTP via `node:crypto`, single-use 15-min token), `<StepUpModal>` gate inside `<ApproveModal>` for EMERGENCY in production tenants, and BFF approve handler that enforces `X-Step-Up-Token` for EMERGENCY changes. Browser test branches on whether the role grants `cab.approve`; full enforcement coverage in `apps/bff/tests/step-up.test.ts` + `changes-approval.test.ts`. CSRF header enforcement covered by BFF integration. |
+| 12 | `workspace-change-cross-tenant-conflict` | sp_admin | **pass** | N/A — MSW suite (v2.0) | `journey-12-workspace-change-cross-tenant.spec.ts` | I.5 — sp_admin lands on `/changes/calendar`, toggles "All my tenants" → BFF/MSW returns changes from every administered tenant with per-tenant color overlay; non-sp_admin still 403s on `?tenants=all` (existence non-leakage). |
+| 13 | `workspace-kb-author-new` | kb_editor_jana | **pass** | N/A — MSW suite (v2.0) | `journey-13-workspace-kb-author-new.spec.ts` | I.4 — full TipTap + DOMPurify editor flow: Jana creates draft → publishes → article surfaces on `/kb`. `@security:kb-markdown-sanitization` covered (XSS payload stripped both FE + BFF). |
+| 14 | `workspace-kb-from-incident` | kb_editor_jana | **pass** | N/A — MSW suite (v2.0) | `journey-14-workspace-kb-from-incident.spec.ts` | I.4 — `?attachToTicket` CTA round-trip + publish-from-editor leg with `@security:kb-visibility-scope` (visibility radio scoped to public/tenant/sp_only). |
+| 15 | `workspace-kb-analytics-review` | kb_editor_jana | **pass** | N/A — MSW suite (v2.0) | `journey-15-workspace-kb-analytics.spec.ts` | I.4 — full `/kb/analytics` dashboard (top-10 / bottom-5 / search-miss × 7d/30d/90d range selector) + per-article stats panel. |
+| 16 | `workspace-cmdb-ci-detail` | cmdb_owner_robert | **pass** | N/A — MSW suite (v2.0) | `journey-16-workspace-cmdb-ci-detail.spec.ts` | All 4 tabs + collapse round-trip + history empty/list branch covered. |
+| 17 | `workspace-cmdb-relationship-impact` | cmdb_owner_robert | **pass** | N/A — MSW suite (v2.0) | `journey-17-workspace-cmdb-relationships.spec.ts` | PDF export progress bar deferred to Phase I.4 (reporting). |
+| 18 | `workspace-cmdb-cross-tenant-shared` | sp_admin | **pass** | N/A — MSW suite (v2.0) | `journey-18-workspace-cmdb-cross-tenant.spec.ts` | I.5 — sp_admin sees the "Shared (N)" marker on cross-tenant CIs in the CMDB list + detail header; `?tenants=all` exposes foreign-tenant neighbours with the dashed-orange Cytoscape edge style; non-sp_admin still 404s on cross-tenant CI fetches. |
 
 **Totals**: 18 / 18 covered — **18 pass**, **0 partial**, **0 deferred**.
 
