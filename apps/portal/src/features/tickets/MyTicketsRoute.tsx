@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { StatusBadge } from "@sdm/design-system";
 import { useTranslation, useLocale, formatRelative } from "@sdm/i18n";
-import { toTenantId } from "@sdm/domain";
+import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
 import { myAllTicketsQuery } from "../home/api";
 import "../home/home.css";
