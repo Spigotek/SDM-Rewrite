@@ -9,6 +9,31 @@ per-chunk plans under `docs/plans/`. Sources of truth for design decisions live
 in `docs/spec/` and `docs/agents/`; this changelog tracks **what shipped** to the
 release artefact, not why.
 
+## [1.1.2] - 2026-MM-DD
+
+Hotfix release. Single-line fix in the portal SPA's `parseTicketParam` so the
+home "My active tickets" → ticket detail click works against the live BFF
+talking to real CA SDM 17.4 (raw numeric IDs). See
+[`RELEASE-NOTES-v1.1.2.md`](./RELEASE-NOTES-v1.1.2.md) for the full
+post-mortem.
+
+### Fixed
+
+- Portal `parseTicketParam` now accepts bare numeric IDs (`/tickets/407804`)
+  and defaults them to `incident`. Without this branch, every home → ticket
+  detail click on a live deploy rendered the SPA's 404 page despite the
+  underlying BFF endpoint being healthy. MSW path is unaffected (fixtures
+  still produce colon-prefixed IDs).
+
+### Deployment
+
+- `ghcr.io/spigotek/sdm-portal:1.1.2` (also `1.1`, `latest`) — multi-arch.
+- `ghcr.io/spigotek/sdm-bff:1.1.2` / `sdm-workspace:1.1.2` — unchanged source,
+  re-cut at the new tag for chart parity.
+- Helm chart (OCI): `oci://ghcr.io/spigotek/charts/sdm` version `1.1.2`.
+
+[1.1.2]: https://github.com/Spigotek/SDM-Rewrite/releases/tag/v1.1.2
+
 ## [1.1.1] - 2026-MM-DD
 
 Hotfix release. Single-line `apps/bff/Dockerfile` `CMD` fix to make the BFF

@@ -47,6 +47,14 @@ export function parseTicketParam(raw: string): ParsedTicketParam | null {
   if (/^REQ-/i.test(raw)) return { type: "request", id: raw };
   if (/^PR-/i.test(raw)) return { type: "problem", id: raw };
   if (/^CHG-/i.test(raw)) return { type: "change", id: raw };
+  // Bare numeric ID — default to `incident`. The portal home lists tickets
+  // from `/api/incidents`, and the live BFF (talking to real CA SDM 17.4)
+  // returns raw numeric IDs, not the prefixed shape the MSW fixtures use.
+  // Without this branch the home → detail click 404s in live mode (the
+  // J.0 staging smoke 2026-06-12 hit this on the first user click).
+  // MSW path is unaffected: fixture rows still carry prefixed IDs, so
+  // their URLs match the colon branch above.
+  if (/^\d+$/.test(raw)) return { type: "incident", id: raw };
   return null;
 }
 
