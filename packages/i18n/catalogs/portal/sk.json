@@ -50,9 +50,14 @@
   "feedback": {
     "submitted": "Ticket #{id} odoslaný. Helpdesk to dostane okamžite."
   },
+  "myTickets": {
+    "title": "Moje tickety",
+    "loading": "Načítavame tvoje tickety…",
+    "empty": "Zatiaľ žiadne tickety. Keď niečo budeš potrebovať, nahlás problém alebo požiadaj o niečo.",
+    "error": "Tickety sa nepodarilo načítať. Skús stránku obnoviť.",
+    "count": "{n, plural, one {# ticket} few {# tickety} other {# ticketov}}"
+  },
   "placeholders": {
-    "myTicketsTitle": "Moje tickety",
-    "myTickets": "Zoznam tvojich ticketov dorazí v H.2.",
     "catalogTitle": "Katalóg služieb",
     "catalog": "Browse katalógu dorazí v H.5.",
     "catalogItemTitle": "Položka katalógu {id}",

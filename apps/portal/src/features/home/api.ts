@@ -19,6 +19,7 @@ import type { KbSuggestion, MyTicketSummary } from "./types";
  */
 
 const MY_TICKETS_PAGE_SIZE = 5;
+const MY_ALL_TICKETS_PAGE_SIZE = 50;
 const KB_SUGGESTIONS_PAGE_SIZE = 3;
 const KB_EXCERPT_MAX = 140;
 
@@ -116,6 +117,28 @@ export function myTicketsQuery(tenantId: TenantId) {
   return {
     queryKey: ["tickets", tenantId, "my-recent"] as const,
     queryFn: fetchMyTickets,
+    staleTime: 60_000,
+  };
+}
+
+async function fetchAllMyTickets(): Promise<ReadonlyArray<MyTicketSummary>> {
+  const params = new URLSearchParams({
+    customer: "me",
+    size: String(MY_ALL_TICKETS_PAGE_SIZE),
+    sort: "open_date DESC",
+  });
+  const resp = await fetch(`/api/incidents?${params.toString()}`, {
+    credentials: "include",
+    headers: { Accept: "application/json" },
+  });
+  const payload = await jsonOrThrow<PaginatedShape<IncidentRowMixed>>(resp, "my-all-tickets");
+  return rowsOf(payload).slice(0, MY_ALL_TICKETS_PAGE_SIZE).map(toMyTicketSummary);
+}
+
+export function myAllTicketsQuery(tenantId: TenantId) {
+  return {
+    queryKey: ["tickets", tenantId, "my-all"] as const,
+    queryFn: fetchAllMyTickets,
     staleTime: 60_000,
   };
 }
