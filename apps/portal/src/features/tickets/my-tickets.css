@@ -1,0 +1,25 @@
+.sdm-my-tickets {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: var(--spacing-6) var(--spacing-4) var(--spacing-12);
+}
+
+.sdm-my-tickets-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+  margin-bottom: var(--spacing-5);
+}
+
+.sdm-my-tickets-title {
+  margin: 0;
+  font-size: var(--font-size-2xl, 1.5rem);
+  font-weight: var(--font-weight-bold, 700);
+}
+
+.sdm-my-tickets-count {
+  margin: 0;
+  color: var(--color-text-subtle);
+  font-size: var(--font-size-sm, 0.875rem);
+}

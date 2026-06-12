@@ -50,9 +50,14 @@
   "feedback": {
     "submitted": "Ticket #{id} submitted. Helpdesk will pick it up shortly."
   },
+  "myTickets": {
+    "title": "My tickets",
+    "loading": "Loading your tickets…",
+    "empty": "No tickets yet. When you need something, report a problem or request something.",
+    "error": "Couldn't load tickets. Try refreshing the page.",
+    "count": "{n, plural, one {# ticket} other {# tickets}}"
+  },
   "placeholders": {
-    "myTicketsTitle": "My tickets",
-    "myTickets": "Your ticket list arrives in H.2.",
     "catalogTitle": "Service catalog",
     "catalog": "Catalog browse arrives in H.5.",
     "catalogItemTitle": "Catalog item {id}",

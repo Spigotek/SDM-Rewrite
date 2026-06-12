@@ -9,6 +9,37 @@ per-chunk plans under `docs/plans/`. Sources of truth for design decisions live
 in `docs/spec/` and `docs/agents/`; this changelog tracks **what shipped** to the
 release artefact, not why.
 
+## [1.1.3] - 2026-MM-DD
+
+Feature follow-up release. Replaces the `/tickets` placeholder ("Zoznam
+tvojich ticketov dorazí v H.2.") with a working "My tickets" full-list
+page in the portal SPA. See
+[`RELEASE-NOTES-v1.1.3.md`](./RELEASE-NOTES-v1.1.3.md) for the full
+post-mortem.
+
+### Added
+
+- Portal `/tickets` route now renders the user's full ticket list (up
+  to 50 rows from `/api/incidents?customer=me`), each row linked to the
+  v1.1.2 detail page. Reuses the home's row markup + the existing
+  `myTicketsQuery` / `myAllTicketsQuery` factories. New SK + EN i18n
+  keys under `myTickets.*` (title, loading, empty, error, count plural).
+
+### Removed
+
+- `apps/portal/src/routes/placeholders/my-tickets.tsx` placeholder
+  component and the matching `placeholders.myTickets` /
+  `placeholders.myTicketsTitle` i18n entries.
+
+### Deployment
+
+- `ghcr.io/spigotek/sdm-portal:1.1.3` (also `1.1`, `latest`) — multi-arch.
+- `ghcr.io/spigotek/sdm-bff:1.1.3` / `sdm-workspace:1.1.3` — unchanged
+  source, re-cut at the new tag for chart parity.
+- Helm chart (OCI): `oci://ghcr.io/spigotek/charts/sdm` version `1.1.3`.
+
+[1.1.3]: https://github.com/Spigotek/SDM-Rewrite/releases/tag/v1.1.3
+
 ## [1.1.2] - 2026-MM-DD
 
 Hotfix release. Single-line fix in the portal SPA's `parseTicketParam` so the
