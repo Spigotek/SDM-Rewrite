@@ -43,6 +43,7 @@
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2500 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
+            "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
             "categories:performance": ["error", { "minScore": 0.85 }]
           }
         },
