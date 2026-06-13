@@ -123,7 +123,7 @@ export function closePortalDrawer(): void {
 }
 
 export function MobileDrawer() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("portal");
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const drawerRef = useRef<HTMLDivElement | null>(null);

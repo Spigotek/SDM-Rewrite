@@ -12,7 +12,7 @@ import { useLocation } from "react-router-dom";
  * and gives us a stable label even before the page bundle lands.
  */
 export function Breadcrumbs() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("portal");
   const { pathname } = useLocation();
 
   const items = useMemo<BreadcrumbItem[]>(() => buildTrail(pathname, t), [pathname, t]);
@@ -35,28 +35,38 @@ function buildTrail(pathname: string, t: Translate): BreadcrumbItem[] {
   const segments = pathname.split("/").filter(Boolean);
   const home: BreadcrumbItem = { label: t("nav.home"), href: "/" };
   const [root, second, third] = segments;
+  // URL-decode terminal slugs ("catalog%3Aexternal-disk" → "catalog:external-disk").
+  // Keeps the last crumb readable when React Router hands us still-encoded params.
+  const decode = (slug: string | undefined): string => {
+    if (!slug) return "";
+    try {
+      return decodeURIComponent(slug);
+    } catch {
+      return slug;
+    }
+  };
 
   switch (root) {
     case "tickets": {
       if (!second) return [home, { label: t("nav.myTickets") }];
-      return [home, { label: t("nav.myTickets"), href: "/tickets" }, { label: second }];
+      return [home, { label: t("nav.myTickets"), href: "/tickets" }, { label: decode(second) }];
     }
     case "catalog": {
       if (!second) return [home, { label: t("nav.catalog") }];
-      return [home, { label: t("nav.catalog"), href: "/catalog" }, { label: second }];
+      return [home, { label: t("nav.catalog"), href: "/catalog" }, { label: decode(second) }];
     }
     case "kb": {
       if (!second) return [home, { label: t("nav.knowledge") }];
       if (second === "article" && third) {
-        return [home, { label: t("nav.knowledge"), href: "/kb" }, { label: third }];
+        return [home, { label: t("nav.knowledge"), href: "/kb" }, { label: decode(third) }];
       }
-      return [home, { label: t("nav.knowledge"), href: "/kb" }, { label: second }];
+      return [home, { label: t("nav.knowledge"), href: "/kb" }, { label: decode(second) }];
     }
     case "new-incident":
       return [home, { label: t("nav.newIncident") }];
     default:
       // Unknown route — render only Home + the raw slug. Better than a blank
       // trail because at least the user can navigate back home.
-      return [home, { label: root ?? "" }];
+      return [home, { label: decode(root) }];
   }
 }

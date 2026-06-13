@@ -12,7 +12,7 @@ import { useLocation } from "react-router-dom";
  * and gives us a stable label even before the page bundle lands.
  */
 export function Breadcrumbs() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("workspace");
   const { pathname } = useLocation();
 
   const items = useMemo<BreadcrumbItem[]>(() => buildTrail(pathname, t), [pathname, t]);

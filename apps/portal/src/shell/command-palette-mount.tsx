@@ -141,7 +141,7 @@ function nextThemeChoice(current: ThemeChoice): ThemeChoice {
 }
 
 export function CommandPaletteMount(): ReactNode {
-  const { t } = useTranslation();
+  const { t } = useTranslation("portal");
   const navigate = useNavigate();
   const { session, status, logout } = useSession();
   const { choice, setChoice } = useTheme();

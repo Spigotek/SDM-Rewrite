@@ -118,7 +118,7 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 export function BottomNav() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("portal");
   const { pathname } = useLocation();
   const navigate = useNavigate();
 

@@ -95,7 +95,7 @@ function themeToggleLabel(choice: ThemeChoice, t: (key: string) => string): stri
 }
 
 export function TopBar({ appName }: { appName: string }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("portal");
   const { session, status, logout } = useSession();
   const { choice, setChoice } = useTheme();
 

@@ -238,7 +238,7 @@ interface RailGroupSectionProps {
 }
 
 function RailGroupSection({ group, pathname, open, onToggle }: RailGroupSectionProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("workspace");
   const groupLabel = t(group.labelKey);
   const toggleLabel = open
     ? t("nav.rail.collapseGroup", { name: groupLabel })
@@ -280,7 +280,7 @@ interface UserMenuProps {
 }
 
 function UserMenu({ displayName, onSignOut }: UserMenuProps) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("workspace");
   const { choice, setChoice } = useTheme();
   const [open, setOpen] = useState(false);
 
@@ -343,7 +343,7 @@ function UserMenu({ displayName, onSignOut }: UserMenuProps) {
 }
 
 export function LeftRail() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("workspace");
   const { pathname } = useLocation();
   const { session, logout } = useSession();
 
