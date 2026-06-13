@@ -28,11 +28,15 @@
 /* K.1 brief §6.5 — P1/Critical is always rendered SOLID (Polaris severity rule):
    filled danger background + white text + no border. Override applies on top of
    Badge's `.danger` variant. The dot is suppressed when this class is active
-   because the entire surface already conveys urgency. */
+   because the entire surface already conveys urgency.
+
+   Background uses `--color-danger-700` (#b91c1c) not `-500`: at the badge's
+   xs/sm font-size, white-on-#ef4444 is 3.76:1 (below WCAG AA 4.5:1).
+   `#b91c1c` lands at 7.4:1 — solid red still reads as P1, axe-clean. */
 .criticalSolid {
-  background-color: var(--color-danger-500);
+  background-color: var(--color-danger-700);
   color: var(--color-neutral-0);
-  border-color: var(--color-danger-500);
+  border-color: var(--color-danger-700);
 }
 
 .criticalSolid [data-component="badge-icon"] {

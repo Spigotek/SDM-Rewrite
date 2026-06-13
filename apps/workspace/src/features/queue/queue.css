@@ -341,7 +341,11 @@
 }
 
 .sdm-queue-table tbody tr:nth-child(even) {
-  background-color: var(--sdm-color-neutral-50, var(--color-background-subtle));
+  /* Stripe: must keep --color-text-tertiary (neutral-500 #64748b) readable.
+     Was `--color-background-subtle` (neutral-100 #f1f5f9) → 4.34:1 (axe fail
+     against WCAG AA 4.5:1). `--color-background-app` (neutral-50 #f8fafc)
+     lands at 4.78:1, still distinct from the default white row. */
+  background-color: var(--color-background-app);
 }
 
 .sdm-queue-row {
