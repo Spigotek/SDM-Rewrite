@@ -1,6 +1,6 @@
 import type { QueryClient } from "@tanstack/react-query";
 import type { TenantId } from "@sdm/domain";
-import type { TicketStatus } from "@sdm/design-system";
+import type { Severity, TicketStatus } from "@sdm/design-system";
 import type { HomeStats, KbAutocompleteHit, MyTicketSummary, RecentActivityEvent } from "./types";
 
 /**
@@ -88,9 +88,39 @@ interface IncidentRowMixed {
   readonly ref?: string;
   readonly summary?: string;
   readonly status?: unknown;
+  readonly priority?: unknown;
   readonly openedAt?: string | null;
   readonly lastModifiedAt?: string | null;
   readonly resolvedAt?: string | null;
+}
+
+/**
+ * Best-effort `priority.code` extraction — BFF emits `FkRef { code, label }`
+ * shape. CA SDM uses `pri` 1..5 (`pri:500`, `pri:400`, ...) or string codes.
+ */
+function readCode(raw: unknown): string | null {
+  if (typeof raw === "string") return raw;
+  if (raw && typeof raw === "object" && "code" in raw) {
+    const code = (raw as { code: unknown }).code;
+    if (typeof code === "string") return code;
+    if (typeof code === "number") return String(code);
+  }
+  return null;
+}
+
+function normalisePriority(raw: unknown): Severity | null {
+  const code = readCode(raw);
+  if (!code) return null;
+  // CA SDM priority codes: pri:500=1 critical, pri:400=2 high, pri:300=3 medium,
+  // pri:200=4 low, pri:100=5 none. Real-tenant deployments sometimes emit the
+  // bare integer or the legacy "P1".."P4" alias — handle all three flavours.
+  const norm = code.toUpperCase();
+  if (norm === "P1" || norm === "1" || norm === "PRI:500" || norm === "CRITICAL") return "critical";
+  if (norm === "P2" || norm === "2" || norm === "PRI:400" || norm === "HIGH") return "high";
+  if (norm === "P3" || norm === "3" || norm === "PRI:300" || norm === "MEDIUM") return "medium";
+  if (norm === "P4" || norm === "4" || norm === "PRI:200" || norm === "LOW") return "low";
+  if (norm === "P5" || norm === "5" || norm === "PRI:100" || norm === "NONE") return "none";
+  return null;
 }
 
 function toMyTicketSummary(row: IncidentRowMixed): MyTicketSummary {
@@ -99,6 +129,8 @@ function toMyTicketSummary(row: IncidentRowMixed): MyTicketSummary {
     ref: row.ref ?? row.id,
     summary: row.summary ?? "",
     status: normaliseStatus(row.status),
+    statusCode: readCode(row.status),
+    priority: normalisePriority(row.priority),
     updatedAt: row.lastModifiedAt ?? row.openedAt ?? null,
   };
 }

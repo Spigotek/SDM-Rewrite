@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { useParams, type LoaderFunctionArgs } from "react-router-dom";
+import { useLocation, useParams, type LoaderFunctionArgs } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Card, Skeleton, usePageTransition } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import type { UiTicketType } from "@sdm/api-types";
 import { queryClient } from "../../lib/query-client";
@@ -52,10 +53,19 @@ export function parseTicketParam(raw: string): ParsedTicketParam | null {
   // returns raw numeric IDs, not the prefixed shape the MSW fixtures use.
   // Without this branch the home → detail click 404s in live mode (the
   // J.0 staging smoke 2026-06-12 hit this on the first user click).
-  // MSW path is unaffected: fixture rows still carry prefixed IDs, so
-  // their URLs match the colon branch above.
   if (/^\d+$/.test(raw)) return { type: "incident", id: raw };
   return null;
+}
+
+function DetailSkeleton() {
+  return (
+    <div className="sdm-portal-ticket-skeleton" aria-hidden="true">
+      <Skeleton variant="text" width="6ch" height={14} />
+      <Skeleton variant="text" width="65%" height={28} />
+      <Skeleton variant="text" width="40%" height={14} />
+      <Skeleton variant="text" width="100%" height={14} count={5} />
+    </div>
+  );
 }
 
 export function TicketDetailRoute() {
@@ -63,6 +73,8 @@ export function TicketDetailRoute() {
   const params = useParams();
   const rawId = params["id"] ?? "";
   const parsed = useMemo(() => parseTicketParam(rawId), [rawId]);
+  const location = useLocation();
+  const { ref: pageRef } = usePageTransition(location.pathname);
 
   const detailQuery = useQuery({
     ...ticketDetailQuery(parsed?.type ?? "incident", parsed?.id ?? ""),
@@ -75,8 +87,14 @@ export function TicketDetailRoute() {
 
   if (detailQuery.isPending) {
     return (
-      <section className="sdm-portal-ticket-detail" data-testid="portal-ticket-detail-loading">
-        <p className="sdm-portal-ticket-state">{t("ticketDetail.loading")}</p>
+      <section
+        ref={pageRef}
+        className="sdm-portal-ticket-detail"
+        data-testid="portal-ticket-detail-loading"
+      >
+        <Card variant="surface" className="sdm-portal-ticket-card">
+          <DetailSkeleton />
+        </Card>
       </section>
     );
   }
@@ -87,6 +105,7 @@ export function TicketDetailRoute() {
     if (status === 403) return <ForbiddenElement />;
     return (
       <section
+        ref={pageRef}
         className="sdm-portal-ticket-detail"
         data-testid="portal-ticket-detail-error"
         role="alert"
@@ -108,16 +127,29 @@ export function TicketDetailRoute() {
 
   return (
     <section
+      ref={pageRef}
       className="sdm-portal-ticket-detail"
       data-testid="portal-ticket-detail"
       data-ticket-type={detail.ticketType}
       data-ticket-id={detail.id}
     >
-      <TicketHeader detail={detail} />
-      <TicketBody description={detail.description} />
-      <ActivityTimeline activity={detail.activity} />
-      <AttachmentsList attachments={detail.attachments} />
-      <PublicComposer ticketType={detail.ticketType} ticketId={detail.id} closed={closed} />
+      <Card variant="surface" className="sdm-portal-ticket-card sdm-portal-ticket-card--header">
+        <TicketHeader detail={detail} />
+      </Card>
+      <Card variant="surface" className="sdm-portal-ticket-card">
+        <TicketBody description={detail.description} />
+      </Card>
+      <Card variant="surface" className="sdm-portal-ticket-card">
+        <ActivityTimeline activity={detail.activity} />
+      </Card>
+      {detail.attachments.items.length > 0 || detail.attachments._unsupported ? (
+        <Card variant="surface" className="sdm-portal-ticket-card">
+          <AttachmentsList attachments={detail.attachments} />
+        </Card>
+      ) : null}
+      <Card variant="surface" className="sdm-portal-ticket-card">
+        <PublicComposer ticketType={detail.ticketType} ticketId={detail.id} closed={closed} />
+      </Card>
     </section>
   );
 }

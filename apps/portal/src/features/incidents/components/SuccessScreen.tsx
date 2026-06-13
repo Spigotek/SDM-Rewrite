@@ -1,21 +1,26 @@
 import { Link } from "react-router-dom";
-import { Button } from "@sdm/design-system";
+import { Button, EmptyState, IllustrationNoOpenTickets } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import type { Incident } from "@sdm/domain";
 
 /**
- * `SuccessScreen` — the "Po odoslaní" panel from `02-new-ticket.md`.
+ * `SuccessScreen` — v1.2 redesign (K.3.E).
  *
- * Three CTAs, ordered by importance for the requester journey:
- *   1. **View ticket** (primary) — `/tickets/incident:<id>` opens the H.4
- *      detail page so Lucia can immediately see the helpdesk-visible state.
- *   2. **Report another** (secondary) — calls `onReportAnother` to remount
- *      `NewIncidentForm` with cleared values.
- *   3. **Done** (link) — back to `/`, sibling card to the home dashboard.
+ * Hero `EmptyState` (illustration + title + body), then a large tabular-nums
+ * ticket-ref display, a short meta strip (status, ETA), and three CTAs.
  *
- * The success ID is rendered as the ticket `ref` (e.g. `IN-10042`), which is
- * what the helpdesk uses verbally; the canonical entity URL still uses the
- * prefixed ID for parser stability (per H.4 `parseTicketParam`).
+ * The `IllustrationNoOpenTickets` glyph is re-used here as a friendly inbox
+ * motif — the brief's prompt explicitly nominates it as the success placeholder.
+ *
+ * Three CTAs (order = importance for the requester journey):
+ *   1. **Vrátiť sa na domov** (primary) — back to `/`, the landing dashboard.
+ *   2. **Nahlásiť ďalší** (secondary) — clears the local incident state and
+ *      remounts the form via a `key` change.
+ *   3. **View ticket** (link / tertiary button) — opens the H.4 detail page so
+ *      Lucia can immediately see the helpdesk-visible state.
+ *
+ * The success `ref` is rendered prominently — `font-variant-numeric: tabular-nums`
+ * keeps the digits aligned.
  */
 export interface SuccessScreenProps {
   readonly incident: Incident;
@@ -33,10 +38,20 @@ export function SuccessScreen({ incident, onReportAnother }: SuccessScreenProps)
       data-ticket-ref={incident.ref}
       aria-live="polite"
     >
-      <h1 className="sdm-portal-new-incident-success-title">
-        {t("newIncident.success.title", { ref: incident.ref })}
-      </h1>
-      <p className="sdm-portal-new-incident-success-body">{t("newIncident.success.body")}</p>
+      <EmptyState
+        variant="hero"
+        illustration={<IllustrationNoOpenTickets />}
+        title={t("newIncident.success.title")}
+        description={t("newIncident.success.body")}
+      />
+      <p
+        className="sdm-portal-new-incident-success-ref"
+        data-testid="portal-new-incident-success-ref"
+        aria-label={`${t("newIncident.success.refLabel")}: ${incident.ref}`}
+      >
+        <span aria-hidden="true">#</span>
+        <span aria-hidden="true">{incident.ref}</span>
+      </p>
       <dl className="sdm-portal-new-incident-success-meta">
         <div>
           <strong>{t("newIncident.success.status")}: </strong>
@@ -49,12 +64,12 @@ export function SuccessScreen({ incident, onReportAnother }: SuccessScreenProps)
       </dl>
       <div className="sdm-portal-new-incident-success-ctas">
         <Link
-          to={`/tickets/${incident.id}`}
+          to="/"
           className="sdm-home-action-link"
-          data-testid="portal-new-incident-success-view"
+          data-testid="portal-new-incident-success-done"
         >
-          <Button variant="primary" type="button">
-            {t("newIncident.success.viewTicket")}
+          <Button variant="primary" type="button" fullWidth>
+            {t("newIncident.success.done")}
           </Button>
         </Link>
         <Button
@@ -62,16 +77,17 @@ export function SuccessScreen({ incident, onReportAnother }: SuccessScreenProps)
           type="button"
           onClick={onReportAnother}
           data-testid="portal-new-incident-success-another"
+          fullWidth
         >
           {t("newIncident.success.reportAnother")}
         </Button>
         <Link
-          to="/"
+          to={`/tickets/${incident.id}`}
           className="sdm-home-action-link"
-          data-testid="portal-new-incident-success-done"
+          data-testid="portal-new-incident-success-view"
         >
-          <Button variant="tertiary" type="button">
-            {t("newIncident.success.done")}
+          <Button variant="tertiary" type="button" fullWidth>
+            {t("newIncident.success.viewTicket")}
           </Button>
         </Link>
       </div>

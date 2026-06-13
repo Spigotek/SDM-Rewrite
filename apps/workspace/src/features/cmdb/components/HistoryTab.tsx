@@ -1,5 +1,7 @@
+import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
+import { staggerListRows } from "@sdm/design-system";
 import { ciHistoryQuery } from "../api";
 import type { CiDetail, CiHistoryEntry } from "../types";
 
@@ -25,6 +27,11 @@ function formatTs(iso: string): string {
 export function HistoryTab({ detail }: { readonly detail: CiDetail }) {
   const { t } = useTranslation("workspace");
   const query = useQuery(ciHistoryQuery(detail.id));
+  const listRef = useRef<HTMLOListElement | null>(null);
+  const count = query.data?.length ?? 0;
+  useEffect(() => {
+    staggerListRows(listRef.current);
+  }, [count]);
 
   return (
     <section
@@ -60,7 +67,7 @@ export function HistoryTab({ detail }: { readonly detail: CiDetail }) {
           {t("cmdb.history.empty")}
         </p>
       ) : (
-        <ol className="sdm-cmdb-history-list" data-testid="cmdb-history-list">
+        <ol ref={listRef} className="sdm-cmdb-history-list" data-testid="cmdb-history-list">
           {query.data.map((entry) => (
             <HistoryRow key={entry.id} entry={entry} />
           ))}
@@ -73,7 +80,12 @@ export function HistoryTab({ detail }: { readonly detail: CiDetail }) {
 function HistoryRow({ entry }: { readonly entry: CiHistoryEntry }) {
   const { t } = useTranslation("workspace");
   return (
-    <li className="sdm-cmdb-history-row" data-testid="cmdb-history-row" data-action={entry.action}>
+    <li
+      className="sdm-cmdb-history-row"
+      data-row
+      data-testid="cmdb-history-row"
+      data-action={entry.action}
+    >
       <span className="sdm-cmdb-history-ts">{formatTs(entry.timestamp)}</span>
       <span className="sdm-cmdb-history-action">
         {t(`cmdb.history.action.${entry.action}`, { defaultValue: entry.action })}

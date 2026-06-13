@@ -1,5 +1,6 @@
 import { useTranslation } from "@sdm/i18n";
 import { Link } from "react-router-dom";
+import { Avatar, Card } from "@sdm/design-system";
 import type { UiTicketDetail } from "@sdm/api-types";
 
 export interface ContextPanelProps {
@@ -7,23 +8,24 @@ export interface ContextPanelProps {
 }
 
 /**
- * Right context rail. Three blocks:
- *  - Requester card — pulled from the parent's `customer` FkRef.
- *  - CI card — H.8 ships the affected-CI hook as a placeholder (the F.6
- *    aggregator does not surface the `affected_resource` lookup yet; CMDB
- *    detail is owned by H.11 + H.13).
- *  - Related records — backed by `detail.linked`. When the BFF reports
- *    `_unsupported: true` (real CA SDM lacks the BREL relation) we render
- *    an empty state instead of an HTTP-error blob.
+ * Right context rail — K.3.E polish.
  *
- * Each block keeps its own `<section aria-label>` so screen readers can jump
- * directly between requester / CI / linked records.
+ * Each block is now a `<Card variant="subtle">` so the right rail picks up
+ * surface/border tokens from the design-system instead of bespoke
+ * `border-left` markers, and dark/light theming flows for free.
+ *
+ * Blocks:
+ *  - Requester (with Avatar)
+ *  - CI placeholder (H.11 attaches the real CMDB linkage)
+ *  - Related records — Problems + Changes + Incidents
+ *  - Watchers (M.x placeholder per K.3.E checklist)
  */
 export function ContextPanel({ detail }: ContextPanelProps) {
   const { t } = useTranslation("workspace");
   const linkedUnsupported = detail.linked._unsupported;
   const totalLinked =
     detail.linked.problems.length + detail.linked.changes.length + detail.linked.incidents.length;
+  const customerName = detail.customer?.label ?? t("ticketDetail.context.noRequester");
 
   return (
     <aside
@@ -31,31 +33,31 @@ export function ContextPanel({ detail }: ContextPanelProps) {
       aria-label={t("ticketDetail.context.ariaLabel")}
       data-testid="ticket-context-panel"
     >
-      <section
-        className="sdm-ticket-context-block"
-        aria-label={t("ticketDetail.context.requester")}
-      >
+      <Card variant="subtle" className="sdm-ticket-context-block">
         <h2 className="sdm-ticket-context-heading">{t("ticketDetail.context.requester")}</h2>
         {detail.customer ? (
-          <dl className="sdm-ticket-context-dl" data-testid="ticket-context-requester">
-            <dt>{t("ticketDetail.context.fields.name")}</dt>
-            <dd>{detail.customer.label}</dd>
-            <dt>{t("ticketDetail.context.fields.id")}</dt>
-            <dd>{detail.customer.code}</dd>
-          </dl>
+          <div className="sdm-ticket-context-requester" data-testid="ticket-context-requester">
+            <Avatar name={customerName} size="md" />
+            <dl className="sdm-ticket-context-dl">
+              <dt>{t("ticketDetail.context.fields.name")}</dt>
+              <dd>{detail.customer.label}</dd>
+              <dt>{t("ticketDetail.context.fields.id")}</dt>
+              <dd className="sdm-tabular">{detail.customer.code}</dd>
+            </dl>
+          </div>
         ) : (
           <p className="sdm-ticket-context-empty">{t("ticketDetail.context.noRequester")}</p>
         )}
-      </section>
+      </Card>
 
-      <section className="sdm-ticket-context-block" aria-label={t("ticketDetail.context.ci")}>
+      <Card variant="subtle" className="sdm-ticket-context-block">
         <h2 className="sdm-ticket-context-heading">{t("ticketDetail.context.ci")}</h2>
         <p className="sdm-ticket-context-empty" data-testid="ticket-context-ci">
           {t("ticketDetail.context.ciPlaceholder")}
         </p>
-      </section>
+      </Card>
 
-      <section className="sdm-ticket-context-block" aria-label={t("ticketDetail.context.related")}>
+      <Card variant="subtle" className="sdm-ticket-context-block">
         <h2 className="sdm-ticket-context-heading">{t("ticketDetail.context.related")}</h2>
         {linkedUnsupported ? (
           <p className="sdm-ticket-context-empty" data-testid="ticket-context-related-unsupported">
@@ -90,7 +92,14 @@ export function ContextPanel({ detail }: ContextPanelProps) {
             ))}
           </ul>
         )}
-      </section>
+      </Card>
+
+      <Card variant="subtle" className="sdm-ticket-context-block">
+        <h2 className="sdm-ticket-context-heading">{t("ticketDetail.sections.watchers")}</h2>
+        <p className="sdm-ticket-context-empty" data-testid="ticket-context-watchers">
+          {t("ticketDetail.sections.watchersEmpty")}
+        </p>
+      </Card>
     </aside>
   );
 }

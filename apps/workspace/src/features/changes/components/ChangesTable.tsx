@@ -1,8 +1,14 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { useTranslation } from "@sdm/i18n";
-import { PriorityBadge, StatusBadge, type Severity, type TicketStatus } from "@sdm/design-system";
+import {
+  PriorityBadge,
+  staggerListRows,
+  StatusBadge,
+  type Severity,
+  type TicketStatus,
+} from "@sdm/design-system";
 import type { ApprovalState, ChangeStatus, RiskLevel } from "@sdm/domain";
 import type { ChangeRow } from "../types";
 
@@ -99,7 +105,13 @@ export function ChangesTable({ rows }: ChangesTableProps) {
         size: 140,
         cell: (info) => {
           const code = info.row.original.status;
-          return <StatusBadge status={STATUS_MAP[code]} label={t(`changes.statusLabel.${code}`)} />;
+          return (
+            <StatusBadge
+              status={STATUS_MAP[code]}
+              label={t(`changes.statusLabel.${code}`)}
+              withIcon
+            />
+          );
         },
       },
       {
@@ -169,6 +181,11 @@ export function ChangesTable({ rows }: ChangesTableProps) {
 
   const open = (id: string) => navigate(`/changes/${encodeURIComponent(id)}`);
 
+  const bodyRef = useRef<HTMLTableSectionElement | null>(null);
+  useEffect(() => {
+    staggerListRows(bodyRef.current);
+  }, [rows.length]);
+
   return (
     <table
       className="sdm-changes-table"
@@ -187,10 +204,11 @@ export function ChangesTable({ rows }: ChangesTableProps) {
           </tr>
         ))}
       </thead>
-      <tbody>
+      <tbody ref={bodyRef}>
         {table.getRowModel().rows.map((row) => (
           <tr
             key={row.id}
+            data-row
             data-row-id={row.original.id}
             data-testid="changes-row"
             tabIndex={0}

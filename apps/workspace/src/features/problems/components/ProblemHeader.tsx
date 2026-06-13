@@ -12,11 +12,11 @@ const STATUS_MAP: Record<string, TicketStatus> = {
   CD: "closed",
 };
 
-function formatDate(iso: string | null | undefined): string {
+function formatDate(iso: string | null | undefined, locale?: string): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleString(undefined, {
+  return d.toLocaleString(locale, {
     day: "2-digit",
     month: "short",
     year: "numeric",
@@ -26,17 +26,18 @@ function formatDate(iso: string | null | undefined): string {
 }
 
 /**
- * Detail-header for `/problems/:id`. Mirrors the H.9 `ChangeHeader` layout
- * (ref + summary stacked over a 4-field meta grid). The `isMajor` flag gets a
- * dedicated badge in the title row because L2 triage uses it as a routing
- * signal (major problems escalate to incident commander).
+ * Detail-header for `/problems/:id` — K.3.E polish. The ref is now rendered
+ * in the `--font-size-2xl` mono treatment per K.1 brief §10.2, with the
+ * summary as the H1 below. Meta grid keeps the 4-up shape but pulls
+ * `StatusBadge withIcon` and `sdm-tabular` to align with the queue/changes
+ * surfaces.
  */
 export function ProblemHeader({ detail }: { readonly detail: ProblemDetail }) {
-  const { t } = useTranslation("workspace");
+  const { t, i18n } = useTranslation("workspace");
   return (
     <header className="sdm-problem-header" data-testid="problem-header">
       <div className="sdm-problem-header-title">
-        <span className="sdm-problem-header-ref">#{detail.ref}</span>
+        <span className="sdm-problem-header-ref sdm-tabular">#{detail.ref}</span>
         <h1 className="sdm-problem-header-summary">{detail.summary || t("problems.noSummary")}</h1>
         {detail.isMajor ? (
           <span className="sdm-problem-header-major" data-testid="problem-header-major">
@@ -50,6 +51,7 @@ export function ProblemHeader({ detail }: { readonly detail: ProblemDetail }) {
           <StatusBadge
             status={STATUS_MAP[detail.status] ?? "open"}
             label={t(`problems.statusLabel.${detail.status}` as const)}
+            withIcon
           />
         </div>
         <div className="sdm-problem-header-field">
@@ -60,11 +62,15 @@ export function ProblemHeader({ detail }: { readonly detail: ProblemDetail }) {
         </div>
         <div className="sdm-problem-header-field">
           <span className="sdm-problem-header-label">{t("problems.fields.openedAt")}</span>
-          <span className="sdm-problem-header-value">{formatDate(detail.openedAt)}</span>
+          <span className="sdm-problem-header-value sdm-tabular">
+            {formatDate(detail.openedAt, i18n.language)}
+          </span>
         </div>
         <div className="sdm-problem-header-field">
           <span className="sdm-problem-header-label">{t("problems.fields.resolvedAt")}</span>
-          <span className="sdm-problem-header-value">{formatDate(detail.resolvedAt)}</span>
+          <span className="sdm-problem-header-value sdm-tabular">
+            {formatDate(detail.resolvedAt, i18n.language)}
+          </span>
         </div>
       </div>
     </header>

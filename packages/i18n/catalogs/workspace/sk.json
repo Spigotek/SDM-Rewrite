@@ -168,6 +168,21 @@
     "loading": "Načítavam ticket…",
     "error": "Ticket sa nepodarilo načítať. Skús refresh.",
     "noSummary": "(bez popisu)",
+    "header": {
+      "openedAt": "Otvorený",
+      "customer": "Žiadateľ",
+      "anonymous": "Bez žiadateľa"
+    },
+    "sections": {
+      "description": "Popis",
+      "descriptionEmpty": "(bez popisu)",
+      "customFields": "Vlastné polia",
+      "customFieldsEmpty": "Žiadne vlastné polia.",
+      "watchers": "Sledujúci",
+      "watchersEmpty": "Nikto zatiaľ ticket nesleduje.",
+      "relatedCis": "Súvisiace CI",
+      "relatedChanges": "Súvisiace zmeny"
+    },
     "fields": {
       "status": "Stav",
       "priority": "Priorita",
@@ -282,11 +297,34 @@
     }
   },
   "changes": {
-    "title": "Changes",
-    "loading": "Načítavam changes…",
-    "error": "Changes sa nepodarilo načítať. Skús refresh.",
-    "empty": "Žiadne changes pre tento tenant.",
+    "title": "Zmeny",
+    "newChange": "+ Nová zmena",
+    "loading": "Načítavam zmeny…",
+    "error": "Zmeny sa nepodarilo načítať. Skús refresh.",
+    "empty": "Žiadne zmeny pre tento tenant.",
+    "emptyTitle": "Žiadne zmeny",
+    "emptyFiltered": "Žiadne zmeny nezodpovedajú filtrom. Skús ich uvoľniť alebo resetuj.",
+    "emptyFilteredTitle": "Žiadne výsledky pre tieto filtre",
     "noSummary": "(bez popisu)",
+    "stats": {
+      "ariaLabel": "Prehľad zmien",
+      "open": "Otvorené",
+      "pendingApproval": "Čaká schválenie",
+      "scheduledToday": "Plánované dnes",
+      "inCab": "V CAB",
+      "closedThisWeek": "Uzavreté tento týždeň"
+    },
+    "filtersBar": {
+      "ariaLabel": "Filtre zmien",
+      "statusLabel": "Stav",
+      "typeLabel": "Typ",
+      "riskLabel": "Riziko",
+      "allStatuses": "Všetky stavy",
+      "allTypes": "Všetky typy",
+      "allRisks": "Všetky riziká",
+      "resultCount": "{visible} z {total}",
+      "reset": "Resetovať"
+    },
     "columns": {
       "ref": "ID",
       "risk": "Riziko",
@@ -426,9 +464,12 @@
   },
   "problems": {
     "title": "Problémy",
+    "newProblem": "+ Nový problém",
     "loading": "Načítavam problémy…",
     "error": "Problémy sa nepodarilo načítať. Skús refresh.",
     "empty": "Žiadne problémy pre tento tenant.",
+    "emptyTitle": "Žiadne otvorené problémy",
+    "emptyDescription": "Žiadny otvorený root-cause záznam pre tento tenant. Eskaluj incident alebo vytvor nový problém manuálne.",
     "noSummary": "(bez popisu)",
     "columns": {
       "ref": "ID",
@@ -498,6 +539,16 @@
     },
     "actions": {
       "convert": "Premeniť na problém"
+    },
+    "tabs": {
+      "ariaLabel": "Sekcie problému",
+      "overview": "Prehľad",
+      "linkedIncidents": "Prepojené incidenty",
+      "activity": "Aktivita"
+    },
+    "sections": {
+      "workarounds": "Workarounds",
+      "workaroundsEmpty": "Žiadne workaroundy zatiaľ neboli zaznamenané."
     }
   },
   "placeholders": {
@@ -507,10 +558,24 @@
   },
   "kb": {
     "title": "Knowledge Base",
+    "subtitle": "Hľadaj v báze znalostí — odpovede, postupy, runbooks.",
     "loading": "Načítavam KB články…",
     "error": "Nepodarilo sa načítať KB.",
     "empty": "V tomto tenante nie sú žiadne publikované články.",
     "emptyTitle": "Žiadne publikované články",
+    "hero": {
+      "searchLabel": "Hľadať v báze znalostí",
+      "searchPlaceholder": "Hľadať články, runbooks, postupy…",
+      "popularLabel": "Populárne:",
+      "popularTags": "Wi-Fi, VPN, Heslo, Notebook"
+    },
+    "list": {
+      "ariaLabel": "Zoznam článkov",
+      "noExcerpt": "Bez náhľadu obsahu.",
+      "byAuthor": "od {author}",
+      "updatedRelative": "{date}",
+      "unknownAuthor": "Neznámy autor"
+    },
     "columns": {
       "category": "Kategória",
       "title": "Názov",
@@ -631,6 +696,11 @@
         "savedMinutesAgo": "Uložené pred {minutes} min",
         "savedHoursAgo": "Uložené pred {hours} h"
       },
+      "toast": {
+        "saved": "Článok uložený.",
+        "published": "Článok publikovaný."
+      },
+      "loadingPlaceholder": "Načítavam editor…",
       "errors": {
         "save": "Článok sa nepodarilo uložiť. Skús znova.",
         "publish": "Publikovanie zlyhalo. Skús znova alebo kontaktuj admina.",
@@ -674,10 +744,21 @@
   },
   "cmdb": {
     "title": "CMDB",
+    "newCi": "+ Nové CI",
     "loading": "Načítavam konfiguračné položky…",
     "error": "Nepodarilo sa načítať CMDB.",
     "empty": "V tomto tenante nie sú žiadne CI.",
     "emptyTitle": "Žiadne konfiguračné položky",
+    "emptyFiltered": "Žiadne CI nezodpovedajú filtrom.",
+    "emptyFilteredTitle": "Žiadne výsledky pre tieto filtre",
+    "stats": {
+      "ariaLabel": "Prehľad CMDB",
+      "total": "Celkom CI",
+      "active": "Aktívne",
+      "inactive": "Neaktívne",
+      "retired": "Vyradené",
+      "sharedCount": "Zdieľané"
+    },
     "columns": {
       "id": "ID",
       "name": "Názov",

@@ -32,6 +32,7 @@ export function CiHeader({ detail }: { readonly detail: CiDetail }) {
         <StatusBadge
           status={STATUS_MAP[detail.status]}
           label={t(`cmdb.statusLabel.${detail.status}`)}
+          withIcon
         />
         <SharedCiMarker
           sharedWithTenantIds={detail.sharedWithTenantIds}

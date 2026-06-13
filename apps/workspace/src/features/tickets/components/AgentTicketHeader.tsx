@@ -1,17 +1,18 @@
 import { useMemo } from "react";
 import { useTranslation } from "@sdm/i18n";
-import { Select } from "@sdm/design-system";
+import { Avatar, Select, StatusBadge, type TicketStatus } from "@sdm/design-system";
 import type { UiTicketDetail, UiTicketType } from "@sdm/api-types";
 import { usePatchTicket } from "../hooks";
 
 /**
- * Top header — ref + summary + inline status/priority editors.
+ * Ticket-detail header — K.3.E polish.
  *
- * Status transitions are driven by `STATUS_OPTIONS[type]` — the FE is the UX
- * affordance ("only the transitions a state machine permits"), the BFF is
- * authoritative and rejects illegal moves with 422. We keep the option lists
- * intentionally small per H.8 §Open questions; the spec lifecycle is per-type
- * but the workspace agent path is a strict subset.
+ * - Ref rendered in mono 2xl (`--font-size-2xl`) per K.1 brief §10.2.
+ * - Read-only `StatusBadge` (with lucide icon) sits next to the ref so the
+ *   colour signal lands fast; the editable status `Select` stays in the meta
+ *   row as the transition affordance.
+ * - Customer avatar surfaces the requester face in the meta row.
+ * - Opened-at + assignee meta render with `sdm-tabular`.
  */
 
 const INCIDENT_STATUSES = ["OP", "WIP", "HLD", "AWU", "AWV", "ESC", "RES", "CL", "CD"];
@@ -31,6 +32,25 @@ const CHANGE_STATUSES = ["NEW", "APPR_PENDING", "APPROVED", "REJECTED", "IN_PROG
 
 const PRIORITIES = ["1", "2", "3", "4", "5"];
 
+const CA_TO_TICKET_STATUS: Record<string, TicketStatus> = {
+  OP: "open",
+  WIP: "in_progress",
+  HLD: "hold",
+  AWU: "waiting_customer",
+  AWV: "waiting_vendor",
+  ESC: "in_progress",
+  RES: "resolved",
+  CL: "closed",
+  CD: "cancelled",
+  SUBMITTED: "new",
+  APPR_PENDING: "approval_pending",
+  APPROVED: "open",
+  REJECTED: "rejected",
+  IN_PROGRESS: "in_progress",
+  DELIVERED: "resolved",
+  NEW: "new",
+};
+
 function statusesFor(type: UiTicketType): ReadonlyArray<string> {
   switch (type) {
     case "incident":
@@ -44,12 +64,25 @@ function statusesFor(type: UiTicketType): ReadonlyArray<string> {
   }
 }
 
+function formatOpened(iso: string | null, locale?: string): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString(locale, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export interface AgentTicketHeaderProps {
   readonly detail: UiTicketDetail;
 }
 
 export function AgentTicketHeader({ detail }: AgentTicketHeaderProps) {
-  const { t } = useTranslation("workspace");
+  const { t, i18n } = useTranslation("workspace");
   const patch = usePatchTicket(detail.ticketType, detail.id);
 
   const statusOptions = useMemo(
@@ -81,12 +114,19 @@ export function AgentTicketHeader({ detail }: AgentTicketHeaderProps) {
     patch.mutate({ priority: n });
   };
 
+  const statusCode = detail.status?.code ?? "";
+  const mappedStatus = CA_TO_TICKET_STATUS[statusCode] ?? "open";
+  const customerName = detail.customer?.label ?? t("ticketDetail.header.anonymous");
+
   return (
     <header className="sdm-ticket-header" data-testid="ticket-header">
       <div className="sdm-ticket-header-title">
-        <span className="sdm-ticket-header-ref" data-testid="ticket-ref">
+        <span className="sdm-ticket-header-ref sdm-tabular" data-testid="ticket-ref">
           #{detail.ref}
         </span>
+        {detail.status ? (
+          <StatusBadge status={mappedStatus} label={detail.status.label} withIcon />
+        ) : null}
         <h1 className="sdm-ticket-header-summary" data-testid="ticket-summary">
           {detail.summary || t("ticketDetail.noSummary")}
         </h1>
@@ -112,9 +152,22 @@ export function AgentTicketHeader({ detail }: AgentTicketHeaderProps) {
           />
         </div>
         <div className="sdm-ticket-header-field">
+          <span className="sdm-ticket-header-label">{t("ticketDetail.header.customer")}</span>
+          <span className="sdm-ticket-header-customer" data-testid="ticket-customer">
+            <Avatar name={customerName} size="xs" />
+            <span className="sdm-ticket-header-value">{customerName}</span>
+          </span>
+        </div>
+        <div className="sdm-ticket-header-field">
           <span className="sdm-ticket-header-label">{t("ticketDetail.fields.assignee")}</span>
-          <span className="sdm-ticket-header-value" data-testid="ticket-assignee">
+          <span className="sdm-ticket-header-value sdm-tabular" data-testid="ticket-assignee">
             {detail.assignee?.label ?? t("ticketDetail.fields.unassigned")}
+          </span>
+        </div>
+        <div className="sdm-ticket-header-field">
+          <span className="sdm-ticket-header-label">{t("ticketDetail.header.openedAt")}</span>
+          <span className="sdm-ticket-header-value sdm-tabular" data-testid="ticket-opened-at">
+            {formatOpened(detail.openedAt, i18n.language)}
           </span>
         </div>
       </div>

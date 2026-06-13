@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
+import { staggerListRows } from "@sdm/design-system";
 import type { UiActivityEntry, UiTicketDetail } from "@sdm/api-types";
 
 /**
@@ -54,6 +55,7 @@ async function fetchProblemDetail(id: string): Promise<UiTicketDetail> {
 export function ActivityTimeline({ problemId }: ActivityTimelineProps) {
   const { t, i18n } = useTranslation("workspace");
   const [filter, setFilter] = useState<TimelineFilter>("all");
+  const listRef = useRef<HTMLOListElement | null>(null);
 
   const query = useQuery({
     queryKey: ["problem-activity", problemId] as const,
@@ -66,6 +68,10 @@ export function ActivityTimeline({ problemId }: ActivityTimelineProps) {
     () => (activity ? filterEntries(activity.items, filter) : []),
     [activity, filter],
   );
+
+  useEffect(() => {
+    if (items.length > 0) staggerListRows(listRef.current);
+  }, [items.length, filter]);
 
   if (query.isPending) {
     return (
@@ -98,6 +104,7 @@ export function ActivityTimeline({ problemId }: ActivityTimelineProps) {
             type="button"
             role="tab"
             aria-selected={filter === f}
+            aria-current={filter === f ? "true" : undefined}
             className="sdm-ticket-timeline-tab"
             data-active={filter === f || undefined}
             data-testid={`problem-timeline-tab-${f}`}
@@ -113,11 +120,12 @@ export function ActivityTimeline({ problemId }: ActivityTimelineProps) {
           {t("ticketDetail.timeline.empty")}
         </p>
       ) : (
-        <ol className="sdm-ticket-timeline-list">
+        <ol className="sdm-ticket-timeline-list" ref={listRef}>
           {items.map((entry) => (
             <li
               key={entry.id}
               className="sdm-ticket-timeline-item"
+              data-row
               data-kind={entry.kind}
               data-testid="problem-timeline-item"
             >
@@ -125,7 +133,7 @@ export function ActivityTimeline({ problemId }: ActivityTimelineProps) {
                 <span className="sdm-ticket-timeline-author">
                   {entry.author?.label ?? t(`ticketDetail.timeline.author.${entry.kind}`)}
                 </span>
-                <span className="sdm-ticket-timeline-meta">
+                <span className="sdm-ticket-timeline-meta sdm-tabular">
                   {t(`ticketDetail.timeline.kindBadge.${entry.kind}`)} ·{" "}
                   {formatTs(entry.createdAt, i18n.language)}
                 </span>

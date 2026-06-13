@@ -1,9 +1,11 @@
 /**
- * Portal Knowledge Base — search list + article detail.
+ * Portal Knowledge Base — search list + article reader (K.3.E v1.2).
  *
- * Same single-column, mobile-first rhythm as `catalog.css` /
- * `new-incident.css`. Tokens consumed: spacing-*, radius-*, color-*,
- * font-size-*, border-width-thin.
+ * Tokens-only stylesheet: every colour/space/radius value resolves through
+ * the design-system tokens (`@sdm/design-system/tokens.css`). No hex, no
+ * px constants. The `--font-size-2xl` etc. fallbacks are kept on the off
+ * chance a host loads the stylesheet without the DS tokens — they mirror
+ * the K.1 brief §3 default scale.
  */
 
 .sdm-kb,
@@ -14,6 +16,18 @@
   padding: var(--spacing-6) var(--spacing-5);
   max-width: 48rem;
   margin: 0 auto;
+}
+
+.sdm-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .sdm-kb-back {
@@ -41,41 +55,42 @@
   font-size: var(--font-size-md);
 }
 
-/* ── Search input ──────────────────────────────────────────────────────── */
+/* ── Search input (K.3.E — matches the home hero rhythm) ─────────────── */
 
 .sdm-kb-search-input {
-  position: relative;
   display: flex;
   align-items: center;
-  border-radius: var(--radius-md, 0.5rem);
-  border: var(--border-width-thin, 1px) solid var(--color-border-default);
-  background: var(--color-surface-elevated);
-  padding: var(--spacing-2) var(--spacing-3);
   gap: var(--spacing-2);
+  background-color: var(--color-background-surface);
+  border: var(--border-width-thin, 1px) solid var(--color-border-default);
+  border-radius: var(--radius-md, 0.5rem);
+  padding: 0 var(--spacing-3);
+  height: 48px;
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease;
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 .sdm-kb-search-input:focus-within {
-  border-color: var(--color-border-strong, var(--color-border-default));
+  border-color: transparent;
   box-shadow: var(--shadow-focus-brand);
 }
 
 .sdm-kb-search-input-icon {
-  flex: 0 0 auto;
+  display: inline-flex;
   color: var(--color-text-secondary);
 }
 
 .sdm-kb-search-input-field {
   flex: 1 1 auto;
-  min-width: 0;
+  appearance: none;
   border: 0;
   outline: 0;
   background: transparent;
   color: var(--color-text-primary);
   font: inherit;
-  padding: var(--spacing-2) 0;
+  font-size: var(--font-size-md);
+  height: 100%;
 }
 
 .sdm-kb-search-input-field::placeholder {
@@ -87,6 +102,7 @@
 .sdm-kb-result-count {
   color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
 }
 
 .sdm-kb-error {
@@ -139,48 +155,71 @@
 
 .sdm-kb-result-meta {
   margin: 0;
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-1);
   color: var(--color-text-tertiary, var(--color-text-secondary));
   font-size: var(--font-size-xs, 0.75rem);
 }
 
 .sdm-kb-result-meta-category {
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: var(--letter-spacing-wide, 0.05em);
   font-weight: var(--font-weight-semibold, 600);
+}
+
+.sdm-kb-result-meta-time {
+  font-variant-numeric: tabular-nums;
+}
+
+.sdm-kb-result-meta-helpful {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  color: var(--color-text-secondary);
+}
+
+.sdm-kb-result-meta-helpful-count {
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-medium, 500);
 }
 
 .sdm-kb-result-lang-badge {
   display: inline-block;
   padding: 0 var(--spacing-2);
   border-radius: var(--radius-sm, 0.25rem);
-  background: var(--color-surface-subtle, var(--color-surface-elevated));
+  background: var(--color-background-subtle, var(--color-surface-elevated));
   color: var(--color-text-secondary);
   font-size: var(--font-size-xs, 0.75rem);
   font-weight: var(--font-weight-semibold, 600);
 }
 
-/* ── Empty state ───────────────────────────────────────────────────────── */
+/* ── Loading skeletons ─────────────────────────────────────────────────── */
 
-.sdm-kb-empty {
+.sdm-kb-result-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-4);
+  border: var(--border-width-thin, 1px) solid var(--color-border-default);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--color-background-surface);
+}
+
+.sdm-kb-article-skeleton {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
-  padding: var(--spacing-5);
-  border-radius: var(--radius-md, 0.5rem);
-  background: var(--color-surface-subtle, var(--color-surface-elevated));
-  text-align: center;
 }
 
-.sdm-kb-empty-title {
-  margin: 0;
-  color: var(--color-text-primary);
-  font-size: var(--font-size-md);
-}
+/* ── Article card wrapper ──────────────────────────────────────────────── */
 
-.sdm-kb-empty-cta {
-  align-self: center;
-  color: var(--color-text-brand, var(--color-text-primary));
-  text-decoration: underline;
+.sdm-kb-article-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+  padding: var(--spacing-8);
 }
 
 /* ── Article header ────────────────────────────────────────────────────── */
@@ -196,6 +235,7 @@
   font-size: var(--font-size-2xl, 1.5rem);
   font-weight: var(--font-weight-bold, 700);
   color: var(--color-text-primary);
+  line-height: 1.2;
 }
 
 .sdm-kb-article-meta {
@@ -267,19 +307,19 @@
   padding-left: var(--spacing-5);
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-1, 0.25rem);
+  gap: var(--spacing-1);
 }
 
 .sdm-kb-article-body code {
-  background: var(--color-surface-subtle, var(--color-surface-elevated));
-  padding: 0 var(--spacing-1, 0.25rem);
+  background: var(--color-background-subtle, var(--color-surface-elevated));
+  padding: 0 var(--spacing-1);
   border-radius: var(--radius-sm, 0.25rem);
   font-family: var(--font-family-mono, monospace);
   font-size: 0.9em;
 }
 
 .sdm-kb-article-body pre {
-  background: var(--color-surface-subtle, var(--color-surface-elevated));
+  background: var(--color-background-subtle, var(--color-surface-elevated));
   padding: var(--spacing-3);
   border-radius: var(--radius-md, 0.5rem);
   overflow-x: auto;
@@ -309,7 +349,7 @@
 }
 
 .sdm-kb-article-body a {
-  color: var(--color-text-brand, var(--color-text-primary));
+  color: var(--color-text-link, var(--color-text-primary));
   text-decoration: underline;
 }
 
@@ -324,15 +364,14 @@
   font-size: var(--font-size-md);
 }
 
-/* ── Helpfulness ───────────────────────────────────────────────────────── */
+/* ── Helpfulness (thumbs + count) ──────────────────────────────────────── */
 
 .sdm-kb-helpfulness {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
   padding: var(--spacing-4);
-  border-radius: var(--radius-md, 0.5rem);
-  background: var(--color-surface-subtle, var(--color-surface-elevated));
+  border-top: var(--border-width-thin, 1px) solid var(--color-border-default);
 }
 
 .sdm-kb-helpfulness--done p {
@@ -350,7 +389,21 @@
 .sdm-kb-helpfulness-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--spacing-2);
+  align-items: center;
+  gap: var(--spacing-3);
+}
+
+.sdm-kb-helpfulness-vote {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+}
+
+.sdm-kb-helpfulness-count {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  min-width: 1ch;
 }
 
 .sdm-kb-helpfulness-comment {
@@ -370,7 +423,7 @@
   font-size: var(--font-size-sm);
 }
 
-/* ── Related articles ──────────────────────────────────────────────────── */
+/* ── Related articles — 3-up Tile grid ─────────────────────────────────── */
 
 .sdm-kb-related {
   display: flex;
@@ -385,37 +438,14 @@
   color: var(--color-text-primary);
 }
 
-.sdm-kb-related-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.sdm-kb-related-link {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
+.sdm-kb-related-grid {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--spacing-3);
-  padding: var(--spacing-2) var(--spacing-3);
-  border-radius: var(--radius-sm, 0.25rem);
-  text-decoration: none;
-  color: var(--color-text-primary);
-  background: var(--color-surface-elevated);
-  border: var(--border-width-thin, 1px) solid var(--color-border-default);
 }
 
-.sdm-kb-related-link:hover {
-  background: var(--color-surface-subtle, var(--color-surface-elevated));
-}
-
-.sdm-kb-related-link-title {
-  font-size: var(--font-size-sm);
-}
-
-.sdm-kb-related-link-meta {
-  font-size: var(--font-size-xs, 0.75rem);
-  color: var(--color-text-secondary);
+@media (min-width: 640px) {
+  .sdm-kb-related-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
 }

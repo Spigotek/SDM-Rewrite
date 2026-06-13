@@ -16,14 +16,14 @@
 
 .sdm-cmdb-page-header {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--spacing-3);
 }
 
 .sdm-cmdb-page-title {
   margin: 0;
-  font-size: var(--font-size-lg);
+  font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
@@ -40,6 +40,82 @@
 
 .sdm-cmdb-state--error {
   color: var(--color-text-danger, var(--color-text-primary));
+}
+
+.sdm-cmdb-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 18rem;
+}
+
+/* ── KPI strip (CmdbStats) ────────────────────────────────────────── */
+
+.sdm-cmdb-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--spacing-3);
+  min-height: 5.5rem;
+}
+
+@media (max-width: 900px) {
+  .sdm-cmdb-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    min-height: calc(5.5rem * 3 + var(--spacing-3) * 2);
+  }
+}
+
+.sdm-cmdb-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2_5) var(--spacing-3);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+  min-height: 5.5rem;
+}
+
+.sdm-cmdb-stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sdm-cmdb-stat-icon {
+  display: inline-flex;
+  color: var(--color-text-tertiary);
+}
+
+.sdm-cmdb-stat-value {
+  font-size: var(--font-size-2xl, var(--font-size-xl));
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+/* ── Table skeleton ───────────────────────────────────────────────── */
+
+.sdm-cmdb-table-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2) 0;
+}
+
+.sdm-cmdb-skeleton-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 160px 120px 160px 130px;
+  gap: var(--spacing-3);
+  align-items: center;
+  padding: var(--spacing-1_5) var(--spacing-2);
+  border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
 }
 
 /* ── Filter bar ────────────────────────────────────────────────────── */
@@ -168,6 +244,11 @@
 .sdm-cmdb-cell-id {
   font-family: var(--font-family-mono, monospace);
   color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.sdm-cmdb-cell-last-sync {
+  font-variant-numeric: tabular-nums;
 }
 
 .sdm-cmdb-cell-name,
@@ -192,21 +273,35 @@
 .sdm-cmdb-detail-page {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-4);
+  gap: var(--spacing-3);
   min-height: 0;
   overflow: auto;
+}
+
+.sdm-cmdb-detail-header-card,
+.sdm-cmdb-detail-tab-card {
+  width: 100%;
+}
+
+.sdm-cmdb-detail-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-cmdb-detail-skeleton-meta {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-3);
+  margin-top: var(--spacing-2);
 }
 
 .sdm-cmdb-header {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
-  border-bottom: var(--border-width-thin) solid var(--color-border-default);
-  padding-bottom: var(--spacing-3);
-  position: sticky;
-  top: 0;
-  background: var(--color-surface, transparent);
-  z-index: 1;
+  border-bottom: none;
+  padding-bottom: 0;
 }
 
 .sdm-cmdb-header-title {
@@ -218,9 +313,11 @@
 
 .sdm-cmdb-header-id {
   font-family: var(--font-family-mono, monospace);
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
-  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-2xl, var(--font-size-xl));
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-tight, normal);
+  font-variant-numeric: tabular-nums;
 }
 
 .sdm-cmdb-header-name {

@@ -124,7 +124,8 @@
     "emptyTitle": "No tickets yet",
     "emptyCta": "Report a problem",
     "error": "Couldn't load tickets. Try refreshing the page.",
-    "count": "{n, plural, one {# ticket} other {# tickets}}"
+    "count": "{n, plural, one {# ticket} other {# tickets}}",
+    "subhead": "{open} open · {awaiting} waiting · {resolved} resolved"
   },
   "placeholders": {
     "catalogTitle": "Service catalog",
@@ -163,8 +164,8 @@
     },
     "helpfulness": {
       "prompt": "Was this article helpful?",
-      "yes": "👍 Yes",
-      "no": "👎 No",
+      "yes": "Yes, helpful",
+      "no": "No, not helpful",
       "commentLabel": "What were you expecting? (optional)",
       "commentPlaceholder": "Briefly describe what was missing.",
       "submit": "Send feedback",
@@ -193,6 +194,7 @@
       "featuredTitle": "Most requested",
       "request": "Request",
       "empty": "No items in this category yet.",
+      "emptyTitle": "No items available",
       "loading": "Loading catalog…",
       "error": "Couldn't load the catalog. Try refreshing the page."
     },
@@ -214,8 +216,9 @@
       "fileDeferredTooltip": "Upload will be available soon."
     },
     "success": {
-      "title": "Request #{ref} submitted",
+      "title": "Request submitted",
       "body": "Helpdesk gets it right now. We'll notify you when someone picks up the request.",
+      "refLabel": "Request reference",
       "viewTicket": "Open request detail →",
       "backToCatalog": "Back to catalog"
     }
@@ -266,8 +269,9 @@
       "submitFailed": "Our server isn't responding. Try again shortly."
     },
     "success": {
-      "title": "Ticket #{ref} submitted",
+      "title": "Ticket submitted",
       "body": "Helpdesk gets it right now. We'll notify you when someone takes the ticket or needs more info.",
+      "refLabel": "Ticket reference",
       "status": "Status",
       "statusNew": "New",
       "eta": "ETA for pickup",
@@ -286,7 +290,8 @@
       "status": "Status",
       "priority": "Priority",
       "assignee": "Assignee",
-      "openedAt": "Opened"
+      "openedAt": "Opened",
+      "closedAt": "Resolved"
     },
     "body": {
       "empty": "No description provided."

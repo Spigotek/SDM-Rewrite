@@ -1,8 +1,8 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { useTranslation } from "@sdm/i18n";
-import { StatusBadge, type TicketStatus } from "@sdm/design-system";
+import { staggerListRows, StatusBadge, type TicketStatus } from "@sdm/design-system";
 import type { CiStatus } from "@sdm/domain";
 import { SharedCiMarker } from "../../sp-cockpit/components/SharedCiMarker";
 import "../../sp-cockpit/sp-cockpit.css";
@@ -90,7 +90,9 @@ export function CmdbTable({ rows }: CmdbTableProps) {
         size: 120,
         cell: (info) => {
           const code = info.row.original.status;
-          return <StatusBadge status={STATUS_MAP[code]} label={t(`cmdb.statusLabel.${code}`)} />;
+          return (
+            <StatusBadge status={STATUS_MAP[code]} label={t(`cmdb.statusLabel.${code}`)} withIcon />
+          );
         },
       },
       {
@@ -126,6 +128,11 @@ export function CmdbTable({ rows }: CmdbTableProps) {
 
   const open = (id: string) => navigate(`/cmdb/ci/${encodeURIComponent(id)}`);
 
+  const bodyRef = useRef<HTMLTableSectionElement | null>(null);
+  useEffect(() => {
+    staggerListRows(bodyRef.current);
+  }, [rows.length]);
+
   return (
     <table
       className="sdm-cmdb-table"
@@ -144,10 +151,11 @@ export function CmdbTable({ rows }: CmdbTableProps) {
           </tr>
         ))}
       </thead>
-      <tbody>
+      <tbody ref={bodyRef}>
         {table.getRowModel().rows.map((row) => (
           <tr
             key={row.id}
+            data-row
             data-row-id={row.original.id}
             data-testid="cmdb-row"
             tabIndex={0}

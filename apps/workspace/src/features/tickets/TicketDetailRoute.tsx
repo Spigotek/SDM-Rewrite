@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
 import type { UiTicketType } from "@sdm/api-types";
+import { Card, Skeleton, usePageTransition } from "@sdm/design-system";
 import { ticketDetailQuery } from "./api";
 import { AgentTicketHeader } from "./components/AgentTicketHeader";
 import { ActionBar } from "./components/ActionBar";
@@ -18,14 +19,7 @@ import "./ticket-detail.css";
 const KNOWN_TYPES: ReadonlyArray<UiTicketType> = ["incident", "request", "problem", "change"];
 
 /**
- * Maps the route param to a `UiTicketType`. The H.7 split-pane stores the
- * full prefixed ID (`incident:10001`) — the prefix is also the type segment
- * the BFF expects. We accept both `incident:…` and the raw `IN-…` ref by
- * sniffing the ID format:
- *  - `incident:…` / `request:…` / `problem:…` / `change:…` → split.
- *  - Bare ID without prefix → default to `incident` (the H.7 queue table only
- *    surfaces incident/request/problem; problem and request rows already use
- *    their typed ID format).
+ * Maps the route param to a `UiTicketType`. See in-tree parser comment.
  */
 function parseTicketParam(raw: string): { type: UiTicketType; id: string } {
   const colon = raw.indexOf(":");
@@ -38,9 +32,19 @@ function parseTicketParam(raw: string): { type: UiTicketType; id: string } {
   return { type: "incident", id: raw };
 }
 
+/**
+ * `/tickets/:id` — K.3.E redesign:
+ *
+ * - Card-wrapped sub-surfaces: header, body (description), activity timeline,
+ *   composer. The right rail (`ContextPanel`) is a Card too.
+ * - `usePageTransition` runs the K.1 crossfade on route mount.
+ * - Skeleton state while the detail query is pending.
+ */
 export default function TicketDetailRoute() {
   const { t } = useTranslation("workspace");
   const params = useParams();
+  const location = useLocation();
+  const { ref: pageRef } = usePageTransition(location.pathname);
   const rawId = params["id"] ?? "";
   const { type, id } = useMemo(() => parseTicketParam(rawId), [rawId]);
 
@@ -57,14 +61,35 @@ export default function TicketDetailRoute() {
 
   if (detailQuery.isPending) {
     return (
-      <section className="sdm-ticket-detail-page" data-testid="ticket-detail-loading">
-        <p className="sdm-ticket-state">{t("ticketDetail.loading")}</p>
+      <section
+        className="sdm-ticket-detail-page"
+        data-testid="ticket-detail-loading"
+        ref={pageRef as React.RefObject<HTMLElement>}
+      >
+        <div className="sdm-ticket-detail-main">
+          <Card variant="surface" className="sdm-ticket-skeleton-card">
+            <Skeleton variant="text" width="40%" height={22} />
+            <Skeleton variant="text" width="70%" height={16} />
+            <Skeleton variant="block" width="100%" height={120} />
+          </Card>
+          <Card variant="surface" className="sdm-ticket-skeleton-card">
+            <Skeleton variant="text" width="100%" height={14} count={5} />
+          </Card>
+        </div>
+        <aside className="sdm-ticket-context" aria-hidden="true">
+          <Skeleton variant="text" width="100%" height={14} count={4} />
+        </aside>
       </section>
     );
   }
   if (detailQuery.isError || !detailQuery.data) {
     return (
-      <section className="sdm-ticket-detail-page" data-testid="ticket-detail-error" role="alert">
+      <section
+        className="sdm-ticket-detail-page"
+        data-testid="ticket-detail-error"
+        role="alert"
+        ref={pageRef as React.RefObject<HTMLElement>}
+      >
         <p className="sdm-ticket-state sdm-ticket-state--error">{t("ticketDetail.error")}</p>
       </section>
     );
@@ -94,9 +119,12 @@ export default function TicketDetailRoute() {
       data-testid="ticket-detail-page"
       data-ticket-type={detail.ticketType}
       data-ticket-id={detail.id}
+      ref={pageRef as React.RefObject<HTMLElement>}
     >
       <div className="sdm-ticket-detail-main">
-        <AgentTicketHeader detail={detail} />
+        <Card variant="surface" className="sdm-ticket-detail-section-card">
+          <AgentTicketHeader detail={detail} />
+        </Card>
         <ActionBar
           detail={detail}
           onResolveClick={() => {
@@ -109,8 +137,20 @@ export default function TicketDetailRoute() {
             detail.ticketType === "incident" ? () => setConvertOpen(true) : undefined
           }
         />
-        <ActivityTimeline activity={detail.activity} />
-        <Composer detail={detail} onResolveRequest={onResolveFromComposer} />
+        {detail.description ? (
+          <Card variant="surface" className="sdm-ticket-detail-section-card">
+            <section className="sdm-ticket-section" data-testid="ticket-description">
+              <h2 className="sdm-ticket-section-title">{t("ticketDetail.sections.description")}</h2>
+              <p className="sdm-ticket-section-body">{detail.description}</p>
+            </section>
+          </Card>
+        ) : null}
+        <Card variant="surface" className="sdm-ticket-detail-section-card">
+          <ActivityTimeline activity={detail.activity} />
+        </Card>
+        <Card variant="surface" className="sdm-ticket-detail-section-card">
+          <Composer detail={detail} onResolveRequest={onResolveFromComposer} />
+        </Card>
       </div>
 
       <ContextPanel detail={detail} />

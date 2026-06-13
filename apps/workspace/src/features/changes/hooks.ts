@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { ChangeCategory, ChangeStatus, RiskLevel } from "@sdm/domain";
 import {
   changeDetailQueryKey,
   postApprove,
@@ -11,8 +12,103 @@ import {
   type ReminderPayload,
 } from "./api";
 import { CHANGE_TABS, type ChangeTabKey, type ChangeDetail } from "./types";
+import { EMPTY_CHANGES_FILTERS, type ChangesFiltersValue } from "./components/ChangesFiltersBar";
 
 const URL_KEY_TAB = "tab";
+const URL_KEY_STATUS = "status";
+const URL_KEY_CATEGORY = "category";
+const URL_KEY_RISK = "risk";
+
+const CHANGE_STATUSES_SET: ReadonlySet<string> = new Set([
+  "RFC",
+  "APPR_PENDING",
+  "APPROVED",
+  "SCHEDULED",
+  "IN_PROGRESS",
+  "VERIFICATION_IN_PROGRESS",
+  "VERIFIED",
+  "REJECTED",
+  "CL",
+  "CD",
+  "EMG_RFC",
+  "EMG_IN_PROGRESS",
+  "EMG_RETROSPECTIVE",
+]);
+const CHANGE_CATEGORIES_SET: ReadonlySet<string> = new Set(["STANDARD", "NORMAL", "EMERGENCY"]);
+const RISK_LEVELS_SET: ReadonlySet<string> = new Set(["HIGH", "MEDIUM", "LOW"]);
+
+function parseStatus(raw: string | null): ChangeStatus | null {
+  return raw && CHANGE_STATUSES_SET.has(raw) ? (raw as ChangeStatus) : null;
+}
+function parseCategory(raw: string | null): ChangeCategory | null {
+  return raw && CHANGE_CATEGORIES_SET.has(raw) ? (raw as ChangeCategory) : null;
+}
+function parseRisk(raw: string | null): RiskLevel | null {
+  return raw && RISK_LEVELS_SET.has(raw) ? (raw as RiskLevel) : null;
+}
+
+export interface UseChangesFiltersResult {
+  readonly filters: ChangesFiltersValue;
+  readonly setStatus: (value: ChangeStatus | null) => void;
+  readonly setCategory: (value: ChangeCategory | null) => void;
+  readonly setRisk: (value: RiskLevel | null) => void;
+  readonly reset: () => void;
+}
+
+/**
+ * URL-driven filter state for `/changes`. Each axis is single-select.
+ */
+export function useChangesFilters(): UseChangesFiltersResult {
+  const [params, setParams] = useSearchParams();
+
+  const filters = useMemo<ChangesFiltersValue>(
+    () => ({
+      status: parseStatus(params.get(URL_KEY_STATUS)),
+      category: parseCategory(params.get(URL_KEY_CATEGORY)),
+      risk: parseRisk(params.get(URL_KEY_RISK)),
+    }),
+    [params],
+  );
+
+  const setParam = useCallback(
+    (key: string, value: string | null) => {
+      setParams(
+        (prev) => {
+          const out = new URLSearchParams(prev);
+          if (value === null) {
+            out.delete(key);
+          } else {
+            out.set(key, value);
+          }
+          return out;
+        },
+        { replace: true },
+      );
+    },
+    [setParams],
+  );
+
+  return {
+    filters,
+    setStatus: useCallback((v) => setParam(URL_KEY_STATUS, v), [setParam]),
+    setCategory: useCallback((v) => setParam(URL_KEY_CATEGORY, v), [setParam]),
+    setRisk: useCallback((v) => setParam(URL_KEY_RISK, v), [setParam]),
+    reset: useCallback(() => {
+      setParams(
+        (prev) => {
+          const out = new URLSearchParams(prev);
+          out.delete(URL_KEY_STATUS);
+          out.delete(URL_KEY_CATEGORY);
+          out.delete(URL_KEY_RISK);
+          return out;
+        },
+        { replace: true },
+      );
+    }, [setParams]),
+  };
+}
+
+export { EMPTY_CHANGES_FILTERS };
 
 function parseTab(raw: string | null): ChangeTabKey {
   if (raw && (CHANGE_TABS as ReadonlyArray<string>).includes(raw)) {

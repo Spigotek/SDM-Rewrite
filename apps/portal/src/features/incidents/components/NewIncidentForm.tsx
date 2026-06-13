@@ -1,7 +1,7 @@
 import { useEffect, useId } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, Select, TextArea, TextField } from "@sdm/design-system";
+import { Button, Select, Skeleton, TextArea, TextField } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { usePendingChanges } from "../../../shell/pending-changes";
 import { useNewIncident } from "../hooks";
@@ -17,10 +17,14 @@ import {
 import type { Incident } from "@sdm/domain";
 
 /**
- * `NewIncidentForm` — RHF + Zod controlled form (uncontrolled inputs under the
- * hood). Field set matches wireframe `portal/02-new-ticket.md` §UI prvky minus
- * attachments — attachments are deferred to a feature follow-up (per H.3
- * decision: ship without; BFF multipart endpoint not built).
+ * `NewIncidentForm` — RHF + Zod controlled form.
+ *
+ * v1.2 layout: a 2-column CSS Grid on `lg+` (category | summary share row 1,
+ * description spans full width, urgency anchors the bottom). Mobile reflows
+ * to a single column. While the submit mutation is pending the button label
+ * is replaced with a `Skeleton` bar — the form itself stays interactive-locked
+ * via `loading` on the button rather than a disabled-all overlay (the BFF
+ * call is < 500 ms in the happy path, so opt-in messaging beats a heavy lock).
  *
  * Validation:
  *   - Zod schema enforces required + length bounds; the resolver hands a key
@@ -178,6 +182,8 @@ export function NewIncidentForm({ onSuccess, onCancel }: NewIncidentFormProps) {
     });
   });
 
+  const isSubmitting = mutation.isPending;
+
   return (
     <form
       className="sdm-portal-new-incident-form"
@@ -186,90 +192,102 @@ export function NewIncidentForm({ onSuccess, onCancel }: NewIncidentFormProps) {
       data-testid="portal-new-incident-form"
       aria-label={t("newIncident.formAriaLabel")}
     >
-      <Controller
-        name="category"
-        control={control}
-        render={({ field, fieldState }) => (
-          <Select
-            label={t("newIncident.fields.category.label")}
-            helper={t("newIncident.fields.category.helper")}
-            placeholder={t("newIncident.fields.category.placeholder")}
-            options={categoryOptions}
+      <div className="sdm-portal-new-incident-grid">
+        <div className="sdm-portal-new-incident-field sdm-portal-new-incident-field-category">
+          <Controller
+            name="category"
+            control={control}
+            render={({ field, fieldState }) => (
+              <Select
+                label={t("newIncident.fields.category.label")}
+                helper={t("newIncident.fields.category.helper")}
+                placeholder={t("newIncident.fields.category.placeholder")}
+                options={categoryOptions}
+                required
+                name={field.name}
+                value={field.value ?? ""}
+                onValueChange={field.onChange}
+                {...(fieldState.error?.message
+                  ? { error: renderError(fieldState.error.message) }
+                  : {})}
+              />
+            )}
+          />
+        </div>
+
+        <div className="sdm-portal-new-incident-field sdm-portal-new-incident-field-summary">
+          <TextField
+            label={t("newIncident.fields.summary.label")}
+            helper={t("newIncident.fields.summary.helper")}
+            placeholder={t("newIncident.fields.summary.placeholder")}
             required
-            name={field.name}
-            value={field.value ?? ""}
-            onValueChange={field.onChange}
-            {...(fieldState.error?.message ? { error: renderError(fieldState.error.message) } : {})}
+            maxLength={SUMMARY_MAX}
+            data-testid="portal-new-incident-summary"
+            aria-describedby={undefined}
+            {...register("summary")}
+            {...(errors.summary?.message
+              ? {
+                  error: renderError(errors.summary.message, {
+                    min: SUMMARY_MIN,
+                    max: SUMMARY_MAX,
+                    current: summaryValue.length,
+                  }),
+                }
+              : {})}
           />
-        )}
-      />
+        </div>
 
-      <TextField
-        label={t("newIncident.fields.summary.label")}
-        helper={t("newIncident.fields.summary.helper")}
-        placeholder={t("newIncident.fields.summary.placeholder")}
-        required
-        maxLength={SUMMARY_MAX}
-        data-testid="portal-new-incident-summary"
-        aria-describedby={undefined}
-        {...register("summary")}
-        {...(errors.summary?.message
-          ? {
-              error: renderError(errors.summary.message, {
-                min: SUMMARY_MIN,
-                max: SUMMARY_MAX,
-                current: summaryValue.length,
-              }),
-            }
-          : {})}
-      />
-
-      <TextArea
-        label={t("newIncident.fields.description.label")}
-        helper={t("newIncident.fields.description.helper")}
-        placeholder={t("newIncident.fields.description.placeholder")}
-        rows={6}
-        maxLength={DESCRIPTION_MAX}
-        data-testid="portal-new-incident-description"
-        {...register("description")}
-        {...(errors.description?.message
-          ? {
-              error: renderError(errors.description.message, {
-                max: DESCRIPTION_MAX,
-                current: descriptionValue.length,
-              }),
-            }
-          : {})}
-      />
-
-      <Controller
-        name="urgency"
-        control={control}
-        render={({ field, fieldState }) => (
-          <RadioField
-            name="portal-new-incident-urgency"
-            legend={t("newIncident.fields.urgency.label")}
-            helper={t("newIncident.fields.urgency.helper")}
-            options={urgencyOptions}
-            value={field.value ?? ""}
-            onChange={field.onChange}
-            {...(fieldState.error?.message
-              ? { error: renderError(fieldState.error.message) }
-              : { error: undefined })}
+        <div className="sdm-portal-new-incident-field sdm-portal-new-incident-field-description">
+          <TextArea
+            label={t("newIncident.fields.description.label")}
+            helper={t("newIncident.fields.description.helper")}
+            placeholder={t("newIncident.fields.description.placeholder")}
+            rows={6}
+            maxLength={DESCRIPTION_MAX}
+            data-testid="portal-new-incident-description"
+            {...register("description")}
+            {...(errors.description?.message
+              ? {
+                  error: renderError(errors.description.message, {
+                    max: DESCRIPTION_MAX,
+                    current: descriptionValue.length,
+                  }),
+                }
+              : {})}
           />
-        )}
-      />
+        </div>
+
+        <div className="sdm-portal-new-incident-field sdm-portal-new-incident-field-urgency">
+          <Controller
+            name="urgency"
+            control={control}
+            render={({ field, fieldState }) => (
+              <RadioField
+                name="portal-new-incident-urgency"
+                legend={t("newIncident.fields.urgency.label")}
+                helper={t("newIncident.fields.urgency.helper")}
+                options={urgencyOptions}
+                value={field.value ?? ""}
+                onChange={field.onChange}
+                {...(fieldState.error?.message
+                  ? { error: renderError(fieldState.error.message) }
+                  : { error: undefined })}
+              />
+            )}
+          />
+        </div>
+      </div>
 
       <div className="sdm-portal-new-incident-actions">
         <Button
-          variant="secondary"
+          variant="tertiary"
           type="button"
           onClick={onCancel}
           data-testid="portal-new-incident-cancel"
         >
           {t("newIncident.actions.cancel")}
         </Button>
-        <div>
+        <div className="sdm-portal-new-incident-actions-right">
           {mutation.isError ? (
             <p
               role="alert"
@@ -281,11 +299,16 @@ export function NewIncidentForm({ onSuccess, onCancel }: NewIncidentFormProps) {
           ) : null}
           <Button
             variant="primary"
+            size="md"
             type="submit"
-            loading={mutation.isPending}
+            loading={isSubmitting}
             data-testid="portal-new-incident-submit"
           >
-            {t("newIncident.actions.submit")}
+            {isSubmitting ? (
+              <Skeleton variant="text" width={120} height={16} aria-hidden="true" />
+            ) : (
+              t("newIncident.actions.submit")
+            )}
           </Button>
         </div>
       </div>

@@ -63,6 +63,7 @@ export function ChangeHeader({ detail }: { readonly detail: ChangeDetail }) {
           <StatusBadge
             status={STATUS_MAP[detail.status] ?? "open"}
             label={t(`changes.statusLabel.${detail.status}`)}
+            withIcon
           />
         </div>
         <div className="sdm-change-header-field">

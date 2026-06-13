@@ -107,6 +107,7 @@ export function CmdbFilterBar(props: CmdbFilterBarProps) {
                 type="button"
                 className={pressed ? "sdm-cmdb-chip sdm-cmdb-chip--active" : "sdm-cmdb-chip"}
                 aria-pressed={pressed}
+                aria-current={pressed ? "true" : undefined}
                 data-testid={`cmdb-chip-class-${c.code}`}
                 onClick={() => onSetClass(pressed ? null : c.code)}
               >
@@ -133,6 +134,7 @@ export function CmdbFilterBar(props: CmdbFilterBarProps) {
                 type="button"
                 className={pressed ? "sdm-cmdb-chip sdm-cmdb-chip--active" : "sdm-cmdb-chip"}
                 aria-pressed={pressed}
+                aria-current={pressed ? "true" : undefined}
                 data-testid={`cmdb-chip-status-${s.code}`}
                 onClick={() => onSetStatus(pressed ? null : s.code)}
               >

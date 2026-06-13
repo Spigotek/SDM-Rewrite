@@ -1,9 +1,16 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
-import { Button } from "@sdm/design-system";
+import {
+  Button,
+  Card,
+  Skeleton,
+  Toast,
+  ToastViewport,
+  usePageTransition,
+} from "@sdm/design-system";
 import { useSession } from "../../../shell/session-context";
 import { kbCategoriesQuery } from "../api";
 import { createArticle, kbEditorArticleQuery, publishArticle, updateArticle } from "./api";
@@ -19,25 +26,37 @@ import "../kb.css";
 import "./editor.css";
 
 /**
- * `/kb/editor` (new) + `/kb/editor/:id` (edit existing) — KB authoring route.
+ * `/kb/editor` + `/kb/editor/:id` — K.3.E polish:
  *
- * Layout: left column for the TipTap editor + title; right column for
- * metadata (category, language, visibility, tags). Below the editor, a
- * sticky action bar exposes Save / Publish.
- *
- * The editor body is held in local state (canonical markdown); auto-save
- * fires 5 s after the last edit. Publishing routes through `<PublishModal>`
- * which lets the agent re-confirm visibility + tags.
+ * - The editor surface is now wrapped in a `<Card>` so the chrome inherits DS
+ *   tokens (surface + border + radius) and the dark theme picks up correctly.
+ * - Toolbar above the editor: title input + DS "Save" / "Publish" buttons.
+ * - Auto-save status pill (existing `DraftAutoSave` `data-status`) lives next
+ *   to the title; the design-system DraftAutoSave label is the small status
+ *   indicator per the K.3.E checklist.
+ * - On save / publish success we surface a 5 s `Toast` in the top-right via
+ *   the DS `ToastViewport` primitive (local state — no global toast bus yet).
+ * - Skeleton placeholder for the loading state when editing an existing
+ *   article (`isLoading`).
+ * - `usePageTransition` honours the K.1 brief crossfade rule.
  */
 const TENANT_PLACEHOLDER = toTenantId("__pending__");
 
+type ToastEntry = {
+  readonly id: string;
+  readonly intent: "success" | "info";
+  readonly title: string;
+};
+
 export default function KbEditorRoute() {
   const { t } = useTranslation("workspace");
+  const location = useLocation();
   const navigate = useNavigate();
   const { session } = useSession();
   const tenantId = session?.tenantId ?? TENANT_PLACEHOLDER;
   const params = useParams<{ id?: string }>();
   const articleId = params.id ?? null;
+  const { ref: pageRef } = usePageTransition(location.pathname);
 
   const article = useQuery({
     ...kbEditorArticleQuery(tenantId, articleId ?? ""),
@@ -58,8 +77,21 @@ export default function KbEditorRoute() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [toasts, setToasts] = useState<ReadonlyArray<ToastEntry>>([]);
   const editorRef = useRef<Editor | null>(null);
   const queryClient = useQueryClient();
+
+  const pushToast = useCallback((entry: Omit<ToastEntry, "id">) => {
+    const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+    setToasts((prev) => [...prev, { ...entry, id }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 5000);
+  }, []);
+
+  const dismissToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
 
   const onEditorReady = useCallback((ed: Editor) => {
     editorRef.current = ed;
@@ -117,6 +149,7 @@ export default function KbEditorRoute() {
       }),
     onSuccess: (created) => {
       queryClient.invalidateQueries({ queryKey: ["kb-browse"] });
+      pushToast({ intent: "success", title: t("kb.editor.toast.saved") });
       navigate(`/kb/editor/${encodeURIComponent(created.id)}`, { replace: true });
     },
     onError: () => setServerError(t("kb.editor.errors.save")),
@@ -127,6 +160,7 @@ export default function KbEditorRoute() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["kb-browse"] });
       queryClient.invalidateQueries({ queryKey: ["kb-editor-article", tenantId, articleId] });
+      pushToast({ intent: "success", title: t("kb.editor.toast.saved") });
     },
     onError: () => setServerError(t("kb.editor.errors.save")),
   });
@@ -143,6 +177,7 @@ export default function KbEditorRoute() {
       setPublishOpen(false);
       queryClient.invalidateQueries({ queryKey: ["kb-browse"] });
       queryClient.invalidateQueries({ queryKey: ["kb-editor-article", tenantId, articleId] });
+      pushToast({ intent: "success", title: t("kb.editor.toast.published") });
       navigate(`/kb/article/${encodeURIComponent(articleId!)}`);
     },
     onError: () => setServerError(t("kb.editor.errors.publish")),
@@ -164,9 +199,14 @@ export default function KbEditorRoute() {
 
   const saving = createMutation.isPending || updateMutation.isPending;
   const newArticle = articleId === null;
+  const showSkeleton = article.isLoading && articleId !== null;
 
   return (
-    <section className="sdm-kb-editor-page" data-testid="workspace-kb-editor">
+    <section
+      className="sdm-kb-editor-page"
+      data-testid="workspace-kb-editor"
+      ref={pageRef as React.RefObject<HTMLElement>}
+    >
       <header className="sdm-kb-editor-header">
         <div className="sdm-kb-editor-header-left">
           <h1 className="sdm-kb-editor-title">
@@ -215,77 +255,88 @@ export default function KbEditorRoute() {
         </p>
       ) : null}
 
-      <div className="sdm-kb-editor-grid">
-        <div className="sdm-kb-editor-main">
-          <label className="sdm-kb-editor-title-row">
-            <span>{t("kb.editor.fields.title")}</span>
-            <input
-              type="text"
-              data-testid="kb-editor-title"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder={t("kb.editor.fields.titlePlaceholder")}
-              required
-            />
-          </label>
-          <div className="sdm-kb-editor-shell-wrapper">
-            {uploading ? (
-              <div
-                className="sdm-kb-editor-upload-overlay"
-                data-testid="kb-editor-uploading"
-                aria-live="polite"
+      {showSkeleton ? (
+        <Card variant="surface" className="sdm-kb-editor-skeleton" data-testid="kb-editor-loading">
+          <Skeleton variant="text" width="60%" height={20} />
+          <Skeleton variant="block" width="100%" height={320} />
+        </Card>
+      ) : (
+        <div className="sdm-kb-editor-grid">
+          <Card variant="surface" className="sdm-kb-editor-main-card">
+            <label className="sdm-kb-editor-title-row">
+              <span>{t("kb.editor.fields.title")}</span>
+              <input
+                type="text"
+                data-testid="kb-editor-title"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder={t("kb.editor.fields.titlePlaceholder")}
+                required
+              />
+            </label>
+            <div className="sdm-kb-editor-shell-wrapper">
+              {uploading ? (
+                <div
+                  className="sdm-kb-editor-upload-overlay"
+                  data-testid="kb-editor-uploading"
+                  aria-live="polite"
+                >
+                  {t("kb.editor.upload.uploading")}
+                </div>
+              ) : null}
+              <EditorShell
+                value={body}
+                onMarkdownChange={setBody}
+                placeholder={t("kb.editor.body.placeholder")}
+                onEditorReady={onEditorReady}
+                onImageFile={onImageFile}
+              />
+            </div>
+          </Card>
+
+          <Card
+            variant="surface"
+            className="sdm-kb-editor-side-card"
+            aria-label={t("kb.editor.side.aria")}
+          >
+            <fieldset className="sdm-kb-editor-fieldset">
+              <legend>{t("kb.editor.fields.category")}</legend>
+              <select
+                data-testid="kb-editor-category"
+                value={categoryId ?? ""}
+                onChange={(e) => setCategoryId(e.target.value || null)}
               >
-                {t("kb.editor.upload.uploading")}
-              </div>
-            ) : null}
-            <EditorShell
-              value={body}
-              onMarkdownChange={setBody}
-              placeholder={t("kb.editor.body.placeholder")}
-              onEditorReady={onEditorReady}
-              onImageFile={onImageFile}
-            />
-          </div>
+                <option value="">{t("kb.editor.fields.categoryNone")}</option>
+                {(categories.data ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </fieldset>
+
+            <VisibilitySelector value={visibility} onChange={setVisibility} />
+
+            <fieldset className="sdm-kb-editor-fieldset">
+              <legend>{t("kb.editor.fields.tags")}</legend>
+              <input
+                type="text"
+                data-testid="kb-editor-tags"
+                value={tags.join(", ")}
+                onChange={(e) =>
+                  setTags(
+                    e.target.value
+                      .split(",")
+                      .map((s) => s.trim())
+                      .filter((s) => s.length > 0),
+                  )
+                }
+                placeholder={t("kb.editor.fields.tagsPlaceholder")}
+              />
+            </fieldset>
+          </Card>
         </div>
-
-        <aside className="sdm-kb-editor-side" aria-label={t("kb.editor.side.aria")}>
-          <fieldset className="sdm-kb-editor-fieldset">
-            <legend>{t("kb.editor.fields.category")}</legend>
-            <select
-              data-testid="kb-editor-category"
-              value={categoryId ?? ""}
-              onChange={(e) => setCategoryId(e.target.value || null)}
-            >
-              <option value="">{t("kb.editor.fields.categoryNone")}</option>
-              {(categories.data ?? []).map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-            </select>
-          </fieldset>
-
-          <VisibilitySelector value={visibility} onChange={setVisibility} />
-
-          <fieldset className="sdm-kb-editor-fieldset">
-            <legend>{t("kb.editor.fields.tags")}</legend>
-            <input
-              type="text"
-              data-testid="kb-editor-tags"
-              value={tags.join(", ")}
-              onChange={(e) =>
-                setTags(
-                  e.target.value
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter((s) => s.length > 0),
-                )
-              }
-              placeholder={t("kb.editor.fields.tagsPlaceholder")}
-            />
-          </fieldset>
-        </aside>
-      </div>
+      )}
 
       {publishOpen ? (
         <PublishModal
@@ -297,6 +348,18 @@ export default function KbEditorRoute() {
           onCancel={() => setPublishOpen(false)}
         />
       ) : null}
+
+      <ToastViewport>
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            intent={toast.intent}
+            title={toast.title}
+            id={toast.id}
+            onDismiss={() => dismissToast(toast.id)}
+          />
+        ))}
+      </ToastViewport>
     </section>
   );
 }

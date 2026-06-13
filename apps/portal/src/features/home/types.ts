@@ -1,4 +1,4 @@
-import type { TicketStatus } from "@sdm/design-system";
+import type { Severity, TicketStatus } from "@sdm/design-system";
 
 /**
  * FE-side projection used by the home dashboard. Normalises whichever paginated
@@ -10,6 +10,10 @@ export interface MyTicketSummary {
   readonly ref: string;
   readonly summary: string;
   readonly status: TicketStatus;
+  /** Raw CA SDM status code (e.g. "OP", "WIP"). Drives `<StatusBadge caCode>` on the v1.2 list. */
+  readonly statusCode: string | null;
+  /** Normalised priority bucket; null when the row didn't report one. */
+  readonly priority: Severity | null;
   /** ISO-8601 timestamp used for the "updated/opened …" relative-time label. */
   readonly updatedAt: string | null;
 }

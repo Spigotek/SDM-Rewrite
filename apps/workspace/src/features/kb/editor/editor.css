@@ -72,6 +72,27 @@
   gap: 12px;
 }
 
+.sdm-kb-editor-main-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+}
+
+.sdm-kb-editor-side-card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
+  padding: var(--spacing-4);
+}
+
+.sdm-kb-editor-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+}
+
 .sdm-kb-editor-title-row {
   display: flex;
   flex-direction: column;

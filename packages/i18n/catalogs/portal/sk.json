@@ -124,7 +124,8 @@
     "emptyTitle": "Zatiaľ žiadne tickety",
     "emptyCta": "Nahlásiť problém",
     "error": "Tickety sa nepodarilo načítať. Skús stránku obnoviť.",
-    "count": "{n, plural, one {# ticket} few {# tickety} other {# ticketov}}"
+    "count": "{n, plural, one {# ticket} few {# tickety} other {# ticketov}}",
+    "subhead": "{open} otvorených · {awaiting} čaká · {resolved} vyriešených"
   },
   "placeholders": {
     "catalogTitle": "Katalóg služieb",
@@ -163,8 +164,8 @@
     },
     "helpfulness": {
       "prompt": "Pomohol ti tento článok?",
-      "yes": "👍 Áno",
-      "no": "👎 Nie",
+      "yes": "Áno, pomohlo",
+      "no": "Nie, nepomohlo",
       "commentLabel": "Čo by si očakával(a)? (voliteľné)",
       "commentPlaceholder": "Krátko popíš, čo článku chýbalo.",
       "submit": "Odoslať feedback",
@@ -193,6 +194,7 @@
       "featuredTitle": "Najčastejšie žiadané",
       "request": "Požiadať",
       "empty": "Pre túto kategóriu zatiaľ nemáme položky.",
+      "emptyTitle": "Žiadne dostupné položky",
       "loading": "Načítavam katalóg…",
       "error": "Katalóg sa nepodarilo načítať. Skús stránku obnoviť."
     },
@@ -214,8 +216,9 @@
       "fileDeferredTooltip": "Upload bude dostupný čoskoro."
     },
     "success": {
-      "title": "Žiadosť #{ref} odoslaná",
+      "title": "Žiadosť bola odoslaná",
       "body": "Helpdesk to dostane okamžite. Pošleme ti notifikáciu, keď niekto prevezme žiadosť.",
+      "refLabel": "Referenčné číslo žiadosti",
       "viewTicket": "Zobraziť detail žiadosti →",
       "backToCatalog": "Späť na katalóg"
     }
@@ -266,8 +269,9 @@
       "submitFailed": "Server teraz neodpovedá. Skús to o chvíľu."
     },
     "success": {
-      "title": "Ticket #{ref} odoslaný",
+      "title": "Ticket bol odoslaný",
       "body": "Helpdesk to dostane okamžite. Pošleme ti notifikáciu, keď niekto prevezme ticket alebo bude mať otázku.",
+      "refLabel": "Referenčné číslo ticketu",
       "status": "Status",
       "statusNew": "Nový",
       "eta": "ETA prevzatia",
@@ -286,7 +290,8 @@
       "status": "Stav",
       "priority": "Priorita",
       "assignee": "Riešiteľ",
-      "openedAt": "Otvorené"
+      "openedAt": "Otvorené",
+      "closedAt": "Vyriešené"
     },
     "body": {
       "empty": "Žiadny popis."

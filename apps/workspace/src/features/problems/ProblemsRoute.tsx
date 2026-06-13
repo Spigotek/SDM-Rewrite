@@ -1,7 +1,17 @@
 import { useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
+import {
+  Button,
+  Card,
+  EmptyState,
+  IllustrationNoSearchResults,
+  Skeleton,
+  usePageTransition,
+} from "@sdm/design-system";
 import { useSession } from "../../shell/session-context";
 import { problemsListQuery } from "./api";
 import { FilterBar } from "./components/FilterBar";
@@ -11,14 +21,16 @@ import type { ProblemFilters, ProblemRow } from "./types";
 import "./problems.css";
 
 /**
- * `/problems` route — Marek's L2 RCA list. Pattern mirrors `/changes` (H.9):
- *  - Tenant-scoped TanStack Query polled every 30 s.
- *  - FilterBar (search + status chips) + ProblemsTable (TanStack Table v8).
- *  - Click / Enter on a row navigates to `/problems/:id` (no split-pane —
- *    problems are deeper deep-dives than queue triage).
+ * `/problems` route — K.3.E redesign:
  *
- * Filter state is URL-driven (`?search=…&status=…`) so deep links shared
- * across L2 / L3 land on the same slice of work.
+ * - Header carries the H1 + `+ Nový problém` primary CTA (placeholder navigate
+ *   to /problems/new is owned by the future "create problem" wireframe — for
+ *   now we surface a console hint identical to the queue "+ Nový" pattern).
+ * - Dense 32-px row table (`ProblemsTable`) with `tabular-nums` on every
+ *   numeric column; the table itself wires `data-row` + `staggerListRows`.
+ * - `EmptyState variant="hero"` with the search/no-data illustration.
+ * - Skeleton placeholder while the list query is pending.
+ * - `usePageTransition` runs the 120 ms crossfade per K.1 brief §7.
  */
 
 const EMPTY_ROWS: ReadonlyArray<ProblemRow> = [];
@@ -39,6 +51,9 @@ export default function ProblemsRoute() {
   const { t } = useTranslation("workspace");
   const { session } = useSession();
   const tenantId = session?.tenantId;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { ref: pageRef } = usePageTransition(location.pathname);
 
   const { filters, setSearch, toggleStatus, reset } = useProblemFilters();
 
@@ -52,19 +67,40 @@ export default function ProblemsRoute() {
   const filtered = useMemo(() => filterRows(rows, filters), [rows, filters]);
 
   return (
-    <section data-testid="workspace-problems" className="sdm-problems-page">
+    <section
+      data-testid="workspace-problems"
+      className="sdm-problems-page"
+      ref={pageRef as React.RefObject<HTMLElement>}
+    >
       <header className="sdm-problems-header">
         <h1 className="sdm-problems-title">{t("problems.title")}</h1>
-        <span className="sdm-problems-tenant-hint">
-          {t("placeholders.activeTenant")}{" "}
-          <strong data-testid="active-tenant">{tenantId ?? ""}</strong>
-        </span>
+        <div className="sdm-problems-header-actions">
+          <span className="sdm-problems-tenant-hint">
+            {t("placeholders.activeTenant")}{" "}
+            <strong data-testid="active-tenant">{tenantId ?? ""}</strong>
+          </span>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            data-testid="problems-new"
+            leadingIcon={<Plus size={14} aria-hidden="true" />}
+            onClick={() => {
+              // v1.2 placeholder — "New problem" composer lands with cmd+K.
+              console.info("[problems] New-problem composer placeholder (v1.2)");
+              navigate("/problems");
+            }}
+          >
+            {t("problems.newProblem")}
+          </Button>
+        </div>
       </header>
 
       {query.isPending ? (
-        <p className="sdm-problems-state" data-testid="problems-loading">
-          {t("problems.loading")}
-        </p>
+        <Card variant="surface" className="sdm-problems-skeleton" data-testid="problems-loading">
+          <Skeleton variant="text" width="40%" height={18} />
+          <Skeleton variant="text" width="100%" height={28} count={6} />
+        </Card>
       ) : query.isError ? (
         <p
           role="alert"
@@ -74,9 +110,14 @@ export default function ProblemsRoute() {
           {t("problems.error")}
         </p>
       ) : rows.length === 0 ? (
-        <p className="sdm-problems-state" data-testid="problems-empty">
-          {t("problems.empty")}
-        </p>
+        <EmptyState
+          variant="hero"
+          illustration={<IllustrationNoSearchResults />}
+          title={t("problems.emptyTitle")}
+          description={t("problems.emptyDescription")}
+          className="sdm-problems-state"
+          data-testid="problems-empty"
+        />
       ) : (
         <>
           <FilterBar
@@ -89,9 +130,13 @@ export default function ProblemsRoute() {
             onReset={reset}
           />
           {filtered.length === 0 ? (
-            <p className="sdm-problems-state" data-testid="problems-filtered-empty">
-              {t("problems.filters.noResults")}
-            </p>
+            <EmptyState
+              variant="compact"
+              illustration={<IllustrationNoSearchResults />}
+              title={t("problems.filters.noResults")}
+              className="sdm-problems-state"
+              data-testid="problems-filtered-empty"
+            />
           ) : (
             <ProblemsTable rows={filtered} />
           )}

@@ -49,6 +49,8 @@ interface KbSearchRowMixed {
   readonly acceptedHits?: number;
   readonly readTimeMin?: number;
   readonly language?: "sk" | "en";
+  readonly updatedAt?: string;
+  readonly lastModifiedAt?: string;
 }
 
 function toSearchResult(row: KbSearchRowMixed): KbSearchResult {
@@ -60,6 +62,7 @@ function toSearchResult(row: KbSearchRowMixed): KbSearchResult {
     helpfulCount: row.helpfulCount ?? row.acceptedHits ?? 0,
     readTimeMin: row.readTimeMin ?? 1,
     language: row.language ?? "sk",
+    updatedAt: row.updatedAt ?? row.lastModifiedAt ?? null,
   };
 }
 
