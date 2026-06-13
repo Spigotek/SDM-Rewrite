@@ -9,6 +9,74 @@ per-chunk plans under `docs/plans/`. Sources of truth for design decisions live
 in `docs/spec/` and `docs/agents/`; this changelog tracks **what shipped** to the
 release artefact, not why.
 
+## [1.1.4] - 2026-MM-DD
+
+Quick-wins UX bundle + v1.1.3 live-deploy bug fixes. Synthesised from
+the K.1 design brief (ServiceNow / JSM / Freshservice / Linear / Notion
+scouts). See [`RELEASE-NOTES-v1.1.4.md`](./RELEASE-NOTES-v1.1.4.md) for
+the full post-mortem. v1.2 ships the full redesign (dark mode, GSAP
+motion, sidebar nav, axe audit, multi-page polish).
+
+### Added
+
+- **Portal home dashboard** — 7-widget grid layout (HeroGreeting +
+  KbSearchBar + popular chips, HeroStats KPIs, QuickActions tiles,
+  OpenTicketsCard, AnnouncementsCard, CatalogTeaser, RecentActivity).
+  KB autocomplete via TanStack Query against `/api/kb?q=…`, debounced
+  200 ms, suggestions in ≤ 300 ms.
+- **Workspace queue dashboard** — KPI strip (Otvorené / Moje / Po SLA /
+  < 1h / Dnes), saved-view + filter chips + "Iba moje" toggle,
+  RecentActivity card, ChangeCalendar teaser. Dense-table row height
+  tightened to 32 px with tabular numerals.
+- **Top nav row** + **breadcrumbs** on both apps. Portal: Domov ·
+  Moje tickety · Katalóg · Pomocník. Workspace: Fronta · Zmeny ·
+  Problémy · CMDB · Znalosti.
+- **Cmd+K hint chip** + **notification bell** placeholders in the
+  top bar (full command palette + SSE wiring in v1.2).
+- **Avatar primitive** in the user pill with deterministic colour
+  hash, image fallback, initials, then lucide `User` icon.
+- **Design-system primitives** — `Tile`, `NavLink`, `Avatar` +
+  `AvatarGroup`, `EmptyState`, `Breadcrumbs`, `Skeleton`, `ToastFlyout`
+  - `ToastViewport`.
+- **Tokens** — full semantic 50/100/500/700/900 scales for success /
+  warning / danger / info; `--color-primary-*` alias ramp;
+  `--motion-easing-out-expo` + `-spring`; `@keyframes sdm-skeleton-shimmer`.
+- **Motion utility** `staggerListRows()` (Web Animations API,
+  `prefers-reduced-motion` honoured) for list-item entrance animation.
+- **CA SDM status mapping** — `StatusBadge` `caCode` prop resolves
+  12 lifecycle codes (`OP`, `WIP`, `HD`, `WC`, `WV`, `RE`, `CL`,
+  `CN`, `RJ`, `AP`, `AR`, `SC`) to canonical statuses with optional
+  lucide glyph via `withIcon`.
+
+### Changed
+
+- **`PriorityBadge` mapping** — `critical` renders solid red with
+  white text and no dot (Polaris severity rule); `medium` → `info`;
+  `low` → `neutral` (per K.1 brief §6.5).
+- **`StatusBadge` mapping** — `in_progress` → `brand` (primary);
+  `open` → `info` (per K.1 brief §6.4).
+- **`Card.interactive`** — hover lift now applies a 2 px translate +
+  primary-400 border, suppressed under `prefers-reduced-motion`.
+
+### Fixed
+
+- **`/api/kb/articles` and `/api/cmdb/cis` 404s** — list-alias routes
+  registered ahead of `:id` parameterised handler so the literal
+  segment wins. Regression tests added.
+- **PWA `manifest.webmanifest` MIME type** — nginx now serves it as
+  `application/manifest+json` (was `application/octet-stream`).
+- **`/config` dev metadata leak** — `BFF_APP_VERSION` + `BFF_BUILD_ID`
+  threaded as build-args in `release.yml`; `BFF_PUBLIC_ORIGIN` +
+  `BFF_DEPLOYED_AT` forwarded by `compose.staging.yml` from
+  `.env.staging`.
+
+### Known limitations
+
+- Service Worker still does not register on staging (plain HTTP).
+  Deferred to v1.2 alongside the broader HTTPS / reverse-proxy story.
+- SLA tile in workspace queue degrades to `—`; full SLA wiring needs
+  `dueDate` + `slaState` projection in the BFF aggregator.
+
 ## [1.1.3] - 2026-MM-DD
 
 Feature follow-up release. Replaces the `/tickets` placeholder ("Zoznam

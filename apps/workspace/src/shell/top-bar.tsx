@@ -1,9 +1,26 @@
-import { Button } from "@sdm/design-system";
+import { useEffect } from "react";
+import { Avatar, Button } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
+import { useHotkeys } from "react-hotkeys-hook";
+import { Bell, Search } from "lucide-react";
 import { LanguageSwitcher } from "./language-switcher";
 import { useSession } from "./session-context";
 import { TenantSwitcher } from "./tenant-switcher";
 import "../features/sp-cockpit/sp-cockpit.css";
+
+/**
+ * Placeholder handler for the global Cmd/Ctrl+K shortcut. The actual
+ * command-palette modal is deferred to v1.2 (K.2); v1.1.4 ships only the
+ * affordance so the muscle memory and keybinding are reserved.
+ */
+function openCommandPalettePlaceholder(): void {
+  console.info("[workspace] Cmd+K modal — coming in v1.2");
+}
+
+// Notifications wiring is deferred to Round D (SSE-fed unread counter).
+// For v1.1.4 the bell is rendered with a hardcoded zero so the affordance
+// is in place but the badge stays hidden.
+const NOTIFICATION_COUNT = 0;
 
 export function TopBar({ appName }: { appName: string }) {
   const { t } = useTranslation();
@@ -15,6 +32,25 @@ export function TopBar({ appName }: { appName: string }) {
    * visible at all times.
    */
   const isSpMode = !!session?.roles.includes("sp_admin");
+
+  // Reserve the keystroke globally so v1.2 can replace this placeholder
+  // without retraining users. `enableOnFormTags` lets it work even when
+  // focus is inside inputs (the future palette must always be reachable).
+  useHotkeys(
+    "mod+k",
+    (event) => {
+      event.preventDefault();
+      openCommandPalettePlaceholder();
+    },
+    { enableOnFormTags: true, enabled: status === "ready" },
+  );
+
+  // No-op effect that keeps the hook ordering stable across re-renders even
+  // if `useHotkeys` is conditionally enabled inside a future refactor.
+  useEffect(() => undefined, []);
+
+  const notificationLabel = `${t("nav.notifications")}, ${NOTIFICATION_COUNT} ${t("nav.unread")}`;
+
   return (
     <header className="sdm-top-bar" data-testid="top-bar">
       <div className="sdm-brand">
@@ -31,11 +67,42 @@ export function TopBar({ appName }: { appName: string }) {
       {status === "ready" && session && (
         <>
           <TenantSwitcher />
-          <div className="sdm-user-pill" data-testid="user-pill">
-            <span className="sdm-user-name">{session.displayName}</span>
-            <span className="sdm-user-roles">
-              {session.roles.length > 0 ? session.roles.join(", ") : t("meta.noRoles")}
+          <button
+            type="button"
+            className="sdm-cmdk-hint"
+            data-testid="cmdk-hint"
+            onClick={openCommandPalettePlaceholder}
+            aria-label={t("nav.cmdkHint")}
+            title={t("nav.cmdkHint")}
+          >
+            <Search size={14} aria-hidden="true" />
+            <span className="sdm-cmdk-hint-keys" aria-hidden="true">
+              <kbd>⌘</kbd>
+              <kbd>K</kbd>
             </span>
+          </button>
+          <button
+            type="button"
+            className="sdm-notif-button"
+            data-testid="notif-button"
+            aria-label={notificationLabel}
+            title={t("nav.notifications")}
+          >
+            <Bell size={18} aria-hidden="true" />
+            {NOTIFICATION_COUNT > 0 && (
+              <span className="sdm-notif-count" aria-hidden="true">
+                {NOTIFICATION_COUNT > 99 ? "99+" : NOTIFICATION_COUNT}
+              </span>
+            )}
+          </button>
+          <div className="sdm-user-pill" data-testid="user-pill">
+            <Avatar name={session.displayName} size="md" aria-label={session.displayName} />
+            <div className="sdm-user-pill-meta">
+              <span className="sdm-user-name">{session.displayName}</span>
+              <span className="sdm-user-roles">
+                {session.roles.length > 0 ? session.roles.join(", ") : t("meta.noRoles")}
+              </span>
+            </div>
           </div>
           <LanguageSwitcher />
           <Button

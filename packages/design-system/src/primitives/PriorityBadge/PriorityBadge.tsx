@@ -13,11 +13,19 @@ export interface PriorityBadgeProps
   label?: string;
 }
 
+/**
+ * K.1 brief §6.5 mapping:
+ * - P1 / Critical → danger SOLID (filled bg + white fg, no dot)
+ * - P2 / High     → warning subtle (+ dot)
+ * - P3 / Medium   → info subtle    (+ dot)  ← changed from warning
+ * - P4 / Low      → neutral subtle (+ dot)  ← changed from success
+ * - None          → neutral subtle (+ dot)
+ */
 const SEVERITY_VARIANT: Record<Severity, BadgeVariant> = {
   critical: "danger",
   high: "warning",
-  medium: "warning",
-  low: "success",
+  medium: "info",
+  low: "neutral",
   none: "neutral",
 };
 
@@ -44,9 +52,10 @@ const SEVERITY_DOT_CLASS: Record<Severity, string> = {
  */
 export const PriorityBadge = forwardRef<HTMLSpanElement, PriorityBadgeProps>(
   function PriorityBadge(props, ref) {
-    const { severity, label, ...rest } = props;
+    const { severity, label, className, ...rest } = props;
     const text = label ?? SEVERITY_LABEL_SK[severity];
-    const dot = (
+    const isSolid = severity === "critical";
+    const dot = isSolid ? undefined : (
       <span className={cn(styles.dot, SEVERITY_DOT_CLASS[severity])} aria-hidden="true" />
     );
 
@@ -55,6 +64,7 @@ export const PriorityBadge = forwardRef<HTMLSpanElement, PriorityBadgeProps>(
         ref={ref}
         variant={SEVERITY_VARIANT[severity]}
         leadingIcon={dot}
+        className={cn(isSolid ? styles.criticalSolid : undefined, className)}
         data-component="priority-badge"
         data-severity={severity}
         {...rest}

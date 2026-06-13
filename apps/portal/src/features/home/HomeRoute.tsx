@@ -1,112 +1,118 @@
+import { useMemo } from "react";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { queryClient } from "../../lib/query-client";
 import { useSession } from "../../shell/session-context";
-import { prefetchHome } from "./api";
-import { ActionCards } from "./components/ActionCards";
+import { deriveHomeStats, deriveRecentActivity, prefetchHome } from "./api";
+import { AnnouncementsCard } from "./components/AnnouncementsCard";
+import { CatalogTeaser } from "./components/CatalogTeaser";
 import { HeroGreeting } from "./components/HeroGreeting";
-import { KbSuggestions } from "./components/KbSuggestions";
-import { MyRecentTickets } from "./components/MyRecentTickets";
-import { TicketRowSkeleton, KbCardSkeleton } from "./components/Skeletons";
-import { useKbSuggestions, useMyTickets } from "./hooks";
+import { HeroStats } from "./components/HeroStats";
+import { OpenTicketsCard } from "./components/OpenTicketsCard";
+import { QuickActions } from "./components/QuickActions";
+import { RecentActivity } from "./components/RecentActivity";
+import { useMyAllTickets, useMyTickets } from "./hooks";
 import "./home.css";
 
 /**
- * Lucia's landing page (`/`). Composition (top → bottom):
+ * Lucia's landing page (`/`) — v1.1.4 multi-column dashboard per K.1 design
+ * brief §10.1. Grid layout drives the column structure (one `grid-template-
+ * areas` per breakpoint, see `home.css`). Six distinct widgets:
  *
- *   ┌─ <HeroGreeting>     "Ahoj, Lucia 👋 — Ako ti môžem pomôcť?"
- *   ├─ <ActionCards>      [Nahlásiť problém] [Požiadať o niečo]
- *   ├─ <MyRecentTickets>  top 5 incidents kde "customer=me"
- *   └─ <KbSuggestions>    top 3 KB articles (hidden when empty)
+ *   row 1   <HeroGreeting>                            (greeting + KB search + chips)
+ *   row 2   <HeroStats>                               (3-up KPI tiles)
+ *   row 3   <QuickActions>                            (3-up Tile grid)
+ *   row 4   <OpenTicketsCard> | <AnnouncementsCard>   (split at lg+)
+ *   row 5   <CatalogTeaser>                           (4 category tiles + "Všetko →")
+ *   row 6   <RecentActivity>                          (synthesised timeline)
  *
- * I.0 perf fix: the structural shell renders unconditionally — `<HeroGreeting>`
- * + `<ActionCards>` are session-independent, so the "Nahlásiť problém" CTA
- * (the natural LCP target per `performance.md §2 portal /`) paints at the
- * first render. The data-dependent sections render skeletons while the
- * underlying queries are pending so LCP is bound by render time, not by the
- * post-render fetch round-trip.
- *
- * The previous `if (!session) return null;` early-return moved LCP to the
- * `<p class="sdm-home-empty">` element that paints AFTER `/me` →
- * `/api/incidents` → `/api/kb` resolves, which dragged LCP past the 1.5 s
- * mobile budget.
+ * I.0 perf rule preserved — the static shell renders unconditionally so the
+ * H1 inside `<HeroGreeting>` paints at first render and remains the LCP
+ * target. Data-dependent widgets render Skeleton rows while their queries
+ * are pending; the chrome stays in place, no CLS.
  */
-// Placeholder tenant ID used for the React-Query key when the session is not
-// yet ready. The route is reachable only through `<AppShell>` which gates on
-// `status === "ready"`, so this fallback is dead code in production — it
-// exists purely to keep the hook call order stable across renders (rules of
-// hooks).
 const TENANT_PLACEHOLDER = toTenantId("__pending__");
 
 export function HomeRoute() {
   const { t } = useTranslation("portal");
   const { session } = useSession();
   const tenantId = session?.tenantId ?? TENANT_PLACEHOLDER;
-  const ticketsQuery = useMyTickets(tenantId, session !== null);
-  const kbQuery = useKbSuggestions(tenantId, session !== null);
+  const enabled = session !== null;
+
+  // `myTicketsQuery` (top 5) feeds the OpenTicketsCard; `myAllTicketsQuery`
+  // (top 50) feeds the KPI stats + activity feed. Both are pre-warmed by
+  // the bootstrap prefetch, so first paint on the happy path is synchronous.
+  const ticketsQuery = useMyTickets(tenantId, enabled);
+  const allTicketsQuery = useMyAllTickets(tenantId, enabled);
 
   const tickets = ticketsQuery.data ?? [];
-  const suggestions = kbQuery.data ?? [];
-  const ticketsPending = session !== null && ticketsQuery.isPending;
-  const kbPending = session !== null && kbQuery.isPending;
+  // `query.data` is a fresh reference when the cache is empty (the
+  // `?? []` fallback creates a new array each render). Memoise it so the
+  // downstream `deriveHomeStats` / `deriveRecentActivity` don't recompute on
+  // every render before the query resolves.
+  const allTickets = useMemo(() => allTicketsQuery.data ?? [], [allTicketsQuery.data]);
+
+  const stats = useMemo(
+    () => (allTicketsQuery.isPending ? null : deriveHomeStats(allTickets)),
+    [allTickets, allTicketsQuery.isPending],
+  );
+  const activity = useMemo(() => deriveRecentActivity(allTickets), [allTickets]);
 
   return (
     <section className="sdm-home" data-testid="portal-home">
-      <h1 className="sdm-visually-hidden">SDM Portal</h1>
+      <h1 className="sdm-visually-hidden">{t("appName")}</h1>
       {session ? (
         <span className="sdm-visually-hidden" data-testid="active-tenant">
           {session.tenantId}
         </span>
       ) : null}
-      <HeroGreeting session={session} />
-      <ActionCards />
-      {ticketsQuery.isError ? (
-        <p className="sdm-home-error" role="alert" data-testid="home-my-tickets-error">
-          {t("home.myTickets.error")}
-        </p>
-      ) : ticketsPending ? (
-        <section className="sdm-home-section" data-testid="home-my-tickets-loading">
-          <h2 className="sdm-home-section-title">{t("home.myTickets.title")}</h2>
-          <ul className="sdm-home-ticket-list" aria-busy="true">
-            <TicketRowSkeleton />
-            <TicketRowSkeleton />
-            <TicketRowSkeleton />
-          </ul>
-        </section>
-      ) : (
-        <MyRecentTickets tickets={tickets} />
-      )}
-      {kbQuery.isError ? null : kbPending ? (
-        <section className="sdm-home-section" data-testid="home-kb-loading">
-          <h2 className="sdm-home-section-title">{t("home.kb.title")}</h2>
-          <ul className="sdm-home-kb-list" aria-busy="true">
-            <KbCardSkeleton />
-            <KbCardSkeleton />
-            <KbCardSkeleton />
-          </ul>
-        </section>
-      ) : (
-        <KbSuggestions suggestions={suggestions} />
-      )}
+      <div className="sdm-home-grid">
+        <div className="sdm-home-area sdm-home-area-hero">
+          <HeroGreeting session={session} />
+        </div>
+        <div className="sdm-home-area sdm-home-area-kpi">
+          <HeroStats stats={stats} />
+        </div>
+        <div className="sdm-home-area sdm-home-area-actions">
+          <QuickActions />
+        </div>
+        <div className="sdm-home-area sdm-home-area-tickets">
+          <OpenTicketsCard
+            tickets={tickets}
+            pending={enabled && ticketsQuery.isPending}
+            error={ticketsQuery.isError}
+          />
+        </div>
+        <div className="sdm-home-area sdm-home-area-announcements">
+          <AnnouncementsCard />
+        </div>
+        <div className="sdm-home-area sdm-home-area-catalog">
+          <CatalogTeaser />
+        </div>
+        <div className="sdm-home-area sdm-home-area-activity">
+          <RecentActivity
+            events={activity}
+            pending={enabled && allTicketsQuery.isPending}
+            error={allTicketsQuery.isError}
+          />
+        </div>
+      </div>
     </section>
   );
 }
 
 /**
- * Loader: kicks off the home dashboard prefetch but does NOT await it. After
- * I.0 the route renders a static shell (`<HeroGreeting>` + `<ActionCards>`)
- * immediately, with skeletons in the data-dependent sections — blocking
- * paint on the network round-trip dragged LCP past the 1.5 s mobile budget
- * (render-delay was 84% of LCP). The hooks below subscribe to the cache and
- * swap the skeletons for real content as soon as the prefetch resolves.
+ * Loader: kicks off the home dashboard prefetch but does NOT await it.
+ * After I.0 the route renders a static shell (`<HeroGreeting>` +
+ * `<QuickActions>` + `<CatalogTeaser>`) immediately, with skeletons in the
+ * data-dependent sections — blocking paint on the network round-trip
+ * dragged LCP past the 1.5 s mobile budget (render-delay was 84 % of LCP).
  *
  * The active tenant ID is read from the cached `/me` response so the loader
- * doesn't fire a second `/me` round-trip. After I.0 the cache is primed in
- * `main.tsx` once `loadSession()` resolves, so the loader hits warm on the
- * cold open path too (not just on `useActiveTenant`'s post-switch path).
- * Bootstrap also fires the home prefetch directly, so the loader's call is
- * usually a no-op deduped by TanStack Query — kept here so client-side
- * navigations to `/` still warm the cache.
+ * doesn't fire a second `/me` round-trip. Bootstrap also fires the home
+ * prefetch directly, so the loader's call is usually a no-op deduped by
+ * TanStack Query — kept here so client-side navigations to `/` still warm
+ * the cache.
  */
 interface MeQueryShape {
   readonly session?: { readonly tenantId?: string };
@@ -116,9 +122,6 @@ export function homeLoader(): null {
   const cached = queryClient.getQueryData<MeQueryShape>(["me"]);
   const tenantId = cached?.session?.tenantId;
   if (!tenantId) return null;
-  // Fire-and-forget — the component layer renders skeletons until the cache
-  // resolves. A loader-level await would re-introduce the render-delay
-  // waterfall the I.0 perf fix targets.
   void prefetchHome(queryClient, tenantId as never).catch(() => {
     // Component-level `isError` paths surface the user-facing message.
   });

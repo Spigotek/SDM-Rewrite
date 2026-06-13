@@ -41,6 +41,12 @@ FROM node:${NODE_VERSION}-alpine AS runtime
 
 ARG GIT_SHA=unknown
 ARG VERSION=0.1.0
+# Build-time metadata threaded into the /config endpoint. release.yml passes
+# the release tag as BFF_APP_VERSION and the commit SHA as BFF_BUILD_ID; both
+# are promoted to ENV below so `applyEnvOverrides` in platform/config/load.ts
+# picks them up at container start without any per-deploy wiring.
+ARG BFF_APP_VERSION=0.0.0-dev
+ARG BFF_BUILD_ID=local
 
 LABEL org.opencontainers.image.title="sdm-bff" \
       org.opencontainers.image.description="SDM-Rewrite Backend-for-Frontend (Hono 4)" \
@@ -50,7 +56,9 @@ LABEL org.opencontainers.image.title="sdm-bff" \
 
 ENV NODE_ENV=production \
     BFF_PORT=5174 \
-    NODE_OPTIONS=--enable-source-maps
+    NODE_OPTIONS=--enable-source-maps \
+    BFF_APP_VERSION=${BFF_APP_VERSION} \
+    BFF_BUILD_ID=${BFF_BUILD_ID}
 
 # Run as non-root.
 RUN addgroup -S sdm && adduser -S -G sdm sdm

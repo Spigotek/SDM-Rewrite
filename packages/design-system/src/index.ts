@@ -17,6 +17,13 @@ export * from "./primitives/Badge";
 export * from "./primitives/StatusBadge";
 export * from "./primitives/PriorityBadge";
 export * from "./primitives/Card";
+export * from "./primitives/Skeleton";
+export * from "./primitives/Tile";
+export * from "./primitives/NavLink";
+export * from "./primitives/Avatar";
+export * from "./primitives/EmptyState";
+export * from "./primitives/Breadcrumbs";
+export * from "./primitives/ToastFlyout";
 export * from "./primitives/TextField";
 export * from "./primitives/TextArea";
 export * from "./primitives/Select";
@@ -30,6 +37,8 @@ export {
   THEME_STORAGE_KEY,
 } from "./tokens/theme";
 export type { ThemeName, ThemeChoice } from "./tokens/theme";
+
+export * from "./motion";
 
 export { cn } from "./utils/cn";
 export type { ClassValue } from "./utils/cn";

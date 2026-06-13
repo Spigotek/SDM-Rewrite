@@ -10,7 +10,13 @@
     "home": "Domov",
     "myTickets": "Moje tickety",
     "catalog": "Katalóg služieb",
-    "knowledge": "Pomoc"
+    "knowledge": "Pomoc",
+    "primary": "Hlavná navigácia",
+    "cmdkHint": "Hľadať / akcia",
+    "notifications": "Oznámenia",
+    "userMenu": "Účet",
+    "newIncident": "Nový incident",
+    "ticketDetail": "Detail ticketu"
   },
   "catalog": {
     "reportProblem": "Nahlásiť problém",
@@ -18,25 +24,72 @@
     "browseAll": "Prezri všetky služby"
   },
   "home": {
-    "greeting": "Ahoj, {name} 👋",
-    "greetingAnonymous": "Ahoj 👋",
-    "subgreeting": "Vitaj v Service Desk Manageri. Tu môžeš nahlásiť incident, požiadať o vybavenie zo služobného katalógu, nájsť návod v znalostnej báze alebo sledovať stav svojich žiadostí. Pomoc s prvým ticketom je vždy len jeden klik od teba.",
-    "actions": {
+    "greeting": "Dobrý deň, {name}.",
+    "greetingAnonymous": "Dobrý deň.",
+    "subgreeting": "Akú pomoc dnes potrebujete?",
+    "hero": {
+      "popularLabel": "Populárne:"
+    },
+    "kbSearch": {
+      "label": "Hľadať v báze znalostí",
+      "placeholder": "Hľadať v báze znalostí alebo katalógu služieb…",
+      "resultsLabel": "Návrhy z bázy znalostí",
+      "emptyTitle": "Nič som nenašiel",
+      "emptyDescription": "Skús inú formuláciu alebo otvor ticket."
+    },
+    "stats": {
+      "ariaLabel": "Prehľad mojich ticketov",
+      "open": "Otvorené",
+      "awaiting": "Čakajúce na odpoveď",
+      "resolvedThisWeek": "Vybavené tento týždeň"
+    },
+    "quickActions": {
       "ariaLabel": "Rýchle akcie",
-      "newIncident": {
+      "report": {
         "title": "Nahlásiť problém",
         "body": "Niečo nefunguje — laptop, prístup, sieť."
       },
-      "newRequest": {
-        "title": "Požiadať o niečo",
-        "body": "Softvér, prístupy, hardvér."
+      "catalog": {
+        "title": "Hardvér / Softvér",
+        "body": "Vyber si zo služobného katalógu."
+      },
+      "password": {
+        "title": "Reset hesla",
+        "body": "Rýchly tiket na obnovu prístupu."
       }
     },
     "myTickets": {
-      "title": "Tvoje aktívne tickety",
-      "seeAll": "Vidieť všetky →",
+      "title": "Moje otvorené tickety",
+      "seeAll": "Všetky →",
       "empty": "Zatiaľ žiadne tickety. Keď niečo budeš potrebovať, nahlás problém alebo požiadaj o niečo.",
+      "emptyTitle": "Žiadne otvorené tickety",
       "error": "Tickety sa nepodarilo načítať. Skús stránku obnoviť."
+    },
+    "announcements": {
+      "title": "Oznámenia",
+      "items": {
+        "wifi": {
+          "title": "Wi-Fi servis 13. 6."
+        },
+        "catalog": {
+          "title": "Nový katalóg služieb otvorený"
+        },
+        "vpn": {
+          "title": "VPN reauth každých 12 hodín"
+        }
+      }
+    },
+    "catalog": {
+      "title": "Katalóg služieb",
+      "seeAll": "Všetko →"
+    },
+    "activity": {
+      "title": "Posledná aktivita",
+      "actorSystem": "Systém",
+      "verbStatusChange": "aktualizoval stav ticketu",
+      "empty": "Tu sa budú zobrazovať najnovšie zmeny tvojich ticketov.",
+      "emptyTitle": "Žiadna aktivita",
+      "error": "Aktivitu sa nepodarilo načítať."
     },
     "kb": {
       "title": "Možno hľadáš toto",

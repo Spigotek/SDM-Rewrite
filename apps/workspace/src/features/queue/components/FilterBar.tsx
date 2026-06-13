@@ -104,7 +104,7 @@ export function FilterBar(props: FilterBarProps) {
       className="sdm-queue-filterbar"
       data-testid="filter-bar"
       role="group"
-      aria-label={t("queue.filters")}
+      aria-label={t("queue.filtersGroupLabel")}
     >
       <div className="sdm-queue-filterbar-row">
         <input

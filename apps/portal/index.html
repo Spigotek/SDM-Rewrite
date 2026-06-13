@@ -150,12 +150,12 @@
             var pre = document.getElementById("portal-prerender");
             if (pre) {
               var en = {
-                greeting: "Hi 👋",
-                subgreeting: "How can I help you?",
+                greeting: "Hello.",
+                subgreeting: "What can we help you with today?",
                 newIncidentTitle: "Report a problem",
                 newIncidentBody: "Something isn't working — laptop, access, network.",
-                newRequestTitle: "Request something",
-                newRequestBody: "Software, access, hardware.",
+                newRequestTitle: "Hardware / Software",
+                newRequestBody: "Pick from the service catalog.",
               };
               var byKey = pre.querySelectorAll("[data-i18n]");
               for (var i = 0; i < byKey.length; i++) {
@@ -181,8 +181,8 @@
     -->
     <main id="portal-prerender" class="sdm-prerender" data-testid="portal-prerender">
       <section class="sdm-prerender-hero">
-        <h1 data-i18n="greeting">Ahoj 👋</h1>
-        <p data-i18n="subgreeting">Ako ti môžem dnes pomôcť?</p>
+        <h1 data-i18n="greeting">Dobrý deň.</h1>
+        <p data-i18n="subgreeting">Akú pomoc dnes potrebujete?</p>
       </section>
       <section class="sdm-prerender-actions" aria-label="Rýchle akcie">
         <a class="sdm-prerender-card" href="/new-incident" data-testid="prerender-new-incident">
@@ -190,8 +190,8 @@
           <p data-i18n="newIncidentBody">Niečo nefunguje — laptop, prístup, sieť.</p>
         </a>
         <a class="sdm-prerender-card" href="/catalog" data-testid="prerender-new-request">
-          <h2 data-i18n="newRequestTitle">Požiadať o niečo</h2>
-          <p data-i18n="newRequestBody">Softvér, prístupy, hardvér.</p>
+          <h2 data-i18n="newRequestTitle">Hardvér / Softvér</h2>
+          <p data-i18n="newRequestBody">Vyber si zo služobného katalógu.</p>
         </a>
       </section>
     </main>

@@ -22,8 +22,9 @@ test("journey-01 portal incident — home CTA → form submit → ticket ref", a
   // Tenant breadcrumb visible (§2.1 DoD).
   await expect(isolatedPage.getByTestId("tenant-display")).toBeVisible();
 
-  // Primary CTA — "Report a problem".
-  const cta = isolatedPage.getByTestId("home-action-new-incident");
+  // Primary CTA — "Report a problem" (K.1 v1.1.4 renamed
+  // `home-action-new-incident` → `home-quick-action-report`).
+  const cta = isolatedPage.getByTestId("home-quick-action-report");
   await expect(cta).toBeVisible();
   await cta.click();
   await expect(isolatedPage).toHaveURL(/\/new-incident$/);

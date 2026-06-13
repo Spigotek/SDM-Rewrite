@@ -88,6 +88,7 @@ export function registerCmdbRoutes(app: Hono, deps: RestProxyDeps): void {
     defaultAttrs: DEFAULT_ATTRS,
     pkIsGuid: true,
     softClose: { kind: "delete-flag-1" },
+    listAlias: "cis",
     mapRow,
     mapCreate,
     mapUpdate,

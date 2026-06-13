@@ -7,8 +7,9 @@
     "userMenuLabel": "Menu agenta"
   },
   "queue": {
-    "title": "Queue",
-    "filters": "Filtre",
+    "title": "Moja fronta",
+    "newTicket": "+ Nový",
+    "filtersGroupLabel": "Filtre",
     "resetFilters": "Resetovať filtre",
     "savedViews": "Uložené pohľady",
     "saveView": "Uložiť pohľad",
@@ -21,6 +22,15 @@
     "empty": "🎉 Žiadne tickety v queue. Užiš si chvíľu alebo si daj kávu.",
     "emptyFiltered": "🔍 Žiadne tickety pre tieto filtre. Skús uvoľniť kritériá alebo resetuj filtre.",
     "unassigned": "Nepriradené",
+    "stats": {
+      "ariaLabel": "Prehľad fronty",
+      "open": "Otvorené",
+      "mine": "Moje",
+      "overdue": "Po SLA",
+      "lastHour": "< 1h",
+      "today": "Dnes",
+      "noSla": "Bez SLA"
+    },
     "axis": {
       "status": "Stav",
       "priority": "Priorita",
@@ -32,6 +42,29 @@
       "request": "Požiadavka",
       "problem": "Problém",
       "change": "Change"
+    },
+    "filters": {
+      "savedView": "Pohľad:",
+      "savedViewPlaceholder": "Vyber pohľad…",
+      "viewAll": "Všetky otvorené incidenty",
+      "viewMine": "Moja fronta",
+      "viewOverdue": "Po SLA",
+      "viewToday": "Dnes otvorené",
+      "assignedToMe": "Iba moje",
+      "addFilter": "+ Pridať filter",
+      "activeAria": "Aktívne filtre",
+      "noActiveFilters": "Žiadne aktívne filtre.",
+      "removeChip": "Odstrániť filter {axis}: {value}"
+    },
+    "recentActivity": {
+      "title": "Najnovšia aktivita",
+      "empty": "Žiadna aktivita za posledné obdobie.",
+      "verbUpdated": "aktualizoval(a)"
+    },
+    "changeCalendar": {
+      "title": "Kalendár zmien",
+      "openLink": "Otvoriť kalendár",
+      "empty": "Žiadne plánované zmeny."
     },
     "columns": {
       "menu": "Stĺpce",
@@ -77,6 +110,23 @@
   },
   "common": {
     "cancel": "Zrušiť"
+  },
+  "nav": {
+    "primary": "Hlavná navigácia",
+    "workspace": "Workspace",
+    "queue": "Fronta",
+    "changes": "Zmeny",
+    "problems": "Problémy",
+    "cmdb": "CMDB",
+    "kb": "Znalosti",
+    "calendar": "Kalendár zmien",
+    "editor": "Editor",
+    "analytics": "Analytika",
+    "spCockpit": "SP Cockpit",
+    "cmdkHint": "Hľadať / akcia",
+    "notifications": "Oznámenia",
+    "unread": "neprečítaných",
+    "userMenu": "Účet"
   },
   "ticketDetail": {
     "loading": "Načítavam ticket…",

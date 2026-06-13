@@ -66,6 +66,8 @@ jobs:
           build-args: |
             GIT_SHA=${{ github.sha }}
             VERSION=${{ steps.meta.outputs.version }}
+            BFF_APP_VERSION=${{ steps.meta.outputs.version }}
+            BFF_BUILD_ID=${{ github.sha }}
           cache-from: type=gha,scope=bff-release
           cache-to: type=gha,mode=max,scope=bff-release
 

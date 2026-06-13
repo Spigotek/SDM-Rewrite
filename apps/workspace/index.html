@@ -11,6 +11,26 @@
       href="/fonts/inter-variable-latin.woff2"
       crossorigin
     />
+    <!-- K-fix CLS — Slovak diacritics (Pohľad, Uložiť, ľ ĺ) on every workspace
+         route trigger latin-ext. Preloading it cuts the late font-swap layout
+         shift (~0.056 of CLS on /queue per Lighthouse audit). -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/inter-variable-latin-ext.woff2"
+      crossorigin
+    />
+    <!-- K-fix CLS — JetBrains Mono is used for tabular-nums on the queue ref
+         column (#10001) and shifts the toolbar-trailing when the swap lands
+         post-LCP. Preload both subsets. -->
+    <link
+      rel="preload"
+      as="font"
+      type="font/woff2"
+      href="/fonts/jetbrains-mono-variable-latin.woff2"
+      crossorigin
+    />
     <script>
       (function () {
         try {

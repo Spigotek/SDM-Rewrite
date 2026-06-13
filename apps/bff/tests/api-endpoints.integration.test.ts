@@ -524,6 +524,38 @@ describe("/api/kb — uppercase KD factory + UPPERCASE attrs (§16)", () => {
     );
     expect(res.status).toBe(404);
   });
+
+  it("GET /api/kb/articles aliases the list endpoint (regression for K-prompt §Outstanding bugs #2)", async () => {
+    let seenPath = "";
+    server.use(
+      http.get(`${BASE}/KD`, ({ request }) => {
+        seenPath = new URL(request.url).pathname;
+        return HttpResponse.json({
+          collection_KD: {
+            "@COUNT": "1",
+            "@START": "1",
+            "@TOTAL_COUNT": "1",
+            KD: {
+              "@id": 400101,
+              TITLE: "Reset VPN klienta",
+              SUMMARY: "summary",
+              RESOLUTION: "",
+              KEYWORDS: "",
+              CREATION_DATE: "1619009439",
+            },
+          },
+        });
+      }),
+    );
+    const { app } = await buildApi();
+    const res = await app.fetch(
+      new Request("http://bff/api/kb/articles", { headers: { [COOKIE]: SID_COOKIE } }),
+    );
+    expect(res.status).toBe(200);
+    expect(seenPath).toBe("/caisd-rest/KD");
+    const body = (await res.json()) as { data: ReadonlyArray<{ title: string }> };
+    expect(body.data[0]?.title).toBe("Reset VPN klienta");
+  });
 });
 
 describe("/api/cmdb — GUID PK + delete_flag soft-delete (§17)", () => {
@@ -586,6 +618,31 @@ describe("/api/cmdb — GUID PK + delete_flag soft-delete (§17)", () => {
       }),
     );
     expect(seenBody).toContain(`<class REL_ATTR="300173"/>`);
+  });
+
+  it("GET /api/cmdb/cis aliases the list endpoint (regression for K-prompt §Outstanding bugs #2)", async () => {
+    let seenPath = "";
+    server.use(
+      http.get(`${BASE}/nr`, ({ request }) => {
+        seenPath = new URL(request.url).pathname;
+        return HttpResponse.json({
+          collection_nr: {
+            "@COUNT": "1",
+            "@START": "1",
+            "@TOTAL_COUNT": "1",
+            nr: { "@id": "U'4BC'", name: "probe", description: "probe ci" },
+          },
+        });
+      }),
+    );
+    const { app } = await buildApi();
+    const res = await app.fetch(
+      new Request("http://bff/api/cmdb/cis", { headers: { [COOKIE]: SID_COOKIE } }),
+    );
+    expect(res.status).toBe(200);
+    expect(seenPath).toBe("/caisd-rest/nr");
+    const body = (await res.json()) as { data: ReadonlyArray<{ name: string }> };
+    expect(body.data[0]?.name).toBe("probe");
   });
 });
 

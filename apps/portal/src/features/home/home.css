@@ -1,22 +1,22 @@
 /**
- * Portal home dashboard — mobile-first.
+ * Portal home dashboard — v1.1.4 multi-column layout per K.1 brief §10.1.
  *
  * Layout strategy:
- *   - Single column < 640 px. Vertical rhythm via `gap` on the page wrapper.
- *   - At ≥ 640 px the action cards reflow into 2 columns. Ticket list + KB
- *     stay single-column (the wireframe shows full-width rows on every
- *     viewport — easier scanning).
+ *   - Mobile (< 640 px): every widget stacks; single column.
+ *   - sm (≥ 640 px):    KPI strip and Quick Actions reflow to 3 cols.
+ *   - lg (≥ 1024 px):   Row 4 splits into two columns (tickets | announcements).
  *
- * Tokens consumed: spacing-2..8, font-size-lg, radius-md, color-text-*.
- * No local colour overrides — everything resolves via `tokens.css`.
+ * CSS Grid drives the column structure via `grid-template-areas`. Components
+ * are wrapped in `.sdm-home-area-<slot>` so they land in the named slot.
+ *
+ * Tokens consumed: spacing-1..8, font-size-sm..2xl, radius-md/lg, color-*,
+ * shadow-focus-brand. No local colour overrides — everything resolves
+ * through `tokens.css`.
  */
 
 .sdm-home {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-8);
   padding: var(--spacing-6) var(--spacing-5);
-  max-width: 64rem;
+  max-width: 80rem;
   margin: 0 auto;
 }
 
@@ -32,80 +32,372 @@
   border: 0;
 }
 
+/* ─── Grid layout ───────────────────────────────────────────────────────── */
+
+.sdm-home-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "hero"
+    "kpi"
+    "actions"
+    "tickets"
+    "announcements"
+    "catalog"
+    "activity";
+  gap: var(--spacing-6);
+}
+
+.sdm-home-area-hero {
+  grid-area: hero;
+}
+.sdm-home-area-kpi {
+  grid-area: kpi;
+}
+.sdm-home-area-actions {
+  grid-area: actions;
+}
+.sdm-home-area-tickets {
+  grid-area: tickets;
+}
+.sdm-home-area-announcements {
+  grid-area: announcements;
+}
+.sdm-home-area-catalog {
+  grid-area: catalog;
+}
+.sdm-home-area-activity {
+  grid-area: activity;
+}
+
+@media (min-width: 1024px) {
+  .sdm-home-grid {
+    grid-template-columns: 2fr 1fr;
+    grid-template-areas:
+      "hero hero"
+      "kpi kpi"
+      "actions actions"
+      "tickets announcements"
+      "catalog catalog"
+      "activity activity";
+  }
+}
+
 /* ─── Hero ─────────────────────────────────────────────────────────────── */
 
 .sdm-home-hero {
   display: flex;
   flex-direction: column;
-  gap: var(--spacing-2);
+  gap: var(--spacing-3);
 }
 
-.sdm-home-hero h1 {
-  font-size: var(--font-size-2xl, 1.5rem);
+.sdm-home-hero-title {
+  font-size: var(--font-size-2xl);
   font-weight: var(--font-weight-bold, 700);
   margin: 0;
 }
 
 .sdm-home-hero-sub {
   margin: 0;
-  color: var(--color-text-muted);
-  max-width: 28rem;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-md);
   line-height: var(--line-height-relaxed, 1.5);
 }
 
-/* ─── Action cards ────────────────────────────────────────────────────── */
-
-.sdm-home-actions {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: var(--spacing-4);
+.sdm-home-hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-top: var(--spacing-1);
 }
 
-@media (min-width: 640px) {
-  .sdm-home-actions {
-    grid-template-columns: 1fr 1fr;
-  }
+.sdm-home-hero-chips-label {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin-right: var(--spacing-1);
 }
 
-.sdm-home-action-link {
-  text-decoration: none;
-  color: inherit;
-  display: block;
-  border-radius: var(--radius-md);
+.sdm-home-hero-chip {
+  appearance: none;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  background-color: var(--color-background-surface);
+  color: var(--color-text-body);
+  border-radius: var(--radius-full);
+  padding: var(--spacing-1) var(--spacing-3);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  cursor: pointer;
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    border-color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
-.sdm-home-action-link:focus-visible {
+.sdm-home-hero-chip:hover {
+  background-color: var(--color-background-subtle);
+  border-color: var(--color-brand-400, var(--color-border-default));
+}
+
+.sdm-home-hero-chip:focus-visible {
   outline: none;
   box-shadow: var(--shadow-focus-brand);
 }
 
-.sdm-home-action-card {
+/* ─── KB search bar (inside hero) ──────────────────────────────────────── */
+
+.sdm-home-kb-search {
+  position: relative;
+  margin-top: var(--spacing-2);
+}
+
+.sdm-home-kb-search-input {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  background-color: var(--color-background-surface);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  padding: 0 var(--spacing-3);
+  height: 48px;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.sdm-home-kb-search-input:focus-within {
+  border-color: transparent;
+  box-shadow: var(--shadow-focus-brand);
+}
+
+.sdm-home-kb-search-icon {
+  display: inline-flex;
+  color: var(--color-text-secondary);
+}
+
+.sdm-home-kb-search-field {
+  flex: 1 1 auto;
+  appearance: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: var(--font-size-md);
+  color: var(--color-text-body);
   height: 100%;
 }
 
-.sdm-home-action-title {
-  margin: 0 0 var(--spacing-2);
-  font-size: var(--font-size-lg);
-  font-weight: var(--font-weight-semibold, 600);
+.sdm-home-kb-search-field::placeholder {
+  color: var(--color-text-tertiary);
 }
 
-.sdm-home-action-body {
+.sdm-home-kb-search-dropdown {
+  position: absolute;
+  top: calc(100% + var(--spacing-1));
+  left: 0;
+  right: 0;
+  background-color: var(--color-background-surface);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md, var(--shadow-sm, 0 4px 12px rgba(0, 0, 0, 0.08)));
+  padding: var(--spacing-2);
+  z-index: 5;
+}
+
+.sdm-home-kb-search-list {
+  list-style: none;
   margin: 0;
-  color: var(--color-text-muted);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
 }
 
-/* ─── Section header + empty states ───────────────────────────────────── */
+.sdm-home-kb-search-hit {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-decoration: none;
+  color: inherit;
+  padding: var(--spacing-2) var(--spacing-3);
+  border-radius: var(--radius-sm);
+}
 
-.sdm-home-section {
+.sdm-home-kb-search-hit:hover,
+.sdm-home-kb-search-hit:focus-visible {
+  outline: none;
+  background-color: var(--color-background-subtle);
+  box-shadow: var(--shadow-focus-brand);
+}
+
+.sdm-home-kb-search-hit-title {
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-base);
+}
+
+.sdm-home-kb-search-hit-snippet {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sdm-home-kb-search-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: var(--spacing-2) var(--spacing-3);
+}
+
+/* ─── KPI strip ────────────────────────────────────────────────────────── */
+
+.sdm-home-kpi-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-3);
+}
+
+@media (min-width: 640px) {
+  .sdm-home-kpi-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.sdm-home-kpi-tile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "icon value"
+    "icon label";
+  align-items: center;
+  column-gap: var(--spacing-3);
+  row-gap: 2px;
+  padding: var(--spacing-4) var(--spacing-5);
+  background-color: var(--color-background-surface);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  text-decoration: none;
+  color: var(--color-text-body);
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
+    transform var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.sdm-home-kpi-tile:hover {
+  border-color: var(--color-brand-400, var(--color-border-default));
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.sdm-home-kpi-tile:active {
+  transform: translateY(0);
+}
+
+.sdm-home-kpi-tile:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sdm-home-kpi-tile,
+  .sdm-home-kpi-tile:hover,
+  .sdm-home-kpi-tile:active {
+    transform: none;
+  }
+}
+
+.sdm-home-kpi-icon {
+  grid-area: icon;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-subtle);
+  color: var(--color-text-secondary);
+}
+
+.sdm-home-kpi-tile[data-tone="open"] .sdm-home-kpi-icon {
+  background-color: var(--color-brand-100, var(--color-background-subtle));
+  color: var(--color-brand-700, var(--color-text-link));
+}
+
+.sdm-home-kpi-tile[data-tone="awaiting"] .sdm-home-kpi-icon {
+  background-color: var(--color-warning-100, var(--color-background-subtle));
+  color: var(--color-warning-700, var(--color-text-body));
+}
+
+.sdm-home-kpi-tile[data-tone="resolved"] .sdm-home-kpi-icon {
+  background-color: var(--color-success-100, var(--color-background-subtle));
+  color: var(--color-success-700, var(--color-text-body));
+}
+
+.sdm-home-kpi-value {
+  grid-area: value;
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+.sdm-home-kpi-label {
+  grid-area: label;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+/* ─── Quick Actions ────────────────────────────────────────────────────── */
+
+.sdm-home-quick-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-3);
+}
+
+@media (min-width: 640px) {
+  .sdm-home-quick-actions {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ─── Cards (tickets + announcements + activity) ───────────────────────── */
+
+.sdm-home-card {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
 }
 
-.sdm-home-section-head {
+.sdm-home-card-head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
+  gap: var(--spacing-3);
+}
+
+.sdm-home-card-title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold, 600);
+}
+
+.sdm-home-card-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-link);
+  text-decoration: none;
+}
+
+.sdm-home-card-link:hover,
+.sdm-home-card-link:focus-visible {
+  text-decoration: underline;
+}
+
+/* Legacy section variant — still used by `MyTicketsRoute` for empty / error
+   states that haven't migrated to `EmptyState`. */
+.sdm-home-section {
+  display: flex;
+  flex-direction: column;
   gap: var(--spacing-3);
 }
 
@@ -115,31 +407,20 @@
   font-weight: var(--font-weight-semibold, 600);
 }
 
-.sdm-home-section-link {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-brand);
-  text-decoration: none;
-}
-
-.sdm-home-section-link:hover,
-.sdm-home-section-link:focus-visible {
-  text-decoration: underline;
-}
-
 .sdm-home-empty,
 .sdm-home-error {
   margin: 0;
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   background-color: var(--color-background-subtle);
   border-radius: var(--radius-md);
   padding: var(--spacing-4);
 }
 
 .sdm-home-error {
-  color: var(--color-text-danger, var(--color-text-default));
+  color: var(--color-text-danger, var(--color-text-body));
 }
 
-/* ─── My tickets list ─────────────────────────────────────────────────── */
+/* ─── Ticket list (used by OpenTicketsCard + /tickets route) ───────────── */
 
 .sdm-home-ticket-list {
   list-style: none;
@@ -192,8 +473,9 @@
 .sdm-home-ticket-ref {
   grid-area: ref;
   font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
 }
 
 .sdm-home-ticket-summary {
@@ -211,62 +493,161 @@
 .sdm-home-ticket-time {
   grid-area: time;
   font-size: var(--font-size-sm);
-  color: var(--color-text-muted);
+  color: var(--color-text-secondary);
 }
 
-/* ─── KB suggestions list ─────────────────────────────────────────────── */
+/* ─── Announcements card ───────────────────────────────────────────────── */
 
-.sdm-home-kb-list {
+.sdm-home-announcement-list {
   list-style: none;
   margin: 0;
   padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-home-announcement-row {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-2) var(--spacing-1);
+}
+
+.sdm-home-announcement-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-text-secondary);
+}
+
+.sdm-home-announcement-dot[data-tone="info"] {
+  background-color: var(--color-info-500, var(--color-text-link));
+}
+
+.sdm-home-announcement-dot[data-tone="warn"] {
+  background-color: var(--color-warning-500, var(--color-text-secondary));
+}
+
+.sdm-home-announcement-dot[data-tone="success"] {
+  background-color: var(--color-success-500, var(--color-text-secondary));
+}
+
+.sdm-home-announcement-title {
+  font-size: var(--font-size-base);
+  color: var(--color-text-body);
+}
+
+.sdm-home-announcement-date {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─── Catalog teaser ───────────────────────────────────────────────────── */
+
+.sdm-home-catalog-teaser {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.sdm-home-catalog-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: var(--spacing-3);
 }
 
 @media (min-width: 640px) {
-  .sdm-home-kb-list {
-    grid-template-columns: repeat(3, 1fr);
+  .sdm-home-catalog-grid {
+    grid-template-columns: repeat(4, 1fr);
   }
 }
 
-.sdm-home-kb-link {
-  display: block;
-  text-decoration: none;
-  color: inherit;
-  border-radius: var(--radius-md);
-}
+/* ─── Recent activity ──────────────────────────────────────────────────── */
 
-.sdm-home-kb-link:focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus-brand);
-}
-
-.sdm-home-kb-card {
-  height: 100%;
-}
-
-.sdm-home-kb-title {
-  margin: 0 0 var(--spacing-2);
-  font-size: var(--font-size-base, 1rem);
-  font-weight: var(--font-weight-semibold, 600);
-}
-
-.sdm-home-kb-excerpt {
+.sdm-home-activity-list {
+  list-style: none;
   margin: 0;
-  color: var(--color-text-muted);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-home-activity-row {
+  display: grid;
+  grid-template-columns: auto auto auto auto auto 1fr;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-1);
   font-size: var(--font-size-sm);
 }
 
-/* ─── I.0 — Loading skeletons ─────────────────────────────────────────── */
+.sdm-home-activity-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-brand-500, var(--color-text-link));
+}
 
-/*
- * Dimensions approximate the real rows so the layout doesn't shift when the
- * query resolves (CLS budget 0.05 per `performance.md §2 portal /`). A
- * single `<span>` per row keeps DOM cost low — the visual variation only
- * lives in CSS sizing.
- */
+.sdm-home-activity-actor {
+  color: var(--color-text-body);
+  font-weight: var(--font-weight-medium, 500);
+}
+
+.sdm-home-activity-verb {
+  color: var(--color-text-secondary);
+}
+
+.sdm-home-activity-ref {
+  font-family: var(--font-family-mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  color: var(--color-text-link);
+  text-decoration: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdm-home-activity-ref:hover,
+.sdm-home-activity-ref:focus-visible {
+  text-decoration: underline;
+}
+
+.sdm-home-activity-time {
+  justify-self: end;
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 639px) {
+  .sdm-home-activity-row {
+    grid-template-columns: auto 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "dot ref time"
+      "dot summary summary";
+    row-gap: 2px;
+  }
+  .sdm-home-activity-dot {
+    grid-area: dot;
+  }
+  .sdm-home-activity-actor,
+  .sdm-home-activity-verb {
+    display: none;
+  }
+  .sdm-home-activity-ref {
+    grid-area: ref;
+  }
+  .sdm-home-activity-time {
+    grid-area: time;
+  }
+  .sdm-home-activity-row [data-component="status-badge"] {
+    grid-area: summary;
+    justify-self: start;
+  }
+}
+
+/* ─── Skeleton placeholders ────────────────────────────────────────────── */
 
 .sdm-home-skeleton-row {
   padding: var(--spacing-3) var(--spacing-4);
@@ -275,18 +656,12 @@
 .sdm-home-skeleton {
   display: block;
   background-color: var(--color-background-subtle);
-  border-radius: var(--radius-sm, 0.25rem);
+  border-radius: var(--radius-sm);
 }
 
 .sdm-home-skeleton-ticket {
   height: 1.5rem;
   width: 70%;
-}
-
-.sdm-home-skeleton-kb {
-  height: 5rem;
-  width: 100%;
-  border-radius: var(--radius-md);
 }
 
 @media (prefers-reduced-motion: no-preference) {

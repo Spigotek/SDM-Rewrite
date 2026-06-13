@@ -34,10 +34,10 @@ import { registerPwa } from "./pwa/register-sw";
  * matching the pre-I.0 behaviour for the degraded path.
  *
  * Bonus: once `/me` lands and exposes an active tenant ID, the home feature's
- * data (`myTicketsQuery` + `kbSuggestionsQuery`) is kicked off in parallel
+ * data (`myTicketsQuery` + `myAllTicketsQuery`) is kicked off in parallel
  * with React mount. The `homeLoader` (React Router v6 data router) then sees
- * a warm cache and the Home shell's `<MyRecentTickets>` + `<KbSuggestions>`
- * paint without a second post-render fetch waterfall.
+ * a warm cache and the Home shell's `<OpenTicketsCard>` + `<HeroStats>` +
+ * `<RecentActivity>` paint without a second post-render fetch waterfall.
  *
  * I.0 Resolution 4 — `bootstrapI18n` is no longer on the critical path.
  * `useTranslation` is aliased to a tiny shim (`lib/i18n-shim.ts`) that ships

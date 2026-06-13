@@ -80,6 +80,7 @@ export function registerKbRoutes(app: Hono, deps: RestProxyDeps): void {
     defaultAttrs: DEFAULT_ATTRS,
     pkIsGuid: false,
     softClose: { kind: "none" },
+    listAlias: "articles",
     mapRow,
     mapCreate,
     mapUpdate,

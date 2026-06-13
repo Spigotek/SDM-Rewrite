@@ -14,8 +14,36 @@ export interface MyTicketSummary {
   readonly updatedAt: string | null;
 }
 
-export interface KbSuggestion {
+/**
+ * Slim row returned by the autocomplete dropdown in `KbSearchBar`. Matches
+ * the same `/api/kb` endpoint the KB route uses; the home autocomplete cares
+ * only about the link target and a short label.
+ */
+export interface KbAutocompleteHit {
   readonly id: string;
   readonly title: string;
-  readonly excerpt: string;
+  readonly snippet: string;
+}
+
+/**
+ * Aggregate of the user's active ticket buckets — drives the 3-up KPI strip
+ * (`HeroStats`). Derived client-side from `myAllTicketsQuery` (top 50).
+ */
+export interface HomeStats {
+  readonly open: number;
+  readonly awaiting: number;
+  readonly resolvedThisWeek: number;
+}
+
+/**
+ * Synthesised timeline event displayed in `RecentActivity`. Built on the
+ * client from the same `myAllTicketsQuery` payload — no dedicated activity
+ * endpoint exists yet, and the K.1 brief explicitly accepts this fallback.
+ */
+export interface RecentActivityEvent {
+  readonly id: string;
+  readonly ticketId: string;
+  readonly ticketRef: string;
+  readonly status: TicketStatus;
+  readonly timestamp: string;
 }
