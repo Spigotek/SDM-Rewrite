@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import "@sdm/design-system/tokens.css";
 import "@sdm/design-system/reset.css";
 import "@sdm/design-system/fonts.css";
+import { THEME_STORAGE_KEY, applyTheme, resolveTheme } from "@sdm/design-system";
 import App from "./App";
 import { loadConfig } from "./bootstrap/config";
 import { initSentry } from "./bootstrap/sentry";
@@ -47,6 +48,20 @@ import { registerPwa } from "./pwa/register-sw";
  * provides the LCP element; React handover removes it after first paint.
  */
 async function bootstrap(): Promise<void> {
+  // K.3.A — belt-and-braces theme apply. The inline FOUC script in
+  // `index.html` already paints `<html data-theme>` before this runs; this
+  // call is a safety net for environments where CSP blocks inline scripts
+  // or the inline body throws (e.g. SSR-prerender pipelines). Calling
+  // `applyTheme` twice with the same value is idempotent.
+  try {
+    const stored = localStorage.getItem(THEME_STORAGE_KEY);
+    const prefersDark = matchMedia("(prefers-color-scheme: dark)").matches;
+    const prefersContrast = matchMedia("(prefers-contrast: more)").matches;
+    applyTheme(resolveTheme(stored, prefersDark, prefersContrast));
+  } catch {
+    applyTheme("light");
+  }
+
   if (import.meta.env.VITE_USE_MOCKS === "true") {
     const { startMockWorker } = await import("./mocks/browser");
     await startMockWorker({ quiet: false });

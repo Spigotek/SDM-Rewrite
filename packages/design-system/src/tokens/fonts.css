@@ -24,6 +24,16 @@
   src: url("/fonts/inter-variable-latin.woff2") format("woff2-variations");
   font-weight: 100 900;
   font-style: normal;
+  /* K.3.A — fallback-metric overrides per K.1 brief §3. These tune the
+     `system-ui` / Segoe UI / Roboto fallback so it occupies the SAME visual
+     box Inter Variable does once it lands. Net effect: CLS shrinks back
+     below the 0.06 LHCI floor on workspace `/queue` (was 0.061 with
+     `font-display: optional` alone in K.2). Numbers are the published
+     Inter→system-ui adjustments. */
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
   /* K-fix CLS — `optional` blocks render for ≤100 ms, then either uses the
      font if cached or falls back permanently (no late swap). Combined with
      `<link rel="preload">` in app index.html the cached path hits every
@@ -39,6 +49,13 @@
   src: url("/fonts/inter-variable-latin-ext.woff2") format("woff2-variations");
   font-weight: 100 900;
   font-style: normal;
+  /* K.3.A — same fallback metrics as the `latin` face so the subset switch
+     does not itself trigger a layout shift on routes carrying Slovak
+     diacritics. */
+  size-adjust: 107%;
+  ascent-override: 90%;
+  descent-override: 22%;
+  line-gap-override: 0%;
   /* K-fix CLS — `optional` blocks render for ≤100 ms, then either uses the
      font if cached or falls back permanently (no late swap). Combined with
      `<link rel="preload">` in app index.html the cached path hits every

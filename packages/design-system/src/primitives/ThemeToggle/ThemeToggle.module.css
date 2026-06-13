@@ -1,0 +1,21 @@
+.toggle {
+  /* K.3.A — 32×32 ghost square (override DS sm = 28 / md = 36 sizing so the
+     toggle sits cleanly inline with adjacent 32-px elements in the top bar). */
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+}
+
+.toggle:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.toggle svg {
+  /* K.3.A — smooth icon swap on cycle. Reduced-motion clamps via tokens. */
+  transition: transform var(--motion-duration-fast) var(--motion-easing-out-expo);
+}
+
+.toggle:active svg {
+  transform: scale(0.92);
+}
