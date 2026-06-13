@@ -21,9 +21,9 @@ session-ov. Nový chat sa orientuje cez tento dokument + linkované špec docs +
 
 ## Aktuálny stav
 
-- **Status: 🚧 Phase K v1.1.4 in flight (2026-06-13)** — quick-wins UX overhaul + v1.1.3 live-deploy bug-fix bundle. Portal home rebuilt as 7-widget multi-column grid; workspace `/queue` upgraded to Anna's dashboard (KPI strip + filters + table + activity / change-calendar split). Top nav row + breadcrumbs on both apps. Design-system gains 8 new primitives (Tile / NavLink / Avatar / EmptyState / Breadcrumbs / Skeleton / ToastFlyout / list-stagger motion utility). StatusBadge ingests CA SDM lifecycle codes. BFF route-alias fix (`/api/kb/articles` + `/api/cmdb/cis` no longer 404). `BFF_*` env threading in `release.yml` so `/config` stops leaking dev defaults. Local typecheck 28/28 + lint 20/20 + test 27/27 green; MSW journey suite + axe verified on PR. Last merged before K: v1.1.3 PR #59 (portal `/tickets` full list page). Per-phase detail: [K.2-v1.1.4.md](./plans/K.2-v1.1.4.md); design brief: [K.1-design-brief.md](./plans/K.1-design-brief.md).
-- **Last merged:** v1.1.3 PR #59 (My tickets list page, portal). Predchádzajúce: v1.1.2 PR #58 (bare numeric ticket ID fix), J.0.1 PR #57 (BFF Dockerfile CMD hotfix), J.9.1 PR #56, J.9 PR #55, J.8 PR #54, J.7 PR #53, J.6 PR #52, J.5 PR #51, J.3 PR #50, J.1 PR #49.
-- **In flight:** Phase K v1.1.4 (PR pending); v1.2 redesign deferred to a separate feature branch post-merge.
+- **Status: 🚀 v1.1.4 LIVE on staging (2026-06-13)** — Phase K quick wins shipped. Stack alive on host `10.11.36.14`, 4 containers `1.1.4` healthy (bff + portal + workspace + frontdoor). `/config` no longer leaks dev defaults (`meta.appVersion=1.1.4`, `meta.buildId=796917ea`, `meta.deployedAt` populated, `bffOrigin`/`apiBaseUrl=http://10.11.36.14:88`). `/api/kb/articles` + `/api/cmdb/cis` no longer 404 (list-alias route fix; auth-gated 401 as expected). `manifest.webmanifest` ships `application/manifest+json`. Portal home is a 7-widget CSS-Grid dashboard; workspace `/queue` got KPI strip + filter chips + activity / change-calendar split. Design-system gained 8 new primitives (Tile / NavLink / Avatar + AvatarGroup / EmptyState / Breadcrumbs / Skeleton / ToastFlyout) + `staggerListRows()` motion utility + 12-code CA SDM `caCode` prop on StatusBadge. Release artefakty: tag `v1.1.4`, run 27467811369, `ghcr.io/spigotek/sdm-{bff,portal,workspace}:1.1.4` + helm OCI chart `oci://ghcr.io/spigotek/charts/sdm:1.1.4` + [GitHub Release v1.1.4](https://github.com/Spigotek/SDM-Rewrite/releases/tag/v1.1.4). Per-session detail: [K.2-v1.1.4.md](./plans/K.2-v1.1.4.md); design brief: [K.1-design-brief.md](./plans/K.1-design-brief.md).
+- **Last merged:** PR #60 `796917e` squash (Phase K v1.1.4). Predchádzajúce: v1.1.3 PR #59 (portal `/tickets` full list page), v1.1.2 PR #58 (bare numeric ticket ID fix), J.0.1 PR #57 (BFF Dockerfile CMD hotfix), J.9.1 PR #56, J.9 PR #55, J.8 PR #54, J.7 PR #53, J.6 PR #52, J.5 PR #51, J.3 PR #50, J.1 PR #49.
+- **In flight:** — (K.2 closed; K.3 v1.2 full redesign sits on a separate feature branch when started).
 - **Phase I:** ✅ DONE (8/8 chunks).
 - **Phase J:** ✅ COMPLETE — J.0 ✅ DONE (live deploy 2026-06-07 on `10.11.36.14`, BFF authentic'd against real CA SDM 17.4); J.0.1 ✅ v1.1.1 hotfix; J.1 ✅; J.2 ✅ N/A; J.3 ✅; J.4 ✅ N/A; J.5 ✅; J.6 ✅; J.7 ✅; J.8 ✅; J.9 ✅ + J.9.1 hotfix; v1.1.0 + v1.1.1 RELEASED.
 - **Project:** ✅ MVP + v1.1.1 COMPLETE end-to-end — Phase 0/C/D/E/F/G/H/I/J all done. v1.0 + v1.1 + v1.1.1 released, v1.1.1 live on staging. v2.0 scope = separate sequencing post-Phase J (real auth + persona handoff for live 18-journey coverage, analytics ingest, SSR, multi-instance Redis pub/sub, incident attachments, IndexedDB offline queue, bulk-ops, audit log explorer, release.yml VITE_SENTRY_DSN thread, helm values env-name realignment).
@@ -223,7 +223,7 @@ Dispatch: strict sekvenčný J.0 → J.9 (per `feedback_pr_flow.md` PR-flow). Pe
 
 ---
 
-### Phase K — Portal + Workspace UX overhaul 🟡 IN PROGRESS
+### Phase K — Portal + Workspace UX overhaul 🟡 K.2 DONE, K.3 NEXT
 
 > Cieľ: make SDM-Rewrite "feel professional" — replace the v1.1.3 "school project"
 > shell with a 2026-SaaS-grade portal + workspace. Two-phase delivery: v1.1.4 quick
@@ -240,16 +240,18 @@ Dispatch: strict sekvenčný J.0 → J.9 (per `feedback_pr_flow.md` PR-flow). Pe
   2026-06-13 (kept `#6366f1` brand, cmd+K modal deferred to v1.2, svgr plugin
   approved).
 
-- **K.2 v1.1.4 quick wins 🟡 IN-FLIGHT** — five rounds executed in parallel
+- **K.2 v1.1.4 quick wins ✅ DONE (2026-06-13)** — five rounds executed in parallel
   fan-out where file boundaries permit (Round A foundation tokens + 6 new
   primitives via 6 parallel subagents; Round B portal+workspace shells via 2
   parallel subagents; Round C home dashboards via 2 parallel; Round D
   observability fixes via 3 parallel; Round E i18n folded into B/C/D inline).
   Bundles the v1.1.3 live-deploy bug fixes (`/config` dev metadata leak,
   `/api/kb/articles` + `/api/cmdb/cis` 404s, PWA manifest MIME type) with
-  the ten "chcem všetko" UX improvements. 74 files modified / created / deleted.
-  Local typecheck 28/28 + lint 20/20 + test 27/27 green. MSW journey
-  suite + axe verified on PR. Plán: [K.2-v1.1.4.md](./plans/K.2-v1.1.4.md).
+  the ten "chcem všetko" UX improvements. 105 files modified / created /
+  deleted across 5 commits in PR #60. Five CI cycles to land (initial,
+  testid/audit, axe, font/CLS, LHCI threshold). Tag `v1.1.4`, run
+  27467811369, GHCR images + helm `oci://ghcr.io/spigotek/charts/sdm:1.1.4`,
+  live on `10.11.36.14`. Plán: [K.2-v1.1.4.md](./plans/K.2-v1.1.4.md), PR #60 squash `796917e`.
 
 - **K.3 v1.2 full redesign 🔮 NEXT** — feature branch `feat/v1.2-redesign`,
   multi-PR. Scope: brand-tied colour scale + neutral + semantic in

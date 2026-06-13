@@ -4,7 +4,7 @@
 surfaced by the J.0 live-deploy walkthrough on 2026-06-12 plus the ten
 "chcem všetko" UX improvements scoped in `docs/plans/K-prompt.md`.
 
-> Released 2026-MM-DD. Source tag: [`v1.1.4`](https://github.com/Spigotek/SDM-Rewrite/releases/tag/v1.1.4).
+> Released 2026-06-13. Source tag: [`v1.1.4`](https://github.com/Spigotek/SDM-Rewrite/releases/tag/v1.1.4).
 > Full changelog: [`docs/CHANGELOG.md`](./CHANGELOG.md).
 
 ## Build metadata — `/config` no longer leaks dev defaults

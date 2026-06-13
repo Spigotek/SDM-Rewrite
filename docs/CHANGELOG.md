@@ -9,7 +9,7 @@ per-chunk plans under `docs/plans/`. Sources of truth for design decisions live
 in `docs/spec/` and `docs/agents/`; this changelog tracks **what shipped** to the
 release artefact, not why.
 
-## [1.1.4] - 2026-MM-DD
+## [1.1.4] - 2026-06-13
 
 Quick-wins UX bundle + v1.1.3 live-deploy bug fixes. Synthesised from
 the K.1 design brief (ServiceNow / JSM / Freshservice / Linear / Notion
