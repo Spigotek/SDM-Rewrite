@@ -1,8 +1,10 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "@sdm/i18n";
+import { Breadcrumbs } from "./breadcrumbs";
 import { Heartbeat } from "./heartbeat";
 import { IdleModal } from "./idle-modal";
 import { LoginPage } from "./login-page";
+import { NavRow } from "./nav-row";
 import { PendingChangesProvider } from "./pending-changes";
 import { PendingChangesTestBridge } from "./pending-changes-test-bridge";
 import { useSession } from "./session-context";
@@ -16,6 +18,12 @@ export function AppShell({ appName, children }: { appName: string; children: Rea
       {import.meta.env.DEV && <PendingChangesTestBridge />}
       <div className="sdm-app-shell">
         <TopBar appName={appName} />
+        {status === "ready" && (
+          <>
+            <NavRow />
+            <Breadcrumbs />
+          </>
+        )}
         <main className="sdm-content" data-testid="shell-content">
           {status === "loading" && <p data-testid="session-loading">{t("meta.loading")}</p>}
           {status === "anonymous" && <LoginPage appName={appName} onSubmit={login} />}

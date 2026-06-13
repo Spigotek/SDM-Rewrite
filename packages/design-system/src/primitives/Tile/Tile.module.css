@@ -1,0 +1,122 @@
+.tile {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: var(--spacing-3);
+  width: 100%;
+  padding: var(--spacing-4);
+  background-color: var(--color-background-surface);
+  border: var(--border-width-thin) solid var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  color: var(--color-text-body);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  font: inherit;
+  transition:
+    border-color var(--motion-duration-fast) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
+    transform var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.tile:hover {
+  border-color: var(--color-primary-400);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-2px);
+}
+
+.tile:active {
+  transform: translateY(0);
+}
+
+.tile:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
+
+.tile:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+  box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile:hover,
+  .tile:active {
+    transform: none;
+  }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  flex-shrink: 0;
+  background-color: var(--color-primary-50);
+  color: var(--color-primary-700);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-lg);
+  line-height: 1;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.title {
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-md);
+}
+
+.description {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--line-height-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+}
+
+.trailing {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  align-self: end;
+  color: var(--color-text-tertiary);
+}
+
+.meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.chevron {
+  flex-shrink: 0;
+}
+
+.quick-action {
+  min-width: 12.5rem; /* ~200 px */
+  min-height: 8.75rem; /* ~140 px */
+}
+
+.catalog {
+  min-width: 17.5rem; /* ~280 px */
+  min-height: 10rem; /* ~160 px */
+}
+
+.kb {
+  min-width: 15rem; /* ~240 px */
+  min-height: 7.5rem; /* ~120 px */
+}

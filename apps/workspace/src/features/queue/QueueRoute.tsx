@@ -1,39 +1,47 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 import { useTranslation } from "@sdm/i18n";
+import { Button } from "@sdm/design-system";
 import type { UiQueueItem } from "@sdm/api-types";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
 import { queueQuery } from "./api";
 import { useColumnConfig, useQueueFilters, useQueueKeyboardNav, useSavedViews } from "./hooks";
+import { ChangeCalendarTeaser } from "./components/ChangeCalendarTeaser";
 import { ColumnConfig } from "./components/ColumnConfig";
 import { FilterBar } from "./components/FilterBar";
+import { QueueFilters } from "./components/QueueFilters";
 import { QueueSidebar } from "./components/QueueSidebar";
+import { QueueStats } from "./components/QueueStats";
 import { QueueTable } from "./components/QueueTable";
+import { RecentActivityCard } from "./components/RecentActivityCard";
 import { SavedViewsManager } from "./components/SavedViewsManager";
-import type { QueueFilters, SavedView } from "./types";
+import type { QueueFilters as QueueFiltersValue, SavedView } from "./types";
 import "./queue.css";
 
 /**
- * `/queue` route — Anna's default landing. Composes:
+ * `/queue` — Anna's workspace home (K.1 brief §10.2, v1.1.4 redesign).
  *
- *  ┌─ Sidebar (saved views) ─┬─ Main column ─────────────────────────────────┐
- *  │                          │ FilterBar + ColumnConfig + SaveView          │
- *  │                          │ QueueTable                                   │
- *  └──────────────────────────┴────────────────┬─────────────────────────────┘
- *                                              │ Right pane (placeholder, H.8)
+ *  Row 1 — `<QueueStats>`           5-up KPI strip (Otvorené / Moje / Po SLA / <1h / Dnes)
+ *  Row 2 — `<QueueFilters>`         saved-view selector + active-filter chips + "Iba moje"
+ *  Row 3 — `<QueueTable>`           dense 32-px row table (the existing centrepiece)
+ *  Row 4 — split: `<RecentActivityCard>` | `<ChangeCalendarTeaser>`
  *
- * Selection state lives in the URL (`?selected=:id`). H.7 ships a placeholder
- * right pane; H.8 fills it with the real ticket detail.
+ * The sidebar (`QueueSidebar`) and split-pane preview from H.7 are retained so
+ * keyboard navigation, saved views, and ticket preview keep working; only the
+ * dashboard widgets surround the table now.
  */
-function filterRows(rows: ReadonlyArray<UiQueueItem>, f: QueueFilters): ReadonlyArray<UiQueueItem> {
+function filterRows(
+  rows: ReadonlyArray<UiQueueItem>,
+  f: QueueFiltersValue,
+): ReadonlyArray<UiQueueItem> {
   const needle = f.search.trim().toLowerCase();
   return rows.filter((r) => {
     if (f.status.length > 0 && !(r.status && f.status.includes(r.status.code))) return false;
     if (f.priority.length > 0 && !(r.priority && f.priority.includes(r.priority.code)))
       return false;
-    if (f.assignee.length > 0 && !(r.assignee && f.assignee.includes(r.assignee.code)))
-      return false;
+    if (f.assignee.length > 0 && !(r.assignee && f.assignee.includes(r.assignee.id))) return false;
     if (f.ticketType.length > 0 && !f.ticketType.includes(r.ticketType)) return false;
     if (f.customer.length > 0 && !(r.customer && f.customer.includes(r.customer.code)))
       return false;
@@ -48,7 +56,7 @@ function filterRows(rows: ReadonlyArray<UiQueueItem>, f: QueueFilters): Readonly
   });
 }
 
-function filtersEqual(a: QueueFilters, b: QueueFilters): boolean {
+function filtersEqual(a: QueueFiltersValue, b: QueueFiltersValue): boolean {
   return (
     a.search === b.search &&
     sameArray(a.status, b.status) &&
@@ -72,6 +80,7 @@ export default function QueueRoute() {
   const { t } = useTranslation("workspace");
   const { session } = useSession();
   const tenantId = session?.tenantId;
+  const currentUserId = session?.userId ?? null;
 
   const {
     filters,
@@ -128,17 +137,58 @@ export default function QueueRoute() {
     saveView(name, filters);
   };
 
+  const handleSelectViewFilters = useCallback(
+    (next: QueueFiltersValue) => {
+      setFilters(next);
+      setSelectedId(null);
+    },
+    [setFilters, setSelectedId],
+  );
+
+  const handleClearChip = useCallback(
+    (axis: keyof Omit<QueueFiltersValue, "search">, value: string) => {
+      toggleFilterValue(axis, value);
+    },
+    [toggleFilterValue],
+  );
+
+  const handleToggleAssignedToMe = useCallback(() => {
+    if (!currentUserId) return;
+    toggleFilterValue("assignee", currentUserId);
+  }, [currentUserId, toggleFilterValue]);
+
   const selectedRow = selectedId ? (rows.find((r) => r.id === selectedId) ?? null) : null;
 
   return (
     <section data-testid="workspace-queue" className="sdm-queue-page">
-      <header className="sdm-queue-header">
-        <h1 className="sdm-queue-title">SDM Workspace</h1>
-        <span className="sdm-queue-tenant-hint">
-          {t("placeholders.activeTenant")}{" "}
-          <strong data-testid="active-tenant">{tenantId ?? ""}</strong>
-        </span>
+      <header className="sdm-queue-page-header">
+        <h1 className="sdm-queue-page-title">{t("queue.title")}</h1>
+        <Button
+          type="button"
+          variant="primary"
+          size="sm"
+          data-testid="queue-new-ticket"
+          leadingIcon={<Plus size={14} aria-hidden="true" />}
+          onClick={() => {
+            // v1.1.4 placeholder — "New ticket" composer lands with cmd+K in v1.2.
+            console.info("[queue] New-ticket composer placeholder (v1.2)");
+          }}
+        >
+          {t("queue.newTicket")}
+        </Button>
       </header>
+
+      <QueueStats rows={rows} currentUserId={currentUserId} isLoading={query.isPending} />
+
+      <QueueFilters
+        filters={filters}
+        rows={rows}
+        currentUserId={currentUserId}
+        savedViews={views}
+        onSelectView={handleSelectViewFilters}
+        onClearChip={handleClearChip}
+        onToggleAssignedToMe={handleToggleAssignedToMe}
+      />
 
       <div className="sdm-queue-layout">
         <QueueSidebar
@@ -219,6 +269,11 @@ export default function QueueRoute() {
             </div>
           )}
         </aside>
+      </div>
+
+      <div className="sdm-queue-dashboard-row">
+        <RecentActivityCard rows={rows} currentUserId={currentUserId} />
+        <ChangeCalendarTeaser tenantId={tenantId} />
       </div>
     </section>
   );

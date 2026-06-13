@@ -103,25 +103,58 @@
   --color-brand-border: var(--color-brand-500);
 
   /* ── §4 Semantic status colors ──────────────────────────────── */
+  /* Full 50/100/500/700/900 scales — K.1 brief §2. */
+  --color-success-50: #f0fdf4;
+  --color-success-100: #dcfce7;
+  --color-success-500: #22c55e;
+  --color-success-700: #15803d;
+  --color-success-900: #14532d;
   --color-success-fg: #16a34a;
-  --color-success-bg: #f0fdf4;
+  --color-success-bg: var(--color-success-50);
   --color-success-border: #86efac;
-  --color-success-solid: #15803d;
+  --color-success-solid: var(--color-success-700);
 
+  --color-warning-50: #fffbeb;
+  --color-warning-100: #fef3c7;
+  --color-warning-500: #f59e0b;
+  --color-warning-700: #b45309;
+  --color-warning-900: #78350f;
   --color-warning-fg: #d97706;
-  --color-warning-bg: #fffbeb;
+  --color-warning-bg: var(--color-warning-50);
   --color-warning-border: #fcd34d;
-  --color-warning-solid: #b45309;
+  --color-warning-solid: var(--color-warning-700);
 
+  --color-danger-50: #fef2f2;
+  --color-danger-100: #fee2e2;
+  --color-danger-500: #ef4444;
+  --color-danger-700: #b91c1c;
+  --color-danger-900: #7f1d1d;
   --color-danger-fg: #dc2626;
-  --color-danger-bg: #fef2f2;
+  --color-danger-bg: var(--color-danger-50);
   --color-danger-border: #fca5a5;
-  --color-danger-solid: #b91c1c;
+  --color-danger-solid: var(--color-danger-700);
 
+  --color-info-50: #eff6ff;
+  --color-info-100: #dbeafe;
+  --color-info-500: #3b82f6;
+  --color-info-700: #1d4ed8;
+  --color-info-900: #1e3a8a;
   --color-info-fg: #2563eb;
-  --color-info-bg: #eff6ff;
+  --color-info-bg: var(--color-info-50);
   --color-info-border: #93c5fd;
-  --color-info-solid: #1d4ed8;
+  --color-info-solid: var(--color-info-700);
+
+  /* Primary alias ramp — K.1 brief §2 canonical naming over `--color-brand-*`. */
+  --color-primary-50: var(--color-brand-50);
+  --color-primary-100: var(--color-brand-100);
+  --color-primary-200: var(--color-brand-200);
+  --color-primary-300: var(--color-brand-300);
+  --color-primary-400: var(--color-brand-400);
+  --color-primary-500: var(--color-brand-500);
+  --color-primary-600: var(--color-brand-600);
+  --color-primary-700: var(--color-brand-700);
+  --color-primary-800: var(--color-brand-800);
+  --color-primary-900: var(--color-brand-900);
 
   /* Severity (priority / risk) */
   --color-severity-critical: #b91c1c;
@@ -188,15 +221,19 @@
 
   /* ── §8 Motion / transitions ────────────────────────────────── */
   --motion-duration-instant: 0ms;
+  --motion-duration-tick: 80ms;
   --motion-duration-fast: 120ms;
   --motion-duration-base: 180ms;
   --motion-duration-slow: 240ms;
   --motion-duration-deliberate: 320ms;
+  --motion-duration-page: 320ms; /* K.1 brief alias — page-level transition */
   --motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-easing-emphasized: cubic-bezier(0.3, 0, 0, 1);
   --motion-easing-linear: linear;
   --motion-easing-decelerate: cubic-bezier(0, 0, 0.2, 1);
   --motion-easing-accelerate: cubic-bezier(0.4, 0, 1, 1);
+  --motion-easing-out-expo: cubic-bezier(0.16, 1, 0.3, 1); /* modal, cmd+K */
+  --motion-easing-spring: cubic-bezier(0.34, 1.2, 0.64, 1); /* drag snap-back */
 
   /* ── §9 Z-index ─────────────────────────────────────────────── */
   --z-base: 0;
@@ -241,6 +278,16 @@
   color-scheme: light;
 }
 
+/* ── Skeleton shimmer keyframe (K.1 brief §6.11) ─────────────── */
+@keyframes sdm-skeleton-shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
 /* ── Dark theme ──────────────────────────────────────────────── */
 [data-theme="dark"] {
   /* Neutral palette inverted */
@@ -283,26 +330,46 @@
   --color-brand-bg-subtle: var(--color-brand-900);
   --color-brand-fg: var(--color-brand-400);
 
-  /* Status colors (dark) */
+  /* Status colors (dark) — full 50/100/500/700/900 also valid in dark via shared ramp */
+  --color-success-50: #052e16;
+  --color-success-100: #14532d;
+  --color-success-500: #22c55e;
+  --color-success-700: #4ade80;
+  --color-success-900: #bbf7d0;
   --color-success-fg: #4ade80;
-  --color-success-bg: #052e16;
+  --color-success-bg: var(--color-success-50);
   --color-success-border: #16a34a;
-  --color-success-solid: #22c55e;
+  --color-success-solid: var(--color-success-500);
 
+  --color-warning-50: #451a03;
+  --color-warning-100: #78350f;
+  --color-warning-500: #f59e0b;
+  --color-warning-700: #fbbf24;
+  --color-warning-900: #fde68a;
   --color-warning-fg: #fbbf24;
-  --color-warning-bg: #451a03;
+  --color-warning-bg: var(--color-warning-50);
   --color-warning-border: #d97706;
-  --color-warning-solid: #f59e0b;
+  --color-warning-solid: var(--color-warning-500);
 
+  --color-danger-50: #450a0a;
+  --color-danger-100: #7f1d1d;
+  --color-danger-500: #ef4444;
+  --color-danger-700: #f87171;
+  --color-danger-900: #fecaca;
   --color-danger-fg: #f87171;
-  --color-danger-bg: #450a0a;
+  --color-danger-bg: var(--color-danger-50);
   --color-danger-border: #dc2626;
-  --color-danger-solid: #ef4444;
+  --color-danger-solid: var(--color-danger-500);
 
+  --color-info-50: #172554;
+  --color-info-100: #1e3a8a;
+  --color-info-500: #3b82f6;
+  --color-info-700: #60a5fa;
+  --color-info-900: #bfdbfe;
   --color-info-fg: #60a5fa;
-  --color-info-bg: #172554;
+  --color-info-bg: var(--color-info-50);
   --color-info-border: #2563eb;
-  --color-info-solid: #3b82f6;
+  --color-info-solid: var(--color-info-500);
 
   /* Severity (dark) */
   --color-severity-critical: #ef4444;

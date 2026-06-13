@@ -1,4 +1,4 @@
-import type { Hono } from "hono";
+import type { Context, Hono } from "hono";
 import { AppErrorException } from "../../auth/errors";
 import { AUDIT_EVENTS } from "../../platform/audit";
 import { requireActiveSession } from "../../session/load";
@@ -42,6 +42,15 @@ export interface EntityRouteConfig<TRow, TCreate, TUpdate> {
    * entities without it ignore the `customer` query param.
    */
   readonly customerMeAttr?: string;
+  /**
+   * Optional literal sub-path that aliases the list endpoint. Registered as
+   * `GET ${route}/${listAlias}` BEFORE the `:id` route so the literal segment
+   * wins over the parameter capture. Fixes K-prompt §"Outstanding bugs" #2 —
+   * `/api/kb/articles` and `/api/cmdb/cis` 404s where the SPA/operator probes
+   * a list endpoint that previously fell through to `GET /api/kb/:id` and
+   * proxied to `/KD/articles` upstream.
+   */
+  readonly listAlias?: string;
 }
 
 export function registerEntityRoutes<TRow, TCreate, TUpdate>(
@@ -51,7 +60,7 @@ export function registerEntityRoutes<TRow, TCreate, TUpdate>(
 ): void {
   const wrapper = config.xmlWrapper ?? config.factory;
 
-  app.get(config.route, async (c) => {
+  const listHandler = async (c: Context) => {
     const url = new URL(c.req.url);
     const { start, size } = paginationToCaSdm(url.searchParams);
     const baseWc = url.searchParams.get("filter") ?? "";
@@ -75,7 +84,16 @@ export function registerEntityRoutes<TRow, TCreate, TUpdate>(
       data: rows.map(config.mapRow) as ReadonlyArray<unknown>,
       page: { total, start: actualStart, size: rows.length },
     } as never);
-  });
+  };
+
+  app.get(config.route, listHandler);
+
+  // Literal-segment list alias (e.g. `/api/kb/articles`, `/api/cmdb/cis`).
+  // MUST register before the `:id` route so the literal wins over the
+  // parameter capture under Hono's RegExpRouter.
+  if (config.listAlias) {
+    app.get(`${config.route}/${config.listAlias}`, listHandler);
+  }
 
   app.get(`${config.route}/:id`, async (c) => {
     const id = c.req.param("id");

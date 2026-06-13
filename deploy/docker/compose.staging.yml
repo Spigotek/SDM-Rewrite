@@ -21,6 +21,12 @@ services:
       SESSION_IDLE_SEC: "1800"
       SESSION_ABSOLUTE_SEC: "28800"
       BFF_ATTACHMENTS_DIR: /var/lib/sdm/attachments-kb
+      # /config metadata — runtime half of the split. Build-time half
+      # (BFF_APP_VERSION, BFF_BUILD_ID) is baked into the image by release.yml.
+      # BFF_PUBLIC_ORIGIN is the externally-reachable BFF URL on this host;
+      # BFF_DEPLOYED_AT is set fresh on every compose-up (default = now()).
+      BFF_PUBLIC_ORIGIN: "${BFF_PUBLIC_ORIGIN}"
+      BFF_DEPLOYED_AT: "${BFF_DEPLOYED_AT:-}"
     volumes:
       - bff-attachments:/var/lib/sdm/attachments-kb
     networks: [sdm]

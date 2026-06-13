@@ -326,7 +326,10 @@
 }
 
 .sdm-queue-table tbody td {
-  padding: var(--spacing-1_5) var(--spacing-2);
+  /* K.1 brief §10.2 — 32-px row density. `--spacing-1` (4 px) padding + 24 px
+     content height yields a 32 px row. Tabular numerals everywhere in the
+     body so the columns line up regardless of glyph width. */
+  padding: var(--spacing-1) var(--spacing-2);
   border-bottom: var(--border-width-thin) solid
     var(--color-border-subtle, var(--color-border-default));
   vertical-align: middle;
@@ -334,6 +337,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdm-queue-table tbody tr:nth-child(even) {
+  background-color: var(--sdm-color-neutral-50, var(--color-background-subtle));
 }
 
 .sdm-queue-row {
@@ -428,4 +436,313 @@
   margin: 0;
   color: var(--color-text-tertiary);
   font-size: var(--font-size-sm);
+}
+
+/* ── K.1 page header ─────────────────────────────────────── */
+
+.sdm-queue-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-3);
+}
+
+.sdm-queue-page-title {
+  margin: 0;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+/* ── KPI strip (QueueStats) ──────────────────────────────── */
+
+.sdm-queue-stats {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--spacing-3);
+}
+
+@media (max-width: 900px) {
+  .sdm-queue-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.sdm-queue-stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  padding: var(--spacing-2_5) var(--spacing-3);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+  min-height: 5.5rem;
+}
+
+.sdm-queue-stat-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-semibold);
+}
+
+.sdm-queue-stat-icon {
+  display: inline-flex;
+  color: var(--color-text-tertiary);
+}
+
+.sdm-queue-stat-value {
+  font-size: var(--font-size-2xl, var(--font-size-xl));
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+  line-height: 1.1;
+}
+
+.sdm-queue-stat-subtitle {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* ── Saved view + active filter chips (QueueFilters) ─────── */
+
+.sdm-queue-filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2_5) var(--spacing-3);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+}
+
+.sdm-queue-filters-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  flex-wrap: wrap;
+}
+
+.sdm-queue-filters-saved {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.sdm-queue-filters-saved-label {
+  font-weight: var(--font-weight-medium);
+}
+
+.sdm-queue-filters-saved-select {
+  padding: var(--spacing-1_5) var(--spacing-2);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+  color: var(--color-text-body);
+  font: inherit;
+  min-width: 14rem;
+}
+
+.sdm-queue-filters-mine {
+  padding: var(--spacing-1_5) var(--spacing-3);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+  color: var(--color-text-body);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-sm);
+}
+
+.sdm-queue-filters-mine:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sdm-queue-filters-mine--active {
+  background-color: var(--color-brand-bg);
+  color: var(--color-text-inverse);
+  border-color: var(--color-brand-bg);
+}
+
+.sdm-queue-filters-chips {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1_5);
+  flex-wrap: wrap;
+  font-size: var(--font-size-xs);
+}
+
+.sdm-queue-filters-chips-empty {
+  color: var(--color-text-tertiary);
+}
+
+.sdm-queue-filters-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-0_5) var(--spacing-1_5);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-pill, 999px);
+  background-color: var(--color-background-subtle);
+  color: var(--color-text-body);
+}
+
+.sdm-queue-filters-chip-axis {
+  color: var(--color-text-tertiary);
+}
+
+.sdm-queue-filters-chip-value {
+  font-weight: var(--font-weight-medium);
+}
+
+.sdm-queue-filters-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 0;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: 0;
+  margin-left: var(--spacing-0_5);
+  line-height: 1;
+}
+
+.sdm-queue-filters-chip-remove:hover {
+  color: var(--color-text-primary);
+}
+
+.sdm-queue-filters-add {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-0_5) var(--spacing-2);
+  border: var(--border-width-thin) dashed var(--color-border-default);
+  border-radius: var(--radius-pill, 999px);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-xs);
+}
+
+.sdm-queue-filters-add:hover {
+  background-color: var(--color-background-hover);
+  color: var(--color-text-primary);
+}
+
+/* ── Dashboard split row (RecentActivity / ChangeCalendarTeaser) ── */
+
+.sdm-queue-dashboard-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: var(--spacing-4);
+}
+
+@media (max-width: 900px) {
+  .sdm-queue-dashboard-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.sdm-queue-card-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  margin-bottom: var(--spacing-3);
+}
+
+.sdm-queue-card-title {
+  margin: 0;
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-queue-card-link {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-link);
+  text-decoration: none;
+}
+
+.sdm-queue-card-link:hover {
+  text-decoration: underline;
+}
+
+.sdm-queue-card-empty {
+  margin: 0;
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-queue-activity-list,
+.sdm-queue-calendar-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-queue-activity-row,
+.sdm-queue-calendar-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-queue-activity-body,
+.sdm-queue-calendar-body {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.sdm-queue-activity-actor {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-body);
+}
+
+.sdm-queue-activity-verb {
+  color: var(--color-text-tertiary);
+}
+
+.sdm-queue-activity-ref,
+.sdm-queue-calendar-ref {
+  color: var(--color-text-link);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-medium);
+}
+
+.sdm-queue-calendar-icon {
+  display: inline-flex;
+  color: var(--color-text-tertiary);
+}
+
+.sdm-queue-calendar-summary {
+  color: var(--color-text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.sdm-queue-activity-age,
+.sdm-queue-calendar-when {
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-size-xs);
 }

@@ -25,7 +25,7 @@ function Probe() {
   return (
     <div>
       <p data-testid="signin">{tShared("actions.signIn")}</p>
-      <p data-testid="greeting">{tPortal("home.actions.newIncident.title")}</p>
+      <p data-testid="greeting">{tPortal("home.quickActions.report.title")}</p>
       <p data-testid="vars">{tPortal("home.greeting", { name: "Lucia" })}</p>
       <p data-testid="ready">{ready ? "ready" : "critical"}</p>
     </div>
@@ -44,7 +44,7 @@ describe("i18n-shim", () => {
     render(<Probe />);
     expect(screen.getByTestId("signin").textContent).toBe("Prihlásiť sa");
     expect(screen.getByTestId("greeting").textContent).toBe("Nahlásiť problém");
-    expect(screen.getByTestId("vars").textContent).toBe("Ahoj, Lucia 👋");
+    expect(screen.getByTestId("vars").textContent).toBe("Dobrý deň, Lucia.");
     expect(screen.getByTestId("ready").textContent).toBe("critical");
   });
 
@@ -62,7 +62,7 @@ describe("i18n-shim", () => {
     // `ready` flag flips.
     expect(screen.getByTestId("ready").textContent).toBe("ready");
     expect(screen.getByTestId("signin").textContent).toBe("Prihlásiť sa");
-    expect(screen.getByTestId("vars").textContent).toBe("Ahoj, Lucia 👋");
+    expect(screen.getByTestId("vars").textContent).toBe("Dobrý deň, Lucia.");
   });
 
   it("re-renders subscribed components on languageChanged", async () => {

@@ -10,7 +10,13 @@
     "home": "Home",
     "myTickets": "My tickets",
     "catalog": "Service catalog",
-    "knowledge": "Help"
+    "knowledge": "Help",
+    "primary": "Primary navigation",
+    "cmdkHint": "Search / command",
+    "notifications": "Notifications",
+    "userMenu": "Account",
+    "newIncident": "New incident",
+    "ticketDetail": "Ticket detail"
   },
   "catalog": {
     "reportProblem": "Report a problem",
@@ -18,25 +24,72 @@
     "browseAll": "Browse all services"
   },
   "home": {
-    "greeting": "Hi, {name} 👋",
-    "greetingAnonymous": "Hi 👋",
-    "subgreeting": "Welcome to Service Desk Manager. You can report an incident, request a catalog item, find a how-to in the knowledge base, or check the status of any ticket you've raised. Help with your first ticket is one click away.",
-    "actions": {
+    "greeting": "Hello, {name}.",
+    "greetingAnonymous": "Hello.",
+    "subgreeting": "What can we help you with today?",
+    "hero": {
+      "popularLabel": "Popular:"
+    },
+    "kbSearch": {
+      "label": "Search the knowledge base",
+      "placeholder": "Search the knowledge base or service catalog…",
+      "resultsLabel": "Knowledge base suggestions",
+      "emptyTitle": "Nothing found",
+      "emptyDescription": "Try different wording, or open a ticket."
+    },
+    "stats": {
+      "ariaLabel": "My ticket overview",
+      "open": "Open",
+      "awaiting": "Awaiting response",
+      "resolvedThisWeek": "Resolved this week"
+    },
+    "quickActions": {
       "ariaLabel": "Quick actions",
-      "newIncident": {
+      "report": {
         "title": "Report a problem",
         "body": "Something isn't working — laptop, access, network."
       },
-      "newRequest": {
-        "title": "Request something",
-        "body": "Software, access, hardware."
+      "catalog": {
+        "title": "Hardware / Software",
+        "body": "Pick from the service catalog."
+      },
+      "password": {
+        "title": "Password reset",
+        "body": "Quick ticket to restore your access."
       }
     },
     "myTickets": {
-      "title": "Your active tickets",
-      "seeAll": "See all →",
+      "title": "My open tickets",
+      "seeAll": "All →",
       "empty": "No tickets yet. When you need something, report a problem or request something.",
+      "emptyTitle": "No open tickets",
       "error": "Couldn't load tickets. Try refreshing the page."
+    },
+    "announcements": {
+      "title": "Announcements",
+      "items": {
+        "wifi": {
+          "title": "Wi-Fi maintenance Jun 13"
+        },
+        "catalog": {
+          "title": "New service catalog is open"
+        },
+        "vpn": {
+          "title": "VPN re-auth every 12 hours"
+        }
+      }
+    },
+    "catalog": {
+      "title": "Service catalog",
+      "seeAll": "All →"
+    },
+    "activity": {
+      "title": "Recent activity",
+      "actorSystem": "System",
+      "verbStatusChange": "updated ticket status",
+      "empty": "Recent ticket updates will appear here.",
+      "emptyTitle": "No activity",
+      "error": "Couldn't load activity."
     },
     "kb": {
       "title": "You might be looking for",

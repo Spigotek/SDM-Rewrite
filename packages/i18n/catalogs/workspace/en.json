@@ -7,8 +7,9 @@
     "userMenuLabel": "Agent menu"
   },
   "queue": {
-    "title": "Queue",
-    "filters": "Filters",
+    "title": "My queue",
+    "newTicket": "+ New",
+    "filtersGroupLabel": "Filters",
     "resetFilters": "Reset filters",
     "savedViews": "Saved views",
     "saveView": "Save view",
@@ -21,6 +22,15 @@
     "empty": "🎉 Queue is empty. Take a break or grab a coffee.",
     "emptyFiltered": "🔍 No tickets match these filters. Try relaxing the criteria or reset filters.",
     "unassigned": "Unassigned",
+    "stats": {
+      "ariaLabel": "Queue overview",
+      "open": "Open",
+      "mine": "Mine",
+      "overdue": "Overdue",
+      "lastHour": "< 1h",
+      "today": "Today",
+      "noSla": "No SLA"
+    },
     "axis": {
       "status": "Status",
       "priority": "Priority",
@@ -32,6 +42,29 @@
       "request": "Request",
       "problem": "Problem",
       "change": "Change"
+    },
+    "filters": {
+      "savedView": "View:",
+      "savedViewPlaceholder": "Pick a view…",
+      "viewAll": "All open incidents",
+      "viewMine": "My queue",
+      "viewOverdue": "Overdue",
+      "viewToday": "Opened today",
+      "assignedToMe": "Only mine",
+      "addFilter": "+ Add filter",
+      "activeAria": "Active filters",
+      "noActiveFilters": "No active filters.",
+      "removeChip": "Remove filter {axis}: {value}"
+    },
+    "recentActivity": {
+      "title": "Recent activity",
+      "empty": "No activity recently.",
+      "verbUpdated": "updated"
+    },
+    "changeCalendar": {
+      "title": "Change calendar",
+      "openLink": "Open calendar",
+      "empty": "No scheduled changes."
     },
     "columns": {
       "menu": "Columns",
@@ -77,6 +110,23 @@
   },
   "common": {
     "cancel": "Cancel"
+  },
+  "nav": {
+    "primary": "Primary navigation",
+    "workspace": "Workspace",
+    "queue": "Queue",
+    "changes": "Changes",
+    "problems": "Problems",
+    "cmdb": "CMDB",
+    "kb": "Knowledge",
+    "calendar": "Change calendar",
+    "editor": "Editor",
+    "analytics": "Analytics",
+    "spCockpit": "SP Cockpit",
+    "cmdkHint": "Search / command",
+    "notifications": "Notifications",
+    "unread": "unread",
+    "userMenu": "Account"
   },
   "ticketDetail": {
     "loading": "Loading ticket…",

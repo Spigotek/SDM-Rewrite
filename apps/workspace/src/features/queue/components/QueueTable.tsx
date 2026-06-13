@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef } from "react";
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { useTranslation } from "@sdm/i18n";
-import { PriorityBadge, StatusBadge, type Severity, type TicketStatus } from "@sdm/design-system";
+import {
+  PriorityBadge,
+  StatusBadge,
+  staggerListRows,
+  type Severity,
+  type TicketStatus,
+} from "@sdm/design-system";
 import type { UiQueueItem } from "@sdm/api-types";
 import type { QueueColumnKey } from "../types";
 
@@ -170,6 +176,12 @@ export function QueueTable(props: QueueTableProps) {
     }
   }, [selectedId]);
 
+  // K.1 brief §7 — list-item stagger on mount. Re-runs whenever the row count
+  // changes (new fetch / filter change) so freshly inserted rows fade in too.
+  useEffect(() => {
+    staggerListRows(bodyRef.current);
+  }, [rows.length]);
+
   return (
     <table
       className="sdm-queue-table"
@@ -194,6 +206,7 @@ export function QueueTable(props: QueueTableProps) {
           return (
             <tr
               key={row.id}
+              data-row
               data-row-id={row.original.id}
               data-testid="queue-row"
               data-selected={isSelected ? "true" : "false"}
