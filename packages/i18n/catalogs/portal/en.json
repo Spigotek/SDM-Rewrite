@@ -16,7 +16,21 @@
     "notifications": "Notifications",
     "userMenu": "Account",
     "newIncident": "New incident",
-    "ticketDetail": "Ticket detail"
+    "ticketDetail": "Ticket detail",
+    "mobile": {
+      "open": "Open menu",
+      "close": "Close menu",
+      "drawerAria": "Mobile navigation"
+    },
+    "themeToggle": {
+      "system": "system",
+      "light": "light",
+      "dark": "dark",
+      "aria": "Theme: {current} (click to switch to {next})"
+    },
+    "bottomNav": {
+      "aria": "Primary navigation"
+    }
   },
   "catalog": {
     "reportProblem": "Report a problem",

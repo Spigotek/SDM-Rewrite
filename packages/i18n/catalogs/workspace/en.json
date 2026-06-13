@@ -114,7 +114,7 @@
   "nav": {
     "primary": "Primary navigation",
     "workspace": "Workspace",
-    "queue": "Queue",
+    "queue": "My queue",
     "changes": "Changes",
     "problems": "Problems",
     "cmdb": "CMDB",
@@ -122,11 +122,43 @@
     "calendar": "Change calendar",
     "editor": "Editor",
     "analytics": "Analytics",
+    "settings": "Settings",
     "spCockpit": "SP Cockpit",
-    "cmdkHint": "Search / command",
+    "cmdkHint": "Search…",
     "notifications": "Notifications",
     "unread": "unread",
-    "userMenu": "Account"
+    "userMenu": "Account",
+    "groups": {
+      "top": "Overview",
+      "incidents": "Incidents",
+      "changes": "Changes",
+      "knowledge": "Knowledge",
+      "cmdb": "CMDB"
+    },
+    "items": {
+      "inbox": "Inbox",
+      "starred": "Starred",
+      "triage": "Triage",
+      "inProgress": "In progress",
+      "onHold": "On hold",
+      "resolved": "Resolved",
+      "pendingApproval": "Pending approval",
+      "scheduled": "Scheduled",
+      "calendar": "Calendar"
+    },
+    "rail": {
+      "collapseGroup": "Collapse {name} group",
+      "expandGroup": "Expand {name} group"
+    },
+    "userMenu": {
+      "themeToggle": "Theme",
+      "signOut": "Sign out",
+      "language": "Language"
+    },
+    "mobile": {
+      "open": "Open navigation",
+      "close": "Close navigation"
+    }
   },
   "ticketDetail": {
     "loading": "Loading ticket…",

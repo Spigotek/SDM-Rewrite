@@ -1,14 +1,15 @@
-import { Avatar, Button } from "@sdm/design-system";
+import { Avatar, Button, ThemeToggle, useTheme, type ThemeChoice } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { useHotkeys } from "react-hotkeys-hook";
 import { LanguageSwitcher } from "./language-switcher";
+import { openPortalDrawer } from "./mobile-drawer";
 import { useSession } from "./session-context";
 import { TenantSwitcher } from "./tenant-switcher";
 
 /**
  * Inline SVG icons. `lucide-react` is bundled by design-system but is not a
- * direct dep of `@sdm/portal`; the shell only needs two glyphs so we keep
- * them inline rather than enlarge portal's dep graph for v1.1.4.
+ * direct dep of `@sdm/portal`; the shell only needs a handful of glyphs so
+ * we keep them inline rather than enlarge portal's dep graph.
  */
 function SearchIcon({ size = 14 }: { size?: number }) {
   return (
@@ -27,6 +28,28 @@ function SearchIcon({ size = 14 }: { size?: number }) {
     >
       <circle cx="11" cy="11" r="8" />
       <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
+}
+
+function HamburgerIcon({ size = 18 }: { size?: number }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      <line x1="4" x2="20" y1="6" y2="6" />
+      <line x1="4" x2="20" y1="12" y2="12" />
+      <line x1="4" x2="20" y1="18" y2="18" />
     </svg>
   );
 }
@@ -61,9 +84,29 @@ function openCommandPalettePlaceholder(): void {
   console.info("[portal] Cmd+K modal — coming in v1.2");
 }
 
+type CycleChoice = "system" | "light" | "dark";
+
+function nextChoice(current: CycleChoice): CycleChoice {
+  if (current === "system") return "light";
+  if (current === "light") return "dark";
+  return "system";
+}
+
+function themeToggleLabel(choice: ThemeChoice, t: (key: string) => string): string {
+  // Mirror the DS default cycle wording but localised through the portal
+  // catalog so SK users get Slovak SR output. `hc` is outside the cycle and
+  // collapses to `system` for label purposes (it also resets there on click).
+  const current: CycleChoice = choice === "hc" ? "system" : choice;
+  const next = nextChoice(current);
+  return t("nav.themeToggle.aria")
+    .replace("{current}", t(`nav.themeToggle.${current}`))
+    .replace("{next}", t(`nav.themeToggle.${next}`));
+}
+
 export function TopBar({ appName }: { appName: string }) {
   const { t } = useTranslation();
   const { session, status, logout } = useSession();
+  const { choice, setChoice } = useTheme();
 
   // Reserve the keystroke globally so v1.2 can replace this placeholder
   // without retraining users. `enableOnFormTags` lets it work even when
@@ -84,6 +127,19 @@ export function TopBar({ appName }: { appName: string }) {
 
   return (
     <header className="sdm-top-bar" data-testid="top-bar">
+      {status === "ready" && session && (
+        <button
+          type="button"
+          className="sdm-hamburger"
+          data-testid="portal-hamburger"
+          onClick={openPortalDrawer}
+          aria-label={t("nav.mobile.open")}
+          aria-controls="portal-mobile-drawer"
+          title={t("nav.mobile.open")}
+        >
+          <HamburgerIcon size={20} />
+        </button>
+      )}
       <div className="sdm-brand">
         <span className="sdm-logo" aria-hidden="true">
           SDM
@@ -107,6 +163,13 @@ export function TopBar({ appName }: { appName: string }) {
               <kbd>K</kbd>
             </span>
           </button>
+          <span className="sdm-theme-toggle-slot" data-testid="portal-theme-toggle">
+            <ThemeToggle
+              value={choice}
+              onChange={setChoice}
+              aria-label={themeToggleLabel(choice, t)}
+            />
+          </span>
           <button
             type="button"
             className="sdm-notif-button"

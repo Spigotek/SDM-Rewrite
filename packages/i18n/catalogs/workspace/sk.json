@@ -114,7 +114,7 @@
   "nav": {
     "primary": "Hlavná navigácia",
     "workspace": "Workspace",
-    "queue": "Fronta",
+    "queue": "Moja fronta",
     "changes": "Zmeny",
     "problems": "Problémy",
     "cmdb": "CMDB",
@@ -122,11 +122,43 @@
     "calendar": "Kalendár zmien",
     "editor": "Editor",
     "analytics": "Analytika",
+    "settings": "Nastavenia",
     "spCockpit": "SP Cockpit",
-    "cmdkHint": "Hľadať / akcia",
+    "cmdkHint": "Hľadať…",
     "notifications": "Oznámenia",
     "unread": "neprečítaných",
-    "userMenu": "Účet"
+    "userMenu": "Účet",
+    "groups": {
+      "top": "Prehľad",
+      "incidents": "Incidenty",
+      "changes": "Zmeny",
+      "knowledge": "Znalosti",
+      "cmdb": "CMDB"
+    },
+    "items": {
+      "inbox": "Inbox",
+      "starred": "Sledované",
+      "triage": "Triáž",
+      "inProgress": "V riešení",
+      "onHold": "Čaká",
+      "resolved": "Vyriešené",
+      "pendingApproval": "Na schválenie",
+      "scheduled": "Naplánované",
+      "calendar": "Kalendár"
+    },
+    "rail": {
+      "collapseGroup": "Zbaliť skupinu {name}",
+      "expandGroup": "Rozbaliť skupinu {name}"
+    },
+    "userMenu": {
+      "themeToggle": "Téma",
+      "signOut": "Odhlásiť sa",
+      "language": "Jazyk"
+    },
+    "mobile": {
+      "open": "Otvoriť navigáciu",
+      "close": "Zavrieť navigáciu"
+    }
   },
   "ticketDetail": {
     "loading": "Načítavam ticket…",

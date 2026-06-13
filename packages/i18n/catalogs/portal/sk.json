@@ -16,7 +16,21 @@
     "notifications": "Oznámenia",
     "userMenu": "Účet",
     "newIncident": "Nový incident",
-    "ticketDetail": "Detail ticketu"
+    "ticketDetail": "Detail ticketu",
+    "mobile": {
+      "open": "Otvoriť menu",
+      "close": "Zavrieť menu",
+      "drawerAria": "Mobilná navigácia"
+    },
+    "themeToggle": {
+      "system": "systémovú",
+      "light": "svetlú",
+      "dark": "tmavú",
+      "aria": "Téma: {current} (klikni pre zmenu na {next})"
+    },
+    "bottomNav": {
+      "aria": "Hlavná navigácia"
+    }
   },
   "catalog": {
     "reportProblem": "Nahlásiť problém",

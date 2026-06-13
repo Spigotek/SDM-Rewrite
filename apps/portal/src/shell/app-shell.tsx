@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "@sdm/i18n";
+import { BottomNav } from "./bottom-nav";
 import { Breadcrumbs } from "./breadcrumbs";
 import { Heartbeat } from "./heartbeat";
 import { IdleModal } from "./idle-modal";
 import { LoginPage } from "./login-page";
+import { MobileDrawer } from "./mobile-drawer";
 import { NavRow } from "./nav-row";
 import { PendingChangesProvider } from "./pending-changes";
 import { PendingChangesTestBridge } from "./pending-changes-test-bridge";
@@ -22,6 +24,7 @@ export function AppShell({ appName, children }: { appName: string; children: Rea
           <>
             <NavRow />
             <Breadcrumbs />
+            <MobileDrawer />
           </>
         )}
         <main className="sdm-content" data-testid="shell-content">
@@ -40,6 +43,7 @@ export function AppShell({ appName, children }: { appName: string; children: Rea
             </>
           )}
         </main>
+        {status === "ready" && <BottomNav />}
       </div>
     </PendingChangesProvider>
   );

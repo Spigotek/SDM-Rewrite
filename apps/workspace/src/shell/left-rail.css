@@ -1,0 +1,309 @@
+/**
+ * K.3.B — workspace left-rail. 240-px persistent column on lg+. The rail
+ * itself owns scroll; the header (tenant switcher + cmd+K chip) stays pinned
+ * at the top, the nav scrolls in the middle, and the footer (settings + user
+ * menu) is anchored at the bottom via flex.
+ *
+ * Selectors below carry layout + the few visual overrides needed to make
+ * `<TenantSwitcher>` and `<LanguageSwitcher>` fit the 240-px context. Token
+ * values come from `@sdm/design-system/tokens.css`.
+ */
+
+.sdm-left-rail {
+  display: flex;
+  flex-direction: column;
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+  background-color: var(--color-background-surface);
+  border-right: var(--border-width-thin) solid var(--color-border-default);
+  height: 100%;
+  overflow: hidden;
+}
+
+.sdm-rail-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+}
+
+/* Tenant switcher fits the rail context — full-width trigger, no left margin. */
+.sdm-rail-header .sdm-tenant-display {
+  width: 100%;
+  justify-content: space-between;
+}
+
+.sdm-rail-header .sdm-tenant-display > span:first-child {
+  flex: 1 1 auto;
+  text-align: left;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sdm-rail-header .sdm-tenant-dropdown {
+  left: 0;
+  right: 0;
+  min-width: 0;
+}
+
+.sdm-rail-cmdk {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  height: 2rem;
+  padding: 0 var(--spacing-2_5);
+  background-color: var(--color-background-subtle);
+  color: var(--color-text-secondary);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-xs);
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.sdm-rail-cmdk:hover {
+  background-color: var(--color-background-hover);
+  color: var(--color-text-body);
+}
+
+.sdm-rail-cmdk:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
+
+.sdm-rail-cmdk-label {
+  flex: 1 1 auto;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sdm-rail-cmdk-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  font-family: var(--font-family-mono);
+  color: var(--color-text-tertiary);
+}
+
+.sdm-rail-cmdk-keys kbd {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1;
+}
+
+.sdm-rail-nav {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--spacing-2) 0;
+}
+
+.sdm-rail-group {
+  border-top: var(--border-width-thin) solid var(--color-border-default);
+  padding: var(--spacing-2) 0;
+}
+
+.sdm-rail-group:first-child {
+  border-top: 0;
+}
+
+.sdm-rail-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1_5);
+  width: 100%;
+  padding: var(--spacing-1) var(--spacing-3);
+  background-color: transparent;
+  border: 0;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-wide);
+  text-transform: uppercase;
+  text-align: left;
+}
+
+.sdm-rail-group-header:hover {
+  color: var(--color-text-body);
+}
+
+.sdm-rail-group-header:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+  border-radius: var(--radius-sm);
+}
+
+.sdm-rail-group-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.sdm-rail-group-label {
+  flex: 1 1 auto;
+}
+
+.sdm-rail-list {
+  list-style: none;
+  margin: var(--spacing-1) 0 0;
+  padding: 0 var(--spacing-1);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sdm-rail-item {
+  list-style: none;
+}
+
+.sdm-rail-item > a {
+  width: 100%;
+}
+
+.sdm-rail-footer {
+  padding: var(--spacing-2) var(--spacing-3);
+  border-top: var(--border-width-thin) solid var(--color-border-default);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+}
+
+.sdm-rail-footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  padding: var(--spacing-2) var(--spacing-2_5);
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+}
+
+.sdm-rail-footer-link:hover {
+  background-color: var(--color-background-hover);
+  color: var(--color-text-body);
+}
+
+.sdm-rail-user-menu {
+  position: relative;
+}
+
+.sdm-rail-user-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding: var(--spacing-1_5) var(--spacing-2);
+  background-color: transparent;
+  border: var(--border-width-thin) solid transparent;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  color: var(--color-text-body);
+  font: inherit;
+}
+
+.sdm-rail-user-trigger:hover {
+  background-color: var(--color-background-hover);
+}
+
+.sdm-rail-user-trigger:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
+
+.sdm-rail-user-name {
+  flex: 1 1 auto;
+  text-align: left;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-rail-user-popover {
+  position: absolute;
+  bottom: calc(100% + var(--spacing-1));
+  left: 0;
+  right: 0;
+  background-color: var(--color-background-surface);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--spacing-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  z-index: var(--z-dropdown);
+}
+
+.sdm-rail-user-popover-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  padding: var(--spacing-1) var(--spacing-2);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-body);
+}
+
+.sdm-rail-user-popover-label {
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xs);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+}
+
+/* The bundled `<LanguageSwitcher>` ships a `<label>+<select>` pair —
+ * suppress its inline label inside the popover where we already render a
+ * caption row. The `<select>` keeps a visible value and a programmatic
+ * `aria-label`, so accessibility is unchanged. */
+.sdm-rail-user-popover .sdm-language-switcher .sdm-language-label {
+  display: none;
+}
+
+.sdm-rail-user-popover .sdm-language-switcher select {
+  background-color: var(--color-background-surface);
+  color: var(--color-text-body);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-sm);
+  padding: 2px var(--spacing-1_5);
+  font: inherit;
+  font-size: var(--font-size-xs);
+}
+
+.sdm-rail-user-popover-item {
+  text-align: left;
+  background-color: transparent;
+  border: 0;
+  padding: var(--spacing-2) var(--spacing-2_5);
+  color: var(--color-text-body);
+  font: inherit;
+  font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.sdm-rail-user-popover-item:hover {
+  background-color: var(--color-background-hover);
+}
+
+.sdm-rail-user-popover-item:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
