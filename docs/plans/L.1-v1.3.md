@@ -14,12 +14,15 @@
   NotificationPopover primitive, `useNotifications` hook in each shell,
   bell wired to J.3 `/api/events` via the new `useAppEvents()` fan-out.
   Commit `4006dd6` (joint with L.1.A).
-- 🟡 **L.1.C — JSM inline status transitions (IN-FLIGHT)** — StatusBadge
-  transitionable mode, CA_SDM_TRANSITIONS lifecycle map, workspace
-  queue / ticket / problem / change consumers wired with optimistic
-  mutations.
-- ⏳ **L.1.D — v1.3.0 release** — PR, CI, squash merge, tag, release.yml,
-  ssh-deploy on `10.11.36.14`.
+- 🟢 **L.1.C — JSM inline status transitions (DONE 2026-06-14)** —
+  StatusBadge transitionable mode, CA_SDM_TRANSITIONS lifecycle map,
+  workspace queue / ticket / problem / change header consumers wired
+  with optimistic mutations + per-feature toast bus. DS test count
+  151 → 159 (+8 StatusBadge). Open BFF gaps logged but non-blocking
+  (PATCH endpoints for tickets / problems / changes status will land
+  v1.4 without further FE PR).
+- 🟡 **L.1.D — v1.3.0 release (IN-FLIGHT)** — PR, CI, squash merge,
+  tag, release.yml, ssh-deploy on `10.11.36.14`.
 
 ## Headline numbers (will fill in post-release)
 
