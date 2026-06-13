@@ -1,6 +1,12 @@
 import { useMemo } from "react";
 import { useTranslation } from "@sdm/i18n";
-import { Avatar, Select, StatusBadge, type TicketStatus } from "@sdm/design-system";
+import {
+  Avatar,
+  CA_SDM_TRANSITIONS,
+  Select,
+  StatusBadge,
+  type TicketStatus,
+} from "@sdm/design-system";
 import type { UiTicketDetail, UiTicketType } from "@sdm/api-types";
 import { usePatchTicket } from "../hooks";
 
@@ -64,6 +70,33 @@ function statusesFor(type: UiTicketType): ReadonlyArray<string> {
   }
 }
 
+/**
+ * Reverse map: `TicketStatus` → CA SDM code for this ticket type. Built by
+ * walking `statusesFor(type)` against `CA_TO_TICKET_STATUS`, so the canonical
+ * "next" code is whichever appears first in the per-type vocabulary. Returns
+ * the candidate transitions the lozenge menu should expose.
+ */
+function transitionMenuFor(
+  type: UiTicketType,
+  current: TicketStatus,
+): {
+  readonly allowed: ReadonlyArray<TicketStatus>;
+  readonly codeFor: (next: TicketStatus) => string | null;
+} {
+  const codes = statusesFor(type);
+  const reverse: Partial<Record<TicketStatus, string>> = {};
+  for (const code of codes) {
+    const mapped = CA_TO_TICKET_STATUS[code];
+    if (mapped && reverse[mapped] === undefined) reverse[mapped] = code;
+  }
+  const documented = CA_SDM_TRANSITIONS[current] ?? [];
+  const allowed = documented.filter((s) => reverse[s] !== undefined);
+  return {
+    allowed,
+    codeFor: (next: TicketStatus) => reverse[next] ?? null,
+  };
+}
+
 function formatOpened(iso: string | null, locale?: string): string {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -118,6 +151,16 @@ export function AgentTicketHeader({ detail }: AgentTicketHeaderProps) {
   const mappedStatus = CA_TO_TICKET_STATUS[statusCode] ?? "open";
   const customerName = detail.customer?.label ?? t("ticketDetail.header.anonymous");
 
+  const { allowed, codeFor } = useMemo(
+    () => transitionMenuFor(detail.ticketType, mappedStatus),
+    [detail.ticketType, mappedStatus],
+  );
+  const onStatusBadgeTransition = (next: TicketStatus) => {
+    const code = codeFor(next);
+    if (!code) return;
+    patch.mutate({ status: code });
+  };
+
   return (
     <header className="sdm-ticket-header" data-testid="ticket-header">
       <div className="sdm-ticket-header-title">
@@ -125,7 +168,17 @@ export function AgentTicketHeader({ detail }: AgentTicketHeaderProps) {
           #{detail.ref}
         </span>
         {detail.status ? (
-          <StatusBadge status={mappedStatus} label={detail.status.label} withIcon />
+          <StatusBadge
+            status={mappedStatus}
+            label={detail.status.label}
+            withIcon
+            transitionable
+            disabled={patch.isPending}
+            menuLabel={t("status.transition.menuLabel")}
+            allowedTransitions={allowed}
+            onTransition={onStatusBadgeTransition}
+            data-testid="ticket-header-status-badge"
+          />
         ) : null}
         <h1 className="sdm-ticket-header-summary" data-testid="ticket-summary">
           {detail.summary || t("ticketDetail.noSummary")}

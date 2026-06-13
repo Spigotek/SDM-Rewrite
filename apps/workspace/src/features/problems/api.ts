@@ -118,6 +118,34 @@ async function postJson<T>(path: string, body: unknown, op: string): Promise<T> 
   return jsonOrThrow<T>(resp, op);
 }
 
+async function patchJson<T>(path: string, body: unknown, op: string): Promise<T> {
+  const resp = await fetch(path, {
+    method: "PATCH",
+    credentials: "include",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify(body),
+  });
+  return jsonOrThrow<T>(resp, op);
+}
+
+/**
+ * L.1.C — Best-effort status PATCH for a problem. The BFF `/api/problems`
+ * factory currently only exposes GET/PUT/DELETE via the generic entity-routes
+ * registrar; this hits a PATCH path that is **not yet wired** in production —
+ * the FE catches the failure and surfaces the `status.transition.unsupported`
+ * toast so the UI is ready for backend catch-up without crashing.
+ */
+export function patchProblem(
+  id: string,
+  patch: { readonly statusCode?: string },
+): Promise<ProblemDetail> {
+  return patchJson<ProblemDetail>(
+    `/api/problems/${encodeURIComponent(id)}`,
+    patch,
+    "problem-patch",
+  );
+}
+
 async function deleteJson<T>(path: string, body: unknown, op: string): Promise<T> {
   const resp = await fetch(path, {
     method: "DELETE",

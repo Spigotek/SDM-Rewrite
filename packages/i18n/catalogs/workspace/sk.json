@@ -115,6 +115,14 @@
   "common": {
     "cancel": "Zrušiť"
   },
+  "status": {
+    "transition": {
+      "menuLabel": "Zmeniť stav",
+      "success": "Stav nastavený na {label}",
+      "error": "Nepodarilo sa zmeniť stav. Skús to znova.",
+      "unsupported": "Backend zatiaľ neumožňuje túto zmenu"
+    }
+  },
   "nav": {
     "primary": "Hlavná navigácia",
     "workspace": "Workspace",

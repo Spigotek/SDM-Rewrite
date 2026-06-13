@@ -1,6 +1,14 @@
+import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "@sdm/i18n";
-import { StatusBadge, type TicketStatus } from "@sdm/design-system";
+import {
+  CA_SDM_TRANSITIONS,
+  StatusBadge,
+  Toast,
+  ToastViewport,
+  type TicketStatus,
+} from "@sdm/design-system";
 import type { ProblemDetail } from "../types";
+import { usePatchProblem } from "../hooks";
 
 const STATUS_MAP: Record<string, TicketStatus> = {
   IDENTIFIED: "new",
@@ -10,6 +18,19 @@ const STATUS_MAP: Record<string, TicketStatus> = {
   RESOLVED: "resolved",
   CL: "closed",
   CD: "closed",
+};
+
+/**
+ * Reverse map: design-system `TicketStatus` → CA SDM problem status code. Only
+ * the canonical "next" codes are listed — the lozenge menu filters to whatever
+ * the documented lifecycle map supports for the current state.
+ */
+const REVERSE_STATUS_MAP: Partial<Record<TicketStatus, string>> = {
+  new: "IDENTIFIED",
+  in_progress: "INVESTIGATION",
+  open: "KNOWN_ERROR",
+  resolved: "RESOLVED",
+  closed: "CL",
 };
 
 function formatDate(iso: string | null | undefined, locale?: string): string {
@@ -34,6 +55,53 @@ function formatDate(iso: string | null | undefined, locale?: string): string {
  */
 export function ProblemHeader({ detail }: { readonly detail: ProblemDetail }) {
   const { t, i18n } = useTranslation("workspace");
+  const patch = usePatchProblem(detail.id);
+
+  const mapped = STATUS_MAP[detail.status] ?? "open";
+  const allowed = useMemo<ReadonlyArray<TicketStatus>>(
+    () => (CA_SDM_TRANSITIONS[mapped] ?? []).filter((s) => REVERSE_STATUS_MAP[s] !== undefined),
+    [mapped],
+  );
+
+  const [toasts, setToasts] = useState<
+    ReadonlyArray<{
+      readonly id: string;
+      readonly intent: "success" | "info" | "danger";
+      readonly title: string;
+    }>
+  >([]);
+  const pushToast = useCallback((intent: "success" | "info" | "danger", title: string) => {
+    const id = `t-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+    setToasts((prev) => [...prev, { id, intent, title }]);
+    setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 5000);
+  }, []);
+  const dismissToast = useCallback(
+    (id: string) => setToasts((prev) => prev.filter((toast) => toast.id !== id)),
+    [],
+  );
+
+  const onStatusTransition = (next: TicketStatus) => {
+    const code = REVERSE_STATUS_MAP[next];
+    if (!code) {
+      pushToast("info", t("status.transition.unsupported"));
+      return;
+    }
+    const label = t(`problems.statusLabel.${code}` as const, { defaultValue: code });
+    patch.mutate(
+      { statusCode: code },
+      {
+        onSuccess: () => pushToast("success", t("status.transition.success", { label })),
+        onError: (err) => {
+          // L.1.C — Problem status PATCH isn't wired in the BFF yet (the F.2
+          // entity registrar only exposes GET/PUT/DELETE). The FE wires the
+          // mutation anyway so backend catch-up in v1.4 doesn't need a FE PR.
+          console.warn("[ProblemHeader] status transition rejected — backend not wired", err);
+          pushToast("info", t("status.transition.unsupported"));
+        },
+      },
+    );
+  };
+
   return (
     <header className="sdm-problem-header" data-testid="problem-header">
       <div className="sdm-problem-header-title">
@@ -49,9 +117,15 @@ export function ProblemHeader({ detail }: { readonly detail: ProblemDetail }) {
         <div className="sdm-problem-header-field">
           <span className="sdm-problem-header-label">{t("problems.fields.status")}</span>
           <StatusBadge
-            status={STATUS_MAP[detail.status] ?? "open"}
+            status={mapped}
             label={t(`problems.statusLabel.${detail.status}` as const)}
             withIcon
+            transitionable
+            disabled={patch.isPending}
+            menuLabel={t("status.transition.menuLabel")}
+            allowedTransitions={allowed}
+            onTransition={onStatusTransition}
+            data-testid="problem-header-status-badge"
           />
         </div>
         <div className="sdm-problem-header-field">
@@ -73,6 +147,17 @@ export function ProblemHeader({ detail }: { readonly detail: ProblemDetail }) {
           </span>
         </div>
       </div>
+      <ToastViewport>
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            id={toast.id}
+            intent={toast.intent}
+            title={toast.title}
+            onDismiss={() => dismissToast(toast.id)}
+          />
+        ))}
+      </ToastViewport>
     </header>
   );
 }

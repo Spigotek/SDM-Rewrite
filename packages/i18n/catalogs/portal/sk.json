@@ -128,6 +128,14 @@
   "feedback": {
     "submitted": "Ticket #{id} odoslaný. Helpdesk to dostane okamžite."
   },
+  "status": {
+    "transition": {
+      "menuLabel": "Zmeniť stav",
+      "success": "Stav nastavený na {label}",
+      "error": "Nepodarilo sa zmeniť stav. Skús to znova.",
+      "unsupported": "Backend zatiaľ neumožňuje túto zmenu"
+    }
+  },
   "myTickets": {
     "title": "Moje tickety",
     "loading": "Načítavame tvoje tickety…",

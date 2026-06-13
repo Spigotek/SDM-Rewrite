@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { ChangeCategory, ChangeStatus, RiskLevel } from "@sdm/domain";
 import {
   changeDetailQueryKey,
+  patchChangeStatus,
   postApprove,
   postReject,
   postReminder,
@@ -11,6 +12,7 @@ import {
   type RejectPayload,
   type ReminderPayload,
 } from "./api";
+import type { ChangeRow } from "./types";
 import { CHANGE_TABS, type ChangeTabKey, type ChangeDetail } from "./types";
 import { EMPTY_CHANGES_FILTERS, type ChangesFiltersValue } from "./components/ChangesFiltersBar";
 
@@ -207,4 +209,37 @@ export function useSendReminder(id: string) {
   return useChangeDetailMutation<ReminderPayload, { ok: true; approverId: string }>(id, (payload) =>
     postReminder(id, payload),
   );
+}
+
+/**
+ * L.1.C — Status PATCH for a change. Hits `/api/changes/:id` with a tiny
+ * `{ statusCode }` body; the BFF doesn't expose this route in production yet,
+ * so the caller surfaces an "unsupported" toast on failure. Optimistic update
+ * is intentionally narrow — we only swap the `status` field, not the full
+ * detail, so a server-side schedule normalisation doesn't clobber the row.
+ */
+export function usePatchChangeStatus(id: string) {
+  const qc = useQueryClient();
+  const key = changeDetailQueryKey(id);
+  return useMutation({
+    mutationFn: (statusCode: string): Promise<ChangeRow> => patchChangeStatus(id, statusCode),
+    onMutate: async (statusCode) => {
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<ChangeDetail>(key);
+      if (previous) {
+        qc.setQueryData<ChangeDetail>(key, {
+          ...previous,
+          status: statusCode as ChangeStatus,
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, _statusCode, ctx) => {
+      const snapshot = (ctx as { previous?: ChangeDetail } | undefined)?.previous;
+      if (snapshot) qc.setQueryData(key, snapshot);
+    },
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: key });
+    },
+  });
 }

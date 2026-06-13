@@ -128,6 +128,14 @@
   "feedback": {
     "submitted": "Ticket #{id} submitted. Helpdesk will pick it up shortly."
   },
+  "status": {
+    "transition": {
+      "menuLabel": "Change status",
+      "success": "Status set to {label}",
+      "error": "Couldn't update status. Try again.",
+      "unsupported": "Backend doesn't support this transition yet"
+    }
+  },
   "myTickets": {
     "title": "My tickets",
     "loading": "Loading your tickets…",
