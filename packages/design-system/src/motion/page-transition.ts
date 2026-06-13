@@ -47,24 +47,54 @@ export function usePageTransition(key: string): UsePageTransitionResult {
       }
     }
 
-    if (previousKey.current === null) {
-      // First mount — fade-in only.
-      gsap.from(node, { opacity: 0, duration: FADE_IN_DURATION, ease: "none" });
-      previousKey.current = key;
-      return;
+    // Defensive try/catch: gsap.from on a node that React is about to swap
+    // (route transitions can orphan the node mid-tween in chromium /
+    // firefox while webkit's scheduler hides it) throws asynchronously
+    // inside RAF and bubbles up through React's error boundary. The
+    // transition is decorative — if it can't run cleanly, the page must
+    // still render. Animations failing to start ≠ page failing to mount.
+    let tween: gsap.core.Tween | null = null;
+    try {
+      if (previousKey.current === null) {
+        // First mount — fade-in only.
+        tween = gsap.from(node, { opacity: 0, duration: FADE_IN_DURATION, ease: "none" });
+      } else if (previousKey.current !== key) {
+        // Subsequent route change — fade-out then fade-in. React has already
+        // swapped children before this effect runs, so the visual reads as a
+        // fast crossfade rather than a sequenced ping-pong.
+        tween = gsap.fromTo(
+          node,
+          { opacity: 0 },
+          { opacity: 1, duration: FADE_IN_DURATION, ease: "power1.out" },
+        );
+      }
+    } catch (error) {
+      if (typeof console !== "undefined") {
+        console.warn("[usePageTransition] gsap tween failed, falling back to no animation", error);
+      }
     }
-
-    if (previousKey.current === key) return;
-
-    // Subsequent route change — fade-out then fade-in. React has already
-    // swapped children before this effect runs, so the visual reads as a
-    // fast crossfade rather than a sequenced ping-pong.
-    gsap.fromTo(
-      node,
-      { opacity: 0 },
-      { opacity: 1, duration: FADE_IN_DURATION, ease: "power1.out" },
-    );
     previousKey.current = key;
+
+    return () => {
+      // Ensure the in-flight tween is killed and any inline opacity gsap
+      // stamped on the node is cleared when the component unmounts. Without
+      // this an orphaned tween may continue writing to a detached node or
+      // the next mount picks up `opacity: 0` and never fades back in.
+      if (tween !== null) {
+        try {
+          tween.kill();
+        } catch {
+          /* swallow — best-effort cleanup */
+        }
+      }
+      if (node !== null) {
+        try {
+          gsap.set(node, { clearProps: "opacity" });
+        } catch {
+          /* swallow */
+        }
+      }
+    };
   }, [key]);
 
   return { ref };

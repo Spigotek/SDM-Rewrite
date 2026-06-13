@@ -64,17 +64,27 @@ export function staggerListRows(container: HTMLElement | null, options: StaggerO
   const effectivePerRowMs = Math.min(perRow, totalCap / rows.length);
 
   if (gsap?.from) {
-    gsap.from(rows, {
-      opacity: 0,
-      y: 6,
-      duration: duration / 1000,
-      ease: GSAP_EASE,
-      stagger: {
-        each: effectivePerRowMs / 1000,
-        amount: Math.min(totalCap, rows.length * effectivePerRowMs) / 1000,
-      },
-    });
-    return;
+    // Defensive try/catch — see usePageTransition. The animation is
+    // decorative; if gsap throws on a detached / mid-unmount container,
+    // we must not bubble that to React's error boundary.
+    try {
+      gsap.from(rows, {
+        opacity: 0,
+        y: 6,
+        duration: duration / 1000,
+        ease: GSAP_EASE,
+        stagger: {
+          each: effectivePerRowMs / 1000,
+          amount: Math.min(totalCap, rows.length * effectivePerRowMs) / 1000,
+        },
+      });
+      return;
+    } catch (error) {
+      if (typeof console !== "undefined") {
+        console.warn("[staggerListRows] gsap stagger failed, skipping animation", error);
+      }
+      return;
+    }
   }
 
   // Defensive fallback — Web Animations API path. Used when GSAP is absent
