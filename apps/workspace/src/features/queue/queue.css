@@ -123,18 +123,28 @@
 
 /* ── main ────────────────────────────────────────────────── */
 
+/* K-fix CLS — `min-height: 0` lets flex shrink, `overflow: auto` keeps the
+   table inside the layout column instead of pushing the dashboard row
+   below. Without this the post-load table grows from the loading state's
+   reserved 30 rem to ~95 rem (48 × 32 px rows) and shifts the dashboard
+   down by ~1000 px. */
 .sdm-queue-main {
   display: flex;
   flex-direction: column;
   min-height: 0;
   gap: var(--spacing-3);
+  overflow: auto;
 }
 
+/* K-fix CLS — reserve toolbar height. Filter chips render after the rows
+   query resolves and add a second wrapped line, shifting the trailing
+   actions by ~35 px. Locking min-height absorbs the late row growth. */
 .sdm-queue-toolbar {
   display: flex;
   align-items: flex-start;
   gap: var(--spacing-3);
   flex-wrap: wrap;
+  min-height: 4.25rem;
 }
 
 .sdm-queue-toolbar-trailing {
@@ -146,12 +156,16 @@
 
 /* ── filter bar ──────────────────────────────────────────── */
 
+/* K-fix CLS — search row (~36 px) + 4 chip group rows (~28 px each) +
+   gaps ≈ 178 px. Locking min-height keeps the toolbar-trailing column
+   anchored when chip groups appear after the queue query resolves. */
 .sdm-queue-filterbar {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
   flex: 1 1 auto;
   min-width: 0;
+  min-height: 11rem;
 }
 
 .sdm-queue-filterbar-row {
@@ -371,11 +385,15 @@
   font-weight: var(--font-weight-semibold);
 }
 
+/* K-fix — axe-core reports contrast in the 4.28–4.48 band for tertiary text on
+   the stripe (`#f8fafc`) due to subpixel anti-aliasing. Math is 4.55:1 but
+   chrome's rendered pixel value falls below 4.5:1. Promote to `text-secondary`
+   (neutral-600 #475569 → 7.24:1 on stripe, 7.58:1 on white) for both cells. */
 .sdm-queue-cell-type {
   font-size: var(--font-size-xs);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wide);
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
 }
 
 .sdm-queue-cell-summary {
@@ -387,15 +405,22 @@
 
 .sdm-queue-cell-age {
   font-variant-numeric: tabular-nums;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
 }
 
 /* ── states ──────────────────────────────────────────────── */
 
+/* K-fix CLS — reserve table height while query.isPending so the dashboard row
+   below doesn't shift up by ~480 px when rows resolve. 30rem ≈ a 32px-row
+   table rendering ~15 rows in the above-the-fold viewport. */
 .sdm-queue-state {
   padding: var(--spacing-6);
   color: var(--color-text-tertiary);
   text-align: center;
+  min-height: 30rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sdm-queue-state--error {
@@ -460,15 +485,21 @@
 
 /* ── KPI strip (QueueStats) ──────────────────────────────── */
 
+/* K-fix — reserve grid height before tile content lands so the table below
+   doesn't shift when `query.isPending` flips off. `.sdm-queue-stat` is
+   88 px tall (min-height 5.5rem); the outer container locks the same value. */
 .sdm-queue-stats {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--spacing-3);
+  min-height: 5.5rem;
 }
 
 @media (max-width: 900px) {
   .sdm-queue-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    /* Two rows of 88 px + 12 px gap when wrapped. */
+    min-height: calc(5.5rem * 2 + var(--spacing-3));
   }
 }
 
@@ -514,6 +545,9 @@
 
 /* ── Saved view + active filter chips (QueueFilters) ─────── */
 
+/* K-fix — saved-view row + chip row + padding (10 + 32 + 8 + 28 + 10 ≈ 88 px).
+   Locked min-height keeps the table from shifting when the rows-derived chips
+   render their labels after the queue query resolves. */
 .sdm-queue-filters {
   display: flex;
   flex-direction: column;
@@ -522,6 +556,7 @@
   border: var(--border-width-thin) solid var(--color-border-default);
   border-radius: var(--radius-md);
   background-color: var(--color-background-surface);
+  min-height: 5.5rem;
 }
 
 .sdm-queue-filters-row {
@@ -644,15 +679,25 @@
 
 /* ── Dashboard split row (RecentActivity / ChangeCalendarTeaser) ── */
 
+/* K-fix — reserve 240 px (≈ 10 activity rows at 20 px + card padding +
+   header) before either card resolves. Both children stretch to the row so
+   the value covers the empty/loading branches as well. */
 .sdm-queue-dashboard-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: var(--spacing-4);
+  min-height: 15rem;
+}
+
+.sdm-queue-dashboard-row > * {
+  min-height: 15rem;
 }
 
 @media (max-width: 900px) {
   .sdm-queue-dashboard-row {
     grid-template-columns: minmax(0, 1fr);
+    /* Two cards stacked, each 15 rem. */
+    min-height: calc(15rem * 2 + var(--spacing-4));
   }
 }
 

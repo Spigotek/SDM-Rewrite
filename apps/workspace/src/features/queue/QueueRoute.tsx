@@ -272,7 +272,7 @@ export default function QueueRoute() {
       </div>
 
       <div className="sdm-queue-dashboard-row">
-        <RecentActivityCard rows={rows} currentUserId={currentUserId} />
+        <RecentActivityCard rows={rows} currentUserId={currentUserId} isLoading={query.isPending} />
         <ChangeCalendarTeaser tenantId={tenantId} />
       </div>
     </section>

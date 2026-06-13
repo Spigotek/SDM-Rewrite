@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "@sdm/i18n";
-import { Avatar, Card } from "@sdm/design-system";
+import { Avatar, Card, Skeleton } from "@sdm/design-system";
 import type { UiQueueItem } from "@sdm/api-types";
 
 /**
@@ -36,10 +36,13 @@ function relativeAge(ms: number, now: number): string {
 export interface RecentActivityCardProps {
   readonly rows: ReadonlyArray<UiQueueItem>;
   readonly currentUserId: string | null;
+  readonly isLoading: boolean;
 }
 
+const SKELETON_ROWS = 6;
+
 export function RecentActivityCard(props: RecentActivityCardProps) {
-  const { rows, currentUserId } = props;
+  const { rows, currentUserId, isLoading } = props;
   const { t } = useTranslation("workspace");
 
   const entries = useMemo(() => {
@@ -54,7 +57,21 @@ export function RecentActivityCard(props: RecentActivityCardProps) {
       <header className="sdm-queue-card-header">
         <h2 className="sdm-queue-card-title">{t("queue.recentActivity.title")}</h2>
       </header>
-      {entries.length === 0 ? (
+      {isLoading ? (
+        // K-fix CLS — render fixed-height Skeleton rows so the dashboard slot
+        // doesn't collapse to zero height before the queue query resolves.
+        <ul className="sdm-queue-activity-list" aria-hidden="true">
+          {Array.from({ length: SKELETON_ROWS }, (_, i) => (
+            <li key={i} className="sdm-queue-activity-row">
+              <Skeleton variant="circle" width={24} height={24} />
+              <span className="sdm-queue-activity-body">
+                <Skeleton variant="text" width="60%" height={16} />
+              </span>
+              <Skeleton variant="text" width={28} height={12} />
+            </li>
+          ))}
+        </ul>
+      ) : entries.length === 0 ? (
         <p className="sdm-queue-card-empty">{t("queue.recentActivity.empty")}</p>
       ) : (
         <ul className="sdm-queue-activity-list">

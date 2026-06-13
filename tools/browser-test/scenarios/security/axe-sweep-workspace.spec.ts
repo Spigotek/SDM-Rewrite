@@ -27,6 +27,11 @@ test.describe("@a11y workspace axe sweep", () => {
     test(`workspace ${route.name} (${route.path}) — no serious / critical a11y violations`, async ({
       isolatedPage,
     }) => {
+      // K-fix — emulate `prefers-reduced-motion: reduce` so the K.1 brief §7
+      // list-row stagger lands instantly. Without this, axe samples mid-fade
+      // and reports a transient `color-contrast` failure on row cells whose
+      // opacity is still animating from 0 to 1.
+      await isolatedPage.emulateMedia({ reducedMotion: "reduce" });
       await isolatedPage.goto(route.path);
       await isolatedPage.locator(route.readySelector).waitFor({ timeout: 20_000 });
 
@@ -58,6 +63,7 @@ test.describe("@a11y workspace axe sweep", () => {
   test("workspace ticket detail — no serious / critical a11y violations", async ({
     isolatedPage,
   }) => {
+    await isolatedPage.emulateMedia({ reducedMotion: "reduce" });
     await isolatedPage.goto("/queue");
     const firstRow = isolatedPage.getByTestId("queue-row").first();
     await firstRow.waitFor({ timeout: 20_000 });
@@ -79,6 +85,7 @@ test.describe("@a11y workspace axe sweep", () => {
   test("workspace change detail — no serious / critical a11y violations", async ({
     isolatedPage,
   }) => {
+    await isolatedPage.emulateMedia({ reducedMotion: "reduce" });
     await isolatedPage.goto("/changes");
     await isolatedPage.locator('[data-testid="workspace-changes"]').waitFor({ timeout: 20_000 });
     const firstRow = isolatedPage.locator("tr[data-row-id]").first();
@@ -103,6 +110,7 @@ test.describe("@a11y workspace axe sweep", () => {
   test("workspace problem detail — no serious / critical a11y violations", async ({
     isolatedPage,
   }) => {
+    await isolatedPage.emulateMedia({ reducedMotion: "reduce" });
     await isolatedPage.goto("/problems");
     await isolatedPage.locator('[data-testid="workspace-problems"]').waitFor({ timeout: 20_000 });
     const firstRow = isolatedPage.locator("tr[data-row-id]").first();
@@ -127,6 +135,7 @@ test.describe("@a11y workspace axe sweep", () => {
   test("workspace CMDB CI detail — no serious / critical a11y violations", async ({
     isolatedPage,
   }) => {
+    await isolatedPage.emulateMedia({ reducedMotion: "reduce" });
     await isolatedPage.goto("/cmdb");
     await isolatedPage.locator('[data-testid="workspace-cmdb"]').waitFor({ timeout: 20_000 });
     const firstRow = isolatedPage.locator("tr[data-row-id]").first();
@@ -149,6 +158,7 @@ test.describe("@a11y workspace axe sweep", () => {
   });
 
   test("workspace KB article — no serious / critical a11y violations", async ({ isolatedPage }) => {
+    await isolatedPage.emulateMedia({ reducedMotion: "reduce" });
     await isolatedPage.goto("/kb");
     await isolatedPage.locator('[data-testid="workspace-kb"]').waitFor({ timeout: 20_000 });
     const firstLink = isolatedPage.locator('a[href^="/kb/article/"]').first();

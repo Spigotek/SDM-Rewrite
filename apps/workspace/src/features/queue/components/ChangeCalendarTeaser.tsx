@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar } from "lucide-react";
 import { useTranslation } from "@sdm/i18n";
-import { Card } from "@sdm/design-system";
+import { Card, Skeleton } from "@sdm/design-system";
 import type { TenantId } from "@sdm/domain";
 import { changesListQuery } from "../../changes/api";
 import type { ChangeRow } from "../../changes/types";
@@ -76,7 +76,21 @@ export function ChangeCalendarTeaser(props: ChangeCalendarTeaserProps) {
         </a>
       </header>
       {query.isPending && !!tenantId ? (
-        <p className="sdm-queue-card-empty">{t("changes.calendar.loading")}</p>
+        // K-fix CLS — render Skeleton rows at the same shape as the resolved
+        // list. A 5-row teaser averages ~120 px of list content; the
+        // surrounding card + header puts it within the dashboard 15rem floor.
+        <ul className="sdm-queue-calendar-list" aria-hidden="true">
+          {Array.from({ length: MAX_ENTRIES }, (_, i) => (
+            <li key={i} className="sdm-queue-calendar-row">
+              <Skeleton variant="block" width={14} height={14} />
+              <span className="sdm-queue-calendar-body">
+                <Skeleton variant="text" width={48} height={14} />
+                <Skeleton variant="text" width="60%" height={14} />
+              </span>
+              <Skeleton variant="text" width={24} height={12} />
+            </li>
+          ))}
+        </ul>
       ) : upcoming.length === 0 ? (
         <p className="sdm-queue-card-empty">{t("queue.changeCalendar.empty")}</p>
       ) : (
