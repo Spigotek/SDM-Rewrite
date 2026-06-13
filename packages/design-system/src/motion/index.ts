@@ -12,3 +12,6 @@ export {
   SKELETON_SHIMMER_EASING,
   SKELETON_SHIMMER_ANIMATION,
 } from "./skeleton-shimmer";
+
+export { useCountUp } from "./use-count-up";
+export type { UseCountUpOptions } from "./use-count-up";

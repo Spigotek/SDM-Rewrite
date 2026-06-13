@@ -1,6 +1,7 @@
+import { useRef } from "react";
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Skeleton } from "@sdm/design-system";
+import { Skeleton, useCountUp } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import type { HomeStats } from "../types";
 
@@ -81,6 +82,19 @@ interface KpiTileProps {
   readonly tone: "open" | "awaiting" | "resolved";
 }
 
+function KpiNumber({ value }: { value: number }) {
+  const ref = useRef<HTMLSpanElement | null>(null);
+  // L.1.A — count-up animation on mount + on value change. The initial
+  // textContent is the target value so SSR / no-effect environments still
+  // render the correct number; the hook overwrites it on mount.
+  useCountUp(value, { ref });
+  return (
+    <span ref={ref} style={{ fontVariantNumeric: "tabular-nums" }}>
+      {value}
+    </span>
+  );
+}
+
 function KpiTile({ icon, label, value, href, testId, tone }: KpiTileProps) {
   return (
     <Link
@@ -97,7 +111,7 @@ function KpiTile({ icon, label, value, href, testId, tone }: KpiTileProps) {
         {value === null ? (
           <Skeleton variant="text" width={28} height={28} />
         ) : (
-          <span style={{ fontVariantNumeric: "tabular-nums" }}>{value}</span>
+          <KpiNumber value={value} />
         )}
       </span>
       <span className="sdm-home-kpi-label">{label}</span>

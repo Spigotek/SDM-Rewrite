@@ -1,0 +1,191 @@
+.root {
+  position: fixed;
+  width: 360px;
+  max-height: min(560px, calc(100vh - 96px));
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-surface-raised, var(--color-surface, #fff));
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.08));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg, 0 12px 32px rgba(0, 0, 0, 0.16));
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  z-index: var(--z-popover, 1100);
+  overflow: hidden;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  border-bottom: 1px solid var(--color-border, rgba(0, 0, 0, 0.06));
+  background-color: var(--color-surface-muted, transparent);
+}
+
+.title {
+  font-weight: var(--font-weight-semibold);
+  font-size: var(--font-size-base);
+}
+
+.markAll {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding: var(--spacing-1) var(--spacing-2);
+  border: none;
+  background: transparent;
+  color: var(--color-primary-600);
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.markAll:hover {
+  background-color: var(--color-primary-50, rgba(0, 0, 0, 0.04));
+}
+
+.markAll:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-primary-500, currentColor);
+}
+
+.emptyWrap {
+  padding: var(--spacing-2) var(--spacing-2);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  flex: 1 1 auto;
+}
+
+.row {
+  display: block;
+  border-bottom: 1px solid var(--color-border, rgba(0, 0, 0, 0.04));
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowLink,
+.rowStatic {
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: flex-start;
+  gap: var(--spacing-2);
+  padding: var(--spacing-3) var(--spacing-4);
+  color: inherit;
+  text-decoration: none;
+}
+
+.rowLink:hover {
+  background-color: var(--color-surface-muted, rgba(0, 0, 0, 0.03));
+}
+
+.rowLink:focus-visible {
+  outline: none;
+  background-color: var(--color-surface-muted, rgba(0, 0, 0, 0.03));
+  box-shadow: inset 2px 0 0 var(--color-primary-500);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  margin-top: 6px;
+  background-color: var(--color-info-500);
+}
+
+.dot_info {
+  background-color: var(--color-info-500);
+}
+
+.dot_warning {
+  background-color: var(--color-warning-500);
+}
+
+.dot_danger {
+  background-color: var(--color-danger-500);
+}
+
+.dot_success {
+  background-color: var(--color-success-500);
+}
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-full);
+  background-color: var(--color-primary-50, rgba(0, 0, 0, 0.06));
+  color: var(--color-primary-700, var(--color-text-primary));
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  flex-shrink: 0;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-width: 0;
+}
+
+.verb {
+  font-size: var(--font-size-sm);
+  line-height: 1.35;
+  word-wrap: break-word;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.ticketRef {
+  font-family: var(--font-family-mono, ui-monospace, monospace);
+}
+
+.time {
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+}
+
+.moreCount {
+  color: var(--color-primary-600);
+  font-weight: var(--font-weight-medium);
+}
+
+.footer {
+  padding: var(--spacing-2) var(--spacing-4);
+  border-top: 1px solid var(--color-border, rgba(0, 0, 0, 0.06));
+  text-align: center;
+  background-color: var(--color-surface-muted, transparent);
+}
+
+.viewAll {
+  font-size: var(--font-size-sm);
+  color: var(--color-primary-600);
+  text-decoration: none;
+}
+
+.viewAll:hover,
+.viewAll:focus-visible {
+  text-decoration: underline;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .root {
+    transition: none;
+  }
+}

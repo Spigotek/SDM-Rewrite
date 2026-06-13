@@ -30,6 +30,9 @@ export * from "./primitives/TextField";
 export * from "./primitives/TextArea";
 export * from "./primitives/Select";
 export * from "./primitives/Checkbox";
+export * from "./primitives/NotificationPopover";
+
+export * from "./brand";
 
 export * from "../illustrations";
 

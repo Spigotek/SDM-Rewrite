@@ -59,19 +59,6 @@
   margin-right: auto;
 }
 
-.sdm-logo {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background-color: var(--color-brand-bg);
-  color: var(--color-text-inverse);
-  font-weight: var(--font-weight-bold);
-  width: 2.25rem;
-  height: 1.75rem;
-  border-radius: var(--radius-md);
-  letter-spacing: var(--letter-spacing-wide);
-}
-
 .sdm-app-name {
   font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-snug);

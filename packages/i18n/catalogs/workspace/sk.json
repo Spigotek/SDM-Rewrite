@@ -1012,5 +1012,16 @@
       "toggleTheme": "Prepnúť tému",
       "signOut": "Odhlásiť sa"
     }
+  },
+  "notifications": {
+    "title": "Oznámenia",
+    "empty": "Žiadne nové oznámenia",
+    "markAllRead": "Označiť všetko ako prečítané",
+    "viewAll": "Zobraziť všetko",
+    "unreadCount": "Neprečítaných: {count}",
+    "verbs": {
+      "tenantSuspended": "Tenant bol pozastavený.",
+      "sessionExpired": "Tvoja relácia vypršala."
+    }
   }
 }

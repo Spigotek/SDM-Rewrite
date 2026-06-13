@@ -18,22 +18,53 @@
  * to anonymous per heartbeat 401 path — same handler, same effect).
  *
  * On EventSource error → silent (I.3 fallback stays active via heartbeat).
+ *
+ * L.1.B — additionally expose a React context (`useAppEvents`) so the
+ * notification center can read the same SSE stream without instantiating a
+ * second EventSource. Subscribers get every event the underlying connection
+ * receives; the provider tracks them in a ref so additions don't restart the
+ * SSE connection.
  */
 
-import { useEffect, useRef } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef } from "react";
 import type { ReactNode } from "react";
 import { AppEventSource, type AppEvent } from "@sdm/api-client";
 import { useSession } from "./session-context";
+
+export type AppEventListener = (event: AppEvent) => void;
+
+export interface AppEventsContextValue {
+  /** Register a listener. Returns the teardown that removes it. */
+  readonly subscribe: (listener: AppEventListener) => () => void;
+}
+
+const AppEventsContext = createContext<AppEventsContextValue | null>(null);
+
+export function useAppEvents(): AppEventsContextValue {
+  const value = useContext(AppEventsContext);
+  if (!value) {
+    throw new Error("useAppEvents must be used inside <EventSourceProvider>");
+  }
+  return value;
+}
 
 export function EventSourceProvider({ children }: { children: ReactNode }) {
   const { session, status } = useSession();
   // Keep activeTenantId in a ref so the event handler always sees the latest
   // value without causing EventSource to re-open on every tenant switch.
   const activeTenantRef = useRef<string | null>(session?.tenantId ?? null);
+  const listenersRef = useRef<Set<AppEventListener>>(new Set());
 
   useEffect(() => {
     activeTenantRef.current = session?.tenantId ?? null;
   }, [session?.tenantId]);
+
+  const subscribe = useCallback((listener: AppEventListener): (() => void) => {
+    listenersRef.current.add(listener);
+    return () => {
+      listenersRef.current.delete(listener);
+    };
+  }, []);
 
   useEffect(() => {
     // Only open SSE when the session is fully loaded.
@@ -60,11 +91,24 @@ export function EventSourceProvider({ children }: { children: ReactNode }) {
           window.dispatchEvent(new CustomEvent("sdm:session-lost"));
         }
         // "connected" event is informational — no UI action needed.
+
+        // L.1.B — fan-out to context subscribers. Iterate over a snapshot so a
+        // listener that unsubscribes mid-loop doesn't skip the rest.
+        const snapshot = Array.from(listenersRef.current);
+        for (const listener of snapshot) {
+          try {
+            listener(event);
+          } catch {
+            /* Listeners must not break the SSE pipeline. */
+          }
+        }
       },
     });
 
     return () => es.close();
   }, [status]);
 
-  return <>{children}</>;
+  const value = useMemo<AppEventsContextValue>(() => ({ subscribe }), [subscribe]);
+
+  return <AppEventsContext.Provider value={value}>{children}</AppEventsContext.Provider>;
 }

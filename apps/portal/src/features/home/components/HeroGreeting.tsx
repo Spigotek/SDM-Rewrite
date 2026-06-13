@@ -22,7 +22,7 @@ export function HeroGreeting({ session }: { session: Session | null }) {
 
   return (
     <section className="sdm-home-hero" data-testid="home-hero">
-      <h1 className="sdm-home-hero-title">
+      <h1 className="sdm-home-hero-title sdm-heading-serif">
         {firstName ? t("home.greeting", { name: firstName }) : t("home.greetingAnonymous")}
       </h1>
       <p className="sdm-home-hero-sub">{t("home.subgreeting")}</p>

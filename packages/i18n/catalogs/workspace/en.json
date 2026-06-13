@@ -1012,5 +1012,16 @@
       "toggleTheme": "Toggle theme",
       "signOut": "Sign out"
     }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No new notifications",
+    "markAllRead": "Mark all as read",
+    "viewAll": "View all",
+    "unreadCount": "{count} unread",
+    "verbs": {
+      "tenantSuspended": "Tenant has been suspended.",
+      "sessionExpired": "Your session has expired."
+    }
   }
 }

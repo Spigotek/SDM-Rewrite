@@ -114,6 +114,17 @@
     "myTickets": "No tickets yet. When you need something, report a problem or request something.",
     "notifications": "No new notifications. Updates on your tickets will appear here."
   },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No new notifications",
+    "markAllRead": "Mark all as read",
+    "viewAll": "View all",
+    "unreadCount": "{count} unread",
+    "verbs": {
+      "tenantSuspended": "Your tenant has been suspended.",
+      "sessionExpired": "Your session has expired."
+    }
+  },
   "feedback": {
     "submitted": "Ticket #{id} submitted. Helpdesk will pick it up shortly."
   },

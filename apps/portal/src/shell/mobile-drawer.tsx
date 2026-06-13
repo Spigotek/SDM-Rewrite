@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from "react";
 import type { MouseEvent, ReactNode, SVGProps } from "react";
-import { NavLink } from "@sdm/design-system";
+import { NavLink, Wordmark } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { useLocation, useNavigate } from "react-router-dom";
 
@@ -209,9 +209,7 @@ export function MobileDrawer() {
       >
         <div className="sdm-mobile-drawer-header">
           <span className="sdm-mobile-drawer-brand">
-            <span className="sdm-logo" aria-hidden="true">
-              SDM
-            </span>
+            <Wordmark size="md" />
           </span>
           <button
             ref={firstFocusRef}

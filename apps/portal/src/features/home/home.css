@@ -85,10 +85,32 @@
 
 /* ─── Hero ─────────────────────────────────────────────────────────────── */
 
+/* L.1.A — subtle brand gradient under the greeting + KB search. The radial
+   tops out at ~340 px so the hero lifts off the page without bleeding into
+   the KPI strip below. RGB literal mirrors --color-brand-500 (#6366f1); we
+   intentionally keep the rgba inline so the gradient stops survive any future
+   token rename. Static visual — no motion gate needed. */
 .sdm-home-hero {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
+  background: radial-gradient(
+    ellipse 80% 340px at 50% 0%,
+    rgba(99, 102, 241, 0.1),
+    transparent 70%
+  );
+  padding-top: var(--spacing-3);
+  padding-bottom: var(--spacing-5);
+  border-radius: var(--radius-lg, 12px);
+}
+
+[data-theme="dark"] .sdm-home-hero {
+  background: radial-gradient(
+    ellipse 80% 340px at 50% 0%,
+    rgba(99, 102, 241, 0.18),
+    transparent 70%
+  );
 }
 
 .sdm-home-hero-title {

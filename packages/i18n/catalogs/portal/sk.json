@@ -114,6 +114,17 @@
     "myTickets": "Zatiaľ žiadne tickety. Keď niečo budeš potrebovať, nahlás problém alebo požiadaj o niečo.",
     "notifications": "Žiadne nové notifikácie. Tu sa budú zobrazovať aktualizácie tvojich ticketov."
   },
+  "notifications": {
+    "title": "Oznámenia",
+    "empty": "Žiadne nové oznámenia",
+    "markAllRead": "Označiť všetko ako prečítané",
+    "viewAll": "Zobraziť všetko",
+    "unreadCount": "Neprečítaných: {count}",
+    "verbs": {
+      "tenantSuspended": "Tvoj tenant bol pozastavený.",
+      "sessionExpired": "Tvoja relácia vypršala."
+    }
+  },
   "feedback": {
     "submitted": "Ticket #{id} odoslaný. Helpdesk to dostane okamžite."
   },

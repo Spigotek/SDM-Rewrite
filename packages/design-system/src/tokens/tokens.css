@@ -17,6 +17,12 @@
   --font-family-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SF Mono", Menlo,
     Consolas, monospace;
   --font-family-display: var(--font-family-sans);
+  /* L.1.A — serif accent for hero / page headings (Charter on macOS,
+     Source Serif Pro as the named cross-platform fallback, Georgia as the
+     universal last-resort). No @font-face required — every fallback ships
+     with at least one of the supported OS bundles. */
+  --font-family-serif-display: Charter, "Source Serif Pro", "Iowan Old Style", "Apple Garamond",
+    Georgia, "Times New Roman", serif;
 
   --font-size-xs: 0.6875rem; /* 11 px */
   --font-size-sm: 0.8125rem; /* 13 px */
@@ -485,4 +491,14 @@
     --motion-duration-slow: 0ms;
     --motion-duration-deliberate: 0ms;
   }
+}
+
+/* ── L.1.A — Serif accent for hero / page headings ───────────── */
+/* Applied selectively to hero / reader / page-title H1s so the route entry
+   reads differently from body content (Linear / Notion convention). Pairs
+   with the DS sans for everything else. */
+.sdm-heading-serif {
+  font-family: var(--font-family-serif-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
 }

@@ -1,7 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { AlertTriangle, Calendar, Clock, Inbox, User } from "lucide-react";
 import { useTranslation } from "@sdm/i18n";
-import { Skeleton } from "@sdm/design-system";
+import { Skeleton, useCountUp } from "@sdm/design-system";
 import type { UiQueueItem } from "@sdm/api-types";
 
 /**
@@ -30,10 +30,20 @@ export interface QueueStatsProps {
 
 interface StatValue {
   readonly label: string;
+  /** Numeric count for tiles that animate. `null` = degraded tile, render `value` string verbatim. */
+  readonly count: number | null;
   readonly value: string;
   readonly icon: React.ReactNode;
   readonly subtitle?: string;
   readonly testid: string;
+}
+
+function QueueStatNumber({ value }: { value: number }) {
+  const ref = useRef<HTMLSpanElement | null>(null);
+  // L.1.A — count-up tween for numeric KPI tiles. Degraded tiles (e.g. SLA
+  // overdue) bypass this and render the raw string fallback.
+  useCountUp(value, { ref });
+  return <span ref={ref}>{value}</span>;
 }
 
 function startOfTodayMs(now: Date): number {
@@ -70,18 +80,21 @@ export function QueueStats(props: QueueStatsProps) {
     return [
       {
         label: t("queue.stats.open"),
+        count: open,
         value: open.toString(),
         icon: <Inbox size={14} aria-hidden="true" />,
         testid: "queue-stat-open",
       },
       {
         label: t("queue.stats.mine"),
+        count: mine,
         value: mine.toString(),
         icon: <User size={14} aria-hidden="true" />,
         testid: "queue-stat-mine",
       },
       {
         label: t("queue.stats.overdue"),
+        count: null,
         value: "—",
         icon: <AlertTriangle size={14} aria-hidden="true" />,
         subtitle: t("queue.stats.noSla"),
@@ -89,12 +102,14 @@ export function QueueStats(props: QueueStatsProps) {
       },
       {
         label: t("queue.stats.lastHour"),
+        count: lastHour,
         value: lastHour.toString(),
         icon: <Clock size={14} aria-hidden="true" />,
         testid: "queue-stat-lasthour",
       },
       {
         label: t("queue.stats.today"),
+        count: today,
         value: today.toString(),
         icon: <Calendar size={14} aria-hidden="true" />,
         testid: "queue-stat-today",
@@ -119,8 +134,12 @@ export function QueueStats(props: QueueStatsProps) {
           </span>
           {isLoading ? (
             <Skeleton variant="text" width={42} height={28} />
-          ) : (
+          ) : tile.count === null ? (
             <span className="sdm-queue-stat-value">{tile.value}</span>
+          ) : (
+            <span className="sdm-queue-stat-value">
+              <QueueStatNumber value={tile.count} />
+            </span>
           )}
           {tile.subtitle ? <span className="sdm-queue-stat-subtitle">{tile.subtitle}</span> : null}
         </div>

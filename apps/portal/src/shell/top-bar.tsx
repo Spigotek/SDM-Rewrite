@@ -1,8 +1,18 @@
-import { Avatar, Button, ThemeToggle, useTheme, type ThemeChoice } from "@sdm/design-system";
+import { useRef, useState } from "react";
+import {
+  Avatar,
+  Button,
+  NotificationPopover,
+  ThemeToggle,
+  Wordmark,
+  useTheme,
+  type ThemeChoice,
+} from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { openPortalCommandPalette } from "./command-palette-mount";
 import { LanguageSwitcher } from "./language-switcher";
 import { openPortalDrawer } from "./mobile-drawer";
+import { useNotifications } from "./use-notifications";
 import { useSession } from "./session-context";
 import { TenantSwitcher } from "./tenant-switcher";
 
@@ -99,10 +109,13 @@ export function TopBar({ appName }: { appName: string }) {
   const { session, status, logout } = useSession();
   const { choice, setChoice } = useTheme();
 
-  // v1.1.4 ships notifications visually only; Round D will wire SSE-driven
-  // counts. `as number` widens the literal so future increments typecheck.
-  const notificationCount = 0 as number;
-  const notificationLabel = `${t("nav.notifications")}, ${notificationCount} unread`;
+  // L.1.B — live notification center. Reads the shared SSE stream via
+  // `useNotifications()`; the bell shows the unread count and toggles a
+  // `NotificationPopover` anchored to itself.
+  const { events, unreadCount, markAllRead } = useNotifications();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifAnchorRef = useRef<HTMLButtonElement | null>(null);
+  const notificationLabel = t("notifications.unreadCount").replace("{count}", String(unreadCount));
 
   return (
     <header className="sdm-top-bar" data-testid="top-bar">
@@ -120,9 +133,7 @@ export function TopBar({ appName }: { appName: string }) {
         </button>
       )}
       <div className="sdm-brand">
-        <span className="sdm-logo" aria-hidden="true">
-          SDM
-        </span>
+        <Wordmark size="md" />
         <span className="sdm-app-name">{appName}</span>
       </div>
       {status === "ready" && session && (
@@ -150,19 +161,34 @@ export function TopBar({ appName }: { appName: string }) {
             />
           </span>
           <button
+            ref={notifAnchorRef}
             type="button"
             className="sdm-notif-button"
             data-testid="notif-button"
             aria-label={notificationLabel}
+            aria-expanded={notifOpen}
+            aria-haspopup="dialog"
             title={t("nav.notifications")}
+            onClick={() => setNotifOpen((prev) => !prev)}
           >
             <BellIcon size={18} />
-            {notificationCount > 0 && (
+            {unreadCount > 0 && (
               <span className="sdm-notif-count" aria-hidden="true">
-                {notificationCount > 99 ? "99+" : notificationCount}
+                {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </button>
+          <NotificationPopover
+            open={notifOpen}
+            onClose={() => setNotifOpen(false)}
+            events={events}
+            anchorRef={notifAnchorRef}
+            onMarkAllRead={markAllRead}
+            title={t("notifications.title")}
+            emptyMessage={t("notifications.empty")}
+            markAllReadLabel={t("notifications.markAllRead")}
+            viewAllLabel={t("notifications.viewAll")}
+          />
           <div className="sdm-user-pill" data-testid="user-pill">
             <Avatar name={session.displayName} size="md" aria-label={session.displayName} />
             <div className="sdm-user-pill-meta">

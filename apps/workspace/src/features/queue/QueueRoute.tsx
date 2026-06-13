@@ -162,7 +162,7 @@ export default function QueueRoute() {
   return (
     <section data-testid="workspace-queue" className="sdm-queue-page">
       <header className="sdm-queue-page-header">
-        <h1 className="sdm-queue-page-title">{t("queue.title")}</h1>
+        <h1 className="sdm-queue-page-title sdm-heading-serif">{t("queue.title")}</h1>
         <Button
           type="button"
           variant="primary"
