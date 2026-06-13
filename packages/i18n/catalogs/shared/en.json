@@ -37,6 +37,9 @@
     "loading": "Loading…",
     "noRoles": "no roles"
   },
+  "a11y": {
+    "skipToMain": "Skip to main content"
+  },
   "errors": {
     "sessionExpired": "Your session has expired. Please sign in again.",
     "permissionDenied": "You don't have access to this record in tenant {tenant}. Check your role with admin.",

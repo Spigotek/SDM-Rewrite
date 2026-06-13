@@ -18,6 +18,8 @@ export interface KbSearchResult {
   readonly helpfulCount: number;
   readonly readTimeMin: number;
   readonly language: KbLanguage;
+  /** ISO-8601 last-modified timestamp; null when the BFF didn't ship one. */
+  readonly updatedAt: string | null;
 }
 
 export interface KbRelatedArticle {

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img">
+  <title>No tickets assigned</title>
+  <rect x="45" y="40" width="110" height="90" rx="6" />
+  <rect x="60" y="55" width="80" height="6" rx="3" fill="currentColor" stroke="none" opacity="0.3" />
+  <rect x="60" y="70" width="80" height="6" rx="3" fill="currentColor" stroke="none" opacity="0.2" />
+  <rect x="60" y="85" width="80" height="6" rx="3" fill="currentColor" stroke="none" opacity="0.15" />
+  <path d="M70 110h60" opacity="0.25" />
+  <path d="M85 25l8 8M115 25l-8 8" />
+</svg>

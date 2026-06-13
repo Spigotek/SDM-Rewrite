@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useTranslation } from "@sdm/i18n";
-import { Button } from "@sdm/design-system";
+import { Button, EmptyState, IllustrationNoTicketsAssigned } from "@sdm/design-system";
 import type { UiQueueItem } from "@sdm/api-types";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
@@ -234,13 +234,14 @@ export default function QueueRoute() {
               {t("queue.error")}
             </p>
           ) : filteredRows.length === 0 ? (
-            <div
+            <EmptyState
+              variant="hero"
+              illustration={<IllustrationNoTicketsAssigned />}
+              title={rows.length === 0 ? t("queue.emptyTitle") : t("queue.emptyFilteredTitle")}
+              description={rows.length === 0 ? t("queue.empty") : t("queue.emptyFiltered")}
               className="sdm-queue-state sdm-queue-empty"
-              role="status"
               data-testid="queue-empty"
-            >
-              <p>{rows.length === 0 ? t("queue.empty") : t("queue.emptyFiltered")}</p>
-            </div>
+            />
           ) : (
             <QueueTable
               rows={filteredRows}

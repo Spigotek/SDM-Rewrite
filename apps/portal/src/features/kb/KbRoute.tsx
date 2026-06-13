@@ -1,36 +1,48 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { Link, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import {
+  Button,
+  EmptyState,
+  IllustrationNoSearchResults,
+  staggerListRows,
+  usePageTransition,
+} from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
 import { kbSearchQuery } from "./api";
 import { SearchInput } from "./components/SearchInput";
 import { SearchResultItem } from "./components/SearchResultItem";
+import { SearchResultRowSkeleton } from "./components/Skeletons";
 import "./kb.css";
 
 /**
- * `/kb` — KB search (Lucia journey).
+ * `/kb` — KB search (Lucia journey). K.3.E v1.2 polish:
  *
- * Layout (mobile-first, top → bottom):
  *   ┌─ Back link
- *   ├─ Heading + subtitle
- *   ├─ <SearchInput>   debounce 300 ms, autoFocus
- *   ├─ Result count    live region
- *   └─ Results list    or empty state with "open ticket" CTA
+ *   ├─ Hero heading + subtitle
+ *   ├─ <SearchInput>     48 px tall, lucide-style inline SVG, debounce 300 ms
+ *   ├─ Result count      live region (tabular-nums on the integer)
+ *   └─ Results list      `Card variant="interactive"` rows, staggered on mount,
+ *                        or `<EmptyState variant="compact">` when the search
+ *                        returns nothing (test-id `kb-empty` preserved).
  *
- * The list is fetched against `/api/kb?q=<term>`. An empty term lists
- * every published article in the tenant; the empty-state branch fires
- * only when the term is non-empty AND the list is empty (per microcopy:
- * "Nič som nenašiel...").
+ * Skeleton rows render in place of the row list while the query is
+ * pending — no "Loading..." text. Page mount fades in via
+ * `usePageTransition` (crossfade only; reduced-motion safe).
  */
 const TENANT_PLACEHOLDER = toTenantId("__pending__");
+const MIN_ROWS_FOR_STAGGER = 3;
 
 export function KbRoute() {
   const { t } = useTranslation("portal");
   const { session } = useSession();
   const tenantId = session?.tenantId ?? TENANT_PLACEHOLDER;
   const [term, setTerm] = useState("");
+  const location = useLocation();
+  const { ref: pageRef } = usePageTransition(location.pathname);
+  const listRef = useRef<HTMLUListElement | null>(null);
 
   const query = useQuery({
     ...kbSearchQuery(tenantId, term),
@@ -41,8 +53,16 @@ export function KbRoute() {
   const hasTerm = term.trim().length > 0;
   const isEmpty = !query.isLoading && !query.isError && hasTerm && results.length === 0;
 
+  // K.1 brief §7 list-item stagger — runs every time the row count changes
+  // (new fetch / term change) so freshly inserted rows fade in too.
+  useEffect(() => {
+    if (results.length >= MIN_ROWS_FOR_STAGGER) {
+      staggerListRows(listRef.current);
+    }
+  }, [results.length]);
+
   return (
-    <section className="sdm-kb" data-testid="portal-kb">
+    <section ref={pageRef} className="sdm-kb" data-testid="portal-kb">
       <Link to="/" className="sdm-kb-back" data-testid="kb-back">
         {t("kb.back")}
       </Link>
@@ -51,10 +71,6 @@ export function KbRoute() {
         <p className="sdm-kb-heading-sub">{t("kb.subtitle")}</p>
       </header>
 
-      {/* Auto-focus the search field on landing — KB search is the primary
-          action of `/kb` (wireframe `portal/05-kb-search.md` Search interakcie
-          "Search live"). The route is reached intentionally, so the focus
-          shift is expected. */}
       <SearchInput
         label={t("kb.searchLabel")}
         placeholder={t("kb.searchPlaceholder")}
@@ -76,21 +92,33 @@ export function KbRoute() {
         <p role="alert" className="sdm-kb-error" data-testid="kb-error">
           {t("kb.error")}
         </p>
+      ) : query.isLoading ? (
+        <ul className="sdm-kb-result-list" aria-busy="true" data-testid="kb-result-list-loading">
+          <SearchResultRowSkeleton />
+          <SearchResultRowSkeleton />
+          <SearchResultRowSkeleton />
+        </ul>
       ) : isEmpty ? (
-        <div className="sdm-kb-empty" data-testid="kb-empty">
-          <p className="sdm-kb-empty-title">{t("kb.empty.title")}</p>
-          <Link
-            to={`/new-incident?summary=${encodeURIComponent(term.trim())}`}
-            className="sdm-kb-empty-cta"
-            data-testid="kb-empty-open-ticket"
-          >
-            {t("kb.empty.openTicket")}
-          </Link>
-        </div>
+        <EmptyState
+          variant="compact"
+          illustration={<IllustrationNoSearchResults />}
+          title={t("kb.empty.title")}
+          cta={
+            <Link
+              to={`/new-incident?summary=${encodeURIComponent(term.trim())}`}
+              data-testid="kb-empty-open-ticket"
+            >
+              <Button type="button" variant="primary" size="md">
+                {t("kb.empty.openTicket")}
+              </Button>
+            </Link>
+          }
+          data-testid="kb-empty"
+        />
       ) : (
-        <ul className="sdm-kb-result-list" data-testid="kb-result-list">
+        <ul ref={listRef} className="sdm-kb-result-list" data-testid="kb-result-list">
           {results.map((result) => (
-            <li key={result.id}>
+            <li key={result.id} data-row data-testid={`kb-result-row-${result.id}`}>
               <SearchResultItem result={result} />
             </li>
           ))}

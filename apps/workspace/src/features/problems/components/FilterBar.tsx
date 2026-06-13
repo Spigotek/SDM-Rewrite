@@ -97,11 +97,12 @@ export function FilterBar(props: FilterBarProps) {
                   pressed ? "sdm-problems-chip sdm-problems-chip--active" : "sdm-problems-chip"
                 }
                 aria-pressed={pressed}
+                aria-current={pressed ? "true" : undefined}
                 data-testid={`problems-chip-${s.code}`}
                 onClick={() => onToggleStatus(s.code)}
               >
                 <span>{t(`problems.statusLabel.${s.code}` as const)}</span>
-                <span className="sdm-problems-chip-count">{s.count}</span>
+                <span className="sdm-problems-chip-count sdm-tabular">{s.count}</span>
               </button>
             );
           })}

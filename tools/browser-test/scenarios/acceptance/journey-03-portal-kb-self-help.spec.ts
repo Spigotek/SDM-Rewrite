@@ -22,10 +22,11 @@ test("journey-03 portal KB — search list → article → 'useful' vote", async
   await expect(isolatedPage.getByTestId("portal-kb")).toBeVisible({ timeout: 15_000 });
   await expect(isolatedPage.getByTestId("kb-result-list")).toBeVisible({ timeout: 10_000 });
 
-  // Open the first article.
+  // Open the first article. K.3 adds usePageTransition crossfade + lazy
+  // vendor-markdown chunk → CI cold-load can take up to ~18 s.
   await isolatedPage.locator('[data-testid^="kb-result-kb:"]').first().click();
-  await expect(isolatedPage.getByTestId("portal-kb-article")).toBeVisible({ timeout: 15_000 });
-  await expect(isolatedPage.getByTestId("kb-article-body")).toBeVisible({ timeout: 10_000 });
+  await expect(isolatedPage.getByTestId("portal-kb-article")).toBeVisible({ timeout: 25_000 });
+  await expect(isolatedPage.getByTestId("kb-article-body")).toBeVisible({ timeout: 15_000 });
 
   // Helpfulness vote.
   await isolatedPage.getByTestId("kb-helpfulness-up").click();

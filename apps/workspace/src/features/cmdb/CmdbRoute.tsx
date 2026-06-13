@@ -1,24 +1,31 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
+import {
+  Button,
+  EmptyState,
+  IllustrationNoCatalogItems,
+  usePageTransition,
+} from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
 import { cmdbListQuery } from "./api";
 import { CmdbFilterBar } from "./components/FilterBar";
 import { CmdbTable } from "./components/CmdbTable";
+import { CmdbStats } from "./components/CmdbStats";
+import { CmdbTableSkeleton } from "./components/CmdbTableSkeleton";
 import { useCmdbFilters, type CmdbFilters } from "./hooks";
 import type { CiRow } from "./types";
 import "./cmdb.css";
 
 /**
- * `/cmdb` — Robert's CMDB browse list. Pattern mirrors `/problems` (H.12):
- *  - Tenant-scoped TanStack Query, 5 min refetch (CIs change on discovery
- *    sweeps, not on the second-by-second triage loop).
- *  - FilterBar (search + class + status chips) + CmdbTable (TanStack Table v8).
- *  - Click / Enter on a row navigates to `/cmdb/ci/:id` (no split-pane).
+ * `/cmdb` — Robert's CMDB browse list (K.3.E v1.2 redesign).
  *
- * Filter state is URL-driven (`?q=&class=&status=`) so deep links shared
- * between Robert and Marek (pre-patch impact analysis) land on the same slice.
+ *  Row 1 — H1 + `+ Nové CI` action.
+ *  Row 2 — `<CmdbStats>`        5-up KPI strip (Total / Active / Inactive / Retired / Shared).
+ *  Row 3 — `<CmdbFilterBar>`    search + class + status chips (existing).
+ *  Row 4 — `<CmdbTable>`        dense 32-px row table with staggered mount.
  */
 const EMPTY_ROWS: ReadonlyArray<CiRow> = [];
 
@@ -39,6 +46,7 @@ export default function CmdbRoute() {
   const { t } = useTranslation("workspace");
   const { session } = useSession();
   const tenantId = session?.tenantId;
+  const { ref } = usePageTransition("/cmdb");
 
   const { filters, setSearch, setClass, setStatus, reset } = useCmdbFilters();
 
@@ -52,27 +60,41 @@ export default function CmdbRoute() {
   const filtered = useMemo(() => filterRows(rows, filters), [rows, filters]);
 
   return (
-    <section data-testid="workspace-cmdb" className="sdm-cmdb-page">
+    <section ref={ref} data-testid="workspace-cmdb" className="sdm-cmdb-page">
       <header className="sdm-cmdb-page-header">
         <h1 className="sdm-cmdb-page-title">{t("cmdb.title")}</h1>
-        <span className="sdm-cmdb-tenant-hint">
-          {t("placeholders.activeTenant")}{" "}
-          <strong data-testid="active-tenant">{tenantId ?? ""}</strong>
-        </span>
+        <Button
+          type="button"
+          variant="primary"
+          size="sm"
+          data-testid="cmdb-new-ci"
+          leadingIcon={<Plus size={14} aria-hidden="true" />}
+          onClick={() => {
+            // K.3.E placeholder — discovery / manual creation lands with v1.2 CMDB ops.
+            console.info("[cmdb] New-CI placeholder (v1.2)");
+          }}
+        >
+          {t("cmdb.newCi")}
+        </Button>
       </header>
 
+      <CmdbStats rows={rows} isLoading={query.isPending} />
+
       {query.isPending ? (
-        <p className="sdm-cmdb-state" data-testid="cmdb-loading">
-          {t("cmdb.loading")}
-        </p>
+        <CmdbTableSkeleton />
       ) : query.isError ? (
         <p role="alert" className="sdm-cmdb-state sdm-cmdb-state--error" data-testid="cmdb-error">
           {t("cmdb.error")}
         </p>
       ) : rows.length === 0 ? (
-        <p className="sdm-cmdb-state" data-testid="cmdb-empty">
-          {t("cmdb.empty")}
-        </p>
+        <EmptyState
+          variant="hero"
+          illustration={<IllustrationNoCatalogItems />}
+          title={t("cmdb.emptyTitle")}
+          description={t("cmdb.empty")}
+          className="sdm-cmdb-empty"
+          data-testid="cmdb-empty"
+        />
       ) : (
         <>
           <CmdbFilterBar
@@ -86,9 +108,14 @@ export default function CmdbRoute() {
             onReset={reset}
           />
           {filtered.length === 0 ? (
-            <p className="sdm-cmdb-state" data-testid="cmdb-filtered-empty">
-              {t("cmdb.filters.noResults")}
-            </p>
+            <EmptyState
+              variant="hero"
+              illustration={<IllustrationNoCatalogItems />}
+              title={t("cmdb.emptyFilteredTitle")}
+              description={t("cmdb.emptyFiltered")}
+              className="sdm-cmdb-empty"
+              data-testid="cmdb-filtered-empty"
+            />
           ) : (
             <CmdbTable rows={filtered} />
           )}

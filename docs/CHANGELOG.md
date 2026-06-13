@@ -9,6 +9,96 @@ per-chunk plans under `docs/plans/`. Sources of truth for design decisions live
 in `docs/spec/` and `docs/agents/`; this changelog tracks **what shipped** to the
 release artefact, not why.
 
+## [1.2.0] - 2026-06-13
+
+Full redesign half of Phase K. v1.1.4 shipped the quick-wins bundle;
+v1.2.0 closes the loop with dark mode, a Linear-style command palette,
+the workspace left-rail nav, illustration assets, multi-page polish
+across every detail route, and an a11y audit that lands axe-clean.
+See [`RELEASE-NOTES-v1.2.0.md`](./RELEASE-NOTES-v1.2.0.md) for the
+full post-mortem.
+
+### Added
+
+- **Dark mode** — `data-theme` attribute + `localStorage` +
+  `prefers-color-scheme` first-visit detect. `<ThemeToggle>` primitive
+  in the top bar (portal) / user menu (workspace). `useTheme()` React
+  hook with live media-query subscription. FOUC-safe inline script in
+  both `index.html`.
+- **CommandPalette (cmd+K)** — Linear-style full modal. Grouped results
+  (Recent / Navigate / Actions / Tickets / KB / CMDB), keyboard-first
+  navigation (`↑/↓`, `Enter`, `Tab`, `cmd+1..9`), mode prefixes
+  (`>`, `#`, `?`), GSAP enter / exit animation, recent-5 persisted
+  in `localStorage`. Pluggable action registry — primitives stay
+  router-agnostic; mounts wire `useNavigate()`.
+- **Workspace left-rail nav** — 240-px persistent column with workspace
+  switcher, cmd+K trigger chip, 5 collapsible groups (TOP / INCIDENTS /
+  CHANGES / KNOWLEDGE / CMDB) persisted per-user in `localStorage`,
+  user menu (ThemeToggle + language switcher + sign out).
+- **Portal mobile nav** — slide-in left drawer with the 4 destinations
+  - ESC + backdrop close + focus trap; sticky bottom-nav bar with
+    4 icon-only tabs (filled-on-active) below `md`. Desktop horizontal
+    nav row stays for `md+`.
+- **Illustration system** — `vite-plugin-svgr` adoption + 10 placeholder
+  empty-state SVGs (`currentColor` + `<title>` + tree-shakeable named
+  exports). EmptyState wired across 10+ surfaces. Bundle: ~4.3 KB raw
+  / ~2.9 KB gzipped.
+- **GSAP motion engine** — `staggerListRows()` upgraded from Web
+  Animations API to GSAP; new `usePageTransition()` route crossfade
+  hook (80 ms out / 120 ms in); `HOVER_LIFT_*` constants;
+  `prefers-reduced-motion` early-returns.
+- **Skip-link** in both shells (off-screen → visible on `:focus`).
+- **`useTheme()` + `ThemeToggle` + `CommandPalette`** new design-system
+  primitives. DS test count grew 95 → 126.
+
+### Changed
+
+- **Typography fallback metrics** — Inter Variable `@font-face` now
+  ships `size-adjust 107%` + `ascent-override 90%` + `descent-override
+22%` + `line-gap-override 0%` so `system-ui` fallback paints at the
+  same line metrics as Inter. Eliminates the residual font-swap CLS
+  that K.2 had to absorb via a relaxed LHCI threshold.
+- **Every detail route polished** — Portal: `/new-incident`,
+  `/catalog`, `/catalog/:id`, `/kb`, `/kb/article/:id`, `/tickets`,
+  `/tickets/:id`. Workspace: `/changes`, `/changes/calendar`,
+  `/changes/:id`, `/cmdb`, `/cmdb/ci/:id`, `/kb` (browse + editor +
+  analytics), `/problems`, `/problems/:id`, `/tickets/:id`. Universal:
+  DS primitives over raw markup, Skeleton loading (no "Loading…" text),
+  tabular numerals on IDs/dates/counts, staggerListRows on list mounts,
+  usePageTransition on route mount, token-only colours.
+- **Dark-mode token parity** — semantic ramps re-aligned (50 = subtle
+  bg, 900 = strongest fg, semantic parity with light ramp). New dark
+  `--color-primary-*` override (lighter shades, AA-safe on dark
+  surfaces). Dark `--color-text-tertiary` bumped to `#8b8b94` (5.2:1
+  on `#0f0f11`).
+- **Workspace `/queue` LeftRail slot reservation** — pre-reserve
+  240 px via `.sdm-app-shell[data-rail-ready="false"] .sdm-app-shell-main
+{ margin-left: 240px }`. CLS 0.179 → 0.023 on `/queue` (3-run
+  desktop LHCI). LHCI per-URL `/queue` override removed; strict
+  global 0.06 floor restored.
+
+### Fixed
+
+- **Axe zero serious/critical** — portal 6/6 + workspace 11/11 routes
+  pass. Specific fixes: portal `/kb` mid-fade contrast (axe spec
+  now emulates `prefers-reduced-motion: reduce`), workspace
+  `/tickets/:id` context-rail `text-tertiary` → `text-secondary`
+  (4.41:1 → 7.5:1).
+
+### Known limitations
+
+- Service Worker still does not register on staging (plain HTTP).
+  Deferred to v2.0 alongside the reverse-proxy / HTTPS story.
+- Portal `/` mobile LHCI performance score 0.83 vs the 0.88 floor —
+  pre-existing K.3.E regression (illustration + EmptyState polish
+  payload). Confirmed via baseline stash. v1.2-polish follow-up:
+  lazy-load empty-state illustrations off the FCP path.
+- Illustration assets are placeholder-grade. Real unDraw downloads
+  via a future `scripts/fetch-undraw.sh` are a v1.2-polish task.
+- BFF `dueDate` + `slaState` projection onto `UiQueueItem`, BFF
+  activity-feed endpoint, status-as-button transition control on
+  `StatusBadge` — all v2.0.
+
 ## [1.1.4] - 2026-06-13
 
 Quick-wins UX bundle + v1.1.3 live-deploy bug fixes. Synthesised from

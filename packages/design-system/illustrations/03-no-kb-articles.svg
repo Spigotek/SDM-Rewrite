@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img">
+  <title>No knowledge base articles</title>
+  <path d="M40 40h55a15 15 0 0 1 15 15v75" />
+  <path d="M160 40h-55a15 15 0 0 0-15 15v75" />
+  <path d="M40 40v75h55a15 15 0 0 1 15 15" />
+  <path d="M160 40v75h-55a15 15 0 0 0-15 15" />
+  <path d="M55 60h25M55 75h25M120 60h25M120 75h25" opacity="0.4" />
+</svg>

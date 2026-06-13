@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "@sdm/i18n";
-import { Button } from "@sdm/design-system";
+import { Button, staggerListRows } from "@sdm/design-system";
 import { Can } from "@sdm/auth";
 import { hasPermission, type ApprovalDecision } from "@sdm/domain";
 import type { ChangeDetail } from "../types";
@@ -60,6 +60,10 @@ export function ApprovalsTab({ detail }: { readonly detail: ChangeDetail }) {
   const currentApproverId = session?.contactId ?? "";
   const [modal, setModal] = useState<ModalState>({ kind: "none" });
   const canApprove = hasPermission(roles, "cab.approve");
+  const listRef = useRef<HTMLUListElement | null>(null);
+  useEffect(() => {
+    staggerListRows(listRef.current);
+  }, [approvers.length]);
 
   return (
     <section
@@ -80,13 +84,14 @@ export function ApprovalsTab({ detail }: { readonly detail: ChangeDetail }) {
           {t("changes.approvals.empty")}
         </p>
       ) : (
-        <ul className="sdm-change-approvals-list" data-testid="change-approvals-list">
+        <ul ref={listRef} className="sdm-change-approvals-list" data-testid="change-approvals-list">
           {approvers.map((a) => {
             const isPending = a.decision === "PENDING";
             const isSelf = a.approverId === currentApproverId;
             return (
               <li
                 key={a.id}
+                data-row
                 data-testid="change-approver-row"
                 data-decision={a.decision}
                 aria-label={t("changes.approvals.rowAriaLabel", {

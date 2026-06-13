@@ -16,7 +16,21 @@
     "notifications": "Oznámenia",
     "userMenu": "Účet",
     "newIncident": "Nový incident",
-    "ticketDetail": "Detail ticketu"
+    "ticketDetail": "Detail ticketu",
+    "mobile": {
+      "open": "Otvoriť menu",
+      "close": "Zavrieť menu",
+      "drawerAria": "Mobilná navigácia"
+    },
+    "themeToggle": {
+      "system": "systémovú",
+      "light": "svetlú",
+      "dark": "tmavú",
+      "aria": "Téma: {current} (klikni pre zmenu na {next})"
+    },
+    "bottomNav": {
+      "aria": "Hlavná navigácia"
+    }
   },
   "catalog": {
     "reportProblem": "Nahlásiť problém",
@@ -107,8 +121,11 @@
     "title": "Moje tickety",
     "loading": "Načítavame tvoje tickety…",
     "empty": "Zatiaľ žiadne tickety. Keď niečo budeš potrebovať, nahlás problém alebo požiadaj o niečo.",
+    "emptyTitle": "Zatiaľ žiadne tickety",
+    "emptyCta": "Nahlásiť problém",
     "error": "Tickety sa nepodarilo načítať. Skús stránku obnoviť.",
-    "count": "{n, plural, one {# ticket} few {# tickety} other {# ticketov}}"
+    "count": "{n, plural, one {# ticket} few {# tickety} other {# ticketov}}",
+    "subhead": "{open} otvorených · {awaiting} čaká · {resolved} vyriešených"
   },
   "placeholders": {
     "catalogTitle": "Katalóg služieb",
@@ -147,8 +164,8 @@
     },
     "helpfulness": {
       "prompt": "Pomohol ti tento článok?",
-      "yes": "👍 Áno",
-      "no": "👎 Nie",
+      "yes": "Áno, pomohlo",
+      "no": "Nie, nepomohlo",
       "commentLabel": "Čo by si očakával(a)? (voliteľné)",
       "commentPlaceholder": "Krátko popíš, čo článku chýbalo.",
       "submit": "Odoslať feedback",
@@ -177,6 +194,7 @@
       "featuredTitle": "Najčastejšie žiadané",
       "request": "Požiadať",
       "empty": "Pre túto kategóriu zatiaľ nemáme položky.",
+      "emptyTitle": "Žiadne dostupné položky",
       "loading": "Načítavam katalóg…",
       "error": "Katalóg sa nepodarilo načítať. Skús stránku obnoviť."
     },
@@ -198,8 +216,9 @@
       "fileDeferredTooltip": "Upload bude dostupný čoskoro."
     },
     "success": {
-      "title": "Žiadosť #{ref} odoslaná",
+      "title": "Žiadosť bola odoslaná",
       "body": "Helpdesk to dostane okamžite. Pošleme ti notifikáciu, keď niekto prevezme žiadosť.",
+      "refLabel": "Referenčné číslo žiadosti",
       "viewTicket": "Zobraziť detail žiadosti →",
       "backToCatalog": "Späť na katalóg"
     }
@@ -250,8 +269,9 @@
       "submitFailed": "Server teraz neodpovedá. Skús to o chvíľu."
     },
     "success": {
-      "title": "Ticket #{ref} odoslaný",
+      "title": "Ticket bol odoslaný",
       "body": "Helpdesk to dostane okamžite. Pošleme ti notifikáciu, keď niekto prevezme ticket alebo bude mať otázku.",
+      "refLabel": "Referenčné číslo ticketu",
       "status": "Status",
       "statusNew": "Nový",
       "eta": "ETA prevzatia",
@@ -270,7 +290,8 @@
       "status": "Stav",
       "priority": "Priorita",
       "assignee": "Riešiteľ",
-      "openedAt": "Otvorené"
+      "openedAt": "Otvorené",
+      "closedAt": "Vyriešené"
     },
     "body": {
       "empty": "Žiadny popis."
@@ -305,5 +326,28 @@
     "offlineReady": "Aplikácia je dostupná offline.",
     "updateAvailable": "Dostupná nová verzia — aktualizuje sa automaticky.",
     "updateReload": "Aktualizovať teraz"
+  },
+  "cmdk": {
+    "placeholder": "Hľadať alebo zadať príkaz…",
+    "empty": "Nič sa nenašlo",
+    "groups": {
+      "recent": "Naposledy",
+      "navigate": "Navigácia",
+      "actions": "Akcie",
+      "tickets": "Tickety",
+      "kb": "Báza znalostí",
+      "users": "Používatelia"
+    },
+    "help": {
+      "header": "Klávesové skratky",
+      "esc": "Esc — zavrieť",
+      "enter": "Enter — vykonať",
+      "arrows": "↑ ↓ — výber",
+      "modes": "Prefix > akcie, # navigácia, ? pomoc"
+    },
+    "actions": {
+      "toggleTheme": "Prepnúť tému",
+      "signOut": "Odhlásiť sa"
+    }
   }
 }

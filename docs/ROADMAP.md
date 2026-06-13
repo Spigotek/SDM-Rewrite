@@ -223,7 +223,7 @@ Dispatch: strict sekvenčný J.0 → J.9 (per `feedback_pr_flow.md` PR-flow). Pe
 
 ---
 
-### Phase K — Portal + Workspace UX overhaul 🟡 K.2 DONE, K.3 NEXT
+### Phase K — Portal + Workspace UX overhaul ✅ COMPLETE
 
 > Cieľ: make SDM-Rewrite "feel professional" — replace the v1.1.3 "school project"
 > shell with a 2026-SaaS-grade portal + workspace. Two-phase delivery: v1.1.4 quick
@@ -253,15 +253,19 @@ Dispatch: strict sekvenčný J.0 → J.9 (per `feedback_pr_flow.md` PR-flow). Pe
   27467811369, GHCR images + helm `oci://ghcr.io/spigotek/charts/sdm:1.1.4`,
   live on `10.11.36.14`. Plán: [K.2-v1.1.4.md](./plans/K.2-v1.1.4.md), PR #60 squash `796917e`.
 
-- **K.3 v1.2 full redesign 🔮 NEXT** — feature branch `feat/v1.2-redesign`,
-  multi-PR. Scope: brand-tied colour scale + neutral + semantic in
-  `tokens.css`; dark-mode toggle wired to `[data-theme]` + `localStorage` +
-  `prefers-color-scheme`; GSAP-driven page transitions + list staggers +
-  hover lifts; Inter / JetBrains Mono font subset + `font-display: swap`;
-  responsive sidebar nav on `lg+` (Linear-style left rail with collapsible
-  groups for workspace); mobile hamburger + bottom nav; multi-page polish
-  (every detail route); axe sweep zero serious/critical; LHCI mobile
-  portal `/` LCP ≤ 2.5 s. Detail TBD in `K.3-v1.2.md` after v1.1.4 lands.
+- **K.3 v1.2 full redesign ✅ DONE (2026-06-13)** — feature branch
+  `feat/v1.2-redesign`, 6 sequential chunks (A foundation → B shells →
+  C cmd+K → D illustrations → E multi-page polish → F a11y + LHCI
+  retighten), executed autonomously with heavy parallel subagent
+  fan-out per chunk. Dark mode + CommandPalette modal + workspace
+  left-rail + portal mobile drawer / bottom-nav + 10 placeholder
+  illustration SVGs + multi-page polish across every detail route
+  - Inter fallback metrics (size-adjust + ascent-override) + skip-link.
+    Axe zero serious/critical (portal 6/6 + workspace 11/11). Workspace
+    `/queue` CLS 0.179 → 0.023 (strict 0.06 floor restored). Design-system
+    test suite grew 95 → 126 (+ useTheme + ThemeToggle + CommandPalette
+  - registry). Plán: [K.3-v1.2.md](./plans/K.3-v1.2.md), PR ⏳, tag
+    v1.2.0 ⏳ deploy on `10.11.36.14`.
 
 Dispatch: heavy parallel subagent fan-out at design + implementation rounds (per
 owner brief "subagentov hlavne pri návrhu dizajnu"). Prompt template: [K-prompt.md](./plans/K-prompt.md).

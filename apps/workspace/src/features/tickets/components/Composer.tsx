@@ -74,6 +74,7 @@ export function Composer({ detail, onResolveRequest }: ComposerProps) {
             type="button"
             role="tab"
             aria-selected={tab === id}
+            aria-current={tab === id ? "true" : undefined}
             className="sdm-ticket-composer-tab"
             data-active={tab === id || undefined}
             data-testid={`ticket-composer-tab-${id}`}

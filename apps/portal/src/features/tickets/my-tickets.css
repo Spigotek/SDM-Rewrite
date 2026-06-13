@@ -1,25 +1,140 @@
+/**
+ * Portal `/tickets` — v1.2 polish.
+ * Tokens-only stylesheet: every colour/space/radius resolves through
+ * `@sdm/design-system/tokens.css`.
+ */
+
 .sdm-my-tickets {
   max-width: 56rem;
   margin: 0 auto;
   padding: var(--spacing-6) var(--spacing-4) var(--spacing-12);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-5);
 }
 
 .sdm-my-tickets-head {
   display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--spacing-3);
-  margin-bottom: var(--spacing-5);
+  flex-direction: column;
+  gap: var(--spacing-1);
 }
 
 .sdm-my-tickets-title {
   margin: 0;
   font-size: var(--font-size-2xl, 1.5rem);
   font-weight: var(--font-weight-bold, 700);
+  color: var(--color-text-primary);
+}
+
+.sdm-my-tickets-subhead {
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-sm);
 }
 
 .sdm-my-tickets-count {
+  font-variant-numeric: tabular-nums;
+}
+
+.sdm-my-tickets-error {
   margin: 0;
-  color: var(--color-text-subtle);
-  font-size: var(--font-size-sm, 0.875rem);
+  padding: var(--spacing-4);
+  border-radius: var(--radius-md, 0.5rem);
+  background: var(--color-background-subtle);
+  color: var(--color-text-danger, var(--color-text-body));
+  font-size: var(--font-size-sm);
+}
+
+/* ── List ──────────────────────────────────────────────────────────────── */
+
+.sdm-my-tickets-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+}
+
+.sdm-my-tickets-row {
+  display: block;
+}
+
+.sdm-my-tickets-link {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: var(--radius-md, 0.5rem);
+}
+
+.sdm-my-tickets-link:focus-visible {
+  outline: var(--border-width-thick, 2px) solid var(--color-border-focus, currentColor);
+  outline-offset: 2px;
+}
+
+.sdm-my-tickets-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  grid-template-rows: auto auto;
+  grid-template-areas:
+    "ref summary badges time"
+    "ref summary badges time";
+  align-items: center;
+  gap: var(--spacing-1) var(--spacing-3);
+}
+
+@media (max-width: 639px) {
+  .sdm-my-tickets-card {
+    grid-template-columns: 1fr auto;
+    grid-template-rows: auto auto auto;
+    grid-template-areas:
+      "ref badges"
+      "summary summary"
+      "time time";
+  }
+}
+
+.sdm-my-tickets-ref {
+  grid-area: ref;
+  font-family: var(--font-family-mono, ui-monospace, monospace);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-weight-semibold, 600);
+  font-size: var(--font-size-sm);
+  color: var(--color-text-link);
+}
+
+.sdm-my-tickets-summary {
+  grid-area: summary;
+  font-weight: var(--font-weight-medium, 500);
+  color: var(--color-text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sdm-my-tickets-badges {
+  grid-area: badges;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.sdm-my-tickets-time {
+  grid-area: time;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Skeleton placeholder rows ─────────────────────────────────────────── */
+
+.sdm-my-tickets-row--skeleton {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-4);
+  background: var(--color-background-surface);
+  border: var(--border-width-thin, 1px) solid var(--color-border-default);
+  border-radius: var(--radius-md, 0.5rem);
 }

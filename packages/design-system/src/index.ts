@@ -24,10 +24,14 @@ export * from "./primitives/Avatar";
 export * from "./primitives/EmptyState";
 export * from "./primitives/Breadcrumbs";
 export * from "./primitives/ToastFlyout";
+export * from "./primitives/ThemeToggle";
+export * from "./primitives/CommandPalette";
 export * from "./primitives/TextField";
 export * from "./primitives/TextArea";
 export * from "./primitives/Select";
 export * from "./primitives/Checkbox";
+
+export * from "../illustrations";
 
 export {
   applyTheme,
@@ -37,6 +41,8 @@ export {
   THEME_STORAGE_KEY,
 } from "./tokens/theme";
 export type { ThemeName, ThemeChoice } from "./tokens/theme";
+
+export * from "./theme";
 
 export * from "./motion";
 

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img">
+  <title>No catalog items</title>
+  <path d="M50 60h100l-10 60a8 8 0 0 1-8 7H68a8 8 0 0 1-8-7z" />
+  <path d="M70 60V45a30 30 0 0 1 60 0v15" />
+  <path d="M85 90l30 30M115 90l-30 30" opacity="0.6" />
+</svg>

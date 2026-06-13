@@ -1,7 +1,14 @@
 import { useCallback, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button } from "@sdm/design-system";
+import {
+  Button,
+  Card,
+  EmptyState,
+  IllustrationNoOpenTickets,
+  Skeleton,
+  usePageTransition,
+} from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
@@ -17,14 +24,20 @@ import "./catalog.css";
 /**
  * `/catalog/:itemId` — Service Catalog item detail + DynamicForm.
  *
- * Three phases:
- *   1. Loading detail (`isLoading`)               → spinner placeholder
- *   2. Loaded                                     → header + DynamicForm
- *   3. Submitted (mutation success)               → SuccessScreen with new ref
+ * Phases:
+ *   1. Loading detail (`isLoading`)               → Card with Skeleton bars
+ *   2. Loaded                                     → Card → header + DynamicForm
+ *   3. Submitted (mutation success)               → hero EmptyState w/ ref
  *
- * The success state is local (not a child route) for the same reason H.3
- * keeps it local — refreshing or sharing the URL should land on the form,
- * not a state-orphaned "thanks" view.
+ * v1.2 redesign (K.3.E):
+ *   - Header + form share a single DS `Card` (variant `surface`).
+ *   - Loading state renders Skeleton text/block bars rather than a "Loading…"
+ *     string so the layout reserves vertical space (CLS friendly).
+ *   - Success state mirrors the new-incident screen: hero `EmptyState` with
+ *     the friendly inbox glyph, a large tabular-nums ref, and CTAs back to
+ *     the catalog / detail / home.
+ *   - `usePageTransition` crossfades route mounts; `prefers-reduced-motion`
+ *     respected upstream.
  */
 
 const TENANT_PLACEHOLDER = toTenantId("__pending__");
@@ -33,6 +46,9 @@ export function CatalogItemRoute() {
   const { t } = useTranslation("portal");
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { ref: pageRef } = usePageTransition(location.pathname);
+
   const { session } = useSession();
   const tenantId = session?.tenantId ?? TENANT_PLACEHOLDER;
   const qc = useQueryClient();
@@ -75,30 +91,45 @@ export function CatalogItemRoute() {
 
   if (!itemId) {
     return (
-      <section className="sdm-catalog-item" data-testid="portal-catalog-item">
-        <p role="alert">{t("catalogBrowse.detail.notFound")}</p>
-      </section>
+      <div ref={pageRef} className="sdm-catalog-item" data-testid="portal-catalog-item">
+        <p role="alert" className="sdm-catalog-error">
+          {t("catalogBrowse.detail.notFound")}
+        </p>
+      </div>
     );
   }
 
   if (created) {
     return (
-      <section
+      <div
+        ref={pageRef}
         className="sdm-catalog-item-success"
         data-testid="catalog-item-success"
         data-ticket-id={created.id}
         data-ticket-ref={created.ref}
         aria-live="polite"
       >
-        <h1>{t("catalogBrowse.success.title", { ref: created.ref })}</h1>
-        <p>{t("catalogBrowse.success.body")}</p>
+        <EmptyState
+          variant="hero"
+          illustration={<IllustrationNoOpenTickets />}
+          title={t("catalogBrowse.success.title")}
+          description={t("catalogBrowse.success.body")}
+        />
+        <p
+          className="sdm-catalog-item-success-ref"
+          data-testid="catalog-item-success-ref"
+          aria-label={`${t("catalogBrowse.success.refLabel")}: ${created.ref}`}
+        >
+          <span aria-hidden="true">#</span>
+          <span aria-hidden="true">{created.ref}</span>
+        </p>
         <div className="sdm-catalog-item-success-ctas">
           <Link
             to={`/tickets/${created.id}`}
             className="sdm-home-action-link"
             data-testid="catalog-item-success-view"
           >
-            <Button variant="primary" type="button">
+            <Button variant="primary" type="button" fullWidth>
               {t("catalogBrowse.success.viewTicket")}
             </Button>
           </Link>
@@ -107,30 +138,31 @@ export function CatalogItemRoute() {
             className="sdm-home-action-link"
             data-testid="catalog-item-success-back"
           >
-            <Button variant="secondary" type="button">
+            <Button variant="secondary" type="button" fullWidth>
               {t("catalogBrowse.success.backToCatalog")}
             </Button>
           </Link>
         </div>
-      </section>
+      </div>
     );
   }
 
   return (
-    <section className="sdm-catalog-item" data-testid="portal-catalog-item">
-      <Link to="/catalog" className="sdm-catalog-back" data-testid="catalog-item-back">
-        {t("catalogBrowse.detail.back")}
-      </Link>
+    <div ref={pageRef} className="sdm-catalog-item" data-testid="portal-catalog-item">
       {query.isLoading ? (
-        <p className="sdm-catalog-loading" data-testid="catalog-item-loading">
-          {t("catalogBrowse.detail.loading")}
-        </p>
+        <Card variant="surface" className="sdm-catalog-item-card" aria-busy="true">
+          <div className="sdm-catalog-item-loading" data-testid="catalog-item-loading">
+            <Skeleton variant="text" width="40%" height={28} />
+            <Skeleton variant="text" width="80%" height={16} />
+            <Skeleton variant="block" height={200} />
+          </div>
+        </Card>
       ) : query.isError || !query.data ? (
         <p role="alert" className="sdm-catalog-error" data-testid="catalog-item-error">
           {t("catalogBrowse.detail.error")}
         </p>
       ) : (
-        <>
+        <Card variant="surface" className="sdm-catalog-item-card">
           <header className="sdm-catalog-item-heading">
             <h1>{query.data.item.name}</h1>
             <p className="sdm-catalog-item-description">{query.data.item.description}</p>
@@ -146,9 +178,9 @@ export function CatalogItemRoute() {
             submitting={mutation.isPending}
             serverError={mutation.isError ? t("catalogBrowse.form.submitFailed") : null}
           />
-        </>
+        </Card>
       )}
-    </section>
+    </div>
   );
 }
 

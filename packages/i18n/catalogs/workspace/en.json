@@ -19,8 +19,10 @@
     "resultCount": "{visible} of {total} tickets",
     "loading": "Loading queue…",
     "error": "Could not load queue. Try refresh.",
-    "empty": "🎉 Queue is empty. Take a break or grab a coffee.",
-    "emptyFiltered": "🔍 No tickets match these filters. Try relaxing the criteria or reset filters.",
+    "empty": "Queue is empty. Take a break or grab a coffee.",
+    "emptyTitle": "Queue is empty",
+    "emptyFiltered": "No tickets match these filters. Try relaxing the criteria or reset filters.",
+    "emptyFilteredTitle": "No results for these filters",
     "unassigned": "Unassigned",
     "stats": {
       "ariaLabel": "Queue overview",
@@ -59,12 +61,14 @@
     "recentActivity": {
       "title": "Recent activity",
       "empty": "No activity recently.",
+      "emptyTitle": "No activity",
       "verbUpdated": "updated"
     },
     "changeCalendar": {
       "title": "Change calendar",
       "openLink": "Open calendar",
-      "empty": "No scheduled changes."
+      "empty": "No scheduled changes.",
+      "emptyTitle": "No scheduled changes"
     },
     "columns": {
       "menu": "Columns",
@@ -114,7 +118,7 @@
   "nav": {
     "primary": "Primary navigation",
     "workspace": "Workspace",
-    "queue": "Queue",
+    "queue": "My queue",
     "changes": "Changes",
     "problems": "Problems",
     "cmdb": "CMDB",
@@ -122,16 +126,63 @@
     "calendar": "Change calendar",
     "editor": "Editor",
     "analytics": "Analytics",
+    "settings": "Settings",
     "spCockpit": "SP Cockpit",
-    "cmdkHint": "Search / command",
+    "cmdkHint": "Search…",
     "notifications": "Notifications",
     "unread": "unread",
-    "userMenu": "Account"
+    "userMenu": "Account",
+    "groups": {
+      "top": "Overview",
+      "incidents": "Incidents",
+      "changes": "Changes",
+      "knowledge": "Knowledge",
+      "cmdb": "CMDB"
+    },
+    "items": {
+      "inbox": "Inbox",
+      "starred": "Starred",
+      "triage": "Triage",
+      "inProgress": "In progress",
+      "onHold": "On hold",
+      "resolved": "Resolved",
+      "pendingApproval": "Pending approval",
+      "scheduled": "Scheduled",
+      "calendar": "Calendar"
+    },
+    "rail": {
+      "collapseGroup": "Collapse {name} group",
+      "expandGroup": "Expand {name} group"
+    },
+    "userMenu": {
+      "themeToggle": "Theme",
+      "signOut": "Sign out",
+      "language": "Language"
+    },
+    "mobile": {
+      "open": "Open navigation",
+      "close": "Close navigation"
+    }
   },
   "ticketDetail": {
     "loading": "Loading ticket…",
     "error": "Could not load ticket. Try refresh.",
     "noSummary": "(no summary)",
+    "header": {
+      "openedAt": "Opened",
+      "customer": "Requester",
+      "anonymous": "No requester"
+    },
+    "sections": {
+      "description": "Description",
+      "descriptionEmpty": "(no description)",
+      "customFields": "Custom fields",
+      "customFieldsEmpty": "No custom fields.",
+      "watchers": "Watchers",
+      "watchersEmpty": "Nobody is watching this ticket yet.",
+      "relatedCis": "Related CIs",
+      "relatedChanges": "Related changes"
+    },
     "fields": {
       "status": "Status",
       "priority": "Priority",
@@ -247,10 +298,33 @@
   },
   "changes": {
     "title": "Changes",
+    "newChange": "+ New change",
     "loading": "Loading changes…",
     "error": "Failed to load changes. Try refresh.",
     "empty": "No changes for this tenant.",
+    "emptyTitle": "No changes",
+    "emptyFiltered": "No changes match the filters. Try relaxing them or reset.",
+    "emptyFilteredTitle": "No results for these filters",
     "noSummary": "(no summary)",
+    "stats": {
+      "ariaLabel": "Changes overview",
+      "open": "Open",
+      "pendingApproval": "Pending approval",
+      "scheduledToday": "Scheduled today",
+      "inCab": "In CAB",
+      "closedThisWeek": "Closed this week"
+    },
+    "filtersBar": {
+      "ariaLabel": "Change filters",
+      "statusLabel": "Status",
+      "typeLabel": "Type",
+      "riskLabel": "Risk",
+      "allStatuses": "All statuses",
+      "allTypes": "All types",
+      "allRisks": "All risks",
+      "resultCount": "{visible} of {total}",
+      "reset": "Reset"
+    },
     "columns": {
       "ref": "ID",
       "risk": "Risk",
@@ -390,9 +464,12 @@
   },
   "problems": {
     "title": "Problems",
+    "newProblem": "+ New problem",
     "loading": "Loading problems…",
     "error": "Failed to load problems. Try refresh.",
     "empty": "No problems for this tenant.",
+    "emptyTitle": "No open problems",
+    "emptyDescription": "No open root-cause records for this tenant. Escalate an incident or create a new problem manually.",
     "noSummary": "(no summary)",
     "columns": {
       "ref": "ID",
@@ -462,6 +539,16 @@
     },
     "actions": {
       "convert": "Convert to problem"
+    },
+    "tabs": {
+      "ariaLabel": "Problem sections",
+      "overview": "Overview",
+      "linkedIncidents": "Linked incidents",
+      "activity": "Activity"
+    },
+    "sections": {
+      "workarounds": "Workarounds",
+      "workaroundsEmpty": "No workarounds recorded yet."
     }
   },
   "placeholders": {
@@ -471,9 +558,24 @@
   },
   "kb": {
     "title": "Knowledge Base",
+    "subtitle": "Search the knowledge base — answers, runbooks, how-tos.",
     "loading": "Loading KB articles…",
     "error": "Failed to load KB.",
     "empty": "No published articles in this tenant.",
+    "emptyTitle": "No published articles",
+    "hero": {
+      "searchLabel": "Search the knowledge base",
+      "searchPlaceholder": "Search articles, runbooks, how-tos…",
+      "popularLabel": "Popular:",
+      "popularTags": "Wi-Fi, VPN, Password, Laptop"
+    },
+    "list": {
+      "ariaLabel": "Article list",
+      "noExcerpt": "No content preview.",
+      "byAuthor": "by {author}",
+      "updatedRelative": "{date}",
+      "unknownAuthor": "Unknown author"
+    },
     "columns": {
       "category": "Category",
       "title": "Title",
@@ -594,6 +696,11 @@
         "savedMinutesAgo": "Saved {minutes} min ago",
         "savedHoursAgo": "Saved {hours} h ago"
       },
+      "toast": {
+        "saved": "Article saved.",
+        "published": "Article published."
+      },
+      "loadingPlaceholder": "Loading editor…",
       "errors": {
         "save": "Could not save article. Try again.",
         "publish": "Publish failed. Try again or contact admin.",
@@ -637,9 +744,21 @@
   },
   "cmdb": {
     "title": "CMDB",
+    "newCi": "+ New CI",
     "loading": "Loading configuration items…",
     "error": "Failed to load CMDB.",
     "empty": "No CIs in this tenant.",
+    "emptyTitle": "No configuration items",
+    "emptyFiltered": "No CIs match the filters.",
+    "emptyFilteredTitle": "No results for these filters",
+    "stats": {
+      "ariaLabel": "CMDB overview",
+      "total": "Total CIs",
+      "active": "Active",
+      "inactive": "Inactive",
+      "retired": "Retired",
+      "sharedCount": "Shared"
+    },
     "columns": {
       "id": "ID",
       "name": "Name",
@@ -869,6 +988,29 @@
       "stop": {
         "button": "Exit view-as"
       }
+    }
+  },
+  "cmdk": {
+    "placeholder": "Search or type a command…",
+    "empty": "No results",
+    "groups": {
+      "recent": "Recent",
+      "navigate": "Navigate",
+      "actions": "Actions",
+      "tickets": "Tickets",
+      "kb": "Knowledge",
+      "users": "CIs"
+    },
+    "help": {
+      "header": "Keyboard shortcuts",
+      "esc": "Esc — close",
+      "enter": "Enter — activate",
+      "arrows": "↑ ↓ — select",
+      "modes": "Prefix > actions, # navigate, ? help"
+    },
+    "actions": {
+      "toggleTheme": "Toggle theme",
+      "signOut": "Sign out"
     }
   }
 }

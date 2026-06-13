@@ -315,7 +315,9 @@
   --color-text-primary: #f4f4f5;
   --color-text-body: #e4e4e7;
   --color-text-secondary: #a1a1aa;
-  --color-text-tertiary: #71717a;
+  /* K.3.A — bumped from #71717a (≈4.36:1 on neutral-50) to clear AA for
+     normal-size meta text (≥ 4.5:1 on #0f0f11). */
+  --color-text-tertiary: #8b8b94;
   --color-text-disabled: #52525b;
   --color-text-inverse: #fafafa;
   --color-text-link: #818cf8;
@@ -330,46 +332,67 @@
   --color-brand-bg-subtle: var(--color-brand-900);
   --color-brand-fg: var(--color-brand-400);
 
-  /* Status colors (dark) — full 50/100/500/700/900 also valid in dark via shared ramp */
-  --color-success-50: #052e16;
-  --color-success-100: #14532d;
+  /* Status colors (dark) — K.3.A: ramp semantics MUST match light (50 = subtle
+     bg, 900 = strongest fg). K.2 originally inverted these (50 = darkest hex,
+     900 = lightest hex); audit + fix per K.1 brief §2 + §8 — `*-bg = -50`,
+     `*-fg = -700`, solid surface = -500. Hex picks chosen to land
+     AA-contrast against `[data-theme="dark"]` surfaces. */
+  --color-success-50: #14532d; /* deep tinted bg on dark surface */
+  --color-success-100: #166534;
   --color-success-500: #22c55e;
-  --color-success-700: #4ade80;
-  --color-success-900: #bbf7d0;
-  --color-success-fg: #4ade80;
+  --color-success-700: #86efac; /* fg on dark — AA on neutral-50 (#0f0f11) */
+  --color-success-900: #dcfce7; /* strongest fg / inverse */
+  --color-success-fg: var(--color-success-700);
   --color-success-bg: var(--color-success-50);
   --color-success-border: #16a34a;
   --color-success-solid: var(--color-success-500);
 
-  --color-warning-50: #451a03;
-  --color-warning-100: #78350f;
+  --color-warning-50: #78350f;
+  --color-warning-100: #92400e;
   --color-warning-500: #f59e0b;
-  --color-warning-700: #fbbf24;
-  --color-warning-900: #fde68a;
-  --color-warning-fg: #fbbf24;
+  --color-warning-700: #fcd34d;
+  --color-warning-900: #fef3c7;
+  --color-warning-fg: var(--color-warning-700);
   --color-warning-bg: var(--color-warning-50);
   --color-warning-border: #d97706;
   --color-warning-solid: var(--color-warning-500);
 
-  --color-danger-50: #450a0a;
-  --color-danger-100: #7f1d1d;
+  --color-danger-50: #7f1d1d;
+  --color-danger-100: #991b1b;
   --color-danger-500: #ef4444;
-  --color-danger-700: #f87171;
-  --color-danger-900: #fecaca;
-  --color-danger-fg: #f87171;
+  --color-danger-700: #fca5a5;
+  --color-danger-900: #fee2e2;
+  --color-danger-fg: var(--color-danger-700);
   --color-danger-bg: var(--color-danger-50);
   --color-danger-border: #dc2626;
   --color-danger-solid: var(--color-danger-500);
 
-  --color-info-50: #172554;
-  --color-info-100: #1e3a8a;
+  --color-info-50: #1e3a8a;
+  --color-info-100: #1d4ed8;
   --color-info-500: #3b82f6;
-  --color-info-700: #60a5fa;
-  --color-info-900: #bfdbfe;
-  --color-info-fg: #60a5fa;
+  --color-info-700: #93c5fd;
+  --color-info-900: #dbeafe;
+  --color-info-fg: var(--color-info-700);
   --color-info-bg: var(--color-info-50);
   --color-info-border: #2563eb;
   --color-info-solid: var(--color-info-500);
+
+  /* Primary ramp on dark — K.3.A per K.1 brief §8. Light theme reuses the
+     shared --color-brand-* hexes via the alias ramp in :root. Dark needs
+     LIGHTER shades to clear AA against the deep neutral surfaces:
+       -400 (#a5b4fc) → link / brand-fg on dark (≥ 4.5:1 on --color-neutral-50)
+       -500 stays as accent border / brand spine
+       -900 → brand-subtle background (deep tinted indigo) */
+  --color-primary-50: #1e1b4b;
+  --color-primary-100: #312e81;
+  --color-primary-200: #3730a3;
+  --color-primary-300: #4338ca;
+  --color-primary-400: #a5b4fc;
+  --color-primary-500: #818cf8;
+  --color-primary-600: #6366f1;
+  --color-primary-700: #c7d2fe;
+  --color-primary-800: #e0e7ff;
+  --color-primary-900: #312e81;
 
   /* Severity (dark) */
   --color-severity-critical: #ef4444;

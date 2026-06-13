@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img">
+  <title>No notifications</title>
+  <path d="M70 110h60M86 110a14 14 0 0 0 28 0" />
+  <path d="M70 110V75a30 30 0 0 1 60 0v35" />
+  <path d="M100 35v-8" />
+  <path d="M50 50l100 70" opacity="0.6" />
+</svg>

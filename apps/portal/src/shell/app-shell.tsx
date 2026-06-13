@@ -1,9 +1,12 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "@sdm/i18n";
+import { BottomNav } from "./bottom-nav";
 import { Breadcrumbs } from "./breadcrumbs";
+import { CommandPaletteMount } from "./command-palette-mount";
 import { Heartbeat } from "./heartbeat";
 import { IdleModal } from "./idle-modal";
 import { LoginPage } from "./login-page";
+import { MobileDrawer } from "./mobile-drawer";
 import { NavRow } from "./nav-row";
 import { PendingChangesProvider } from "./pending-changes";
 import { PendingChangesTestBridge } from "./pending-changes-test-bridge";
@@ -17,14 +20,21 @@ export function AppShell({ appName, children }: { appName: string; children: Rea
     <PendingChangesProvider>
       {import.meta.env.DEV && <PendingChangesTestBridge />}
       <div className="sdm-app-shell">
+        {/* K.3.F — skip-link MUST be the first focusable element. Hidden off-screen
+         * until focused. Targets `<main id="main">`. */}
+        <a href="#main" className="sdm-skip-link">
+          {t("a11y.skipToMain")}
+        </a>
         <TopBar appName={appName} />
         {status === "ready" && (
           <>
             <NavRow />
             <Breadcrumbs />
+            <MobileDrawer />
+            <CommandPaletteMount />
           </>
         )}
-        <main className="sdm-content" data-testid="shell-content">
+        <main className="sdm-content" id="main" tabIndex={-1} data-testid="shell-content">
           {status === "loading" && <p data-testid="session-loading">{t("meta.loading")}</p>}
           {status === "anonymous" && <LoginPage appName={appName} onSubmit={login} />}
           {status === "error" && (
@@ -40,6 +50,7 @@ export function AppShell({ appName, children }: { appName: string; children: Rea
             </>
           )}
         </main>
+        {status === "ready" && <BottomNav />}
       </div>
     </PendingChangesProvider>
   );

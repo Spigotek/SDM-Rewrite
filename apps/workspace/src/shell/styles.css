@@ -6,8 +6,86 @@
 
 .sdm-app-shell {
   display: flex;
-  flex-direction: column;
   min-height: 100%;
+}
+
+/* ── K.3.F — Skip-to-main-content link ─────────────────────────────────────
+ * Hidden visually until focused. On focus, slides into the top-left corner so
+ * keyboard users can bypass the left-rail + top-bar chrome. WCAG 2.4.1 (Bypass
+ * Blocks) compliance. */
+.sdm-skip-link {
+  position: fixed;
+  top: var(--spacing-2, 0.5rem);
+  left: var(--spacing-2, 0.5rem);
+  z-index: 1000;
+  padding: var(--spacing-2, 0.5rem) var(--spacing-4, 1rem);
+  background: var(--color-brand-bg);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-md, 0.5rem);
+  font-weight: var(--font-weight-semibold, 600);
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform 120ms ease-out;
+}
+
+.sdm-skip-link:focus,
+.sdm-skip-link:focus-visible {
+  transform: translateY(0);
+  outline: var(--border-width-thick, 2px) solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* `<main tabIndex=-1>` MUST not show a focus ring after the skip-link jumps. */
+.sdm-content:focus {
+  outline: none;
+}
+
+.sdm-app-shell-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 100%;
+}
+
+/* K.3.F — CLS fix for /queue. Without this, the LeftRail is conditionally
+ * rendered only after `status === "ready"`, so the main column jumps from
+ * `left: 0` to `left: 240px` once the session loads. Reserve the rail's
+ * 240px slot during loading so the layout is stable from first paint.
+ * Once `data-rail-ready="true"`, the flex sibling rail occupies that slot
+ * and `margin-left` returns to 0. */
+.sdm-app-shell[data-rail-ready="false"] .sdm-app-shell-main {
+  margin-left: 240px;
+}
+
+.sdm-top-bar-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  margin-left: auto;
+}
+
+.sdm-hamburger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  background-color: transparent;
+  border: var(--border-width-thin) solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--color-text-body);
+  cursor: pointer;
+}
+
+.sdm-hamburger:hover {
+  background-color: var(--color-background-hover);
+}
+
+.sdm-hamburger:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
 }
 
 .sdm-top-bar {
@@ -202,81 +280,6 @@
   line-height: 1.4;
 }
 
-.sdm-user-pill {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-2_5);
-  padding: var(--spacing-1) var(--spacing-3);
-  border-left: var(--border-width-thin) solid var(--color-border-default);
-}
-
-.sdm-user-pill-meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  min-width: 0;
-}
-
-.sdm-user-name {
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-body);
-}
-
-.sdm-user-roles {
-  font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
-}
-
-.sdm-cmdk-hint {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-2);
-  height: 2rem;
-  padding: 0 var(--spacing-2_5);
-  background-color: var(--color-background-subtle);
-  color: var(--color-text-secondary);
-  border: var(--border-width-thin) solid var(--color-border-default);
-  border-radius: var(--radius-full);
-  cursor: pointer;
-  font: inherit;
-  font-size: var(--font-size-xs);
-  transition:
-    background-color var(--motion-duration-fast) var(--motion-easing-standard),
-    color var(--motion-duration-fast) var(--motion-easing-standard);
-}
-
-.sdm-cmdk-hint:hover {
-  background-color: var(--color-background-hover);
-  color: var(--color-text-body);
-}
-
-.sdm-cmdk-hint:focus-visible {
-  outline: none;
-  box-shadow: var(--shadow-focus-brand);
-}
-
-.sdm-cmdk-hint-keys {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-  font-family: var(--font-family-mono);
-  color: var(--color-text-tertiary);
-}
-
-.sdm-cmdk-hint kbd {
-  font-family: inherit;
-  font-size: inherit;
-  line-height: 1;
-}
-
-@media (max-width: 767px) {
-  .sdm-cmdk-hint {
-    display: none;
-  }
-}
-
 .sdm-notif-button {
   position: relative;
   display: inline-flex;
@@ -321,19 +324,6 @@
   line-height: 1rem;
   text-align: center;
   font-variant-numeric: tabular-nums;
-}
-
-.sdm-nav-row {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-  padding: 0 var(--spacing-5);
-  height: 2.75rem;
-  background-color: var(--color-background-surface);
-  border-bottom: var(--border-width-thin) solid var(--color-border-default);
-  position: sticky;
-  top: var(--layout-header-height);
-  z-index: var(--z-sticky);
 }
 
 .sdm-breadcrumbs-row {
@@ -494,4 +484,28 @@
   margin: 0;
   color: var(--color-danger-fg);
   font-size: var(--font-size-sm);
+}
+
+/* K.3.B — rail/hamburger responsive rules. The 1024-px breakpoint mirrors
+ * the design-brief `lg` token used by the portal sibling chunk. */
+@media (max-width: 1023.98px) {
+  .sdm-hamburger {
+    display: inline-flex;
+  }
+  .sdm-left-rail {
+    display: none;
+  }
+  body[data-rail-open="true"] .sdm-left-rail {
+    display: flex;
+    position: fixed;
+    inset: 0 auto 0 0;
+    z-index: var(--z-overlay);
+    box-shadow: var(--shadow-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .sdm-hamburger {
+    display: none;
+  }
 }

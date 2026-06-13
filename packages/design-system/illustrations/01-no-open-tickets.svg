@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img">
+  <title>No open tickets</title>
+  <rect x="40" y="50" width="120" height="70" rx="6" />
+  <path d="M40 80h35l8 14h34l8-14h35" />
+  <circle cx="100" cy="36" r="10" fill="currentColor" stroke="none" opacity="0.35" />
+  <path d="M100 30v6l4 3" stroke="#fff" stroke-width="2" />
+</svg>

@@ -1,5 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "@sdm/i18n";
+import { staggerListRows } from "@sdm/design-system";
 import type { UiActivityEntry, UiTicketDetailActivity } from "@sdm/api-types";
 import { useTimelineFilter } from "../hooks";
 import type { TimelineFilter } from "../types";
@@ -28,17 +29,21 @@ function filterEntries(
 }
 
 /**
- * Read-only timeline. Filtering is purely client-side over the already-loaded
- * `activity.items` list (per H.8.md §Done-when) — there is no extra BFF call.
- * The kind colour is encoded via a `data-kind` attribute styled in the CSS
- * module; we keep the markup minimal so screen readers announce one item at
- * a time.
+ * Read-only timeline — K.3.E polish: entries carry `data-row` so
+ * `staggerListRows` runs the 20 ms-per-row enter animation each time the
+ * filter or item count changes. `aria-current` is set on the active filter
+ * tab.
  */
 export function ActivityTimeline({ activity }: ActivityTimelineProps) {
   const { t, i18n } = useTranslation("workspace");
   const { filter, setFilter } = useTimelineFilter();
+  const listRef = useRef<HTMLOListElement | null>(null);
 
   const filtered = useMemo(() => filterEntries(activity.items, filter), [activity.items, filter]);
+
+  useEffect(() => {
+    if (filtered.length > 0) staggerListRows(listRef.current);
+  }, [filtered.length, filter]);
 
   return (
     <section
@@ -53,6 +58,7 @@ export function ActivityTimeline({ activity }: ActivityTimelineProps) {
             type="button"
             role="tab"
             aria-selected={filter === f}
+            aria-current={filter === f ? "true" : undefined}
             className="sdm-ticket-timeline-tab"
             data-active={filter === f || undefined}
             data-testid={`ticket-timeline-tab-${f}`}
@@ -68,11 +74,12 @@ export function ActivityTimeline({ activity }: ActivityTimelineProps) {
           {t("ticketDetail.timeline.empty")}
         </p>
       ) : (
-        <ol className="sdm-ticket-timeline-list">
+        <ol className="sdm-ticket-timeline-list" ref={listRef}>
           {filtered.map((entry) => (
             <li
               key={entry.id}
               className="sdm-ticket-timeline-item"
+              data-row
               data-kind={entry.kind}
               data-testid="ticket-timeline-item"
             >
@@ -80,7 +87,7 @@ export function ActivityTimeline({ activity }: ActivityTimelineProps) {
                 <span className="sdm-ticket-timeline-author">
                   {entry.author?.label ?? t(`ticketDetail.timeline.author.${entry.kind}`)}
                 </span>
-                <span className="sdm-ticket-timeline-meta">
+                <span className="sdm-ticket-timeline-meta sdm-tabular">
                   {t(`ticketDetail.timeline.kindBadge.${entry.kind}`)} ·{" "}
                   {formatTs(entry.createdAt, i18n.language)}
                 </span>

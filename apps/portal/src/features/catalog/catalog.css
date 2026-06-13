@@ -1,9 +1,18 @@
 /**
- * Portal Service Catalog — list view + item detail + DynamicForm.
+ * Portal Service Catalog — v1.2 redesign (K.3.E).
  *
- * Layout follows the same single-column, mobile-first rhythm as
- * `home.css` / `new-incident.css`. Tokens consumed: spacing-*, radius-*,
- * color-*, font-size-*, border-width-thin.
+ * Layout:
+ *   - Outer section: max 80rem, centred, vertical rhythm via gap.
+ *   - Category tiles: 1-up mobile / 2-up md / 4-up lg+ (CSS Grid).
+ *   - Featured grid: same breakpoints — Tile primitive sets min-width so
+ *     `repeat(auto-fill, minmax(...))` keeps things responsive at extreme
+ *     widths.
+ *   - Detail page: header + DynamicForm in a single Card (rendered by the
+ *     route component).
+ *
+ * Token-only colours — every `var(...)` resolves through `tokens.css`.
+ * No hex literals, no hard-coded px values except the absolute layout caps
+ * (max-width).
  */
 
 .sdm-catalog,
@@ -13,27 +22,15 @@
   flex-direction: column;
   gap: var(--spacing-6);
   padding: var(--spacing-6) var(--spacing-5);
-  max-width: 64rem;
+  max-width: 80rem;
   margin: 0 auto;
-}
-
-.sdm-catalog-back {
-  align-self: flex-start;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  text-decoration: none;
-}
-
-.sdm-catalog-back:hover {
-  color: var(--color-text-primary);
-  text-decoration: underline;
 }
 
 .sdm-catalog-heading h1,
 .sdm-catalog-item-heading h1 {
   margin: 0;
-  font-size: var(--font-size-2xl, 1.5rem);
-  font-weight: var(--font-weight-bold, 700);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
 }
 
@@ -52,12 +49,12 @@
 
 .sdm-catalog-section-title {
   margin: 0;
-  font-size: var(--font-size-lg, 1.125rem);
-  font-weight: var(--font-weight-semibold, 600);
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 
-/* ── Category tiles ────────────────────────────────────────────────────── */
+/* ── Category tiles (Tile-driven) ──────────────────────────────────────── */
 
 .sdm-catalog-categories {
   list-style: none;
@@ -74,53 +71,20 @@
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 1024px) {
   .sdm-catalog-categories {
     grid-template-columns: repeat(4, 1fr);
   }
 }
 
-.sdm-catalog-category-tile {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-  border: var(--border-width-thin) solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-raised, var(--color-bg-canvas));
-  padding: var(--spacing-4);
-  cursor: pointer;
-  color: var(--color-text-primary);
-  text-align: left;
-  font: inherit;
-  transition:
-    border-color 0.12s ease,
-    box-shadow 0.12s ease;
-}
+/* Override Tile defaults for the active filter state. The DS Tile primitive
+   doesn't expose an `aria-pressed` style hook, so we layer one on via the
+   custom class set in `CategoryTiles.tsx`. */
 
-.sdm-catalog-category-tile:hover,
-.sdm-catalog-category-tile:focus-visible {
-  border-color: var(--color-border-strong, var(--color-text-primary));
-  outline: none;
-  box-shadow: var(--shadow-focus, 0 0 0 2px var(--color-text-primary));
-}
-
+.sdm-catalog-category-tile-active,
 .sdm-catalog-category-tile[data-active="true"] {
-  border-color: var(--color-border-strong, var(--color-text-primary));
-  background: var(--color-surface-subtle, var(--color-bg-canvas));
-}
-
-.sdm-catalog-category-icon {
-  font-size: var(--font-size-xl, 1.25rem);
-}
-
-.sdm-catalog-category-label {
-  font-weight: var(--font-weight-semibold, 600);
-}
-
-.sdm-catalog-category-count {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
+  background-color: var(--color-background-subtle);
+  border-color: var(--color-primary-400);
 }
 
 /* ── Featured / filtered item list ─────────────────────────────────────── */
@@ -129,62 +93,33 @@
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-3);
-}
-
-.sdm-catalog-featured-card {
   display: grid;
-  grid-template-columns: auto 1fr auto;
-  align-items: center;
+  grid-template-columns: 1fr;
   gap: var(--spacing-3);
-  padding: var(--spacing-4);
-  border: var(--border-width-thin) solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-raised, var(--color-bg-canvas));
-  color: var(--color-text-primary);
-  text-decoration: none;
-  transition:
-    border-color 0.12s ease,
-    box-shadow 0.12s ease;
 }
 
-.sdm-catalog-featured-card:hover,
-.sdm-catalog-featured-card:focus-visible {
-  border-color: var(--color-border-strong, var(--color-text-primary));
-  outline: none;
-  box-shadow: var(--shadow-focus, 0 0 0 2px var(--color-text-primary));
+@media (min-width: 480px) {
+  .sdm-catalog-featured {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
-.sdm-catalog-featured-icon {
-  font-size: var(--font-size-xl, 1.25rem);
+@media (min-width: 1024px) {
+  .sdm-catalog-featured {
+    grid-template-columns: repeat(4, 1fr);
+  }
 }
 
-.sdm-catalog-featured-body {
+.sdm-catalog-featured > li {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
 }
 
-.sdm-catalog-featured-title {
-  font-weight: var(--font-weight-semibold, 600);
+.sdm-catalog-featured > li > * {
+  flex: 1 1 auto;
 }
 
-.sdm-catalog-featured-description {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.sdm-catalog-featured-sla {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.sdm-catalog-featured-cta {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  white-space: nowrap;
+.sdm-catalog-featured-skeleton {
+  display: block;
 }
 
 .sdm-catalog-loading,
@@ -195,9 +130,24 @@
 }
 
 .sdm-catalog-error {
-  color: var(--color-text-danger, var(--color-text-primary));
+  color: var(--color-danger-fg);
   font-size: var(--font-size-sm);
   margin: 0;
+}
+
+/* ── Detail page card ──────────────────────────────────────────────────── */
+
+.sdm-catalog-item-card {
+  padding: var(--spacing-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.sdm-catalog-item-loading {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-4);
 }
 
 /* ── DynamicForm ───────────────────────────────────────────────────────── */
@@ -206,10 +156,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-5);
-  border: var(--border-width-thin) solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-5);
-  background: var(--color-surface-raised, var(--color-bg-canvas));
 }
 
 .sdm-catalog-form-fields {
@@ -223,10 +169,11 @@
   padding-top: var(--spacing-3);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
+  font-variant-numeric: tabular-nums;
 }
 
 .sdm-catalog-form-error {
-  color: var(--color-text-danger, var(--color-text-primary));
+  color: var(--color-danger-fg);
   font-size: var(--font-size-sm);
   margin: 0;
 }
@@ -251,7 +198,7 @@
 
 .sdm-catalog-field-radio-legend {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold, 600);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   padding: 0;
   margin: 0 0 var(--spacing-2) 0;
@@ -259,7 +206,7 @@
 
 .sdm-catalog-field-required {
   margin-left: var(--spacing-1);
-  color: var(--color-text-danger, var(--color-text-primary));
+  color: var(--color-danger-fg);
 }
 
 .sdm-catalog-field-radio-group,
@@ -289,6 +236,12 @@
   cursor: pointer;
 }
 
+.sdm-catalog-field-radio-option input:focus-visible,
+.sdm-catalog-field-multi-option input:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
+
 .sdm-catalog-field-helper {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
@@ -296,15 +249,10 @@
 
 .sdm-catalog-field-error {
   font-size: var(--font-size-sm);
-  color: var(--color-text-danger, var(--color-text-primary));
+  color: var(--color-danger-fg);
 }
 
-.sdm-catalog-field-checkbox {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
-}
-
+.sdm-catalog-field-checkbox,
 .sdm-catalog-field-date {
   display: flex;
   flex-direction: column;
@@ -313,23 +261,23 @@
 
 .sdm-catalog-field-date-label {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold, 600);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
 }
 
 .sdm-catalog-field-date-input {
   padding: var(--spacing-2) var(--spacing-3);
   border: var(--border-width-thin) solid var(--color-border-default);
-  border-radius: var(--radius-sm, 4px);
-  background: var(--color-bg-canvas);
+  border-radius: var(--radius-sm);
+  background: var(--color-background-surface);
   color: var(--color-text-primary);
   font: inherit;
 }
 
 .sdm-catalog-field-date-input:focus-visible {
   outline: none;
-  border-color: var(--color-border-strong, var(--color-text-primary));
-  box-shadow: var(--shadow-focus, 0 0 0 2px var(--color-text-primary));
+  border-color: var(--color-primary-400);
+  box-shadow: var(--shadow-focus-brand);
 }
 
 .sdm-catalog-field-file {
@@ -339,7 +287,7 @@
   padding: var(--spacing-3);
   border: var(--border-width-thin) dashed var(--color-border-default);
   border-radius: var(--radius-md);
-  background: var(--color-surface-subtle, transparent);
+  background: var(--color-background-subtle);
 }
 
 .sdm-catalog-field-file-hint {
@@ -356,10 +304,11 @@
 
 .sdm-catalog-field-markdown-help {
   padding: var(--spacing-3) var(--spacing-4);
-  border-left: 3px solid var(--color-border-default);
-  background: var(--color-surface-subtle, transparent);
+  border-left: var(--border-width-thick) solid var(--color-border-default);
+  background: var(--color-background-subtle);
   color: var(--color-text-primary);
   font-size: var(--font-size-sm);
+  border-radius: var(--radius-sm);
 }
 
 .sdm-catalog-field-markdown-help p {
@@ -370,15 +319,37 @@
 
 /* ── Success screen ───────────────────────────────────────────────────── */
 
+.sdm-catalog-item-success {
+  align-items: center;
+  text-align: center;
+  padding: var(--spacing-10) var(--spacing-6);
+}
+
+.sdm-catalog-item-success-ref {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--spacing-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  margin: 0;
+}
+
 .sdm-catalog-item-success-ctas {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
+  width: 100%;
+  max-width: 28rem;
 }
 
 @media (min-width: 480px) {
   .sdm-catalog-item-success-ctas {
     flex-direction: row;
     flex-wrap: wrap;
+    justify-content: center;
   }
 }

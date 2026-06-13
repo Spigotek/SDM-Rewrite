@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img">
+  <title>No recent activity</title>
+  <circle cx="100" cy="80" r="45" />
+  <path d="M100 55v25l16 12" />
+  <path d="M100 25v6M100 129v6M55 80h-6M151 80h-6" opacity="0.5" />
+</svg>

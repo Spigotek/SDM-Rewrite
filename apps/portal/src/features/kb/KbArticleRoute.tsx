@@ -1,5 +1,6 @@
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Card, usePageTransition } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
@@ -9,17 +10,21 @@ import { ArticleHeader } from "./components/ArticleHeader";
 import { ArticleBody } from "./components/ArticleBody";
 import { HelpfulnessVote } from "./components/HelpfulnessVote";
 import { RelatedArticles } from "./components/RelatedArticles";
+import { ArticleSkeleton } from "./components/Skeletons";
 import "./kb.css";
 
 /**
- * `/kb/article/:id` — KB article detail.
+ * `/kb/article/:id` — KB article reader. K.3.E v1.2:
  *
- * Composition (top → bottom):
- *   ┌─ Back link to /kb (preserves history.back semantics)
- *   ├─ <ArticleHeader>     title + meta (category, updated, read time)
- *   ├─ <ArticleBody>       lazy-loaded `react-markdown` chunk
- *   ├─ <HelpfulnessVote>   👍 / 👎 + comment
- *   └─ <RelatedArticles>   same-category 3-5 items
+ *   ┌─ Back link to /kb
+ *   ├─ Card variant="surface" wrapping the whole reader:
+ *   │   ├─ <ArticleHeader>     h1 30 px + meta (category, updated, read time)
+ *   │   ├─ <ArticleBody>       lazy-loaded react-markdown chunk
+ *   │   ├─ <HelpfulnessVote>   thumbs-up / -down IconButtons + counts
+ *   │   └─ <RelatedArticles>   3-up Tile grid (when data is available)
+ *
+ * `usePageTransition` runs the crossfade on mount; the skeleton placeholder
+ * replaces the "Načítavam článok…" text the route used to render.
  */
 const TENANT_PLACEHOLDER = toTenantId("__pending__");
 
@@ -28,6 +33,8 @@ export function KbArticleRoute() {
   const { id } = useParams<{ id: string }>();
   const { session } = useSession();
   const tenantId = session?.tenantId ?? TENANT_PLACEHOLDER;
+  const location = useLocation();
+  const { ref: pageRef } = usePageTransition(location.pathname);
 
   const query = useQuery({
     ...kbArticleQuery(tenantId, id ?? ""),
@@ -38,8 +45,13 @@ export function KbArticleRoute() {
 
   if (query.isLoading) {
     return (
-      <section className="sdm-kb-article" data-testid="portal-kb-article-loading">
-        <p className="sdm-kb-article-loading">{t("kb.article.loading")}</p>
+      <section ref={pageRef} className="sdm-kb-article" data-testid="portal-kb-article-loading">
+        <Link to="/kb" className="sdm-kb-back" data-testid="kb-article-back">
+          {t("kb.article.back")}
+        </Link>
+        <Card variant="surface" className="sdm-kb-article-card">
+          <ArticleSkeleton />
+        </Card>
       </section>
     );
   }
@@ -48,7 +60,12 @@ export function KbArticleRoute() {
     const status = (query.error as { status?: number } | null)?.status;
     if (status === 404) return <NotFoundElement />;
     return (
-      <section className="sdm-kb-article" data-testid="portal-kb-article-error" role="alert">
+      <section
+        ref={pageRef}
+        className="sdm-kb-article"
+        data-testid="portal-kb-article-error"
+        role="alert"
+      >
         <p className="sdm-kb-article-error">{t("kb.article.error")}</p>
       </section>
     );
@@ -59,6 +76,7 @@ export function KbArticleRoute() {
 
   return (
     <section
+      ref={pageRef}
       className="sdm-kb-article"
       data-testid="portal-kb-article"
       data-article-id={article.id}
@@ -66,9 +84,11 @@ export function KbArticleRoute() {
       <Link to="/kb" className="sdm-kb-back" data-testid="kb-article-back">
         {t("kb.article.back")}
       </Link>
-      <ArticleHeader article={article} />
-      <ArticleBody markdown={article.markdown} />
-      <HelpfulnessVote articleId={article.id} />
+      <Card variant="surface" className="sdm-kb-article-card">
+        <ArticleHeader article={article} />
+        <ArticleBody markdown={article.markdown} />
+        <HelpfulnessVote articleId={article.id} helpfulCount={article.helpfulCount} />
+      </Card>
       <RelatedArticles articles={article.related} />
     </section>
   );

@@ -1,12 +1,17 @@
 /**
- * Portal new-incident form — single-column, mobile-first.
+ * Portal new-incident form — v1.2 redesign (K.3.E).
  *
- * Vertical rhythm mirrors `home.css` / `ticket-detail.css`. The form ships
- * inside the standard 64rem `<section>` so the line length stays comfortable
- * at desktop widths.
+ * Layout:
+ *   - Outer section: max 64rem, centred, vertical rhythm via gap.
+ *   - Form lives inside a DS Card (`variant="surface"`).
+ *   - Grid: single column on mobile, 2-col on `lg+` (1024 px) with
+ *     category | summary on row 1, description full-width, urgency below.
+ *   - Action row: tertiary "Cancel" on the left, primary submit on the right.
+ *   - SuccessScreen renders a hero EmptyState — own block at the bottom.
  *
- * Tokens consumed: spacing-*, font-size-*, color-text-*, radius-md,
- * border-width-thin, color-border-default.
+ * Tokens consumed: spacing-*, font-size-*, color-background-*, color-text-*,
+ * color-danger-fg, color-border-default, radius-md, border-width-thin. No
+ * hex / px hard-codes.
  */
 
 .sdm-portal-new-incident {
@@ -14,20 +19,8 @@
   flex-direction: column;
   gap: var(--spacing-6);
   padding: var(--spacing-6) var(--spacing-5);
-  max-width: 48rem;
+  max-width: 64rem;
   margin: 0 auto;
-}
-
-.sdm-portal-new-incident-back {
-  align-self: flex-start;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-  text-decoration: none;
-}
-
-.sdm-portal-new-incident-back:hover {
-  color: var(--color-text-primary);
-  text-decoration: underline;
 }
 
 .sdm-portal-new-incident-heading {
@@ -38,8 +31,8 @@
 
 .sdm-portal-new-incident-heading h1 {
   margin: 0;
-  font-size: var(--font-size-2xl, 1.5rem);
-  font-weight: var(--font-weight-bold, 700);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
 }
 
@@ -49,14 +42,46 @@
   font-size: var(--font-size-md);
 }
 
+/* ── Card body — form layout ──────────────────────────────────────────── */
+
+.sdm-portal-new-incident-card {
+  padding: var(--spacing-8);
+}
+
 .sdm-portal-new-incident-form {
   display: flex;
   flex-direction: column;
+  gap: var(--spacing-6);
+}
+
+.sdm-portal-new-incident-grid {
+  display: grid;
+  grid-template-columns: 1fr;
   gap: var(--spacing-5);
-  border: var(--border-width-thin) solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  padding: var(--spacing-5);
-  background: var(--color-surface-raised, var(--color-bg-canvas));
+}
+
+@media (min-width: 1024px) {
+  .sdm-portal-new-incident-grid {
+    grid-template-columns: 1fr 1fr;
+    column-gap: var(--spacing-6);
+    row-gap: var(--spacing-5);
+  }
+
+  .sdm-portal-new-incident-field-category {
+    grid-column: 1 / 2;
+  }
+
+  .sdm-portal-new-incident-field-summary {
+    grid-column: 2 / 3;
+  }
+
+  .sdm-portal-new-incident-field-description {
+    grid-column: 1 / -1;
+  }
+
+  .sdm-portal-new-incident-field-urgency {
+    grid-column: 1 / -1;
+  }
 }
 
 /* Radio group — wireframe §5 Súrnosť. The design-system Radio primitive is
@@ -68,11 +93,14 @@
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
+  border: none;
+  padding: 0;
+  margin: 0;
 }
 
 .sdm-portal-new-incident-radio-legend {
   font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-semibold, 600);
+  font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
   padding: 0;
   margin: 0 0 var(--spacing-1) 0;
@@ -80,13 +108,21 @@
 
 .sdm-portal-new-incident-radio-required {
   margin-left: var(--spacing-1);
-  color: var(--color-text-danger, var(--color-text-primary));
+  color: var(--color-danger-fg);
 }
 
 .sdm-portal-new-incident-radio-options {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-2);
+}
+
+@media (min-width: 480px) {
+  .sdm-portal-new-incident-radio-options {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--spacing-4);
+  }
 }
 
 .sdm-portal-new-incident-radio-option {
@@ -102,6 +138,11 @@
   cursor: pointer;
 }
 
+.sdm-portal-new-incident-radio-option input:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
+
 .sdm-portal-new-incident-radio-helper {
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
@@ -109,7 +150,7 @@
 
 .sdm-portal-new-incident-radio-error {
   font-size: var(--font-size-sm);
-  color: var(--color-text-danger, var(--color-text-primary));
+  color: var(--color-danger-fg);
 }
 
 /* Submit row — Cancel left, Submit right. Stack on narrow viewports. */
@@ -119,7 +160,7 @@
   flex-direction: column-reverse;
   gap: var(--spacing-3);
   border-top: var(--border-width-thin) solid var(--color-border-default);
-  padding-top: var(--spacing-4);
+  padding-top: var(--spacing-5);
 }
 
 @media (min-width: 480px) {
@@ -130,8 +171,22 @@
   }
 }
 
+.sdm-portal-new-incident-actions-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--spacing-2);
+}
+
+@media (min-width: 480px) {
+  .sdm-portal-new-incident-actions-right {
+    flex-direction: row;
+    align-items: center;
+  }
+}
+
 .sdm-portal-new-incident-submit-error {
-  color: var(--color-text-danger, var(--color-text-primary));
+  color: var(--color-danger-fg);
   font-size: var(--font-size-sm);
   margin: 0;
 }
@@ -141,48 +196,62 @@
 .sdm-portal-new-incident-success {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: var(--spacing-5);
-  padding: var(--spacing-6) var(--spacing-5);
-  max-width: 48rem;
-  margin: 0 auto;
-  text-align: left;
+  padding: var(--spacing-10) var(--spacing-6);
+  background-color: var(--color-background-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xs);
 }
 
-.sdm-portal-new-incident-success-title {
-  margin: 0;
-  font-size: var(--font-size-2xl, 1.5rem);
-  font-weight: var(--font-weight-bold, 700);
+.sdm-portal-new-incident-success-ref {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--spacing-2);
+  font-family: var(--font-family-mono);
+  font-size: var(--font-size-3xl);
+  font-weight: var(--font-weight-bold);
   color: var(--color-text-primary);
-}
-
-.sdm-portal-new-incident-success-body {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
   margin: 0;
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-md);
-  line-height: var(--line-height-relaxed, 1.6);
 }
 
 .sdm-portal-new-incident-success-meta {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-1);
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-4);
   font-size: var(--font-size-sm);
   color: var(--color-text-secondary);
+  margin: 0;
+  padding: 0;
+}
+
+.sdm-portal-new-incident-success-meta > div {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1);
 }
 
 .sdm-portal-new-incident-success-meta strong {
   color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .sdm-portal-new-incident-success-ctas {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-3);
+  width: 100%;
+  max-width: 28rem;
 }
 
 @media (min-width: 480px) {
   .sdm-portal-new-incident-success-ctas {
     flex-direction: row;
     flex-wrap: wrap;
+    justify-content: center;
   }
 }

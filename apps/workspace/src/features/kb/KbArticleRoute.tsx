@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { Can } from "@sdm/auth";
-import { Button } from "@sdm/design-system";
+import { Button, Card, Skeleton, usePageTransition } from "@sdm/design-system";
 import { useSession } from "../../shell/session-context";
 import { NotFoundElement } from "../../routes/error-boundaries";
 import { kbArticleQuery } from "./api";
@@ -14,14 +14,14 @@ import { KbAttachIncidentAction } from "./components/KbAttachIncidentAction";
 import "./kb.css";
 
 /**
- * `/kb/article/:id` — workspace article view. Read-only MVP composition:
- *   ┌─ Back link to `/kb` (preserves current `?attachToTicket=` so a return
- *   │  to browse keeps the cross-feature context)
- *   ├─ KbAttachIncidentAction      (renders only when ?attachToTicket present)
- *   ├─ ArticleHeader               (title + author + category + last updated)
- *   ├─ ArticleBody                 (lazy markdown via vendor-markdown chunk)
- *   ├─ ArticleStats                (view count + helpfulness ratio)
- *   └─ Edit button                 (kb.write only; hidden via <Can fallback={null}>)
+ * `/kb/article/:id` — K.3.E polish:
+ *
+ * - The article body, stats, and header sit inside `<Card>` containers so the
+ *   surface tokens come from the DS instead of bespoke borders.
+ * - The toolbar keeps `kb-article-back` + `kb-article-edit` test-ids; edit is
+ *   permission-gated via `<Can permission="kb.write" fallback={null}>`.
+ * - Helpfulness footer renders via `ArticleStats` (H.6 contract preserved).
+ * - `usePageTransition` runs the K.1 crossfade on route mount.
  */
 const TENANT_PLACEHOLDER = toTenantId("__pending__");
 
@@ -33,6 +33,7 @@ export default function KbArticleRoute() {
   const roles = session?.roles ?? [];
   const location = useLocation();
   const navigate = useNavigate();
+  const { ref: pageRef } = usePageTransition(location.pathname);
 
   const query = useQuery({
     ...kbArticleQuery(tenantId, id ?? ""),
@@ -43,8 +44,16 @@ export default function KbArticleRoute() {
 
   if (query.isLoading) {
     return (
-      <section className="sdm-kb-article" data-testid="workspace-kb-article-loading">
-        <p className="sdm-kb-article-state">{t("kb.article.loading")}</p>
+      <section
+        className="sdm-kb-article"
+        data-testid="workspace-kb-article-loading"
+        ref={pageRef as React.RefObject<HTMLElement>}
+      >
+        <Card variant="surface" className="sdm-kb-article-skeleton">
+          <Skeleton variant="text" width="64%" height={28} />
+          <Skeleton variant="text" width="32%" height={14} />
+          <Skeleton variant="block" width="100%" height={160} />
+        </Card>
       </section>
     );
   }
@@ -53,7 +62,12 @@ export default function KbArticleRoute() {
     const status = (query.error as { status?: number } | null)?.status;
     if (status === 404) return <NotFoundElement />;
     return (
-      <section className="sdm-kb-article" data-testid="workspace-kb-article-error" role="alert">
+      <section
+        className="sdm-kb-article"
+        data-testid="workspace-kb-article-error"
+        role="alert"
+        ref={pageRef as React.RefObject<HTMLElement>}
+      >
         <p className="sdm-kb-article-state">{t("kb.article.error")}</p>
       </section>
     );
@@ -71,6 +85,7 @@ export default function KbArticleRoute() {
       className="sdm-kb-article"
       data-testid="workspace-kb-article"
       data-article-id={article.id}
+      ref={pageRef as React.RefObject<HTMLElement>}
     >
       <div className="sdm-kb-article-toolbar">
         <Link to={backHref} className="sdm-kb-article-back" data-testid="kb-article-back">
@@ -89,9 +104,13 @@ export default function KbArticleRoute() {
         </Can>
       </div>
       <KbAttachIncidentAction articleId={article.id} />
-      <ArticleHeader article={article} />
-      <ArticleBody markdown={article.markdown} />
-      <ArticleStats stats={article.stats} />
+      <Card variant="surface" className="sdm-kb-article-card">
+        <ArticleHeader article={article} />
+        <ArticleBody markdown={article.markdown} />
+      </Card>
+      <Card variant="surface" className="sdm-kb-article-stats-card">
+        <ArticleStats stats={article.stats} />
+      </Card>
     </section>
   );
 }

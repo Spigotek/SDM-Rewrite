@@ -1,8 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
-import { Button, StatusBadge, type TicketStatus } from "@sdm/design-system";
+import { Button, StatusBadge, staggerListRows, type TicketStatus } from "@sdm/design-system";
 import type { IncidentStatus } from "@sdm/domain";
 import { linkedIncidentsQuery, type ProblemId } from "../api";
 import { useUnlinkIncident } from "../hooks";
@@ -21,15 +21,16 @@ const INCIDENT_STATUS_MAP: Record<IncidentStatus, TicketStatus> = {
 };
 
 /**
- * LinkedIncidentsList — renders the incidents currently linked to this problem
- * + the "Link incident" action that opens the multi-select modal.
+ * LinkedIncidentsList — K.3.E polish.
  *
- * H.12.md §Done-when MVP: per F.6 §24 BREL doesn't work on this CA SDM
- * instance, so a real BFF mutation needs a WC-query rewrite. We ship the FE
- * flow against MSW today (round-trip proven by the H.12 browser test) and
- * defer the BFF endpoint to a Phase I follow-up. Until the BFF is wired, the
- * empty state surfaces the "feature available after B-E customization" hint
- * so non-MSW environments don't look broken.
+ * - Rows render as Card-style flex rows (still a `<ul>` so SR semantics hold)
+ *   with `data-row` so `staggerListRows` from the design-system runs on
+ *   mount + when the linked count changes.
+ * - `StatusBadge withIcon` brings the lucide glyph into the row to match the
+ *   queue/problems table treatment.
+ * - The `linked-incidents-list` / `problem-linked-row` / `problem-link-...`
+ *   test-ids are preserved for the J.4 browser test that asserts the link/
+ *   unlink flow end-to-end.
  */
 export interface LinkedIncidentsListProps {
   readonly problemId: ProblemId;
@@ -39,14 +40,20 @@ export function LinkedIncidentsList({ problemId }: LinkedIncidentsListProps) {
   const { t } = useTranslation("workspace");
   const [linkOpen, setLinkOpen] = useState(false);
   const unlink = useUnlinkIncident(problemId);
+  const listRef = useRef<HTMLUListElement | null>(null);
 
   const query = useQuery(linkedIncidentsQuery(problemId));
   const incidents = query.data ?? [];
+
+  useEffect(() => {
+    staggerListRows(listRef.current);
+  }, [incidents.length]);
 
   return (
     <section
       className="sdm-problem-linked sdm-problem-section"
       data-testid="problem-linked-incidents"
+      data-component="linked-incidents-list"
       aria-label={t("problems.linkedIncidents.ariaLabel")}
     >
       <div className="sdm-problem-linked-header">
@@ -70,25 +77,28 @@ export function LinkedIncidentsList({ problemId }: LinkedIncidentsListProps) {
       </div>
 
       {incidents.length === 0 ? (
-        <p className="sdm-problem-linked-empty" data-testid="problem-linked-empty">
+        <p className="sdm-problem-linked-empty" data-testid="problem-linked-empty" role="status">
           {t("problems.linkedIncidents.empty")}
           <span className="sdm-problem-linked-empty-hint">
             {t("problems.linkedIncidents.unsupportedHint")}
           </span>
         </p>
       ) : (
-        <ul className="sdm-problem-linked-list">
+        <ul className="sdm-problem-linked-list" ref={listRef}>
           {incidents.map((i) => (
             <li
               key={i.id}
               className="sdm-problem-linked-item"
+              data-row
+              data-row-id={i.id}
               data-testid="problem-linked-row"
               data-incident-id={i.id}
             >
-              <span className="sdm-problem-linked-ref">#{i.ref}</span>
+              <span className="sdm-problem-linked-ref sdm-tabular">#{i.ref}</span>
               <StatusBadge
                 status={INCIDENT_STATUS_MAP[i.status] ?? "open"}
                 label={t(`ticketDetail.statusLabel.${i.status}` as const)}
+                withIcon
               />
               <Link
                 to={`/tickets/${encodeURIComponent(i.id)}`}

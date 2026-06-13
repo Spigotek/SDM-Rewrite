@@ -16,7 +16,21 @@
     "notifications": "Notifications",
     "userMenu": "Account",
     "newIncident": "New incident",
-    "ticketDetail": "Ticket detail"
+    "ticketDetail": "Ticket detail",
+    "mobile": {
+      "open": "Open menu",
+      "close": "Close menu",
+      "drawerAria": "Mobile navigation"
+    },
+    "themeToggle": {
+      "system": "system",
+      "light": "light",
+      "dark": "dark",
+      "aria": "Theme: {current} (click to switch to {next})"
+    },
+    "bottomNav": {
+      "aria": "Primary navigation"
+    }
   },
   "catalog": {
     "reportProblem": "Report a problem",
@@ -107,8 +121,11 @@
     "title": "My tickets",
     "loading": "Loading your tickets…",
     "empty": "No tickets yet. When you need something, report a problem or request something.",
+    "emptyTitle": "No tickets yet",
+    "emptyCta": "Report a problem",
     "error": "Couldn't load tickets. Try refreshing the page.",
-    "count": "{n, plural, one {# ticket} other {# tickets}}"
+    "count": "{n, plural, one {# ticket} other {# tickets}}",
+    "subhead": "{open} open · {awaiting} waiting · {resolved} resolved"
   },
   "placeholders": {
     "catalogTitle": "Service catalog",
@@ -147,8 +164,8 @@
     },
     "helpfulness": {
       "prompt": "Was this article helpful?",
-      "yes": "👍 Yes",
-      "no": "👎 No",
+      "yes": "Yes, helpful",
+      "no": "No, not helpful",
       "commentLabel": "What were you expecting? (optional)",
       "commentPlaceholder": "Briefly describe what was missing.",
       "submit": "Send feedback",
@@ -177,6 +194,7 @@
       "featuredTitle": "Most requested",
       "request": "Request",
       "empty": "No items in this category yet.",
+      "emptyTitle": "No items available",
       "loading": "Loading catalog…",
       "error": "Couldn't load the catalog. Try refreshing the page."
     },
@@ -198,8 +216,9 @@
       "fileDeferredTooltip": "Upload will be available soon."
     },
     "success": {
-      "title": "Request #{ref} submitted",
+      "title": "Request submitted",
       "body": "Helpdesk gets it right now. We'll notify you when someone picks up the request.",
+      "refLabel": "Request reference",
       "viewTicket": "Open request detail →",
       "backToCatalog": "Back to catalog"
     }
@@ -250,8 +269,9 @@
       "submitFailed": "Our server isn't responding. Try again shortly."
     },
     "success": {
-      "title": "Ticket #{ref} submitted",
+      "title": "Ticket submitted",
       "body": "Helpdesk gets it right now. We'll notify you when someone takes the ticket or needs more info.",
+      "refLabel": "Ticket reference",
       "status": "Status",
       "statusNew": "New",
       "eta": "ETA for pickup",
@@ -270,7 +290,8 @@
       "status": "Status",
       "priority": "Priority",
       "assignee": "Assignee",
-      "openedAt": "Opened"
+      "openedAt": "Opened",
+      "closedAt": "Resolved"
     },
     "body": {
       "empty": "No description provided."
@@ -305,5 +326,28 @@
     "offlineReady": "App is available offline.",
     "updateAvailable": "New version available — updating automatically.",
     "updateReload": "Update now"
+  },
+  "cmdk": {
+    "placeholder": "Search or type a command…",
+    "empty": "No results",
+    "groups": {
+      "recent": "Recent",
+      "navigate": "Navigate",
+      "actions": "Actions",
+      "tickets": "Tickets",
+      "kb": "Knowledge base",
+      "users": "Users"
+    },
+    "help": {
+      "header": "Keyboard shortcuts",
+      "esc": "Esc — close",
+      "enter": "Enter — activate",
+      "arrows": "↑ ↓ — select",
+      "modes": "Prefix > actions, # navigate, ? help"
+    },
+    "actions": {
+      "toggleTheme": "Toggle theme",
+      "signOut": "Sign out"
+    }
   }
 }

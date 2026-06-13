@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, loadEnv, type PluginOption } from "vite";
 import react from "@vitejs/plugin-react";
+import svgr from "vite-plugin-svgr";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { visualizer } from "rollup-plugin-visualizer";
 import { VitePWA } from "vite-plugin-pwa";
@@ -12,7 +13,25 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
   const bff = env.VITE_BFF_ORIGIN || "http://localhost:5174";
 
-  const plugins: PluginOption[] = [react()];
+  const plugins: PluginOption[] = [
+    react(),
+    // K.3.D — `vite-plugin-svgr` adoption. `icon: true` strips
+    // width/height so the host controls sizing via CSS;
+    // `convertColors` with `currentColor` lets the surrounding text
+    // colour drive the accent (per K.1 brief §9 illustration strategy).
+    svgr({
+      svgrOptions: {
+        icon: true,
+        svgo: true,
+        svgoConfig: {
+          plugins: [
+            { name: "preset-default", params: { overrides: { removeViewBox: false } } },
+            { name: "convertColors", params: { currentColor: true } },
+          ],
+        },
+      },
+    }),
+  ];
   // Source maps are produced as `hidden` so the prod bundle has NO trailing
   // `//# sourceMappingURL=` comment — they only live in Sentry. The plugin
   // is gated on `SENTRY_AUTH_TOKEN` so local `pnpm build` stays offline.

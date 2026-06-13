@@ -1,18 +1,20 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { useTranslation } from "@sdm/i18n";
-import { StatusBadge, type TicketStatus } from "@sdm/design-system";
+import { StatusBadge, staggerListRows, type TicketStatus } from "@sdm/design-system";
 import type { ProblemStatus } from "@sdm/domain";
 import type { ProblemRow } from "../types";
 
 /**
- * Problems list table — mirrors the H.9 `ChangesTable` shape (TanStack Table v8
- * headless + plain `<table>`). Columns per H.12.md §Done-when: status, ref,
- * summary, root cause (truncated), assignee, open date.
+ * Problems list table — K.3.E polish:
  *
- * Click + Enter / Space both swap the route to `/problems/:id`; no split-pane
- * UX here because problem deep dives are typically multi-tab session work.
+ * - `StatusBadge withIcon` to surface the lucide glyph per K.1 brief §6.4.
+ * - `tabular-nums` on ref + opened-at columns (utility class `.sdm-tabular`
+ *   already baked into the badge primitives + applied here on cells).
+ * - Each `<tr>` carries `data-row` so the shared `staggerListRows` from
+ *   `@sdm/design-system` runs the 20 ms-per-row enter animation; the effect
+ *   re-runs when the row count changes so freshly filtered sets stagger too.
  */
 
 const STATUS_MAP: Record<ProblemStatus, TicketStatus> = {
@@ -39,6 +41,7 @@ export interface ProblemsTableProps {
 export function ProblemsTable({ rows }: ProblemsTableProps) {
   const { t } = useTranslation("workspace");
   const navigate = useNavigate();
+  const bodyRef = useRef<HTMLTableSectionElement | null>(null);
 
   const columns = useMemo<ColumnDef<ProblemRow>[]>(
     () => [
@@ -47,19 +50,22 @@ export function ProblemsTable({ rows }: ProblemsTableProps) {
         header: t("problems.columns.ref"),
         accessorKey: "ref",
         size: 120,
-        cell: (info) => <span className="sdm-problems-cell-ref">#{info.row.original.ref}</span>,
+        cell: (info) => (
+          <span className="sdm-problems-cell-ref sdm-tabular">#{info.row.original.ref}</span>
+        ),
       },
       {
         id: "status",
         header: t("problems.columns.status"),
         accessorKey: "status",
-        size: 160,
+        size: 180,
         cell: (info) => {
           const code = info.row.original.status;
           return (
             <StatusBadge
               status={STATUS_MAP[code]}
               label={t(`problems.statusLabel.${code}` as const)}
+              withIcon
             />
           );
         },
@@ -100,7 +106,11 @@ export function ProblemsTable({ rows }: ProblemsTableProps) {
         id: "openedAt",
         header: t("problems.columns.openedAt"),
         size: 120,
-        cell: (info) => formatOpened(info.row.original.openedAt),
+        cell: (info) => (
+          <span className="sdm-problems-cell-date sdm-tabular">
+            {formatOpened(info.row.original.openedAt)}
+          </span>
+        ),
       },
     ],
     [t],
@@ -112,6 +122,10 @@ export function ProblemsTable({ rows }: ProblemsTableProps) {
     getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => row.id,
   });
+
+  useEffect(() => {
+    staggerListRows(bodyRef.current);
+  }, [rows.length]);
 
   const open = (id: string) => navigate(`/problems/${encodeURIComponent(id)}`);
 
@@ -133,10 +147,11 @@ export function ProblemsTable({ rows }: ProblemsTableProps) {
           </tr>
         ))}
       </thead>
-      <tbody>
+      <tbody ref={bodyRef}>
         {table.getRowModel().rows.map((row) => (
           <tr
             key={row.id}
+            data-row
             data-row-id={row.original.id}
             data-testid="problems-row"
             tabIndex={0}

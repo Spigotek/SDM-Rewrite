@@ -1,58 +1,56 @@
-import { useEffect } from "react";
-import { Avatar, Button } from "@sdm/design-system";
+import { ThemeToggle, useTheme } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
-import { useHotkeys } from "react-hotkeys-hook";
-import { Bell, Search } from "lucide-react";
-import { LanguageSwitcher } from "./language-switcher";
+import { Bell, Menu } from "lucide-react";
 import { useSession } from "./session-context";
-import { TenantSwitcher } from "./tenant-switcher";
 import "../features/sp-cockpit/sp-cockpit.css";
 
-/**
- * Placeholder handler for the global Cmd/Ctrl+K shortcut. The actual
- * command-palette modal is deferred to v1.2 (K.2); v1.1.4 ships only the
- * affordance so the muscle memory and keybinding are reserved.
- */
-function openCommandPalettePlaceholder(): void {
-  console.info("[workspace] Cmd+K modal — coming in v1.2");
-}
-
 // Notifications wiring is deferred to Round D (SSE-fed unread counter).
-// For v1.1.4 the bell is rendered with a hardcoded zero so the affordance
-// is in place but the badge stays hidden.
+// For v1.1.4 the bell renders with a hardcoded zero; in K.3.B the bell stays
+// in the top-bar so the affordance survives the rail migration.
 const NOTIFICATION_COUNT = 0;
+
+/**
+ * Toggle the left-rail visibility below the `lg` breakpoint via a body-level
+ * data attribute. Keeping the toggle on `document.body` avoids prop-drilling
+ * and lets the rail/CSS-only media queries decide rendering — the rail
+ * component itself doesn't need to know whether mobile mode is active.
+ */
+function toggleMobileRail(): void {
+  const open = document.body.getAttribute("data-rail-open") === "true";
+  if (open) {
+    document.body.removeAttribute("data-rail-open");
+  } else {
+    document.body.setAttribute("data-rail-open", "true");
+  }
+}
 
 export function TopBar({ appName }: { appName: string }) {
   const { t } = useTranslation();
-  const { session, status, logout } = useSession();
+  const { session, status } = useSession();
+  const { choice, setChoice } = useTheme();
+
   /**
    * I.5 — show a `SP mode` indicator whenever the active session has the
-   * `sp_admin` role. Avoids disorientation when sp_admin is drilled into a
-   * customer tenant via the cockpit — the TopBar makes the elevated scope
-   * visible at all times.
+   * `sp_admin` role. The badge stays in the top-bar so the elevated scope is
+   * visible from every workspace view, including those without a rail
+   * (loading/anonymous/error).
    */
   const isSpMode = !!session?.roles.includes("sp_admin");
-
-  // Reserve the keystroke globally so v1.2 can replace this placeholder
-  // without retraining users. `enableOnFormTags` lets it work even when
-  // focus is inside inputs (the future palette must always be reachable).
-  useHotkeys(
-    "mod+k",
-    (event) => {
-      event.preventDefault();
-      openCommandPalettePlaceholder();
-    },
-    { enableOnFormTags: true, enabled: status === "ready" },
-  );
-
-  // No-op effect that keeps the hook ordering stable across re-renders even
-  // if `useHotkeys` is conditionally enabled inside a future refactor.
-  useEffect(() => undefined, []);
 
   const notificationLabel = `${t("nav.notifications")}, ${NOTIFICATION_COUNT} ${t("nav.unread")}`;
 
   return (
     <header className="sdm-top-bar" data-testid="top-bar">
+      <button
+        type="button"
+        className="sdm-hamburger"
+        data-testid="rail-hamburger"
+        aria-label={t("nav.mobile.open")}
+        title={t("nav.mobile.open")}
+        onClick={toggleMobileRail}
+      >
+        <Menu size={18} aria-hidden="true" />
+      </button>
       <div className="sdm-brand">
         <span className="sdm-logo" aria-hidden="true">
           SDM
@@ -65,22 +63,8 @@ export function TopBar({ appName }: { appName: string }) {
         )}
       </div>
       {status === "ready" && session && (
-        <>
-          <TenantSwitcher />
-          <button
-            type="button"
-            className="sdm-cmdk-hint"
-            data-testid="cmdk-hint"
-            onClick={openCommandPalettePlaceholder}
-            aria-label={t("nav.cmdkHint")}
-            title={t("nav.cmdkHint")}
-          >
-            <Search size={14} aria-hidden="true" />
-            <span className="sdm-cmdk-hint-keys" aria-hidden="true">
-              <kbd>⌘</kbd>
-              <kbd>K</kbd>
-            </span>
-          </button>
+        <div className="sdm-top-bar-actions">
+          <ThemeToggle value={choice} onChange={setChoice} />
           <button
             type="button"
             className="sdm-notif-button"
@@ -95,25 +79,7 @@ export function TopBar({ appName }: { appName: string }) {
               </span>
             )}
           </button>
-          <div className="sdm-user-pill" data-testid="user-pill">
-            <Avatar name={session.displayName} size="md" aria-label={session.displayName} />
-            <div className="sdm-user-pill-meta">
-              <span className="sdm-user-name">{session.displayName}</span>
-              <span className="sdm-user-roles">
-                {session.roles.length > 0 ? session.roles.join(", ") : t("meta.noRoles")}
-              </span>
-            </div>
-          </div>
-          <LanguageSwitcher />
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={() => void logout()}
-            data-testid="logout-button"
-          >
-            {t("actions.signOut")}
-          </Button>
-        </>
+        </div>
       )}
     </header>
   );

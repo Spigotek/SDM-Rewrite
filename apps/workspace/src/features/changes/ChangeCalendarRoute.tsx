@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
+import { Card, Skeleton, usePageTransition } from "@sdm/design-system";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
 import { changesListAllTenantsQuery, changesListQuery } from "./api";
@@ -13,26 +14,18 @@ import "../sp-cockpit/sp-cockpit.css";
 /**
  * `/changes/calendar` — Peter's CAB calendar.
  *
- * Composition:
- *  - Loads the same tenant change list as `/changes` (cache shared via
- *    `staleTime` + identical `queryKey` prefix on the underlying fetch).
- *  - Applies client-side risk + status filters from the `CalendarFilters`
- *    chips.
- *  - Renders `<CalendarView>` which owns the FullCalendar instance, view
- *    switch, and hover tooltip lifecycle.
- *  - Below the lg breakpoint, shows a fallback banner pointing the user back
- *    to the list view — FullCalendar's time-grid is unusable on narrow
- *    viewports per the wireframe mobile branch (`03-change-calendar.md`).
- *
- * The route is lazy-loaded from `routes/index.tsx` so the FullCalendar
- * vendor chunk (~95–150 KB gzip) is never paid on the workspace initial
- * load.
+ * K.3.E polish: Card-wrapped calendar surface, skeleton loading placeholder,
+ * page-transition crossfade. Drag-resize behaviour (J.6) and the
+ * `<CalendarFilters>` chip toolbar (incl. the sp_admin cross-tenant overlay)
+ * are preserved verbatim — the calendar drag-resize browser-test must keep
+ * passing.
  */
 export default function ChangeCalendarRoute() {
   const { t } = useTranslation("workspace");
   const { session } = useSession();
   const tenantId = session?.tenantId;
   const roles = session?.roles ?? [];
+  const { ref } = usePageTransition("/changes/calendar");
 
   const [filters, setFilters] = useState<CalendarFiltersValue>({
     risk: "ALL",
@@ -75,6 +68,7 @@ export default function ChangeCalendarRoute() {
   if (isMobile) {
     return (
       <section
+        ref={ref}
         data-testid="workspace-changes-calendar"
         className="sdm-calendar-page sdm-calendar-page--mobile"
       >
@@ -96,7 +90,7 @@ export default function ChangeCalendarRoute() {
   }
 
   return (
-    <section data-testid="workspace-changes-calendar" className="sdm-calendar-page">
+    <section ref={ref} data-testid="workspace-changes-calendar" className="sdm-calendar-page">
       <header className="sdm-calendar-header">
         <h1 className="sdm-calendar-title">{t("changes.calendar.title")}</h1>
         <span className="sdm-calendar-tenant-hint">
@@ -107,21 +101,29 @@ export default function ChangeCalendarRoute() {
 
       <CalendarFilters value={filters} onChange={setFilters} roles={roles} />
 
-      {query.isPending ? (
-        <p className="sdm-calendar-state" data-testid="calendar-loading">
-          {t("changes.calendar.loading")}
-        </p>
-      ) : query.isError ? (
-        <p
-          role="alert"
-          className="sdm-calendar-state sdm-calendar-state--error"
-          data-testid="calendar-error"
-        >
-          {t("changes.calendar.error")}
-        </p>
-      ) : (
-        <CalendarView rows={rows} crossTenant={filters.crossTenant} />
-      )}
+      <Card variant="outlined" className="sdm-calendar-card">
+        {query.isPending ? (
+          <div
+            className="sdm-calendar-skeleton"
+            data-testid="calendar-loading"
+            aria-busy="true"
+            aria-label={t("changes.calendar.loading")}
+          >
+            <Skeleton variant="block" width="100%" height={48} />
+            <Skeleton variant="block" width="100%" height={420} />
+          </div>
+        ) : query.isError ? (
+          <p
+            role="alert"
+            className="sdm-calendar-state sdm-calendar-state--error"
+            data-testid="calendar-error"
+          >
+            {t("changes.calendar.error")}
+          </p>
+        ) : (
+          <CalendarView rows={rows} crossTenant={filters.crossTenant} />
+        )}
+      </Card>
     </section>
   );
 }

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img">
+  <title>Permission denied</title>
+  <path d="M100 25l50 18v40c0 28-22 47-50 52-28-5-50-24-50-52V43z" />
+  <path d="M85 80v-12a15 15 0 0 1 30 0v12" />
+  <rect x="80" y="80" width="40" height="28" rx="3" />
+  <circle cx="100" cy="94" r="3" fill="currentColor" stroke="none" />
+</svg>
