@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { useTranslation } from "@sdm/i18n";
 import { Breadcrumbs } from "./breadcrumbs";
+import { CommandPaletteMount } from "./command-palette-mount";
 import { Heartbeat } from "./heartbeat";
 import { IdleModal } from "./idle-modal";
 import { LeftRail } from "./left-rail";
@@ -35,6 +36,7 @@ export function AppShell({ appName, children }: { appName: string; children: Rea
               <>
                 <Heartbeat />
                 <IdleModal idleTimeoutSec={session?.idleTimeoutSec ?? 30 * 60} />
+                <CommandPaletteMount />
                 {children}
               </>
             )}

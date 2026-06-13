@@ -25,6 +25,7 @@ export * from "./primitives/EmptyState";
 export * from "./primitives/Breadcrumbs";
 export * from "./primitives/ToastFlyout";
 export * from "./primitives/ThemeToggle";
+export * from "./primitives/CommandPalette";
 export * from "./primitives/TextField";
 export * from "./primitives/TextArea";
 export * from "./primitives/Select";

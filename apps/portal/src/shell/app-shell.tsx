@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "@sdm/i18n";
 import { BottomNav } from "./bottom-nav";
 import { Breadcrumbs } from "./breadcrumbs";
+import { CommandPaletteMount } from "./command-palette-mount";
 import { Heartbeat } from "./heartbeat";
 import { IdleModal } from "./idle-modal";
 import { LoginPage } from "./login-page";
@@ -25,6 +26,7 @@ export function AppShell({ appName, children }: { appName: string; children: Rea
             <NavRow />
             <Breadcrumbs />
             <MobileDrawer />
+            <CommandPaletteMount />
           </>
         )}
         <main className="sdm-content" data-testid="shell-content">

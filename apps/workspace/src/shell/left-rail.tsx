@@ -22,18 +22,10 @@ import {
   Star,
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { openWorkspaceCommandPalette } from "./command-palette-mount";
 import { LanguageSwitcher } from "./language-switcher";
 import { useSession } from "./session-context";
 import { TenantSwitcher } from "./tenant-switcher";
-
-/**
- * Placeholder Cmd+K trigger. K.3.C will mount the actual CommandPalette
- * primitive and route the click into it; for K.3.B the chip exists so the
- * rail anatomy from §10.2 is complete and the muscle memory is reserved.
- */
-function openCommandPalettePlaceholder(): void {
-  console.info("[workspace] Cmd+K modal — coming in K.3.C");
-}
 
 type GroupKey = "TOP" | "INCIDENTS" | "CHANGES" | "KNOWLEDGE" | "CMDB";
 
@@ -401,7 +393,7 @@ export function LeftRail() {
         <button
           type="button"
           className="sdm-rail-cmdk"
-          onClick={openCommandPalettePlaceholder}
+          onClick={openWorkspaceCommandPalette}
           aria-label={t("nav.cmdkHint")}
           title={t("nav.cmdkHint")}
         >

@@ -902,5 +902,28 @@
         "button": "Exit view-as"
       }
     }
+  },
+  "cmdk": {
+    "placeholder": "Search or type a command…",
+    "empty": "No results",
+    "groups": {
+      "recent": "Recent",
+      "navigate": "Navigate",
+      "actions": "Actions",
+      "tickets": "Tickets",
+      "kb": "Knowledge",
+      "users": "CIs"
+    },
+    "help": {
+      "header": "Keyboard shortcuts",
+      "esc": "Esc — close",
+      "enter": "Enter — activate",
+      "arrows": "↑ ↓ — select",
+      "modes": "Prefix > actions, # navigate, ? help"
+    },
+    "actions": {
+      "toggleTheme": "Toggle theme",
+      "signOut": "Sign out"
+    }
   }
 }

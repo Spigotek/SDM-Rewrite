@@ -1,6 +1,6 @@
 import { Avatar, Button, ThemeToggle, useTheme, type ThemeChoice } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
-import { useHotkeys } from "react-hotkeys-hook";
+import { openPortalCommandPalette } from "./command-palette-mount";
 import { LanguageSwitcher } from "./language-switcher";
 import { openPortalDrawer } from "./mobile-drawer";
 import { useSession } from "./session-context";
@@ -75,15 +75,6 @@ function BellIcon({ size = 18 }: { size?: number }) {
   );
 }
 
-/**
- * Placeholder handler for the global Cmd/Ctrl+K shortcut. The actual
- * command-palette modal is deferred to v1.2 (K.2); v1.1.4 ships only the
- * affordance so the muscle memory and keybinding are reserved.
- */
-function openCommandPalettePlaceholder(): void {
-  console.info("[portal] Cmd+K modal — coming in v1.2");
-}
-
 type CycleChoice = "system" | "light" | "dark";
 
 function nextChoice(current: CycleChoice): CycleChoice {
@@ -107,18 +98,6 @@ export function TopBar({ appName }: { appName: string }) {
   const { t } = useTranslation();
   const { session, status, logout } = useSession();
   const { choice, setChoice } = useTheme();
-
-  // Reserve the keystroke globally so v1.2 can replace this placeholder
-  // without retraining users. `enableOnFormTags` lets it work even when
-  // focus is inside inputs (the future palette must always be reachable).
-  useHotkeys(
-    "mod+k",
-    (event) => {
-      event.preventDefault();
-      openCommandPalettePlaceholder();
-    },
-    { enableOnFormTags: true, enabled: status === "ready" },
-  );
 
   // v1.1.4 ships notifications visually only; Round D will wire SSE-driven
   // counts. `as number` widens the literal so future increments typecheck.
@@ -153,7 +132,7 @@ export function TopBar({ appName }: { appName: string }) {
             type="button"
             className="sdm-cmdk-hint"
             data-testid="cmdk-hint"
-            onClick={openCommandPalettePlaceholder}
+            onClick={openPortalCommandPalette}
             aria-label={t("nav.cmdkHint")}
             title={t("nav.cmdkHint")}
           >

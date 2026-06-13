@@ -319,5 +319,28 @@
     "offlineReady": "App is available offline.",
     "updateAvailable": "New version available — updating automatically.",
     "updateReload": "Update now"
+  },
+  "cmdk": {
+    "placeholder": "Search or type a command…",
+    "empty": "No results",
+    "groups": {
+      "recent": "Recent",
+      "navigate": "Navigate",
+      "actions": "Actions",
+      "tickets": "Tickets",
+      "kb": "Knowledge base",
+      "users": "Users"
+    },
+    "help": {
+      "header": "Keyboard shortcuts",
+      "esc": "Esc — close",
+      "enter": "Enter — activate",
+      "arrows": "↑ ↓ — select",
+      "modes": "Prefix > actions, # navigate, ? help"
+    },
+    "actions": {
+      "toggleTheme": "Toggle theme",
+      "signOut": "Sign out"
+    }
   }
 }

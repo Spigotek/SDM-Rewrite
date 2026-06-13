@@ -319,5 +319,28 @@
     "offlineReady": "Aplikácia je dostupná offline.",
     "updateAvailable": "Dostupná nová verzia — aktualizuje sa automaticky.",
     "updateReload": "Aktualizovať teraz"
+  },
+  "cmdk": {
+    "placeholder": "Hľadať alebo zadať príkaz…",
+    "empty": "Nič sa nenašlo",
+    "groups": {
+      "recent": "Naposledy",
+      "navigate": "Navigácia",
+      "actions": "Akcie",
+      "tickets": "Tickety",
+      "kb": "Báza znalostí",
+      "users": "Používatelia"
+    },
+    "help": {
+      "header": "Klávesové skratky",
+      "esc": "Esc — zavrieť",
+      "enter": "Enter — vykonať",
+      "arrows": "↑ ↓ — výber",
+      "modes": "Prefix > akcie, # navigácia, ? pomoc"
+    },
+    "actions": {
+      "toggleTheme": "Prepnúť tému",
+      "signOut": "Odhlásiť sa"
+    }
   }
 }
