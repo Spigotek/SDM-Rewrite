@@ -20,11 +20,16 @@ export function AppShell({ appName, children }: { appName: string; children: Rea
     <PendingChangesProvider>
       {import.meta.env.DEV && <PendingChangesTestBridge />}
       <div className="sdm-app-shell" data-rail-ready={ready ? "true" : "false"}>
+        {/* K.3.F — skip-link MUST be the first focusable element. Hidden off-screen
+         * until focused. Targets `<main id="main">`. */}
+        <a href="#main" className="sdm-skip-link">
+          {t("a11y.skipToMain")}
+        </a>
         {ready && <LeftRail />}
         <div className="sdm-app-shell-main">
           <TopBar appName={appName} />
           {ready && <Breadcrumbs />}
-          <main className="sdm-content" data-testid="shell-content">
+          <main className="sdm-content" id="main" tabIndex={-1} data-testid="shell-content">
             {status === "loading" && <p data-testid="session-loading">{t("meta.loading")}</p>}
             {status === "anonymous" && <LoginPage appName={appName} onSubmit={login} />}
             {status === "error" && (

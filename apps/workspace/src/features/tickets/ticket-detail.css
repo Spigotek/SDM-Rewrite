@@ -364,12 +364,15 @@
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: var(--letter-spacing-wide);
-  color: var(--color-text-tertiary);
+  /* K.3.F — promoted from tertiary to secondary: tertiary (#64748b) on
+   * Card variant="subtle" (#f1f5f9) = 4.41:1, fails WCAG AA 4.5:1. */
+  color: var(--color-text-secondary);
 }
 
 .sdm-ticket-context-empty {
   margin: 0;
-  color: var(--color-text-tertiary);
+  /* K.3.F — see `.sdm-ticket-context-heading` rationale. */
+  color: var(--color-text-secondary);
   font-size: var(--font-size-sm);
 }
 
@@ -383,7 +386,8 @@
 }
 
 .sdm-ticket-context-dl dt {
-  color: var(--color-text-tertiary);
+  /* K.3.F — see `.sdm-ticket-context-heading` rationale. */
+  color: var(--color-text-secondary);
 }
 
 .sdm-ticket-context-dl dd {
@@ -416,6 +420,7 @@
 .sdm-ticket-context-related-type {
   font-family: var(--font-family-mono, monospace);
   font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
+  /* K.3.F — see `.sdm-ticket-context-heading` rationale (rendered inside Card variant="subtle"). */
+  color: var(--color-text-secondary);
   margin-right: var(--spacing-1);
 }

@@ -9,12 +9,53 @@
   min-height: 100%;
 }
 
+/* ── K.3.F — Skip-to-main-content link ─────────────────────────────────────
+ * Hidden visually until focused. On focus, slides into the top-left corner so
+ * keyboard users can bypass the left-rail + top-bar chrome. WCAG 2.4.1 (Bypass
+ * Blocks) compliance. */
+.sdm-skip-link {
+  position: fixed;
+  top: var(--spacing-2, 0.5rem);
+  left: var(--spacing-2, 0.5rem);
+  z-index: 1000;
+  padding: var(--spacing-2, 0.5rem) var(--spacing-4, 1rem);
+  background: var(--color-brand-bg);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-md, 0.5rem);
+  font-weight: var(--font-weight-semibold, 600);
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform 120ms ease-out;
+}
+
+.sdm-skip-link:focus,
+.sdm-skip-link:focus-visible {
+  transform: translateY(0);
+  outline: var(--border-width-thick, 2px) solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* `<main tabIndex=-1>` MUST not show a focus ring after the skip-link jumps. */
+.sdm-content:focus {
+  outline: none;
+}
+
 .sdm-app-shell-main {
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 100%;
+}
+
+/* K.3.F — CLS fix for /queue. Without this, the LeftRail is conditionally
+ * rendered only after `status === "ready"`, so the main column jumps from
+ * `left: 0` to `left: 240px` once the session loads. Reserve the rail's
+ * 240px slot during loading so the layout is stable from first paint.
+ * Once `data-rail-ready="true"`, the flex sibling rail occupies that slot
+ * and `margin-left` returns to 0. */
+.sdm-app-shell[data-rail-ready="false"] .sdm-app-shell-main {
+  margin-left: 240px;
 }
 
 .sdm-top-bar-actions {

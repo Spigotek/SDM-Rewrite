@@ -37,6 +37,9 @@
     "loading": "Načítavam…",
     "noRoles": "bez rolí"
   },
+  "a11y": {
+    "skipToMain": "Preskočiť na hlavný obsah"
+  },
   "errors": {
     "sessionExpired": "Tvoja relácia vypršala. Prihlás sa znova.",
     "permissionDenied": "Nemáš prístup k tomuto záznamu v tenante {tenant}. Skontroluj rolu s administrátorom.",

@@ -34,6 +34,11 @@ test.describe("@a11y portal axe sweep", () => {
     test(`portal ${route.name} (${route.path}) — no serious / critical a11y violations`, async ({
       isolatedPage,
     }) => {
+      // K.3.F — emulate `prefers-reduced-motion: reduce` so the K.1 brief §7
+      // list-row stagger lands instantly. Without this, axe samples mid-fade
+      // (e.g. on `/kb` result cards) and reports a transient `color-contrast`
+      // failure on cells whose opacity is still animating from 0 to 1.
+      await isolatedPage.emulateMedia({ reducedMotion: "reduce" });
       await isolatedPage.goto(route.path);
       await isolatedPage.locator(route.readySelector).waitFor({ timeout: 20_000 });
 
@@ -67,6 +72,7 @@ test.describe("@a11y portal axe sweep", () => {
   test("portal catalog item detail — no serious / critical a11y violations", async ({
     isolatedPage,
   }) => {
+    await isolatedPage.emulateMedia({ reducedMotion: "reduce" });
     // Resolve a real catalog item id from the catalog list so we navigate to
     // a route that actually renders (vs. a hard-coded fixture id that may
     // drift). `FeaturedItemCard` emits `data-testid="catalog-featured-<id>"`
@@ -87,6 +93,7 @@ test.describe("@a11y portal axe sweep", () => {
   });
 
   test("portal KB article — no serious / critical a11y violations", async ({ isolatedPage }) => {
+    await isolatedPage.emulateMedia({ reducedMotion: "reduce" });
     await isolatedPage.goto("/kb");
     // KB search is debounced live-search — typing a generic term yields
     // results in MSW mode. Fall back to skip if the mock corpus is empty

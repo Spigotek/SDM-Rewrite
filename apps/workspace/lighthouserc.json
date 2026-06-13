@@ -40,11 +40,11 @@
           }
         },
         {
+          "_comment_k3f_cls_inherit": "K.3.F — per-URL CLS override removed; /queue now inherits the strict global 0.06 floor. Measured CLS = 0.023 after reserving the 240px LeftRail slot via `.sdm-app-shell[data-rail-ready=false] .sdm-app-shell-main { margin-left: 240px }` in `app-shell/styles.css` (the rail was conditionally rendered on session-ready, shifting the main column by 240px on first paint).",
           "matchingUrlPattern": "http://localhost:5181/queue$",
           "assertions": {
             "interactive": ["error", { "maxNumericValue": 2500 }],
             "largest-contentful-paint": ["error", { "maxNumericValue": 2000 }],
-            "cumulative-layout-shift": ["error", { "maxNumericValue": 0.1 }],
             "categories:performance": ["error", { "minScore": 0.85 }]
           }
         },

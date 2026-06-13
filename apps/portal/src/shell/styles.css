@@ -10,6 +10,38 @@
   min-height: 100%;
 }
 
+/* ── K.3.F — Skip-to-main-content link ─────────────────────────────────────
+ * Hidden visually until focused (sr-only equivalent). On focus, slides into
+ * the top-left corner so keyboard users can bypass the top bar / nav row /
+ * mobile drawer chrome. WCAG 2.4.1 (Bypass Blocks) compliance. */
+.sdm-skip-link {
+  position: fixed;
+  top: var(--spacing-2, 0.5rem);
+  left: var(--spacing-2, 0.5rem);
+  z-index: 1000;
+  padding: var(--spacing-2, 0.5rem) var(--spacing-4, 1rem);
+  background: var(--color-brand-bg);
+  color: var(--color-text-inverse);
+  border-radius: var(--radius-md, 0.5rem);
+  font-weight: var(--font-weight-semibold, 600);
+  text-decoration: none;
+  transform: translateY(-200%);
+  transition: transform 120ms ease-out;
+}
+
+.sdm-skip-link:focus,
+.sdm-skip-link:focus-visible {
+  transform: translateY(0);
+  outline: var(--border-width-thick, 2px) solid var(--color-border-focus);
+  outline-offset: 2px;
+}
+
+/* Make `<main tabIndex=-1>` not show a focus ring after the skip-link
+ * jumps to it — the link itself is the visible affordance. */
+.sdm-content:focus {
+  outline: none;
+}
+
 .sdm-top-bar {
   display: flex;
   align-items: center;
