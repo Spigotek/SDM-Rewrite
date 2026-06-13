@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Card, EmptyState, StatusBadge } from "@sdm/design-system";
+import { Card, EmptyState, IllustrationNoOpenTickets, StatusBadge } from "@sdm/design-system";
 import { formatRelative, useLocale, useTranslation } from "@sdm/i18n";
 import type { MyTicketSummary } from "../types";
 import { TicketRowSkeleton } from "./Skeletons";
@@ -45,6 +45,7 @@ export function OpenTicketsCard({ tickets, pending, error }: OpenTicketsCardProp
       ) : tickets.length === 0 ? (
         <EmptyState
           variant="compact"
+          illustration={<IllustrationNoOpenTickets />}
           title={t("home.myTickets.emptyTitle")}
           description={t("home.myTickets.empty")}
           data-testid="home-open-tickets-empty"

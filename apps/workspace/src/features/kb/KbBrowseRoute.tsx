@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { Can } from "@sdm/auth";
-import { Button } from "@sdm/design-system";
+import { Button, EmptyState, IllustrationNoKbArticles } from "@sdm/design-system";
 import { useSession } from "../../shell/session-context";
 import { kbBrowseQuery, kbCategoriesQuery } from "./api";
 import { useKbFilters } from "./hooks";
@@ -122,9 +122,27 @@ export default function KbBrowseRoute() {
           {t("kb.error")}
         </p>
       ) : rows.length === 0 ? (
-        <p className="sdm-kb-state" data-testid="kb-empty">
-          {t("kb.empty")}
-        </p>
+        <EmptyState
+          variant="hero"
+          illustration={<IllustrationNoKbArticles />}
+          title={t("kb.emptyTitle")}
+          description={t("kb.empty")}
+          cta={
+            <Can roles={roles} permission="kb.write" fallback={null}>
+              <Button
+                type="button"
+                variant="primary"
+                size="md"
+                data-testid="kb-empty-new-article"
+                onClick={() => navigate("/kb/editor")}
+              >
+                {t("kb.actions.newArticle")}
+              </Button>
+            </Can>
+          }
+          className="sdm-kb-state"
+          data-testid="kb-empty"
+        />
       ) : (
         <>
           <KbFilters

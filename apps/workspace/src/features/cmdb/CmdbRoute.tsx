@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { EmptyState, IllustrationNoCatalogItems } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
@@ -70,9 +71,14 @@ export default function CmdbRoute() {
           {t("cmdb.error")}
         </p>
       ) : rows.length === 0 ? (
-        <p className="sdm-cmdb-state" data-testid="cmdb-empty">
-          {t("cmdb.empty")}
-        </p>
+        <EmptyState
+          variant="hero"
+          illustration={<IllustrationNoCatalogItems />}
+          title={t("cmdb.emptyTitle")}
+          description={t("cmdb.empty")}
+          className="sdm-cmdb-state"
+          data-testid="cmdb-empty"
+        />
       ) : (
         <>
           <CmdbFilterBar

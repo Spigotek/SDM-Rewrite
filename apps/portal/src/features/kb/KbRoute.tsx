@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
+import { Button, EmptyState, IllustrationNoKbArticles } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
@@ -77,16 +78,22 @@ export function KbRoute() {
           {t("kb.error")}
         </p>
       ) : isEmpty ? (
-        <div className="sdm-kb-empty" data-testid="kb-empty">
-          <p className="sdm-kb-empty-title">{t("kb.empty.title")}</p>
-          <Link
-            to={`/new-incident?summary=${encodeURIComponent(term.trim())}`}
-            className="sdm-kb-empty-cta"
-            data-testid="kb-empty-open-ticket"
-          >
-            {t("kb.empty.openTicket")}
-          </Link>
-        </div>
+        <EmptyState
+          variant="hero"
+          illustration={<IllustrationNoKbArticles />}
+          title={t("kb.empty.title")}
+          cta={
+            <Link
+              to={`/new-incident?summary=${encodeURIComponent(term.trim())}`}
+              data-testid="kb-empty-open-ticket"
+            >
+              <Button type="button" variant="primary" size="md">
+                {t("kb.empty.openTicket")}
+              </Button>
+            </Link>
+          }
+          data-testid="kb-empty"
+        />
       ) : (
         <ul className="sdm-kb-result-list" data-testid="kb-result-list">
           {results.map((result) => (

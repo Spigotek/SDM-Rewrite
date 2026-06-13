@@ -121,6 +121,8 @@
     "title": "Moje tickety",
     "loading": "Načítavame tvoje tickety…",
     "empty": "Zatiaľ žiadne tickety. Keď niečo budeš potrebovať, nahlás problém alebo požiadaj o niečo.",
+    "emptyTitle": "Zatiaľ žiadne tickety",
+    "emptyCta": "Nahlásiť problém",
     "error": "Tickety sa nepodarilo načítať. Skús stránku obnoviť.",
     "count": "{n, plural, one {# ticket} few {# tickety} other {# ticketov}}"
   },

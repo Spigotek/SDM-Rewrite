@@ -19,8 +19,10 @@
     "resultCount": "{visible} of {total} tickets",
     "loading": "Loading queue…",
     "error": "Could not load queue. Try refresh.",
-    "empty": "🎉 Queue is empty. Take a break or grab a coffee.",
-    "emptyFiltered": "🔍 No tickets match these filters. Try relaxing the criteria or reset filters.",
+    "empty": "Queue is empty. Take a break or grab a coffee.",
+    "emptyTitle": "Queue is empty",
+    "emptyFiltered": "No tickets match these filters. Try relaxing the criteria or reset filters.",
+    "emptyFilteredTitle": "No results for these filters",
     "unassigned": "Unassigned",
     "stats": {
       "ariaLabel": "Queue overview",
@@ -59,12 +61,14 @@
     "recentActivity": {
       "title": "Recent activity",
       "empty": "No activity recently.",
+      "emptyTitle": "No activity",
       "verbUpdated": "updated"
     },
     "changeCalendar": {
       "title": "Change calendar",
       "openLink": "Open calendar",
-      "empty": "No scheduled changes."
+      "empty": "No scheduled changes.",
+      "emptyTitle": "No scheduled changes"
     },
     "columns": {
       "menu": "Columns",
@@ -506,6 +510,7 @@
     "loading": "Loading KB articles…",
     "error": "Failed to load KB.",
     "empty": "No published articles in this tenant.",
+    "emptyTitle": "No published articles",
     "columns": {
       "category": "Category",
       "title": "Title",
@@ -672,6 +677,7 @@
     "loading": "Loading configuration items…",
     "error": "Failed to load CMDB.",
     "empty": "No CIs in this tenant.",
+    "emptyTitle": "No configuration items",
     "columns": {
       "id": "ID",
       "name": "Name",

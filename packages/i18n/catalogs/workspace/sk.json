@@ -19,8 +19,10 @@
     "resultCount": "{visible} z {total} ticketov",
     "loading": "Načítavam queue…",
     "error": "Queue sa nepodarilo načítať. Skús refresh.",
-    "empty": "🎉 Žiadne tickety v queue. Užiš si chvíľu alebo si daj kávu.",
-    "emptyFiltered": "🔍 Žiadne tickety pre tieto filtre. Skús uvoľniť kritériá alebo resetuj filtre.",
+    "empty": "Žiadne tickety v queue. Užiš si chvíľu alebo si daj kávu.",
+    "emptyTitle": "Žiadne tickety v queue",
+    "emptyFiltered": "Žiadne tickety pre tieto filtre. Skús uvoľniť kritériá alebo resetuj filtre.",
+    "emptyFilteredTitle": "Žiadne výsledky pre tieto filtre",
     "unassigned": "Nepriradené",
     "stats": {
       "ariaLabel": "Prehľad fronty",
@@ -59,12 +61,14 @@
     "recentActivity": {
       "title": "Najnovšia aktivita",
       "empty": "Žiadna aktivita za posledné obdobie.",
+      "emptyTitle": "Žiadna aktivita",
       "verbUpdated": "aktualizoval(a)"
     },
     "changeCalendar": {
       "title": "Kalendár zmien",
       "openLink": "Otvoriť kalendár",
-      "empty": "Žiadne plánované zmeny."
+      "empty": "Žiadne plánované zmeny.",
+      "emptyTitle": "Žiadne plánované zmeny"
     },
     "columns": {
       "menu": "Stĺpce",
@@ -506,6 +510,7 @@
     "loading": "Načítavam KB články…",
     "error": "Nepodarilo sa načítať KB.",
     "empty": "V tomto tenante nie sú žiadne publikované články.",
+    "emptyTitle": "Žiadne publikované články",
     "columns": {
       "category": "Kategória",
       "title": "Názov",
@@ -672,6 +677,7 @@
     "loading": "Načítavam konfiguračné položky…",
     "error": "Nepodarilo sa načítať CMDB.",
     "empty": "V tomto tenante nie sú žiadne CI.",
+    "emptyTitle": "Žiadne konfiguračné položky",
     "columns": {
       "id": "ID",
       "name": "Názov",

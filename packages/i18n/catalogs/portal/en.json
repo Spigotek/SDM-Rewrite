@@ -121,6 +121,8 @@
     "title": "My tickets",
     "loading": "Loading your tickets…",
     "empty": "No tickets yet. When you need something, report a problem or request something.",
+    "emptyTitle": "No tickets yet",
+    "emptyCta": "Report a problem",
     "error": "Couldn't load tickets. Try refreshing the page.",
     "count": "{n, plural, one {# ticket} other {# tickets}}"
   },

@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { StatusBadge } from "@sdm/design-system";
+import { Button, EmptyState, IllustrationNoOpenTickets, StatusBadge } from "@sdm/design-system";
 import { useTranslation, useLocale, formatRelative } from "@sdm/i18n";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
@@ -44,9 +44,20 @@ export function MyTicketsRoute() {
           {t("myTickets.loading")}
         </p>
       ) : tickets.length === 0 ? (
-        <p className="sdm-home-empty" data-testid="portal-my-tickets-empty">
-          {t("myTickets.empty")}
-        </p>
+        <EmptyState
+          variant="hero"
+          illustration={<IllustrationNoOpenTickets />}
+          title={t("myTickets.emptyTitle")}
+          description={t("myTickets.empty")}
+          cta={
+            <Link to="/new-incident">
+              <Button type="button" variant="primary" size="md">
+                {t("myTickets.emptyCta")}
+              </Button>
+            </Link>
+          }
+          data-testid="portal-my-tickets-empty"
+        />
       ) : (
         <ul className="sdm-home-ticket-list">
           {tickets.map((ticket) => (

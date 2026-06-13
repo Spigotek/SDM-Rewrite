@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Card, EmptyState, StatusBadge } from "@sdm/design-system";
+import { Card, EmptyState, IllustrationNoRecentActivity, StatusBadge } from "@sdm/design-system";
 import { formatRelative, useLocale, useTranslation } from "@sdm/i18n";
 import type { RecentActivityEvent } from "../types";
 import { TicketRowSkeleton } from "./Skeletons";
@@ -43,6 +43,7 @@ export function RecentActivity({ events, pending, error }: RecentActivityProps) 
       ) : events.length === 0 ? (
         <EmptyState
           variant="compact"
+          illustration={<IllustrationNoRecentActivity />}
           title={t("home.activity.emptyTitle")}
           description={t("home.activity.empty")}
           data-testid="home-recent-activity-empty"

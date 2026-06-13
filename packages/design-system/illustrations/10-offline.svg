@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img">
+  <title>Offline</title>
+  <path d="M40 70a85 85 0 0 1 120 0" opacity="0.4" />
+  <path d="M60 90a55 55 0 0 1 80 0" opacity="0.6" />
+  <path d="M80 110a25 25 0 0 1 40 0" />
+  <circle cx="100" cy="128" r="4" fill="currentColor" stroke="none" />
+  <path d="M40 40l120 90" />
+</svg>

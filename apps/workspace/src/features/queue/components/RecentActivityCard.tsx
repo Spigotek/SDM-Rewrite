@@ -1,6 +1,12 @@
 import { useMemo } from "react";
 import { useTranslation } from "@sdm/i18n";
-import { Avatar, Card, Skeleton } from "@sdm/design-system";
+import {
+  Avatar,
+  Card,
+  EmptyState,
+  IllustrationNoRecentActivity,
+  Skeleton,
+} from "@sdm/design-system";
 import type { UiQueueItem } from "@sdm/api-types";
 
 /**
@@ -72,7 +78,13 @@ export function RecentActivityCard(props: RecentActivityCardProps) {
           ))}
         </ul>
       ) : entries.length === 0 ? (
-        <p className="sdm-queue-card-empty">{t("queue.recentActivity.empty")}</p>
+        <EmptyState
+          variant="compact"
+          illustration={<IllustrationNoRecentActivity />}
+          title={t("queue.recentActivity.emptyTitle")}
+          description={t("queue.recentActivity.empty")}
+          className="sdm-queue-card-empty"
+        />
       ) : (
         <ul className="sdm-queue-activity-list">
           {entries.map((r) => {

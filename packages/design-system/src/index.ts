@@ -31,6 +31,8 @@ export * from "./primitives/TextArea";
 export * from "./primitives/Select";
 export * from "./primitives/Checkbox";
 
+export * from "../illustrations";
+
 export {
   applyTheme,
   resolveTheme,

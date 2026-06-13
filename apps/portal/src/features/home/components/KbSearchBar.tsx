@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { Link } from "react-router-dom";
-import { EmptyState, Skeleton } from "@sdm/design-system";
+import { EmptyState, IllustrationNoSearchResults, Skeleton } from "@sdm/design-system";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useTranslation } from "@sdm/i18n";
 import { useSession } from "../../../shell/session-context";
@@ -145,7 +145,8 @@ export function KbSearchBar({ valueOverride, onTermChange }: KbSearchBarProps) {
             </ul>
           ) : showEmpty ? (
             <EmptyState
-              variant="compact"
+              variant="minimal"
+              illustration={<IllustrationNoSearchResults />}
               title={t("home.kbSearch.emptyTitle")}
               description={t("home.kbSearch.emptyDescription")}
               data-testid="home-kb-search-empty"

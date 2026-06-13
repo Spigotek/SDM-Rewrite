@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar } from "lucide-react";
 import { useTranslation } from "@sdm/i18n";
-import { Card, Skeleton } from "@sdm/design-system";
+import { Card, EmptyState, IllustrationNoRecentActivity, Skeleton } from "@sdm/design-system";
 import type { TenantId } from "@sdm/domain";
 import { changesListQuery } from "../../changes/api";
 import type { ChangeRow } from "../../changes/types";
@@ -92,7 +92,13 @@ export function ChangeCalendarTeaser(props: ChangeCalendarTeaserProps) {
           ))}
         </ul>
       ) : upcoming.length === 0 ? (
-        <p className="sdm-queue-card-empty">{t("queue.changeCalendar.empty")}</p>
+        <EmptyState
+          variant="compact"
+          illustration={<IllustrationNoRecentActivity />}
+          title={t("queue.changeCalendar.emptyTitle")}
+          description={t("queue.changeCalendar.empty")}
+          className="sdm-queue-card-empty"
+        />
       ) : (
         <ul className="sdm-queue-calendar-list">
           {upcoming.map((c) => {

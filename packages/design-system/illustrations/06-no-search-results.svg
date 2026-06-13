@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" role="img">
+  <title>No search results</title>
+  <circle cx="90" cy="75" r="35" />
+  <path d="M115 100l25 25" />
+  <path d="M78 63l24 24M102 63l-24 24" opacity="0.7" />
+</svg>

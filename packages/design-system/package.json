@@ -6,6 +6,7 @@
   "main": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./illustrations": "./illustrations/index.ts",
     "./tokens.css": "./src/tokens/tokens.css",
     "./reset.css": "./src/tokens/reset.css",
     "./fonts.css": "./src/tokens/fonts.css"
