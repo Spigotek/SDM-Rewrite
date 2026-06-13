@@ -137,7 +137,7 @@ function statusCodeOf(raw: IncidentRow["status"]): string {
 }
 
 export function CommandPaletteMount(): ReactNode {
-  const { t } = useTranslation();
+  const { t } = useTranslation("workspace");
   const navigate = useNavigate();
   const { session, status, logout } = useSession();
   const { choice, setChoice } = useTheme();

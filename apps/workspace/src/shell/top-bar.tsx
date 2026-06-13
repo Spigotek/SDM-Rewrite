@@ -25,7 +25,7 @@ function toggleMobileRail(): void {
 }
 
 export function TopBar({ appName }: { appName: string }) {
-  const { t } = useTranslation();
+  const { t } = useTranslation("workspace");
   const { session, status } = useSession();
   const { choice, setChoice } = useTheme();
 

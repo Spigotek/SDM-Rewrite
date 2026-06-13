@@ -109,7 +109,7 @@ function NavRowLink({ destination, active, label }: NavRowLinkProps) {
 }
 
 export function NavRow() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("portal");
   const { pathname } = useLocation();
 
   return (

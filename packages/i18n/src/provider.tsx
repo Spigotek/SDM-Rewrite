@@ -60,6 +60,13 @@ async function doBootstrap(opts: BootstrapOptions): Promise<I18nInstance> {
       fallbackLng: FALLBACK_LOCALE,
       defaultNS: "shared",
       ns: ["shared", opts.app],
+      // K.3 hotfix — when a component pins itself to the per-app namespace
+      // (e.g. `useTranslation("portal")` for `nav.*` / `cmdk.*` keys), lookups
+      // for cross-app utility keys (`actions.*`, `meta.*`, `errors.*`) MUST
+      // still resolve. fallbackNS makes that traversal automatic; without
+      // it the K.3.B shell rewrite leaked raw "nav.home" / "nav.catalog"
+      // strings to the rendered nav row + breadcrumbs in production.
+      fallbackNS: "shared",
       supportedLngs: ["sk", "en"],
       resources: {
         [locale]: {
