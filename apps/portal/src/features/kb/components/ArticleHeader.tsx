@@ -1,14 +1,23 @@
-import { useTranslation } from "@sdm/i18n";
+import { useLocale, useTranslation } from "@sdm/i18n";
 import type { KbArticleDetail } from "../types";
 
 /**
  * KB article header — title is the page `<h1>`, meta in a `<dl>` so the
  * key/value pairs survive screen-reader navigation (per
  * `components.md §KbArticleHeader`).
+ *
+ * Locale source: `useLocale("portal")` — the portal-wide convention. The
+ * critical-path i18n shim (`i18n-portal.ts`) returns `i18n: null` from
+ * `useTranslation` before `vendor-i18n` hydrates, so reading `i18n.language`
+ * crashes on the first render of `/kb/article/:id` whenever the markdown
+ * route chunk lands ahead of the i18n chunk (reproducible on chromium and
+ * firefox; webkit's chunk scheduler happens to mask it). `useLocale` is a
+ * stable contract regardless of hydration phase.
  */
 export function ArticleHeader({ article }: { article: KbArticleDetail }) {
-  const { t, i18n } = useTranslation("portal");
-  const formatter = new Intl.DateTimeFormat(i18n.language, {
+  const { t } = useTranslation("portal");
+  const { locale } = useLocale("portal");
+  const formatter = new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
