@@ -156,6 +156,16 @@ export async function searchUsers(q: string): Promise<ReadonlyArray<UserOption>>
   return body.users;
 }
 
+interface CiPayloadMixed {
+  readonly items?: ReadonlyArray<CiOption>;
+  readonly data?: ReadonlyArray<{
+    readonly id: string;
+    readonly name?: string;
+    readonly description?: string;
+    readonly class?: { readonly label?: string } | string;
+  }>;
+}
+
 export async function searchCis(q: string): Promise<ReadonlyArray<CiOption>> {
   const params = new URLSearchParams({ q });
   const resp = await fetch(`/api/cmdb?${params.toString()}`, {
@@ -163,6 +173,16 @@ export async function searchCis(q: string): Promise<ReadonlyArray<CiOption>> {
     headers: { Accept: "application/json" },
   });
   if (!resp.ok) return [];
-  const body = (await resp.json()) as { items: ReadonlyArray<CiOption> };
-  return body.items;
+  // MSW returns `{ items }`; BFF F.4 entity route returns `{ data, page }`.
+  // Normalise both so the caller's `.map` never lands on `undefined`.
+  const body = (await resp.json()) as CiPayloadMixed;
+  if (Array.isArray(body.items)) return body.items;
+  if (Array.isArray(body.data)) {
+    return body.data.map((row) => ({
+      id: row.id,
+      name: row.name ?? row.id,
+      class: typeof row.class === "string" ? row.class : (row.class?.label ?? ""),
+    }));
+  }
+  return [];
 }
