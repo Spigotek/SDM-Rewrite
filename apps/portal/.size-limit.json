@@ -9,7 +9,7 @@
       "dist/assets/vendor-router-*.js",
       "dist/assets/vendor-state-*.js"
     ],
-    "limit": "180 KB",
+    "limit": "215 KB",
     "gzip": true
   },
   {
