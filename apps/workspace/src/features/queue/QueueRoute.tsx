@@ -1,13 +1,26 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useTranslation } from "@sdm/i18n";
-import { Button, EmptyState, IllustrationNoTicketsAssigned } from "@sdm/design-system";
+import {
+  Button,
+  EmptyState,
+  IllustrationNoTicketsAssigned,
+  Toast,
+  ToastViewport,
+  type TicketStatus,
+} from "@sdm/design-system";
 import type { UiQueueItem } from "@sdm/api-types";
 import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
 import { queueQuery } from "./api";
-import { useColumnConfig, useQueueFilters, useQueueKeyboardNav, useSavedViews } from "./hooks";
+import {
+  useColumnConfig,
+  useQueueFilters,
+  useQueueKeyboardNav,
+  useQueueStatusTransition,
+  useSavedViews,
+} from "./hooks";
 import { ChangeCalendarTeaser } from "./components/ChangeCalendarTeaser";
 import { ColumnConfig } from "./components/ColumnConfig";
 import { FilterBar } from "./components/FilterBar";
@@ -95,6 +108,47 @@ export default function QueueRoute() {
   const { views, saveView, deleteView } = useSavedViews();
   const { config, toggleColumn, resetColumns, allColumns } = useColumnConfig();
 
+  // Local toast bus — keeps parity with KbEditorRoute. The transitionable
+  // status badge in each row drives success/error/unsupported toasts.
+  const [toasts, setToasts] = useState<
+    ReadonlyArray<{
+      readonly id: string;
+      readonly intent: "success" | "info" | "warning" | "danger";
+      readonly title: string;
+    }>
+  >([]);
+  const pushToast = useCallback(
+    (intent: "success" | "info" | "warning" | "danger", title: string) => {
+      const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      setToasts((prev) => [...prev, { id, intent, title }]);
+      setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 5000);
+    },
+    [],
+  );
+  const dismissToast = useCallback(
+    (id: string) => setToasts((prev) => prev.filter((toast) => toast.id !== id)),
+    [],
+  );
+
+  const queryTenantIdString = (tenantId ?? "__pending__") as string;
+  const statusTransition = useQueueStatusTransition({
+    tenantId: queryTenantIdString,
+    onSuccess: (label) => pushToast("success", t("status.transition.success", { label })),
+    onError: () => pushToast("danger", t("status.transition.error")),
+    onUnsupported: () => pushToast("info", t("status.transition.unsupported")),
+  });
+
+  const onStatusTransition = useCallback(
+    async (input: {
+      readonly id: string;
+      readonly type: UiQueueItem["ticketType"];
+      readonly next: TicketStatus;
+    }) => {
+      await statusTransition.transition(input);
+    },
+    [statusTransition],
+  );
+
   // `session.tenantId` is a branded `TenantId`; the empty placeholder is only
   // used until the session resolves, at which point `enabled` flips on.
   const queryTenantId = tenantId ?? toTenantId("__pending__");
@@ -162,7 +216,7 @@ export default function QueueRoute() {
   return (
     <section data-testid="workspace-queue" className="sdm-queue-page">
       <header className="sdm-queue-page-header">
-        <h1 className="sdm-queue-page-title">{t("queue.title")}</h1>
+        <h1 className="sdm-queue-page-title sdm-heading-serif">{t("queue.title")}</h1>
         <Button
           type="button"
           variant="primary"
@@ -249,6 +303,8 @@ export default function QueueRoute() {
               selectedId={selectedId}
               onRowSelect={setSelectedId}
               onRowActivate={setSelectedId}
+              onStatusTransition={onStatusTransition}
+              statusTransitionPending={statusTransition.isPending}
             />
           )}
         </div>
@@ -276,6 +332,18 @@ export default function QueueRoute() {
         <RecentActivityCard rows={rows} currentUserId={currentUserId} isLoading={query.isPending} />
         <ChangeCalendarTeaser tenantId={tenantId} />
       </div>
+
+      <ToastViewport>
+        {toasts.map((toast) => (
+          <Toast
+            key={toast.id}
+            id={toast.id}
+            intent={toast.intent}
+            title={toast.title}
+            onDismiss={() => dismissToast(toast.id)}
+          />
+        ))}
+      </ToastViewport>
     </section>
   );
 }

@@ -5,12 +5,14 @@ import type { ProblemFilters } from "./types";
 import {
   convertIncidentToProblem as apiConvert,
   linkIncidents as apiLink,
+  patchProblem as apiPatch,
   unlinkIncident as apiUnlink,
   linkedIncidentsQueryKey,
   problemDetailQueryKey,
   type ConvertIncidentBody,
   type LinkIncidentsResult,
 } from "./api";
+import type { ProblemDetail } from "./types";
 
 /**
  * Filter state is URL-driven (`?search=…&status=…`) so deep links / browser
@@ -119,5 +121,25 @@ function primeCachesAfterLinkChange(
 export function useConvertIncidentToProblem() {
   return useMutation({
     mutationFn: (body: ConvertIncidentBody) => apiConvert(body),
+  });
+}
+
+export function usePatchProblem(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (patch: { readonly statusCode?: string }) => apiPatch(id, patch),
+    onMutate: async () => {
+      const key = problemDetailQueryKey(id);
+      await qc.cancelQueries({ queryKey: key });
+      const previous = qc.getQueryData<ProblemDetail>(key);
+      return { previous };
+    },
+    onSuccess: (data) => {
+      qc.setQueryData(problemDetailQueryKey(id), data);
+    },
+    onError: (_err, _input, ctx) => {
+      const snapshot = (ctx as { previous?: ProblemDetail } | undefined)?.previous;
+      if (snapshot) qc.setQueryData(problemDetailQueryKey(id), snapshot);
+    },
   });
 }

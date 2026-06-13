@@ -26,7 +26,7 @@ export function ArticleHeader({ article }: { article: KbArticleDetail }) {
 
   return (
     <header className="sdm-kb-article-header" data-testid="kb-article-header">
-      <h1 className="sdm-kb-article-title">{article.title}</h1>
+      <h1 className="sdm-kb-article-title sdm-heading-serif">{article.title}</h1>
       <dl className="sdm-kb-article-meta">
         {article.categoryName ? (
           <div className="sdm-kb-article-meta-row">

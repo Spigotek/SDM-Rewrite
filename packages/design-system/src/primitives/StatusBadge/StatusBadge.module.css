@@ -1,0 +1,125 @@
+/* StatusBadge — transitionable lozenge (L.1.C).
+ *
+ * The read-only `<span>` form is owned by `Badge.module.css`. This file adds:
+ *   - `.trigger`   — when `transitionable=true`, the lozenge renders as a
+ *                    `<button>` and needs reset styles so it inherits the
+ *                    Badge appearance without browser button chrome.
+ *   - `.chevron`   — small caret hint inside the trigger.
+ *   - `.menu`/...  — popover panel + menu items styled in the DS surface scale.
+ */
+
+.trigger {
+  appearance: none;
+  font: inherit;
+  cursor: pointer;
+  user-select: none;
+}
+
+.trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-brand-500, currentColor);
+}
+
+.trigger[disabled] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.chevron {
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--spacing-1);
+  opacity: 0.7;
+}
+
+.menu {
+  position: fixed;
+  min-width: 200px;
+  max-width: 280px;
+  max-height: min(360px, calc(100vh - 96px));
+  background-color: var(--color-surface-raised, var(--color-surface, #fff));
+  border: 1px solid var(--color-border, rgba(0, 0, 0, 0.08));
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg, 0 12px 32px rgba(0, 0, 0, 0.16));
+  color: var(--color-text-primary);
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-sm);
+  padding: var(--spacing-1);
+  z-index: var(--z-popover, 1100);
+  overflow-y: auto;
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-2);
+  width: 100%;
+  padding: var(--spacing-1) var(--spacing-2);
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  line-height: 1.3;
+}
+
+.menuItem:hover,
+.menuItem:focus-visible {
+  outline: none;
+  background-color: var(--color-surface-muted, rgba(0, 0, 0, 0.04));
+}
+
+.menuItem[disabled] {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.menuItemDot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+}
+
+.menuItemIcon {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: var(--color-text-secondary);
+}
+
+.menuItemLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dot_info {
+  background-color: var(--color-info-500);
+}
+.dot_success {
+  background-color: var(--color-success-500);
+}
+.dot_warning {
+  background-color: var(--color-warning-500);
+}
+.dot_danger {
+  background-color: var(--color-danger-500);
+}
+.dot_brand {
+  background-color: var(--color-brand-500);
+}
+.dot_hold {
+  background-color: var(--color-status-hold-border, var(--color-warning-500));
+}
+.dot_neutral {
+  background-color: var(--color-text-tertiary, var(--color-text-secondary));
+}
+
+.empty {
+  padding: var(--spacing-2);
+  color: var(--color-text-tertiary, var(--color-text-secondary));
+  font-size: var(--font-size-xs);
+  text-align: center;
+}

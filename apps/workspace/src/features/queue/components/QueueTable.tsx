@@ -2,14 +2,16 @@ import { useEffect, useMemo, useRef } from "react";
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { useTranslation } from "@sdm/i18n";
 import {
+  CA_SDM_TRANSITIONS,
   PriorityBadge,
   StatusBadge,
   staggerListRows,
   type Severity,
   type TicketStatus,
 } from "@sdm/design-system";
-import type { UiQueueItem } from "@sdm/api-types";
+import type { UiQueueItem, UiTicketType } from "@sdm/api-types";
 import type { QueueColumnKey } from "../types";
+import { transitionsForType } from "../hooks";
 
 /**
  * Dense queue table. Uses TanStack Table v8 headless API + a hand-rolled
@@ -68,10 +70,29 @@ export interface QueueTableProps {
   readonly selectedId: string | null;
   readonly onRowSelect: (id: string) => void;
   readonly onRowActivate: (id: string) => void;
+  /**
+   * L.1.C — optional handler that turns each row's status badge into a
+   * transitionable lozenge. When omitted the badge stays read-only.
+   */
+  readonly onStatusTransition?: (input: {
+    readonly id: string;
+    readonly type: UiTicketType;
+    readonly next: TicketStatus;
+  }) => void | Promise<void>;
+  /** When true, the per-row lozenges render in a `disabled` state (in-flight). */
+  readonly statusTransitionPending?: boolean;
 }
 
 export function QueueTable(props: QueueTableProps) {
-  const { rows, visibleColumns, selectedId, onRowSelect, onRowActivate } = props;
+  const {
+    rows,
+    visibleColumns,
+    selectedId,
+    onRowSelect,
+    onRowActivate,
+    onStatusTransition,
+    statusTransitionPending = false,
+  } = props;
   const { t } = useTranslation("workspace");
 
   const columns = useMemo<ColumnDef<UiQueueItem>[]>(() => {
@@ -100,9 +121,47 @@ export function QueueTable(props: QueueTableProps) {
         accessorKey: "status",
         size: 110,
         cell: (info) => {
-          const code = info.row.original.status?.code ?? "";
+          const row = info.row.original;
+          const code = row.status?.code ?? "";
           const mapped = STATUS_MAP[code] ?? "open";
-          return <StatusBadge status={mapped} label={info.row.original.status?.label ?? code} />;
+          const transitionable = !!onStatusTransition;
+          const allowed = transitionable
+            ? transitionsForType(row.ticketType, CA_SDM_TRANSITIONS[mapped] ?? [])
+            : null;
+          const badge = (
+            <StatusBadge
+              status={mapped}
+              label={row.status?.label ?? code}
+              data-testid="queue-row-status-badge"
+              {...(transitionable
+                ? {
+                    transitionable: true as const,
+                    disabled: statusTransitionPending,
+                    menuLabel: t("status.transition.menuLabel"),
+                    ...(allowed ? { allowedTransitions: allowed } : {}),
+                    onTransition: (next: TicketStatus) =>
+                      onStatusTransition?.({ id: row.id, type: row.ticketType, next }),
+                  }
+                : {})}
+            />
+          );
+          if (!transitionable) return badge;
+          // Stop row-click + activation so opening the menu doesn't navigate.
+          // `role="presentation"` keeps the wrapper out of the accessibility
+          // tree — interactivity lives on the inner badge button.
+          return (
+            <span
+              role="presentation"
+              data-stop-row-activate
+              onClickCapture={(e) => e.stopPropagation()}
+              onDoubleClickCapture={(e) => e.stopPropagation()}
+              onKeyDownCapture={(e) => {
+                if (e.key === " " || e.key === "Enter") e.stopPropagation();
+              }}
+            >
+              {badge}
+            </span>
+          );
         },
       },
       priority: {
@@ -154,7 +213,7 @@ export function QueueTable(props: QueueTableProps) {
       },
     };
     return visibleColumns.map((k) => all[k]);
-  }, [visibleColumns, t]);
+  }, [visibleColumns, t, onStatusTransition, statusTransitionPending]);
 
   const table = useReactTable<UiQueueItem>({
     data: rows as UiQueueItem[],

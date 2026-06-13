@@ -1,13 +1,10 @@
-import { ThemeToggle, useTheme } from "@sdm/design-system";
+import { useRef, useState } from "react";
+import { NotificationPopover, ThemeToggle, Wordmark, useTheme } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { Bell, Menu } from "lucide-react";
+import { useNotifications } from "./use-notifications";
 import { useSession } from "./session-context";
 import "../features/sp-cockpit/sp-cockpit.css";
-
-// Notifications wiring is deferred to Round D (SSE-fed unread counter).
-// For v1.1.4 the bell renders with a hardcoded zero; in K.3.B the bell stays
-// in the top-bar so the affordance survives the rail migration.
-const NOTIFICATION_COUNT = 0;
 
 /**
  * Toggle the left-rail visibility below the `lg` breakpoint via a body-level
@@ -37,7 +34,11 @@ export function TopBar({ appName }: { appName: string }) {
    */
   const isSpMode = !!session?.roles.includes("sp_admin");
 
-  const notificationLabel = `${t("nav.notifications")}, ${NOTIFICATION_COUNT} ${t("nav.unread")}`;
+  // L.1.B — live notification center driven by the shared SSE stream.
+  const { events, unreadCount, markAllRead } = useNotifications();
+  const [notifOpen, setNotifOpen] = useState(false);
+  const notifAnchorRef = useRef<HTMLButtonElement | null>(null);
+  const notificationLabel = t("notifications.unreadCount").replace("{count}", String(unreadCount));
 
   return (
     <header className="sdm-top-bar" data-testid="top-bar">
@@ -52,9 +53,7 @@ export function TopBar({ appName }: { appName: string }) {
         <Menu size={18} aria-hidden="true" />
       </button>
       <div className="sdm-brand">
-        <span className="sdm-logo" aria-hidden="true">
-          SDM
-        </span>
+        <Wordmark size="md" />
         <span className="sdm-app-name">{appName}</span>
         {isSpMode && (
           <span className="sdm-sp-mode-badge" data-testid="sp-mode-badge">
@@ -66,19 +65,34 @@ export function TopBar({ appName }: { appName: string }) {
         <div className="sdm-top-bar-actions">
           <ThemeToggle value={choice} onChange={setChoice} />
           <button
+            ref={notifAnchorRef}
             type="button"
             className="sdm-notif-button"
             data-testid="notif-button"
             aria-label={notificationLabel}
+            aria-expanded={notifOpen}
+            aria-haspopup="dialog"
             title={t("nav.notifications")}
+            onClick={() => setNotifOpen((prev) => !prev)}
           >
             <Bell size={18} aria-hidden="true" />
-            {NOTIFICATION_COUNT > 0 && (
+            {unreadCount > 0 && (
               <span className="sdm-notif-count" aria-hidden="true">
-                {NOTIFICATION_COUNT > 99 ? "99+" : NOTIFICATION_COUNT}
+                {unreadCount > 99 ? "99+" : unreadCount}
               </span>
             )}
           </button>
+          <NotificationPopover
+            open={notifOpen}
+            onClose={() => setNotifOpen(false)}
+            events={events}
+            anchorRef={notifAnchorRef}
+            onMarkAllRead={markAllRead}
+            title={t("notifications.title")}
+            emptyMessage={t("notifications.empty")}
+            markAllReadLabel={t("notifications.markAllRead")}
+            viewAllLabel={t("notifications.viewAll")}
+          />
         </div>
       )}
     </header>

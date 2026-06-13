@@ -115,6 +115,14 @@
   "common": {
     "cancel": "Zrušiť"
   },
+  "status": {
+    "transition": {
+      "menuLabel": "Zmeniť stav",
+      "success": "Stav nastavený na {label}",
+      "error": "Nepodarilo sa zmeniť stav. Skús to znova.",
+      "unsupported": "Backend zatiaľ neumožňuje túto zmenu"
+    }
+  },
   "nav": {
     "primary": "Hlavná navigácia",
     "workspace": "Workspace",
@@ -1011,6 +1019,17 @@
     "actions": {
       "toggleTheme": "Prepnúť tému",
       "signOut": "Odhlásiť sa"
+    }
+  },
+  "notifications": {
+    "title": "Oznámenia",
+    "empty": "Žiadne nové oznámenia",
+    "markAllRead": "Označiť všetko ako prečítané",
+    "viewAll": "Zobraziť všetko",
+    "unreadCount": "Neprečítaných: {count}",
+    "verbs": {
+      "tenantSuspended": "Tenant bol pozastavený.",
+      "sessionExpired": "Tvoja relácia vypršala."
     }
   }
 }

@@ -251,3 +251,18 @@ export function patchChangeSchedule(id: string, payload: SchedulePayload): Promi
     "change-schedule",
   );
 }
+
+/**
+ * L.1.C — Inline status transition for a change. Extends the J.6 schedule
+ * patch path; the BFF endpoint for status-only updates is **not yet wired** in
+ * production (the generic entity registrar only exposes PUT/DELETE). The FE
+ * calls a PATCH on the entity root anyway so the wiring exists for the v1.4
+ * backend catch-up; failures surface a localised "unsupported" toast.
+ */
+export function patchChangeStatus(id: string, statusCode: string): Promise<ChangeRow> {
+  return patchJson<ChangeRow>(
+    `/api/changes/${encodeURIComponent(id)}`,
+    { statusCode },
+    "change-status-patch",
+  );
+}

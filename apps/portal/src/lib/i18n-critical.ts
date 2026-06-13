@@ -102,6 +102,14 @@ const CRITICAL_SK: CriticalDict = {
   "catalogBrowse.categories.software": "Softvér",
   "catalogBrowse.categories.access": "Prístupy",
   "catalogBrowse.categories.other": "Iné",
+  // L.1.B — notification center (top-bar bell + popover)
+  "notifications.title": "Oznámenia",
+  "notifications.empty": "Žiadne nové oznámenia",
+  "notifications.markAllRead": "Označiť všetko ako prečítané",
+  "notifications.viewAll": "Zobraziť všetko",
+  "notifications.unreadCount": "Neprečítaných: {count}",
+  "notifications.verbs.tenantSuspended": "Tvoj tenant bol pozastavený.",
+  "notifications.verbs.sessionExpired": "Tvoja relácia vypršala.",
 };
 
 const CRITICAL_EN: CriticalDict = {
@@ -171,6 +179,14 @@ const CRITICAL_EN: CriticalDict = {
   "catalogBrowse.categories.software": "Software",
   "catalogBrowse.categories.access": "Access",
   "catalogBrowse.categories.other": "Other",
+  // L.1.B — notification center (top-bar bell + popover)
+  "notifications.title": "Notifications",
+  "notifications.empty": "No new notifications",
+  "notifications.markAllRead": "Mark all as read",
+  "notifications.viewAll": "View all",
+  "notifications.unreadCount": "{count} unread",
+  "notifications.verbs.tenantSuspended": "Your tenant has been suspended.",
+  "notifications.verbs.sessionExpired": "Your session has expired.",
 };
 
 const DICTIONARIES: Readonly<Record<Locale, CriticalDict>> = {

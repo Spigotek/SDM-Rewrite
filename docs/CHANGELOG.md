@@ -9,6 +9,78 @@ per-chunk plans under `docs/plans/`. Sources of truth for design decisions live
 in `docs/spec/` and `docs/agents/`; this changelog tracks **what shipped** to the
 release artefact, not why.
 
+## [1.3.0] - 2026-06-14
+
+"Live + Identity" surprise pass. Built atop v1.2.x after owner brief
+"stále nie som spokojný s dizajnom a komplexitou UI. Prekvap ma!".
+Three pillars: brand visual identity refresh, live SSE notification
+center, JSM-style inline status transitions. See
+[`RELEASE-NOTES-v1.3.0.md`](./RELEASE-NOTES-v1.3.0.md) for the full
+post-mortem and [`docs/plans/L.1-v1.3.md`](./plans/L.1-v1.3.md) for
+the per-chunk breakdown.
+
+### Added
+
+- **`Wordmark` primitive** in `@sdm/design-system/brand`. Two stacked
+  rounded indigo squares (primary-500 front, primary-700 back, 4-px
+  offset) + tightened "SDM" wordmark in Inter Variable 600 / -0.04em
+  letter-spacing. GSAP entry on first mount (opacity + scale +
+  per-letter y stagger). Replaces the hardcoded `<span>SDM</span>`
+  block in portal top-bar, portal mobile drawer, workspace top-bar.
+- **`NotificationPopover` primitive** — 360-px anchored dropdown,
+  GSAP fade+lift, contiguous same-ticket clustering (3+ → "+N more"),
+  outside-click + Escape close.
+- **Live notification center** — top-bar bell (hardcoded 0 since
+  v1.1.4) wired to J.3 SSE `/api/events`. `useNotifications` hook in
+  each shell with `lastReadAt` persisted in `localStorage`. Maps
+  `tenant.suspended` → danger row, `session.expired` → warning row.
+  Bell is a real `<button>` with `aria-expanded` / `aria-haspopup`.
+- **`useCountUp` hook** — gsap-driven `textContent` tween with snap-to-
+  integers. Applied to every KPI tile in portal HeroStats (3 tiles) +
+  workspace QueueStats (5 tiles). `prefers-reduced-motion` short-
+  circuits to immediate set.
+- **JSM-style inline status transitions** — `StatusBadge` gets
+  `transitionable` mode + `allowedTransitions` + `onTransition`. Click
+  opens a popover menu listing the allowed CA SDM next states (coloured
+  dot + label + lucide icon). Keyboard nav (Arrow / Home / End / Enter
+  / Escape). GSAP fade+lift, reduced-motion safe. Backward-compatible
+  with read-only callsites.
+- **`CA_SDM_TRANSITIONS` lifecycle map** — exported constant documenting
+  legal next states per K.1 brief §6.4.
+- **Wired transitions** in workspace queue rows, ticket detail H1,
+  problem detail H1, change detail H1. Optimistic TanStack mutations
+  with snapshot rollback + per-feature toast bus.
+
+### Changed
+
+- **Brand gradient on portal home hero** — subtle radial indigo (10 %
+  alpha light / 18 % dark, capped 340 px) lifts the hero without
+  dominating.
+- **Serif accent on H1 hero / reader headings** — Charter / Source
+  Serif Pro / Iowan / Apple Garamond / Georgia fallback chain (system
+  serif, no new font @font-face). Applied to portal HeroGreeting H1,
+  KB ArticleHeader H1, workspace Queue H1. Inter stays for everything
+  else.
+- **EventSourceProvider** in both shells extended with
+  `AppEventsContext` + `useAppEvents()` fan-out. Single `EventSource`
+  connection preserved — listeners stored in a ref Set, fan-out fires
+  after the existing DOM dispatchers.
+- **i18n** — `notifications.*` keys added in both apps;
+  `status.transition.*` added in both. Workspace 738 keys, portal 234.
+
+### Known limitations / deferred to v1.4+
+
+- `PATCH /api/tickets/:type/:id` is MSW-only; `PATCH /api/problems/:id`
+  - `PATCH /api/changes/:id { status }` are not yet wired server-side.
+    FE shows the localised "Backend zatiaľ neumožňuje túto zmenu" toast +
+    console.warn on the unsupported path. UI is ready for v1.4 catch-up.
+- `GET /api/events?since=<lastReadAt>` backlog hydration endpoint
+  doesn't exist on BFF. Fresh tabs start with empty queue and fill as
+  SSE pushes.
+- `/notifications` route not yet built. Popover hides its footer link.
+- Ticket-level SSE events not yet emitted by BFF — `NotificationEvent`
+  primitive has the `ticketRef` / `ticketHref` slots wired and ready.
+
 ## [1.2.0] - 2026-06-13
 
 Full redesign half of Phase K. v1.1.4 shipped the quick-wins bundle;
