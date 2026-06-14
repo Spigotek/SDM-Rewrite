@@ -115,6 +115,31 @@
   position: relative;
 }
 
+/* M.2.C — caption above the tenant value so "default" reads as a workspace
+   name, not an unexplained token. */
+.sdm-tenant-caption {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  margin-bottom: var(--spacing-1);
+}
+
+.sdm-tenant-dropdown-help {
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-2_5);
+  font-size: var(--font-size-xs);
+  /* text-body — clears AA on the brand-bg-subtle fill in both themes
+     (text-secondary ≈4.46:1 on the dark brand-900 fill). */
+  color: var(--color-text-body);
+  background-color: var(--color-brand-bg-subtle);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
+}
+
 .sdm-tenant-display {
   display: inline-flex;
   align-items: center;
@@ -322,6 +347,9 @@
 .sdm-content {
   flex: 1 1 auto;
   padding: var(--spacing-6);
+  /* M.2.C — tinted canvas behind the content column. White cards/surfaces
+     sit on this faint indigo wash for depth instead of paper-on-paper. */
+  background-color: var(--color-surface-canvas);
 }
 
 .sdm-error-screen {

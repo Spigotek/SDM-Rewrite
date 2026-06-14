@@ -11,7 +11,7 @@ import {
 } from "@sdm/design-system";
 import type { UiQueueItem, UiTicketType } from "@sdm/api-types";
 import type { QueueColumnKey } from "../types";
-import { transitionsForType } from "../hooks";
+import { caLogicalStatus, transitionsForType } from "../hooks";
 
 /**
  * Dense queue table. Uses TanStack Table v8 headless API + a hand-rolled
@@ -20,27 +20,11 @@ import { transitionsForType } from "../hooks";
  * desc, then openedAt desc) per `01-queue.md §Účel` — column sort UI is v1+.
  *
  * Status/Priority codes use the CA SDM vocabulary returned by the aggregator
- * (`OP`/`WIP`/...). The local mappers below collapse them onto the design-
- * system's `TicketStatus`/`Severity` enums so colour + label come from the
- * shared `StatusBadge`/`PriorityBadge` primitives.
+ * (`OP`/`WIP`/...). Status codes resolve through `caLogicalStatus` — the SAME
+ * map the filter uses (`hooks.CA_CODE_TO_LOGICAL`) — so a row's badge always
+ * agrees with the logical status the filter matched it on. Priority collapses
+ * onto the design-system `Severity` enum via the local map below.
  */
-
-const STATUS_MAP: Record<string, TicketStatus> = {
-  NEW: "new",
-  OP: "open",
-  SUBMITTED: "new",
-  APPR_PENDING: "pending",
-  APPROVED: "open",
-  IN_PROGRESS: "in_progress",
-  WIP: "in_progress",
-  HLD: "hold",
-  AWU: "pending",
-  RES: "resolved",
-  DELIVERED: "resolved",
-  CL: "closed",
-  ROOT_CAUSE_KNOWN: "in_progress",
-  KNOWN_ERROR: "in_progress",
-};
 
 const PRIORITY_MAP: Record<string, Severity> = {
   "1": "critical",
@@ -110,7 +94,7 @@ export function QueueTable(props: QueueTableProps) {
         cell: (info) => {
           const row = info.row.original;
           const code = row.status?.code ?? "";
-          const mapped = STATUS_MAP[code] ?? "open";
+          const mapped = caLogicalStatus(code);
           const transitionable = !!onStatusTransition;
           const allowed = transitionable
             ? transitionsForType(row.ticketType, CA_SDM_TRANSITIONS[mapped] ?? [])

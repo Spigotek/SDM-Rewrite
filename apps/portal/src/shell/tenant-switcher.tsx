@@ -230,6 +230,9 @@ export function TenantSwitcher() {
         data-testid="tenant-switcher"
         data-variant="single"
       >
+        <span className="sdm-tenant-caption" data-testid="tenant-caption">
+          {t("tenantSwitcher.caption")}
+        </span>
         <span
           className="sdm-tenant-display sdm-tenant-display--single"
           aria-label={t("tenantSwitcher.current")}
@@ -252,6 +255,9 @@ export function TenantSwitcher() {
         data-testid="tenant-switcher"
         data-variant={variant}
       >
+        <span className="sdm-tenant-caption" data-testid="tenant-caption">
+          {t("tenantSwitcher.caption")}
+        </span>
         <button
           type="button"
           className="sdm-tenant-display"
@@ -277,6 +283,9 @@ export function TenantSwitcher() {
             role="listbox"
             aria-label={t("tenantSwitcher.label")}
           >
+            <p className="sdm-tenant-dropdown-help" data-testid="tenant-dropdown-help">
+              {t("tenantSwitcher.dropdownHelp")}
+            </p>
             <div className="sdm-tenant-dropdown-search">
               <input
                 ref={searchRef}

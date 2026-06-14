@@ -72,6 +72,10 @@
   --color-background-app: var(--color-neutral-50);
   --color-background-surface: var(--color-neutral-0);
   --color-background-subtle: var(--color-neutral-100);
+  /* M.2.C — app canvas wash. A faintly indigo-tinted off-white so the content
+     area reads as a deliberate surface, not flat paper. Cards/surfaces above it
+     stay white (`--color-background-surface`) and gain contrast from the tint. */
+  --color-surface-canvas: #f5f6fb;
   --color-background-hover: var(--color-neutral-100);
   --color-background-selected: #eef2ff;
   --color-background-overlay: rgba(15, 23, 42, 0.55);
@@ -80,7 +84,12 @@
   --color-text-primary: var(--color-neutral-900);
   --color-text-body: var(--color-neutral-800);
   --color-text-secondary: var(--color-neutral-600);
-  --color-text-tertiary: var(--color-neutral-500);
+  /* M.2.E — darkened from neutral-500 (#64748b, 4.34:1 on subtle / 4.41:1 on
+     canvas — both fail AA) to clear 4.5:1 on every light surface the M.2.C
+     vivid pass introduced. #586577 → 5.41:1 on subtle (#f1f5f9), 5.49:1 on
+     canvas (#f5f6fb), 5.93:1 on white; stays lighter than secondary
+     (neutral-600, 6.92:1) so the secondary/tertiary distinction survives. */
+  --color-text-tertiary: #586577;
   --color-text-disabled: var(--color-neutral-400);
   --color-text-inverse: var(--color-neutral-0);
   --color-text-link: #4f46e5;
@@ -314,6 +323,9 @@
   --color-background-app: #0f0f11;
   --color-background-surface: #18181b;
   --color-background-subtle: #27272a;
+  /* M.2.C — dark canvas stays deep; a hair above the app base so the content
+     column separates from the chrome without lifting toward the surface tone. */
+  --color-surface-canvas: #121214;
   --color-background-hover: #3f3f46;
   --color-background-selected: #1e1b4b;
   --color-background-overlay: rgba(0, 0, 0, 0.65);
@@ -433,6 +445,9 @@
   --color-background-app: #ffffff;
   --color-background-surface: #ffffff;
   --color-background-subtle: #f0f0f0;
+  /* M.2.C — high-contrast: canvas stays pure white so text contrast is maximal;
+     section separation in hc relies on borders, not tint. */
+  --color-surface-canvas: #ffffff;
   --color-background-hover: #f0f0f0;
   --color-background-selected: #1e1b4b;
   --color-background-overlay: rgba(0, 0, 0, 0.9);

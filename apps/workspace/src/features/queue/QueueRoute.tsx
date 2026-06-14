@@ -23,18 +23,15 @@ import {
   useQueueKeyboardNav,
   useQueueStatusTransition,
   useQueueViewMode,
-  useSavedViews,
 } from "./hooks";
 import { ChangeCalendarTeaser } from "./components/ChangeCalendarTeaser";
 import { ColumnConfig } from "./components/ColumnConfig";
 import { FilterBar } from "./components/FilterBar";
-import { QueueDetailPane } from "./components/QueueDetailPane";
+import { QueueDetailDrawer } from "./components/QueueDetailDrawer";
 import { QueueFilters } from "./components/QueueFilters";
-import { QueueSidebar } from "./components/QueueSidebar";
 import { QueueStats } from "./components/QueueStats";
 import { QueueTable } from "./components/QueueTable";
 import { RecentActivityCard } from "./components/RecentActivityCard";
-import { SavedViewsManager } from "./components/SavedViewsManager";
 import type { QueueFilters as QueueFiltersValue, SavedView } from "./types";
 
 // Kanban is opt-in — lazy so the dense table view (default) keeps shipping
@@ -45,16 +42,17 @@ const QueueKanban = lazy(() =>
 import "./queue.css";
 
 /**
- * `/queue` — Anna's workspace home (K.1 brief §10.2, v1.1.4 redesign).
+ * `/queue` — Anna's workspace home (K.1 brief §10.2, M.2.B layout clarity).
  *
  *  Row 1 — `<QueueStats>`           5-up KPI strip (Otvorené / Moje / Po SLA / <1h / Dnes)
- *  Row 2 — `<QueueFilters>`         saved-view selector + active-filter chips + "Iba moje"
- *  Row 3 — `<QueueTable>`           dense 32-px row table (the existing centrepiece)
+ *  Row 2 — `<QueueFilters>`         active-filter chips + "Iba moje"
+ *  Row 3 — `<QueueTable>`           dense 32-px row table, now full content width
  *  Row 4 — split: `<RecentActivityCard>` | `<ChangeCalendarTeaser>`
  *
- * The sidebar (`QueueSidebar`) and split-pane preview from H.7 are retained so
- * keyboard navigation, saved views, and ticket preview keep working; only the
- * dashboard widgets surround the table now.
+ * M.2.B: the inner Queues/saved-views left column and the permanent right
+ * split-pane were removed per owner feedback ("ukladanie pohľadov nepotrebujem
+ * … radšej roztiahni stred"). The list spans full width; row selection opens
+ * `<QueueDetailDrawer>` (a right-side drawer over the content).
  */
 function filterRows(
   rows: ReadonlyArray<UiQueueItem>,
@@ -83,25 +81,10 @@ function filterRows(
   });
 }
 
-function filtersEqual(a: QueueFiltersValue, b: QueueFiltersValue): boolean {
-  return (
-    a.search === b.search &&
-    sameArray(a.status, b.status) &&
-    sameArray(a.priority, b.priority) &&
-    sameArray(a.assignee, b.assignee) &&
-    sameArray(a.customer, b.customer) &&
-    sameArray(a.ticketType, b.ticketType)
-  );
-}
-
-function sameArray(a: ReadonlyArray<string>, b: ReadonlyArray<string>): boolean {
-  if (a.length !== b.length) return false;
-  const sa = [...a].sort();
-  const sb = [...b].sort();
-  return sa.every((v, i) => v === sb[i]);
-}
-
 const EMPTY_ROWS: ReadonlyArray<UiQueueItem> = [];
+// Saved-views UI removed in M.2.B; the `QueueFilters` quick-filter dropdown now
+// shows only built-in presets. A stable empty array keeps it referentially sound.
+const EMPTY_VIEWS: ReadonlyArray<SavedView> = [];
 
 export default function QueueRoute() {
   const { t } = useTranslation("workspace");
@@ -119,7 +102,6 @@ export default function QueueRoute() {
     setSelectedId,
   } = useQueueFilters();
 
-  const { views, saveView, deleteView } = useSavedViews();
   const { config, toggleColumn, resetColumns, allColumns } = useColumnConfig();
   const { mode: viewMode, setMode: setViewMode } = useQueueViewMode();
 
@@ -186,25 +168,6 @@ export default function QueueRoute() {
     onActivate: setSelectedId,
     enabled: filteredRows.length > 0,
   });
-
-  const activeViewId = useMemo<string | null>(() => {
-    const match = views.find((v) => filtersEqual(v.filters, filters));
-    return match?.id ?? null;
-  }, [views, filters]);
-
-  const handleSelectView = (view: SavedView) => {
-    setFilters(view.filters);
-    setSelectedId(null);
-  };
-
-  const handleResetView = () => {
-    resetFilters();
-    setSelectedId(null);
-  };
-
-  const handleSaveView = (name: string) => {
-    saveView(name, filters);
-  };
 
   const handleSelectViewFilters = useCallback(
     (next: QueueFiltersValue) => {
@@ -281,21 +244,13 @@ export default function QueueRoute() {
         filters={filters}
         rows={rows}
         currentUserId={currentUserId}
-        savedViews={views}
+        savedViews={EMPTY_VIEWS}
         onSelectView={handleSelectViewFilters}
         onClearChip={handleClearChip}
         onToggleAssignedToMe={handleToggleAssignedToMe}
       />
 
       <div className="sdm-queue-layout">
-        <QueueSidebar
-          views={views}
-          activeViewId={activeViewId}
-          onSelectView={handleSelectView}
-          onResetView={handleResetView}
-          onDeleteView={deleteView}
-        />
-
         <div className="sdm-queue-main">
           <div className="sdm-queue-toolbar">
             <FilterBar
@@ -308,7 +263,6 @@ export default function QueueRoute() {
               onReset={resetFilters}
             />
             <div className="sdm-queue-toolbar-trailing">
-              <SavedViewsManager filters={filters} onSave={handleSaveView} />
               <ColumnConfig
                 visible={config.visible}
                 all={allColumns}
@@ -368,15 +322,13 @@ export default function QueueRoute() {
             />
           )}
         </div>
-
-        <aside
-          className="sdm-queue-split-pane"
-          data-testid="queue-split-pane"
-          aria-label={t("queue.splitPane.ariaLabel")}
-        >
-          <QueueDetailPane row={selectedRow} />
-        </aside>
       </div>
+
+      <QueueDetailDrawer
+        row={selectedRow}
+        open={selectedId !== null}
+        onClose={() => setSelectedId(null)}
+      />
 
       <div className="sdm-queue-dashboard-row">
         <RecentActivityCard rows={rows} currentUserId={currentUserId} isLoading={query.isPending} />

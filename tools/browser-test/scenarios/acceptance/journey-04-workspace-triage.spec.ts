@@ -6,7 +6,7 @@ import { test, expect } from "../../fixtures/isolated-context";
  * Anchors `acceptance-criteria.md §2.4` happy path:
  *   1. Workspace `/` redirects to `/queue` with rows from MSW.
  *   2. Keyboard nav `j`/`k` moves the selected row.
- *   3. `Enter` opens the split-pane (`?selected=:id`).
+ *   3. `Enter` opens the detail drawer (`?selected=:id`).
  *   4. Filter chip narrows the list; reset clears.
  *
  * Tenant-switch alternate flow (`@security:tenant-switch` +

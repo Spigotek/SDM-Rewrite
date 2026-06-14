@@ -13,7 +13,7 @@ import {
   type TicketStatus,
 } from "@sdm/design-system";
 import type { UiQueueItem, UiTicketType } from "@sdm/api-types";
-import { transitionsForType } from "../hooks";
+import { caLogicalStatus, transitionsForType } from "../hooks";
 
 /**
  * Linear-style Kanban board for the workspace queue (M.1.B / v1.4.0).
@@ -28,25 +28,6 @@ import { transitionsForType } from "../hooks";
  * triple the lazy-chunk size for one screen of interaction, and the v1.4 brief
  * forbids new package deps.
  */
-
-const STATUS_MAP: Record<string, TicketStatus> = {
-  NEW: "new",
-  OP: "open",
-  SUBMITTED: "new",
-  APPR_PENDING: "pending",
-  APPROVED: "open",
-  IN_PROGRESS: "in_progress",
-  WIP: "in_progress",
-  HLD: "hold",
-  AWU: "pending",
-  AWV: "pending",
-  RES: "resolved",
-  DELIVERED: "resolved",
-  CL: "closed",
-  REOPENED: "reopened",
-  ROOT_CAUSE_KNOWN: "in_progress",
-  KNOWN_ERROR: "in_progress",
-};
 
 const PRIORITY_MAP: Record<string, Severity> = {
   "1": "critical",
@@ -103,8 +84,7 @@ interface DragPayload {
 }
 
 function mapRowStatus(row: UiQueueItem): TicketStatus {
-  const code = row.status?.code ?? "";
-  return STATUS_MAP[code] ?? "open";
+  return caLogicalStatus(row.status?.code ?? "");
 }
 
 function relativeAge(iso: string | null): string {

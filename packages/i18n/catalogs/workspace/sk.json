@@ -11,10 +11,6 @@
     "newTicket": "+ Nový",
     "filtersGroupLabel": "Filtre",
     "resetFilters": "Resetovať filtre",
-    "savedViews": "Uložené pohľady",
-    "saveView": "Uložiť pohľad",
-    "savedViewNameLabel": "Názov pohľadu",
-    "savedViewNamePlaceholder": "Pomenuj pohľad…",
     "searchPlaceholder": "Hľadať v queue…",
     "resultCount": "{visible} z {total} ticketov",
     "loading": "Načítavam queue…",
@@ -85,17 +81,6 @@
       "assignee": "Riešiteľ",
       "age": "Vek"
     },
-    "sidebar": {
-      "ariaLabel": "Queues a uložené pohľady",
-      "queues": "Queues",
-      "allTickets": "Všetky tickety",
-      "noSavedViews": "Zatiaľ žiadne uložené pohľady.",
-      "deleteView": "Zmazať pohľad {name}"
-    },
-    "splitPane": {
-      "ariaLabel": "Detail vybraného ticketu",
-      "empty": "Vyber ticket zo zoznamu (klikni alebo stlač Enter na vybranom riadku)."
-    },
     "view": {
       "table": "Tabuľka",
       "kanban": "Tabuľa",
@@ -135,6 +120,10 @@
       "comments": {
         "empty": "Zatiaľ žiadne verejné komentáre."
       }
+    },
+    "detailDrawer": {
+      "ariaLabel": "Detail vybraného ticketu",
+      "close": "Zavrieť detail"
     }
   },
   "actions": {
@@ -186,7 +175,14 @@
       "incidents": "Incidenty",
       "changes": "Zmeny",
       "knowledge": "Znalosti",
-      "cmdb": "CMDB"
+      "cmdb": "CMDB",
+      "help": {
+        "top": "Tvoje rýchle pohľady — inbox, pridelené tebe a sledované.",
+        "incidents": "Životný cyklus incidentov od triáže po vyriešenie.",
+        "changes": "Žiadosti o zmenu — schvaľovanie, plán a kalendár.",
+        "knowledge": "Databáza znalostí a postupy riešenia.",
+        "cmdb": "Konfiguračná databáza — položky a vzťahy."
+      }
     },
     "items": {
       "inbox": "Inbox",
@@ -199,9 +195,25 @@
       "scheduled": "Naplánované",
       "calendar": "Kalendár"
     },
+    "help": {
+      "inbox": "Nové podania čakajúce na priradenie.",
+      "myqueue": "Tickety priradené tebe.",
+      "starred": "Tickety, ktoré sleduješ.",
+      "triage": "Nové incidenty na roztriedenie.",
+      "in-progress": "Incidenty, na ktorých sa pracuje.",
+      "on-hold": "Čaká na zákazníka alebo dodávateľa.",
+      "resolved": "Vyriešené a uzavreté incidenty.",
+      "problems": "Známe problémy a ich príčiny.",
+      "pending-approval": "Zmeny čakajúce na schválenie.",
+      "scheduled": "Naplánované zmeny pripravené na realizáciu.",
+      "calendar": "Kalendár plánovaných zmien.",
+      "kb": "Články databázy znalostí.",
+      "cmdb": "Konfiguračné položky a ich väzby."
+    },
     "rail": {
       "collapseGroup": "Zbaliť skupinu {name}",
-      "expandGroup": "Rozbaliť skupinu {name}"
+      "expandGroup": "Rozbaliť skupinu {name}",
+      "groupHelp": "{name}: {description}"
     },
     "userMenu": {
       "themeToggle": "Téma",

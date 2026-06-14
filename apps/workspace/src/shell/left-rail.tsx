@@ -14,6 +14,7 @@ import {
   Clock,
   GitBranch,
   Inbox,
+  Info,
   PauseCircle,
   Play,
   Search,
@@ -209,9 +210,10 @@ interface RailLinkProps {
   item: RailItem;
   active: boolean;
   label: string;
+  help: string;
 }
 
-function RailLink({ item, active, label }: RailLinkProps) {
+function RailLink({ item, active, label, help }: RailLinkProps) {
   const navigate = useNavigate();
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (
@@ -236,6 +238,8 @@ function RailLink({ item, active, label }: RailLinkProps) {
         variant="vertical"
         active={active}
         onClick={handleClick}
+        title={help}
+        aria-label={help ? `${label} — ${help}` : label}
       />
     </li>
   );
@@ -251,24 +255,37 @@ interface RailGroupSectionProps {
 function RailGroupSection({ group, pathname, open, onToggle }: RailGroupSectionProps) {
   const { t } = useTranslation("workspace");
   const groupLabel = t(group.labelKey);
+  const groupHelp = t(`nav.groups.help.${group.key.toLowerCase()}`);
   const toggleLabel = open
     ? t("nav.rail.collapseGroup", { name: groupLabel })
     : t("nav.rail.expandGroup", { name: groupLabel });
   return (
     <section className="sdm-rail-group" data-open={open ? "true" : "false"}>
-      <button
-        type="button"
-        className="sdm-rail-group-header"
-        data-testid={`workspace-rail-group-${group.key.toLowerCase()}`}
-        aria-expanded={open}
-        aria-label={toggleLabel}
-        onClick={onToggle}
-      >
-        <span className="sdm-rail-group-chevron" aria-hidden="true">
-          {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        </span>
-        <span className="sdm-rail-group-label">{groupLabel}</span>
-      </button>
+      <div className="sdm-rail-group-headerrow">
+        <button
+          type="button"
+          className="sdm-rail-group-header"
+          data-testid={`workspace-rail-group-${group.key.toLowerCase()}`}
+          aria-expanded={open}
+          aria-label={toggleLabel}
+          onClick={onToggle}
+        >
+          <span className="sdm-rail-group-chevron" aria-hidden="true">
+            {open ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+          </span>
+          <span className="sdm-rail-group-label">{groupLabel}</span>
+        </button>
+        <button
+          type="button"
+          className="sdm-rail-group-help"
+          data-testid={`workspace-rail-group-help-${group.key.toLowerCase()}`}
+          aria-label={t("nav.rail.groupHelp", { name: groupLabel, description: groupHelp })}
+          title={groupHelp}
+          onClick={(event) => event.currentTarget.blur()}
+        >
+          <Info size={13} aria-hidden="true" />
+        </button>
+      </div>
       {open && (
         <ul className="sdm-rail-list">
           {group.items.map((item) => (
@@ -277,6 +294,7 @@ function RailGroupSection({ group, pathname, open, onToggle }: RailGroupSectionP
               item={item}
               active={isActive(pathname, item.href)}
               label={t(item.labelKey)}
+              help={t(`nav.help.${item.slug}`)}
             />
           ))}
         </ul>
