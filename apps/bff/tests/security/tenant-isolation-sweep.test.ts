@@ -55,6 +55,10 @@ function makeConfig(): RuntimeConfig {
       cookieMaxAgeSec: 28800,
     },
     uiRoleMapping: {},
+    // This sweep validates the legacy tenant `WC` read-filter, which is gated
+    // behind `tenantWcScoping` (default off — single-tenant CA SDM scopes via
+    // X-Role instead). Enable it so the scoping assertions exercise the path.
+    tenantWcScoping: true,
   };
 }
 

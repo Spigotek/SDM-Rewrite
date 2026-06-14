@@ -207,6 +207,76 @@ describe("SdmBroker.listContactRoles", () => {
   });
 });
 
+describe("SdmBroker.listAccessTypeRoles", () => {
+  it("parses an array of acctyp_role records (id stringified, name preserved)", async () => {
+    const body = JSON.stringify({
+      collection_acctyp_role: {
+        "@COUNT": 2,
+        acctyp_role: [
+          { "@id": 1, role_obj: { "@id": 400151, "@COMMON_NAME": "Service Desk Analyst" } },
+          { "@id": 2, role_obj: { "@id": 400002, "@COMMON_NAME": "Administration" } },
+        ],
+      },
+    });
+    let seenWc: string | null = null;
+    let seenAttrs: string | null = null;
+    server.use(
+      http.get(`${BASE}/acctyp_role`, ({ request }) => {
+        const url = new URL(request.url);
+        seenWc = url.searchParams.get("WC");
+        seenAttrs = request.headers.get("x-obj-attrs");
+        expect(request.headers.get("x-accesskey")).toBe("k");
+        return HttpResponse.text(body);
+      }),
+    );
+    const roles = await makeBroker().listAccessTypeRoles("k", "10002");
+    expect(seenWc).toBe("access_type=10002");
+    expect(seenAttrs).toBe("role_obj");
+    expect(roles).toEqual([
+      { roleId: "400151", roleName: "Service Desk Analyst" },
+      { roleId: "400002", roleName: "Administration" },
+    ]);
+  });
+
+  it("collapses a single-object collection into a one-element array (§4)", async () => {
+    const body = JSON.stringify({
+      collection_acctyp_role: {
+        "@COUNT": 1,
+        acctyp_role: {
+          "@id": 1,
+          role_obj: { "@id": 400151, "@COMMON_NAME": "Service Desk Analyst" },
+        },
+      },
+    });
+    server.use(http.get(`${BASE}/acctyp_role`, () => HttpResponse.text(body)));
+    const roles = await makeBroker().listAccessTypeRoles("k", "10002");
+    expect(roles).toEqual([{ roleId: "400151", roleName: "Service Desk Analyst" }]);
+  });
+
+  it("returns [] when the collection is empty", async () => {
+    const body = JSON.stringify({ collection_acctyp_role: { "@COUNT": 0 } });
+    server.use(http.get(`${BASE}/acctyp_role`, () => HttpResponse.text(body)));
+    const roles = await makeBroker().listAccessTypeRoles("k", "10002");
+    expect(roles).toEqual([]);
+  });
+
+  it("skips records whose role_obj (or its @id) is missing", async () => {
+    const body = JSON.stringify({
+      collection_acctyp_role: {
+        "@COUNT": 3,
+        acctyp_role: [
+          { "@id": 1, role_obj: { "@id": 400151, "@COMMON_NAME": "Service Desk Analyst" } },
+          { "@id": 2 }, // no role_obj at all
+          { "@id": 3, role_obj: { "@COMMON_NAME": "Orphan" } }, // role_obj without @id
+        ],
+      },
+    });
+    server.use(http.get(`${BASE}/acctyp_role`, () => HttpResponse.text(body)));
+    const roles = await makeBroker().listAccessTypeRoles("k", "10002");
+    expect(roles).toEqual([{ roleId: "400151", roleName: "Service Desk Analyst" }]);
+  });
+});
+
 describe("SdmBroker.revoke", () => {
   it("calls DELETE with X-AccessKey on the keyed path", async () => {
     let seenPath = "";

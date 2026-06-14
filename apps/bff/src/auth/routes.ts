@@ -7,6 +7,7 @@ import {
   roleId as toRoleId,
   tenantId as toTenantId,
   userId as toUserId,
+  type TenantId,
 } from "@sdm/domain";
 import { AUDIT_EVENTS, type AuditEmitter } from "../platform/audit";
 import { publishSessionExpired } from "../platform/event-bus";
@@ -16,7 +17,7 @@ import type { CookieConfig } from "../security/cookies";
 import { generateSid } from "../session";
 import type { SessionPayload, SessionStore } from "../session/types";
 import { AppErrorException, toAppErrorBody } from "./errors";
-import { resolveUiRoles, type RoleMappingConfig } from "./role-mapper";
+import { resolveUiRoles, resolveUiRoleFromRoleName, type RoleMappingConfig } from "./role-mapper";
 import type { SdmBroker } from "./sdm-broker";
 
 export interface AuthRouteDeps {
@@ -85,17 +86,41 @@ export function registerAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
       const sid = generateSid();
       const nowMs = Date.now();
       const absoluteExpiresAt = nowMs + deps.config.session.absoluteSec * 1000;
-      const defaultTenantId = toTenantId("default");
-      const payload: SessionPayload = {
-        sid,
-        userId: toUserId(contact.userid),
-        contactId: toContactId(contact.id),
-        displayName: contact.displayName || `${contact.firstName} ${contact.lastName}`.trim(),
-        email: contact.email,
-        activeTenantId: defaultTenantId,
-        tenants: [
+
+      // Role-as-workspace: each role the user's access type permits becomes a
+      // switchable workspace, read live from CA SDM (acctyp_role) so the list
+      // stays current with no hardcoding. The active workspace's role id is
+      // carried in `activeTenantId` and sent upstream as `X-Role`. When the
+      // access type exposes no roles — or the lookup fails — fall back to a
+      // single "default" workspace seeded from the access-type-derived UIRoles
+      // (legacy single-tenant behavior).
+      const acctypRoles = await safeListAccessTypeRoles(
+        deps,
+        key.accessKey,
+        contact.accessTypeId,
+        correlationId,
+      );
+      const [firstRole] = acctypRoles;
+      let tenants: SessionPayload["tenants"];
+      let activeTenantId: TenantId;
+      if (firstRole) {
+        tenants = acctypRoles.map((r) => ({
+          id: toTenantId(r.roleId),
+          name: r.roleName.replace(/^\.+/, "").trim(),
+          roles: [
+            {
+              id: toRoleId(r.roleId),
+              sym: r.roleName,
+              uiRole: resolveUiRoleFromRoleName(r.roleName, roleCfg),
+            },
+          ],
+        }));
+        activeTenantId = toTenantId(firstRole.roleId);
+      } else {
+        activeTenantId = toTenantId("default");
+        tenants = [
           {
-            id: defaultTenantId,
+            id: activeTenantId,
             name: "default",
             roles: uiRoles.map((uiRole, idx) => ({
               id: toRoleId(contactRoles[idx]?.id ?? `auto-${idx}`),
@@ -103,7 +128,18 @@ export function registerAuthRoutes(app: Hono, deps: AuthRouteDeps): void {
               uiRole,
             })),
           },
-        ],
+        ];
+      }
+
+      const payload: SessionPayload = {
+        sid,
+        userId: toUserId(contact.userid),
+        contactId: toContactId(contact.id),
+        displayName: contact.displayName || `${contact.firstName} ${contact.lastName}`.trim(),
+        email: contact.email,
+        accessTypeId: contact.accessTypeId,
+        activeTenantId,
+        tenants,
         accessKey: key.accessKey,
         accessKeyId: key.accessKeyId,
         accessKeyExpiresAt: key.expiresAtMs,
@@ -245,6 +281,24 @@ async function safeListRoles(
     deps.log.warn(
       { event: "sdm.cnt_role.lookup_failed", err, correlationId },
       "cnt_role lookup failed — falling back to access_type",
+    );
+    return [];
+  }
+}
+
+async function safeListAccessTypeRoles(
+  deps: AuthRouteDeps,
+  accessKey: string,
+  accessTypeId: string,
+  correlationId: string,
+): Promise<Array<{ roleId: string; roleName: string }>> {
+  if (!accessTypeId) return [];
+  try {
+    return await deps.broker.listAccessTypeRoles(accessKey, accessTypeId);
+  } catch (err) {
+    deps.log.warn(
+      { event: "sdm.acctyp_role.lookup_failed", err, correlationId },
+      "acctyp_role lookup failed — falling back to single default workspace",
     );
     return [];
   }

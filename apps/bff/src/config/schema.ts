@@ -48,6 +48,9 @@ export const RuntimeConfigSchema = z.object({
     .default({
       kbDir: "./.attachments-kb",
     }),
+  // Single-tenant instance scopes by X-Role, not a tenant WC predicate. Keep the
+  // legacy tenant-scoping path dormant unless an operator opts back in.
+  tenantWcScoping: EnvBoolean.default(false),
   uiRoleMapping: z
     .record(
       z.string(),
