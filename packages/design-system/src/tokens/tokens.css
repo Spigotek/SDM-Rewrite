@@ -84,7 +84,12 @@
   --color-text-primary: var(--color-neutral-900);
   --color-text-body: var(--color-neutral-800);
   --color-text-secondary: var(--color-neutral-600);
-  --color-text-tertiary: var(--color-neutral-500);
+  /* M.2.E — darkened from neutral-500 (#64748b, 4.34:1 on subtle / 4.41:1 on
+     canvas — both fail AA) to clear 4.5:1 on every light surface the M.2.C
+     vivid pass introduced. #586577 → 5.41:1 on subtle (#f1f5f9), 5.49:1 on
+     canvas (#f5f6fb), 5.93:1 on white; stays lighter than secondary
+     (neutral-600, 6.92:1) so the secondary/tertiary distinction survives. */
+  --color-text-tertiary: #586577;
   --color-text-disabled: var(--color-neutral-400);
   --color-text-inverse: var(--color-neutral-0);
   --color-text-link: #4f46e5;
