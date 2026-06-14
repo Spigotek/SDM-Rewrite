@@ -116,11 +116,45 @@
   border-top: 0;
 }
 
+/* M.2.C — group header row: collapse toggle + inline help affordance. */
+.sdm-rail-group-headerrow {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1);
+  padding-right: var(--spacing-2_5);
+}
+
+.sdm-rail-group-help {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-full, 999px);
+  color: var(--color-text-tertiary);
+  cursor: help;
+}
+
+.sdm-rail-group-help:hover,
+.sdm-rail-group-help:focus-visible {
+  color: var(--color-brand-fg);
+}
+
+.sdm-rail-group-help:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
+
 .sdm-rail-group-header {
   display: flex;
   align-items: center;
   gap: var(--spacing-1_5);
   width: 100%;
+  flex: 1 1 auto;
   padding: var(--spacing-1) var(--spacing-3);
   background-color: transparent;
   border: 0;
@@ -183,6 +217,20 @@
 
 .sdm-rail-item > a {
   width: 100%;
+}
+
+/* M.2.C — make the active rail item pop. The DS NavLink ships only a 2px left
+   bar + colour shift for `vertical` variant; on the workspace rail we add a
+   brand-tinted fill so the current section is unmistakable. Scoped to the rail
+   via `data-active` (set by NavLink) so the shared DS primitive is untouched. */
+.sdm-rail-item > a[data-active="true"],
+.sdm-rail-item > a[data-active="true"]:hover {
+  background-color: var(--color-brand-bg-subtle);
+  /* `text-primary` (not `brand-fg`) — brand-fg = brand-400 in dark drops to
+     ≈3.8:1 on the brand-900 fill; text-primary clears AA in both themes. The
+     2px DS active bar + brand fill already signal "active". */
+  color: var(--color-text-primary);
+  font-weight: var(--font-weight-semibold);
 }
 
 .sdm-rail-footer {

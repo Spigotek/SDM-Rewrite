@@ -8,8 +8,8 @@ import { test, expect } from "../fixtures/isolated-context";
  *   2. Clicking the rail "Triáž" link sets `?status=new` in the URL and the
  *      chip-row + table reflect the logical-status filter (rows whose CA SDM
  *      code maps to `new` survive; others are removed).
- *   3. Selecting a row shows the new `QueueDetailPane` (not the H.8
- *      placeholder), and the "Otvoriť plný detail" CTA routes to `/tickets/:id`.
+ *   3. Selecting a row opens the M.2.B detail drawer hosting `QueueDetailPane`,
+ *      and the "Otvoriť plný detail" CTA routes to `/tickets/:id`.
  */
 test("M.1.A queue — filter chip narrows rows + rail status filter applies + detail pane wired", async ({
   isolatedPage,
@@ -62,13 +62,15 @@ test("M.1.A queue — filter chip narrows rows + rail status filter applies + de
   const emptyAfterRail = isolatedPage.getByTestId("queue-empty");
   await expect(tableAfterRail.or(emptyAfterRail)).toBeVisible({ timeout: 5_000 });
 
-  // ── 3. Detail pane renders + open-full CTA routes to /tickets/:id ────
+  // ── 3. Detail drawer renders + open-full CTA routes to /tickets/:id ──
   // Reset filters to make sure at least one row is visible for selection.
   await isolatedPage.goto("/queue");
   await expect(table).toBeVisible({ timeout: 15_000 });
   const firstRow = rows.first();
   await firstRow.click();
 
+  // M.2.B — row click opens the right-side drawer hosting the detail pane.
+  await expect(isolatedPage.getByTestId("queue-detail-drawer")).toBeVisible({ timeout: 5_000 });
   const pane = isolatedPage.getByTestId("queue-detail-pane");
   await expect(pane).toBeVisible({ timeout: 5_000 });
   await expect(pane).toHaveAttribute("data-state", "loaded");

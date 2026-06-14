@@ -30,107 +30,16 @@
   font-size: var(--font-size-sm);
 }
 
+/* M.2.B — single full-width column. The inner Queues/saved-views left rail
+   and the permanent right split-pane were removed; the list now spans the
+   full content width and ticket detail opens in `<QueueDetailDrawer>`. */
 .sdm-queue-layout {
   display: grid;
-  grid-template-columns: 14rem minmax(0, 1fr) 22rem;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--spacing-4);
   align-items: stretch;
   min-height: 0;
   flex: 1 1 auto;
-}
-
-/* ── sidebar ─────────────────────────────────────────────── */
-
-.sdm-queue-sidebar {
-  border-right: var(--border-width-thin) solid var(--color-border-default);
-  padding-right: var(--spacing-3);
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-5);
-}
-
-.sdm-queue-sidebar-section {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.sdm-queue-sidebar-heading {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--spacing-1_5);
-  font-size: var(--font-size-xs);
-  letter-spacing: 0;
-  color: var(--color-text-secondary);
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-}
-
-.sdm-queue-sidebar-heading::before {
-  content: "";
-  display: inline-block;
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-  background-color: var(--color-brand-400);
-  flex-shrink: 0;
-}
-
-.sdm-queue-sidebar-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-0_5);
-}
-
-.sdm-queue-sidebar-row {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-1);
-}
-
-.sdm-queue-sidebar-item {
-  flex: 1 1 auto;
-  background: transparent;
-  border: 0;
-  color: var(--color-text-body);
-  padding: var(--spacing-1_5) var(--spacing-2);
-  text-align: left;
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  font: inherit;
-}
-
-.sdm-queue-sidebar-item:hover {
-  background-color: var(--color-background-hover);
-}
-
-.sdm-queue-sidebar-item--active {
-  background-color: var(--color-background-selected);
-  color: var(--color-text-primary);
-  font-weight: var(--font-weight-semibold);
-}
-
-.sdm-queue-sidebar-delete {
-  background: transparent;
-  border: 0;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  font-size: var(--font-size-md);
-  line-height: 1;
-  padding: 0 var(--spacing-1_5);
-}
-
-.sdm-queue-sidebar-delete:hover {
-  color: var(--color-danger-fg);
-}
-
-.sdm-queue-sidebar-empty {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-tertiary);
-  margin: 0;
 }
 
 /* ── main ────────────────────────────────────────────────── */
@@ -157,6 +66,15 @@
   gap: var(--spacing-3);
   flex-wrap: wrap;
   min-height: 4.25rem;
+  /* M.2.C — controls zone. A neutral subtle panel with a rounded border so the
+     search + filter chips read as a distinct toolbar surface, not free-floating
+     controls on the canvas. Neutral (not brand) fill keeps the muted chip-group
+     labels + result count above AA in dark mode, where the deep brand-900
+     tint would crush them. */
+  padding: var(--spacing-3);
+  background-color: var(--color-background-subtle);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-lg);
 }
 
 .sdm-queue-toolbar-trailing {
@@ -263,22 +181,7 @@
   opacity: 0.85;
 }
 
-/* ── save view + column config ───────────────────────────── */
-
-.sdm-queue-save-view {
-  display: flex;
-  gap: var(--spacing-1_5);
-}
-
-.sdm-queue-save-view-input {
-  padding: var(--spacing-1_5) var(--spacing-2);
-  border: var(--border-width-thin) solid var(--color-border-default);
-  border-radius: var(--radius-md);
-  font: inherit;
-  background-color: var(--color-background-surface);
-  color: var(--color-text-body);
-  width: 9rem;
-}
+/* ── column config ───────────────────────────────────────── */
 
 .sdm-queue-columns {
   position: relative;
@@ -467,37 +370,42 @@
   min-height: 12rem;
 }
 
-/* ── split pane ──────────────────────────────────────────── */
+/* ── M.2.B detail drawer ─────────────────────────────────── */
 
-.sdm-queue-split-pane {
+/* Fixed overlay over the whole workspace content. The backdrop dims the
+   list; the panel pins to the right at a fixed 480px and slides in via GSAP
+   (xPercent). Both are stacked above the page chrome via a high z-index. */
+.sdm-queue-detail-drawer-root {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index-modal, 1000);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sdm-queue-detail-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background-color: var(--color-background-overlay, rgba(0, 0, 0, 0.45));
+}
+
+.sdm-queue-detail-drawer-panel {
+  position: relative;
+  width: 480px;
+  max-width: 92vw;
+  height: 100%;
+  background-color: var(--color-background-surface);
   border-left: var(--border-width-thin) solid var(--color-border-default);
-  padding-left: var(--spacing-3);
+  box-shadow: var(--shadow-lg, 0 0 2rem rgba(0, 0, 0, 0.35));
   display: flex;
   flex-direction: column;
+  overflow: auto;
 }
 
-.sdm-queue-split-placeholder {
-  padding: var(--spacing-4);
+.sdm-queue-detail-drawer-close {
   display: flex;
-  flex-direction: column;
-  gap: var(--spacing-2);
-}
-
-.sdm-queue-split-ref {
-  margin: 0;
-  font-weight: var(--font-weight-semibold);
-  color: var(--color-text-link);
-}
-
-.sdm-queue-split-summary {
-  margin: 0;
-  color: var(--color-text-body);
-}
-
-.sdm-queue-split-hint {
-  margin: 0;
-  color: var(--color-text-tertiary);
-  font-size: var(--font-size-sm);
+  justify-content: flex-end;
+  padding: var(--spacing-2) var(--spacing-2) 0;
 }
 
 /* ── M.1.A detail pane ───────────────────────────────────── */
@@ -940,9 +848,51 @@
   gap: var(--spacing-1);
   padding: var(--spacing-2_5) var(--spacing-3);
   border: var(--border-width-thin) solid var(--color-border-default);
+  border-left: 3px solid var(--color-brand-400);
   border-radius: var(--radius-md);
   background-color: var(--color-background-surface);
   min-height: 5.5rem;
+}
+
+/* M.2.C — semantic KPI tints. Each full tile gets a soft `-50` wash keyed to
+   its meaning plus a matching 3px left-border accent, so the strip reads as a
+   dashboard rather than five grey boxes. Keyed by the stable `data-testid`
+   (set in QueueStats.tsx) so no component change is needed. Text stays on the
+   pale tint — `--color-text-*` on a `-50` surface clears AA comfortably.
+   The chip (`--chip`) variant keeps its neutral fill — the `:not()` guard scopes
+   these tints to full tiles only. */
+.sdm-queue-stat:not(.sdm-queue-stat--chip)[data-testid="queue-stat-open"] {
+  background-color: var(--color-brand-bg-subtle);
+  border-left-color: var(--color-brand-500);
+}
+
+.sdm-queue-stat:not(.sdm-queue-stat--chip)[data-testid="queue-stat-mine"] {
+  background-color: var(--color-success-50);
+  border-left-color: var(--color-success-500);
+}
+
+.sdm-queue-stat:not(.sdm-queue-stat--chip)[data-testid="queue-stat-overdue"] {
+  background-color: var(--color-danger-50);
+  border-left-color: var(--color-danger-500);
+}
+
+.sdm-queue-stat:not(.sdm-queue-stat--chip)[data-testid="queue-stat-lasthour"] {
+  background-color: var(--color-warning-50);
+  border-left-color: var(--color-warning-500);
+}
+
+.sdm-queue-stat:not(.sdm-queue-stat--chip)[data-testid="queue-stat-today"] {
+  background-color: var(--color-info-50);
+  border-left-color: var(--color-info-500);
+}
+
+/* M.2.C — on tinted tiles the muted `text-secondary` label drops below AA in
+   dark mode (≈3.5:1 on the deep `-900` tints). Bump the label + subtitle to
+   `text-body` on full tiles — clears AA in both themes (≥7:1 light, ≥7:1 dark).
+   Chips keep their neutral `text-secondary` label via the `:not()` guard. */
+.sdm-queue-stat:not(.sdm-queue-stat--chip) .sdm-queue-stat-label,
+.sdm-queue-stat:not(.sdm-queue-stat--chip) .sdm-queue-stat-subtitle {
+  color: var(--color-text-body);
 }
 
 /* M.1.C — empty tiles collapse to a 28-px inline chip. Label + value live
@@ -958,6 +908,9 @@
   height: 1.75rem;
   padding: 0 var(--spacing-2_5);
   background-color: var(--color-background-subtle);
+  /* Collapsed chips stay neutral — drop the semantic tint + accent the
+     full-tile keyed rules would otherwise apply. */
+  border-left: var(--border-width-thin) solid var(--color-border-default);
 }
 
 .sdm-queue-stat-label {
@@ -1007,7 +960,9 @@
 
 .sdm-queue-stat-subtitle {
   font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
+  /* M.2.C — secondary (not tertiary) so the subtitle clears AA on the tinted
+     tile background (tertiary #64748b ≈ 4.35:1 on danger-50, below 4.5). */
+  color: var(--color-text-secondary);
 }
 
 /* ── Saved view + active filter chips (QueueFilters) ─────── */
@@ -1174,6 +1129,18 @@
   justify-content: space-between;
   gap: var(--spacing-2);
   margin-bottom: var(--spacing-3);
+  /* M.2.C — tinted header strip separates the section visually from the body
+     below. Negative inset margins let the strip span the card's padding so it
+     reads as a banded header, not an indented box. */
+  margin: calc(var(--spacing-6) * -1) calc(var(--spacing-6) * -1) var(--spacing-3);
+  padding: var(--spacing-2_5) var(--spacing-6);
+  /* Neutral subtle strip (not brand) — keeps the card-link "View all" above AA
+     in dark mode where the deep brand-900 tint crushes the link colour. The
+     brand accent comes from the title's left border instead. */
+  background-color: var(--color-background-subtle);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
 }
 
 .sdm-queue-card-title {
@@ -1181,6 +1148,9 @@
   font-size: var(--font-size-md);
   font-weight: var(--font-weight-semibold);
   color: var(--color-text-primary);
+  /* Brand accent bar to anchor the section title. */
+  padding-left: var(--spacing-2_5);
+  border-left: 3px solid var(--color-brand-500);
 }
 
 .sdm-queue-card-link {

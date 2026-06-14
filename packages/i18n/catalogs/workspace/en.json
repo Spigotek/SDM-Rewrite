@@ -11,10 +11,6 @@
     "newTicket": "+ New",
     "filtersGroupLabel": "Filters",
     "resetFilters": "Reset filters",
-    "savedViews": "Saved views",
-    "saveView": "Save view",
-    "savedViewNameLabel": "View name",
-    "savedViewNamePlaceholder": "Name this view…",
     "searchPlaceholder": "Search queue…",
     "resultCount": "{visible} of {total} tickets",
     "loading": "Loading queue…",
@@ -85,17 +81,6 @@
       "assignee": "Assignee",
       "age": "Age"
     },
-    "sidebar": {
-      "ariaLabel": "Queues and saved views",
-      "queues": "Queues",
-      "allTickets": "All tickets",
-      "noSavedViews": "No saved views yet.",
-      "deleteView": "Delete view {name}"
-    },
-    "splitPane": {
-      "ariaLabel": "Selected ticket detail",
-      "empty": "Pick a ticket from the list (click or press Enter on a selected row)."
-    },
     "view": {
       "table": "Table",
       "kanban": "Board",
@@ -135,6 +120,10 @@
       "comments": {
         "empty": "No public comments yet."
       }
+    },
+    "detailDrawer": {
+      "ariaLabel": "Selected ticket detail",
+      "close": "Close detail"
     }
   },
   "actions": {
@@ -186,7 +175,14 @@
       "incidents": "Incidents",
       "changes": "Changes",
       "knowledge": "Knowledge",
-      "cmdb": "CMDB"
+      "cmdb": "CMDB",
+      "help": {
+        "top": "Your quick views — inbox, assigned to you and starred.",
+        "incidents": "Incident lifecycle from triage to resolution.",
+        "changes": "Change requests — approval, schedule and calendar.",
+        "knowledge": "Knowledge base and resolution procedures.",
+        "cmdb": "Configuration database — items and relationships."
+      }
     },
     "items": {
       "inbox": "Inbox",
@@ -199,9 +195,25 @@
       "scheduled": "Scheduled",
       "calendar": "Calendar"
     },
+    "help": {
+      "inbox": "New submissions awaiting assignment.",
+      "myqueue": "Tickets assigned to you.",
+      "starred": "Tickets you are watching.",
+      "triage": "New incidents to triage.",
+      "in-progress": "Incidents currently being worked on.",
+      "on-hold": "Waiting on the customer or a vendor.",
+      "resolved": "Resolved and closed incidents.",
+      "problems": "Known problems and their root causes.",
+      "pending-approval": "Changes awaiting approval.",
+      "scheduled": "Scheduled changes ready for implementation.",
+      "calendar": "Calendar of planned changes.",
+      "kb": "Knowledge base articles.",
+      "cmdb": "Configuration items and their relationships."
+    },
     "rail": {
       "collapseGroup": "Collapse {name} group",
-      "expandGroup": "Expand {name} group"
+      "expandGroup": "Expand {name} group",
+      "groupHelp": "{name}: {description}"
     },
     "userMenu": {
       "themeToggle": "Theme",

@@ -9,6 +9,45 @@ per-chunk plans under `docs/plans/`. Sources of truth for design decisions live
 in `docs/spec/` and `docs/agents/`; this changelog tracks **what shipped** to the
 release artefact, not why.
 
+## [1.5.0] - 2026-06-14
+
+"Workspace clarity". Second owner staging walk: filter still misbehaving,
+wasted screen width, flat ("amatérsky") design, unclear left rail, cryptic
+"default" workspace switcher. v1.5 addresses every point. See
+[`RELEASE-NOTES-v1.5.0.md`](./RELEASE-NOTES-v1.5.0.md).
+
+### Fixed
+
+- **Status filter — real root cause (3rd report).** Reproduced live via
+  Playwright before any edit. `QueueTable` + `QueueKanban` each carried a
+  private CA-SDM→logical status map that disagreed with the filter's
+  authoritative map (`AWU` → `pending` vs `waiting_customer`; several
+  codes missing → `?? "open"` fallback), so admitted rows showed wrong
+  badges. Fix: single `caLogicalStatus()` resolver in `hooks.ts`, both
+  duplicates deleted. After-fix Playwright: every filter renders only
+  matching badges. Regression test `m2-queue-filter.spec.ts` added.
+
+### Changed
+
+- **Layout reclaim** — removed the inner Queues/saved-views column
+  (`QueueSidebar` + `SavedViewsManager` deleted); detail pane moved from
+  a permanent split-pane to a 480-px right drawer (backdrop + ESC + focus
+  trap + GSAP slide). Ticket list now full-width.
+- **Vivid backgrounds** — new `--color-surface-canvas` token on content
+  area; KPI strip semantic tints + coloured left-borders; filter toolbar
+  panel; dashboard card header strips. All re-checked for WCAG AA.
+- **Left-rail help** — per-item Slovak tooltips + composite aria-labels;
+  per-group `Info` help buttons.
+- **Tenant clarity** — "Pracovný priestor" caption above the value;
+  dropdown helper line + clearer profile (CAMP/SD/…) switching.
+- **i18n** — shared 81→83, workspace 754→773 keys (`nav.help.*`,
+  `nav.groups.help.*`, `tenantSwitcher.*`, `queue.detailDrawer.*`).
+
+### Deferred to v1.6+
+
+- Prune unused `useSavedViews` hook + storage helpers.
+- BFF predicates for `?scope=inbox` / `?starred=true` / `?assignee=me`.
+
 ## [1.4.0] - 2026-06-14
 
 "Queue overhaul". Built directly on owner feedback after v1.3.0

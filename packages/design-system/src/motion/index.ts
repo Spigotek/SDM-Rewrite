@@ -1,6 +1,9 @@
 export { staggerListRows } from "./list-stagger";
 export type { StaggerOptions } from "./list-stagger";
 
+export { slideInPanel } from "./slide-in-panel";
+export type { SlideInPanelOptions } from "./slide-in-panel";
+
 export { usePageTransition, PAGE_TRANSITION_DURATIONS } from "./page-transition";
 export type { UsePageTransitionResult } from "./page-transition";
 

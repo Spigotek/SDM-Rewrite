@@ -473,6 +473,21 @@ export function statusMatchesFilter(
   return logical !== undefined && (filterValues as ReadonlyArray<string>).includes(logical);
 }
 
+/**
+ * Resolve a CA SDM `status.code` to its canonical `TicketStatus`. This is the
+ * single source of truth shared by the filter (`statusMatchesFilter`) and the
+ * queue table badge (`QueueTable`). Keeping both on this one map prevents the
+ * M.2.A desync where the table rendered a row's badge under a different logical
+ * status than the one the filter matched it on (e.g. `AWU` filtered as
+ * `waiting_customer` but badged as `pending`, or `RESOLVED` filtered as
+ * `resolved` but badged as the `"open"` fallback). Falls back to `"open"` for
+ * codes outside the known vocabulary so the badge always renders.
+ */
+export function caLogicalStatus(rowCode: string | null | undefined): TicketStatus {
+  if (!rowCode) return "open";
+  return CA_CODE_TO_LOGICAL[rowCode] ?? "open";
+}
+
 export interface UseQueueStatusTransitionOptions {
   readonly tenantId: string;
   readonly onSuccess?: (label: string) => void;

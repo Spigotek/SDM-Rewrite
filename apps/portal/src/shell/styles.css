@@ -67,6 +67,34 @@
 
 .sdm-tenant-switcher {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+/* M.2.C — caption above the tenant value so "default" reads as a workspace
+   name. In the portal top-bar the caption is a tight line above the trigger. */
+.sdm-tenant-caption {
+  display: block;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--letter-spacing-wide);
+  line-height: 1.2;
+  margin-bottom: 2px;
+}
+
+.sdm-tenant-dropdown-help {
+  margin: 0;
+  padding: var(--spacing-2) var(--spacing-2_5);
+  font-size: var(--font-size-xs);
+  /* text-body — clears AA on the brand-bg-subtle fill in both themes. */
+  color: var(--color-text-body);
+  background-color: var(--color-brand-bg-subtle);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+  border-top-left-radius: var(--radius-lg);
+  border-top-right-radius: var(--radius-lg);
 }
 
 .sdm-tenant-display {
@@ -594,6 +622,8 @@ body[data-portal-drawer-open] .sdm-mobile-drawer {
 .sdm-content {
   flex: 1 1 auto;
   padding: var(--spacing-6);
+  /* M.2.C — shared tinted canvas for portal/workspace parity. */
+  background-color: var(--color-surface-canvas);
 }
 
 .sdm-error-screen {

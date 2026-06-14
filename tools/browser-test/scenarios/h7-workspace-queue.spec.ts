@@ -2,17 +2,18 @@ import { test, expect } from "../fixtures/isolated-context";
 
 /**
  * H.7 workspace queue end-to-end — drives the workspace shell after MSW
- * has hydrated the active session. Covers the four pillars of the chunk:
+ * has hydrated the active session. Covers the surviving pillars of the chunk:
  *
  *   1. `/` redirects to `/queue` and the table renders rows from the MSW
  *      `/api/queue` aggregator handler.
  *   2. Keyboard nav `j`/`k` moves the selected row; `Enter` opens the
- *      split-pane placeholder (URL gains `?selected=:id`).
+ *      M.2.B detail drawer (URL gains `?selected=:id`); `Escape` closes it.
  *   3. Filter chips narrow the visible row set; reset clears them.
- *   4. Save view persists a localStorage entry exposed by the sidebar; the
- *      sidebar entry reapplies the same filters on click.
+ *
+ * Saved-views (the inner left rail + "Save view" toolbar input) were removed
+ * in M.2.B per owner feedback, so the H.7 saved-view sub-test is gone.
  */
-test("H.7 queue — load, keyboard nav, filter chip, saved view", async ({ isolatedPage }) => {
+test("H.7 queue — load, keyboard nav, detail drawer, filter chip", async ({ isolatedPage }) => {
   await isolatedPage.goto("/");
 
   // `/` should redirect to `/queue` (the workspace landing).
@@ -43,12 +44,16 @@ test("H.7 queue — load, keyboard nav, filter chip, saved view", async ({ isola
 
   await isolatedPage.keyboard.press("Enter");
   await expect(isolatedPage).toHaveURL(/selected=/);
-  // M.1.A — the H.8 placeholder was replaced by `QueueDetailPane`; the pane
-  // exposes `queue-detail-pane` and renders a row's ref + tabbed body.
+  // M.2.B — selection opens the right-side detail drawer (replaces the
+  // permanent split-pane). The drawer hosts the existing `queue-detail-pane`
+  // body, so both testids are present.
+  const drawer = isolatedPage.getByTestId("queue-detail-drawer");
+  await expect(drawer).toBeVisible();
   await expect(isolatedPage.getByTestId("queue-detail-pane")).toBeVisible();
 
   await isolatedPage.keyboard.press("Escape");
   await expect(isolatedPage).not.toHaveURL(/selected=/);
+  await expect(drawer).toHaveCount(0);
 
   // ── Filter chip toggle ───────────────────────────────────────────────
   const firstChip = isolatedPage.locator('[data-testid^="queue-chip-"]').first();
@@ -59,20 +64,4 @@ test("H.7 queue — load, keyboard nav, filter chip, saved view", async ({ isola
   await expect(resetBtn).toBeVisible();
   await resetBtn.click();
   await expect(firstChip).toHaveAttribute("aria-pressed", "false");
-
-  // ── Saved views — save current filter set under a name ──────────────
-  // First apply a filter so the saved-view affordance is enabled.
-  await firstChip.click();
-  await expect(firstChip).toHaveAttribute("aria-pressed", "true");
-  const nameInput = isolatedPage.getByTestId("queue-save-view-name");
-  await nameInput.fill("My open");
-  await isolatedPage.getByTestId("queue-save-view-submit").click();
-
-  // Sidebar exposes the saved view; clicking it re-applies the filters.
-  const savedSidebar = isolatedPage.locator('[data-testid^="queue-sidebar-view-"]');
-  await expect(savedSidebar.first()).toHaveText("My open");
-  await resetBtn.click();
-  await expect(firstChip).toHaveAttribute("aria-pressed", "false");
-  await savedSidebar.first().click();
-  await expect(firstChip).toHaveAttribute("aria-pressed", "true");
 });
