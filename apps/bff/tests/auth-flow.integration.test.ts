@@ -39,6 +39,21 @@ const CNT_ROLE_EMPTY = JSON.stringify({
   collection_cnt_role: { "@COUNT": 0 },
 });
 
+// Role-as-workspace: the roles vueuser's access type (Administration) permits,
+// read from the acctyp_role junction (role_obj → role). Mirrors the real CA SDM
+// shape — ids arrive as numbers, names carry a leading "." for custom roles.
+const ACCTYP_ROLE_3 = JSON.stringify({
+  collection_acctyp_role: {
+    "@COUNT": 3,
+    "@TOTAL_COUNT": 3,
+    acctyp_role: [
+      { "@id": 5001, role_obj: { "@id": 400151, "@COMMON_NAME": ".Pouzivatel_CAMP" } },
+      { "@id": 5002, role_obj: { "@id": 400251, "@COMMON_NAME": ".Riesitel_NBS" } },
+      { "@id": 5003, role_obj: { "@id": 400301, "@COMMON_NAME": "Admin CAMP" } },
+    ],
+  },
+});
+
 function buildTestConfig(): RuntimeConfig {
   return {
     nodeEnv: "test",
@@ -201,6 +216,63 @@ describe("F.1 BFF auth flow — integration", () => {
       new Request("http://bff/me", { headers: { Cookie: cookieHeader } }),
     );
     expect(meAfter.status).toBe(401);
+  });
+
+  it("role-as-workspace: login maps acctyp_role roles to switchable workspaces", async () => {
+    const { app } = buildTestApp();
+    server.use(http.get(`${SDM_BASE}/acctyp_role`, () => HttpResponse.text(ACCTYP_ROLE_3)));
+
+    const loginRes = await app.fetch(
+      new Request("http://bff/auth/login", {
+        method: "POST",
+        headers: { Origin: ORIGIN, "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "vueuser", password: "Vue@user123!" }),
+      }),
+    );
+    expect(loginRes.status).toBe(200);
+    const sid = extractCookie(loginRes.headers, "sdm.sid");
+    const cookieHeader = `sdm.sid=${sid}`;
+
+    const meRes = await app.fetch(
+      new Request("http://bff/me", { headers: { Cookie: cookieHeader } }),
+    );
+    const me = (await meRes.json()) as {
+      tenants: Array<{ id: string; name: string; roles: Array<{ uiRole: string }> }>;
+      activeTenant: { id: string; activeRoleId: string };
+      uiRole: string;
+      app: string;
+    };
+    // 3 switchable workspaces, leading dot stripped from display names.
+    expect(me.tenants.map((t) => t.id)).toEqual(["400151", "400251", "400301"]);
+    expect(me.tenants.map((t) => t.name)).toEqual([
+      "Pouzivatel_CAMP",
+      "Riesitel_NBS",
+      "Admin CAMP",
+    ]);
+    // role-name heuristics: Pouzivatel → requester, Riesitel → agent_l2, Admin → sp_admin
+    expect(me.tenants.map((t) => t.roles[0]?.uiRole)).toEqual([
+      "requester",
+      "agent_l2",
+      "sp_admin",
+    ]);
+    // active = first workspace; X-Role upstream carries this role id.
+    expect(me.activeTenant.id).toBe("400151");
+    expect(me.activeTenant.activeRoleId).toBe("400151");
+    expect(me.uiRole).toBe("requester");
+    expect(me.app).toBe("portal");
+
+    // switch to another role-workspace
+    const switchRes = await app.fetch(
+      new Request("http://bff/me/active-tenant", {
+        method: "POST",
+        headers: { Origin: ORIGIN, "Content-Type": "application/json", Cookie: cookieHeader },
+        body: JSON.stringify({ tenantId: "400251" }),
+      }),
+    );
+    expect(switchRes.status).toBe(200);
+    const switched = (await switchRes.json()) as { activeTenant: { id: string }; uiRole: string };
+    expect(switched.activeTenant.id).toBe("400251");
+    expect(switched.uiRole).toBe("agent_l2");
   });
 
   it("login with wrong password returns 401 AUTH_INVALID_CREDENTIALS", async () => {

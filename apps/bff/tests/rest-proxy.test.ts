@@ -14,7 +14,7 @@ import type { SessionPayload } from "../src/session/types";
 
 const BASE = "http://test-sdm.local/caisd-rest";
 
-function makeConfig(): RuntimeConfig {
+function makeConfig(tenantWcScoping = false): RuntimeConfig {
   return {
     nodeEnv: "test",
     bff: { port: 5174, trustedOrigins: ["http://localhost:5500"], logLevel: "fatal" },
@@ -28,15 +28,19 @@ function makeConfig(): RuntimeConfig {
       absoluteSec: 28800,
       cookieMaxAgeSec: 28800,
     },
+    tenantWcScoping,
     uiRoleMapping: {},
   };
 }
 
-async function buildAppWithSession(opts: { activeTenantId: string }): Promise<{
+async function buildAppWithSession(opts: {
+  activeTenantId: string;
+  tenantWcScoping?: boolean;
+}): Promise<{
   app: Hono;
   sid: string;
 }> {
-  const config = makeConfig();
+  const config = makeConfig(opts.tenantWcScoping ?? false);
   const log = pino({ level: "silent" });
   const sessionStore = createSessionStore({ driver: "memory" });
   const client = new SdmHttpClient(
@@ -193,8 +197,36 @@ describe("proxyToSdm — header injection matrix", () => {
   });
 });
 
-describe("proxyToSdm — tenant scoping at the path layer", () => {
-  it("does NOT inject tenant WC on the 'default' placeholder (single-tenant)", async () => {
+describe("proxyToSdm — X-Role injection (role-as-workspace)", () => {
+  it("omits X-Role on the 'default' placeholder (single-tenant, no role context)", async () => {
+    let seenRole: string | null = "<not-called>";
+    server.use(
+      http.get(`${BASE}/in`, ({ request }) => {
+        seenRole = request.headers.get("x-role");
+        return HttpResponse.json({ collection_in: { "@COUNT": 0, "@TOTAL_COUNT": 0 } });
+      }),
+    );
+    const { app, sid } = await buildAppWithSession({ activeTenantId: "default" });
+    await app.fetch(new Request("http://bff/api/probe", { headers: { Cookie: `sdm.sid=${sid}` } }));
+    expect(seenRole).toBeNull();
+  });
+
+  it("injects X-Role with the active role id when not 'default'", async () => {
+    let seenRole: string | null = null;
+    server.use(
+      http.get(`${BASE}/in`, ({ request }) => {
+        seenRole = request.headers.get("x-role");
+        return HttpResponse.json({ collection_in: { "@COUNT": 0, "@TOTAL_COUNT": 0 } });
+      }),
+    );
+    const { app, sid } = await buildAppWithSession({ activeTenantId: "400151" });
+    await app.fetch(new Request("http://bff/api/probe", { headers: { Cookie: `sdm.sid=${sid}` } }));
+    expect(seenRole).toBe("400151");
+  });
+});
+
+describe("proxyToSdm — tenant WC scoping gate", () => {
+  it("does NOT rewrite the WC path when tenantWcScoping is false (default)", async () => {
     let seenWc: string | null = "<not-called>";
     server.use(
       http.get(`${BASE}/in`, ({ request }) => {
@@ -202,12 +234,15 @@ describe("proxyToSdm — tenant scoping at the path layer", () => {
         return HttpResponse.json({ collection_in: { "@COUNT": 0, "@TOTAL_COUNT": 0 } });
       }),
     );
-    const { app, sid } = await buildAppWithSession({ activeTenantId: "default" });
+    const { app, sid } = await buildAppWithSession({
+      activeTenantId: "U'ABC'",
+      tenantWcScoping: false,
+    });
     await app.fetch(new Request("http://bff/api/probe", { headers: { Cookie: `sdm.sid=${sid}` } }));
     expect(seenWc).toBeNull();
   });
 
-  it("injects tenant WC on a real (non-default) tenantId", async () => {
+  it("rewrites the WC path with the tenant predicate when tenantWcScoping is true", async () => {
     let seenWc: string | null = null;
     server.use(
       http.get(`${BASE}/in`, ({ request }) => {
@@ -215,7 +250,10 @@ describe("proxyToSdm — tenant scoping at the path layer", () => {
         return HttpResponse.json({ collection_in: { "@COUNT": 0, "@TOTAL_COUNT": 0 } });
       }),
     );
-    const { app, sid } = await buildAppWithSession({ activeTenantId: "U'ABC'" });
+    const { app, sid } = await buildAppWithSession({
+      activeTenantId: "U'ABC'",
+      tenantWcScoping: true,
+    });
     await app.fetch(new Request("http://bff/api/probe", { headers: { Cookie: `sdm.sid=${sid}` } }));
     expect(seenWc).toBe("tenant=U'ABC'");
   });

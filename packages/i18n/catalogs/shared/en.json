@@ -86,19 +86,19 @@
     "en": "English"
   },
   "tenantSwitcher": {
-    "label": "Tenant",
+    "label": "Workspace",
     "caption": "Workspace",
-    "current": "Active tenant",
-    "search": "Search tenant…",
+    "current": "Active workspace",
+    "search": "Search workspace…",
     "switchTo": "Switch to {name}",
     "open": "Switch workspace",
     "dropdownHelp": "Pick a workspace to switch context.",
-    "noResults": "No tenant matches your search.",
+    "noResults": "No workspace matches your search.",
     "singleTenantHint": "You have a role in a single workspace only.",
-    "pendingChangesTitle": "Switch tenant?",
+    "pendingChangesTitle": "Switch workspace?",
     "pendingChangesBody": "You have an unsaved form open. Switching will close it.",
     "pendingChangesConfirm": "Switch",
-    "pendingChangesCancel": "Keep tenant",
+    "pendingChangesCancel": "Keep workspace",
     "error": "Switch failed. Please try again.",
     "env": {
       "production": "Production",
@@ -108,7 +108,7 @@
     },
     "suspended": {
       "label": "Suspended",
-      "tooltip": "Tenant is suspended — please contact your administrator."
+      "tooltip": "Workspace is suspended — please contact your administrator."
     }
   },
   "sp": {

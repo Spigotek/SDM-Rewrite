@@ -78,7 +78,9 @@ export async function proxyToSdm(
   const session = await requireActiveSession(c, deps);
 
   const path =
-    req.tenantScopeReadQuery !== false && isReadLikePath(req)
+    deps.config.tenantWcScoping === true &&
+    req.tenantScopeReadQuery !== false &&
+    isReadLikePath(req)
       ? scopeReadQuery(req.caSdmPath, { activeTenantId: session.activeTenantId }, { log: deps.log })
       : req.caSdmPath;
 
@@ -87,6 +89,9 @@ export async function proxyToSdm(
     Accept: DEFAULT_ACCEPT,
     "X-Correlation-ID": correlationId,
   };
+  // activeTenantId carries the active CA SDM role id; "default" is the
+  // single-tenant placeholder where no role context applies.
+  if (session.activeTenantId !== "default") headers["X-Role"] = session.activeTenantId;
   if (req.xObjAttrs) headers["X-Obj-Attrs"] = req.xObjAttrs;
   if (req.body !== undefined) {
     headers["Content-Type"] = req.contentType ?? "application/json";

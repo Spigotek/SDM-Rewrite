@@ -86,19 +86,19 @@
     "en": "Angličtina"
   },
   "tenantSwitcher": {
-    "label": "Tenant",
+    "label": "Pracovný priestor",
     "caption": "Pracovný priestor",
-    "current": "Aktívny tenant",
-    "search": "Hľadať tenant…",
+    "current": "Aktívny pracovný priestor",
+    "search": "Hľadať pracovný priestor…",
     "switchTo": "Prepnúť na {name}",
     "open": "Prepnúť pracovný priestor",
     "dropdownHelp": "Vyber pracovný priestor pre prepnutie kontextu.",
-    "noResults": "Žiadny tenant nezodpovedá hľadaniu.",
+    "noResults": "Žiadny pracovný priestor nezodpovedá hľadaniu.",
     "singleTenantHint": "Máš rolu len v jednom pracovnom priestore.",
-    "pendingChangesTitle": "Prepnúť tenant?",
+    "pendingChangesTitle": "Prepnúť pracovný priestor?",
     "pendingChangesBody": "Máš otvorený nezapísaný formulár. Prepnutie ho uzavrie.",
     "pendingChangesConfirm": "Prepnúť",
-    "pendingChangesCancel": "Zachovať tenant",
+    "pendingChangesCancel": "Zachovať pracovný priestor",
     "error": "Prepnutie sa nepodarilo. Skús to znova.",
     "env": {
       "production": "Produkcia",
@@ -108,7 +108,7 @@
     },
     "suspended": {
       "label": "Pozastavený",
-      "tooltip": "Tenant je pozastavený — kontaktuj administrátora."
+      "tooltip": "Pracovný priestor je pozastavený — kontaktuj administrátora."
     }
   },
   "sp": {

@@ -271,6 +271,56 @@ export class SdmBroker {
   }
 
   /**
+   * GET /acctyp_role?WC=access_type=<id> — the roles a contact may *switch into*,
+   * derived from their access type via the acctyp_role junction factory.
+   * Unlike cnt_role (§5), the SREL `role_obj` IS projected here when requested
+   * via X-Obj-Attrs, so both id and COMMON_NAME come back populated.
+   */
+  async listAccessTypeRoles(
+    accessKey: string,
+    accessTypeId: string,
+  ): Promise<Array<{ roleId: string; roleName: string }>> {
+    const wc = `access_type=${accessTypeId}`;
+    const path = `/acctyp_role?WC=${encodeURIComponent(wc)}&size=200`;
+    const res = await this.client.request({
+      method: "GET",
+      path,
+      headers: {
+        "X-AccessKey": accessKey,
+        Accept: "application/json",
+        "X-Obj-Attrs": "role_obj",
+      },
+    });
+    this.assertReadOk(res, "listAccessTypeRoles");
+
+    type ParsedAcctypRole = {
+      collection_acctyp_role?: {
+        "@COUNT"?: string | number;
+        acctyp_role?: RawAcctypRole | RawAcctypRole[];
+      };
+    };
+    const parsed = JSON.parse(res.text) as ParsedAcctypRole;
+    const collection = parsed.collection_acctyp_role;
+    if (!collection) return [];
+    const list: RawAcctypRole[] = Array.isArray(collection.acctyp_role)
+      ? collection.acctyp_role
+      : collection.acctyp_role
+        ? [collection.acctyp_role]
+        : [];
+    const out: Array<{ roleId: string; roleName: string }> = [];
+    for (const r of list) {
+      const rawId = r.role_obj?.["@id"];
+      if (rawId === undefined || rawId === null) continue; // unbound SREL → not a switchable role
+      out.push({
+        roleId: String(rawId),
+        roleName:
+          typeof r.role_obj?.["@COMMON_NAME"] === "string" ? r.role_obj["@COMMON_NAME"] : "",
+      });
+    }
+    return out;
+  }
+
+  /**
    * Ensure an access key has at least `refreshThresholdSec` seconds of validity
    * remaining; if not, re-bootstrap. Returns the up-to-date key.
    */
@@ -307,6 +357,11 @@ interface RawCnt {
 interface RawCntRole {
   "@id"?: string | number;
   role?: { "@id"?: string | number; "@COMMON_NAME"?: string };
+}
+
+interface RawAcctypRole {
+  "@id"?: string | number;
+  role_obj?: { "@id"?: string | number; "@COMMON_NAME"?: string };
 }
 
 function toSdmContact(raw: RawCnt): SdmContact {

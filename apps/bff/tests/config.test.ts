@@ -85,4 +85,12 @@ describe("loadConfig", () => {
     const cfg = loadConfig(env);
     expect(cfg.bff.port).toBe(5174);
   });
+
+  it("defaults tenantWcScoping to false (single-tenant scopes via X-Role)", () => {
+    expect(loadConfig(baseEnv()).tenantWcScoping).toBe(false);
+  });
+
+  it("parses TENANT_WC_SCOPING=true into the boolean flag", () => {
+    expect(loadConfig({ ...baseEnv(), TENANT_WC_SCOPING: "true" }).tenantWcScoping).toBe(true);
+  });
 });

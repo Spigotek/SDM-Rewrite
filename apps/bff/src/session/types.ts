@@ -28,6 +28,13 @@ export interface SessionPayload {
   readonly contactId: ContactId;
   readonly displayName: string;
   readonly email: string;
+  /**
+   * CA SDM `cnt.access_type` id. Persisted so the switchable role list
+   * (role-as-workspace) can be re-read from the `acctyp_role` factory without a
+   * fresh contact lookup. Optional for backward-compat with pre-existing
+   * sessions in flight at deploy time.
+   */
+  readonly accessTypeId?: string;
   activeTenantId: TenantId;
   readonly tenants: ReadonlyArray<SessionTenant>;
   accessKey: string;

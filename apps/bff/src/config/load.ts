@@ -44,6 +44,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig 
       absoluteSec: env.SESSION_ABSOLUTE_SEC,
       cookieMaxAgeSec: env.SESSION_COOKIE_MAX_AGE_SEC,
     },
+    tenantWcScoping: env.TENANT_WC_SCOPING,
     uiRoleMapping: parseRoleMapping(env.UI_ROLE_MAPPING_JSON),
     attachments: env.BFF_ATTACHMENTS_DIR ? { kbDir: env.BFF_ATTACHMENTS_DIR } : undefined,
   };
@@ -56,6 +57,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): RuntimeConfig 
     }
   }
   if (input.nodeEnv === undefined) delete input.nodeEnv;
+  if (input.tenantWcScoping === undefined) delete input.tenantWcScoping;
   if (input.uiRoleMapping === undefined) delete input.uiRoleMapping;
 
   let parsed: RuntimeConfig;
