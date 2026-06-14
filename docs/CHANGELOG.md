@@ -9,6 +9,54 @@ per-chunk plans under `docs/plans/`. Sources of truth for design decisions live
 in `docs/spec/` and `docs/agents/`; this changelog tracks **what shipped** to the
 release artefact, not why.
 
+## [1.4.0] - 2026-06-14
+
+"Queue overhaul". Built directly on owner feedback after v1.3.0
+staging walk: filter chip didn't apply, left-rail clicks were inert,
+split-pane right column still said "Plný detail ticketu dorazí v
+H.8.", UI density hard to scan. v1.4 fixes all four and ships a
+Kanban view as the surprise. See
+[`RELEASE-NOTES-v1.4.0.md`](./RELEASE-NOTES-v1.4.0.md) for the full
+post-mortem.
+
+### Fixed
+
+- **Filter chip applies to rows.** `statusMatchesFilter()` +
+  `CA_CODE_TO_LOGICAL` map bridges logical-status URL params and
+  CA SDM codes.
+- **Left-rail wired.** Every item now navigates to a real query
+  contract (`?status=new`, `?status=in_progress`, etc.). Inbox /
+  My queue / Starred stay URL-only stubs until BFF predicates land.
+- **Split-pane detail.** Real `QueueDetailPane` (Header +
+  transitionable StatusBadge + 3 tabs + "Otvoriť plný detail" CTA)
+  replaces the H.8 placeholder.
+- **Visual density.** Caps section labels → sentence-case + indigo
+  accent dot. Table rows 36 px with subtle hover lift. Stripe
+  removed. KPI tiles 0 / "—" → compact chips; non-zero keep full
+  tile. "Zobraziť aj prázdne" toggle persisted.
+
+### Added
+
+- **Kanban view toggle** on `/queue` — 4-column board (Otvorené /
+  V riešení / Čaká / Vyriešené), native drag-to-transition,
+  lazy-loaded (5.17 kB raw / 2.16 kB gzip). Choice persisted in
+  `localStorage["sdm.workspace.queue.view"]`.
+- **Smart age formatter** — < 24h `~Nh`, 1–90d `Nd`, > 90d
+  Slovak Intl `pred N rokmi`. Absolute date in `title=` tooltip.
+- **Workspace i18n** grew 738 → 763 keys (Kanban + view toggle +
+  queue detail + age formatter).
+
+### Changed
+
+- Card elevation pass — `.surface` + `.interactive` ship thin
+  border + 1-px ground shadow; `.subtle` flat.
+
+### Deferred to v1.5+
+
+- BFF predicates for `?scope=inbox` / `?starred=true` / `?assignee=me`.
+- Real-time Kanban auto-rearrange on SSE push.
+- BFF status PATCH endpoints (UI ready since v1.3).
+
 ## [1.3.0] - 2026-06-14
 
 "Live + Identity" surprise pass. Built atop v1.2.x after owner brief
