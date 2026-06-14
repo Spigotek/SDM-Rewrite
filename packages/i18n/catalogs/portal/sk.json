@@ -228,6 +228,7 @@
       "submit": "Odoslať žiadosť",
       "cancel": "Zrušiť",
       "submitFailed": "Server teraz neodpovedá. Skús to o chvíľu.",
+      "forbidden": "Na túto akciu nemáš oprávnenie.",
       "estimatedCost": "Odhadovaná cena"
     },
     "fields": {
@@ -285,7 +286,8 @@
       "cancel": "Zrušiť"
     },
     "errors": {
-      "submitFailed": "Server teraz neodpovedá. Skús to o chvíľu."
+      "submitFailed": "Server teraz neodpovedá. Skús to o chvíľu.",
+      "forbidden": "Na túto akciu nemáš oprávnenie."
     },
     "success": {
       "title": "Ticket bol odoslaný",

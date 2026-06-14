@@ -36,12 +36,12 @@ test("M.1.A queue — filter chip narrows rows + rail status filter applies + de
   expect(filteredCount).toBeGreaterThan(0);
   expect(filteredCount).toBeLessThanOrEqual(totalRows);
 
-  // Every visible row's status badge label should agree with the chip's label.
-  // The chip's visible text contains the human label (Slovak), but the
-  // simplest stable assertion is that the row count went DOWN (or stayed
-  // the same iff all rows happened to share that status) AND the queue is
-  // still showing rows that match the filter via the URL param.
-  await expect(isolatedPage).toHaveURL(new RegExp(`status=${chipCode}`));
+  // Clicking a chip writes its code into whichever filter axis owns it. The
+  // FilterBar renders type chips first (so `firstChip` is a ticket-type chip →
+  // `?type=<code>`), then status / priority / assignee groups. The stable,
+  // axis-agnostic assertion is that the chip's code appears as an active filter
+  // param value in the URL.
+  await expect(isolatedPage).toHaveURL(new RegExp(`[?&][a-z]+=(?:[^&]*,)?${chipCode}(?:,|&|$)`));
 
   // Reset for the next sub-test.
   await isolatedPage.getByTestId("queue-reset-filters").click();

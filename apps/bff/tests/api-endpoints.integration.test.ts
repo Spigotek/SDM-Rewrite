@@ -253,6 +253,61 @@ describe("/api/incidents — full CRUD + error path", () => {
     expect(seenBody).toContain(`<customer REL_ATTR="U'BDE1683C44FCCB4DAE50BA4DDB5DCBE6'"/>`);
   });
 
+  it('POST /api/incidents with customer="me" resolves to session contactId (M.3)', async () => {
+    let seenBody = "";
+    server.use(
+      http.post(`${BASE}/in`, async ({ request }) => {
+        seenBody = await request.text();
+        return new HttpResponse(JSON.stringify(INCIDENT_CREATED), {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        });
+      }),
+    );
+    const { app } = await buildApi();
+    const res = await app.fetch(
+      new Request("http://bff/api/incidents", {
+        method: "POST",
+        headers: { [COOKIE]: SID_COOKIE, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          summary: "diag",
+          description: "diag",
+          customer: "me",
+          categoryCode: "software",
+          urgencyCode: "1",
+        }),
+      }),
+    );
+    expect(res.status).toBe(201);
+    // session.contactId === U'BDE' (see buildApi) — injected by the create-time resolver.
+    expect(seenBody).toContain(`<customer REL_ATTR="U'BDE'"/>`);
+    // Portal taxonomy folded into the description (codes are not CA SDM FKs).
+    expect(seenBody).toContain("Kateg");
+    expect(seenBody).toContain("rnos");
+  });
+
+  it("POST /api/incidents with omitted customer also resolves to session contactId (M.3)", async () => {
+    let seenBody = "";
+    server.use(
+      http.post(`${BASE}/in`, async ({ request }) => {
+        seenBody = await request.text();
+        return new HttpResponse(JSON.stringify(INCIDENT_CREATED), {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        });
+      }),
+    );
+    const { app } = await buildApi();
+    await app.fetch(
+      new Request("http://bff/api/incidents", {
+        method: "POST",
+        headers: { [COOKIE]: SID_COOKIE, "Content-Type": "application/json" },
+        body: JSON.stringify({ summary: "diag" }),
+      }),
+    );
+    expect(seenBody).toContain(`<customer REL_ATTR="U'BDE'"/>`);
+  });
+
   it("PUT /api/incidents/:id sends partial XML body", async () => {
     let seenBody = "";
     server.use(
@@ -343,6 +398,39 @@ describe("/api/requests — type=R injected on POST (§13.1)", () => {
       }),
     );
     expect(seenBody).toContain(`<type REL_ATTR="R"/>`);
+  });
+
+  it('resolves requesterId="me" to session contactId and folds catalog formData into description (M.3)', async () => {
+    let seenBody = "";
+    server.use(
+      http.post(`${BASE}/cr`, async ({ request }) => {
+        seenBody = await request.text();
+        return new HttpResponse(JSON.stringify({ cr: { "@id": 407806 } }), {
+          status: 201,
+          headers: { "Content-Type": "application/json" },
+        });
+      }),
+    );
+    const { app } = await buildApi();
+    const res = await app.fetch(
+      new Request("http://bff/api/requests", {
+        method: "POST",
+        headers: { [COOKIE]: SID_COOKIE, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          summary: "Figma",
+          requesterId: "me",
+          serviceCatalogItemId: "catalog:figma",
+          formData: { reason: "Design work", duration: "12 mesiacov", costCenter: "Brand 2026" },
+        }),
+      }),
+    );
+    expect(res.status).toBe(201);
+    expect(seenBody).toContain(`<customer REL_ATTR="U'BDE'"/>`);
+    expect(seenBody).toContain(`<type REL_ATTR="R"/>`);
+    // Catalog context folded into the free-text description.
+    expect(seenBody).toContain("catalog:figma");
+    expect(seenBody).toContain("Design work");
+    expect(seenBody).toContain("Brand 2026");
   });
 
   it("returns FE shape with `type` FK collapsed on detail", async () => {

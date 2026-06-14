@@ -1,4 +1,5 @@
 import type { TenantId } from "@sdm/domain";
+import { toSubmitError } from "../../lib/submit-error";
 import type { CatalogField, CatalogItem } from "./types";
 
 /**
@@ -111,18 +112,7 @@ export async function postCatalogRequest(
     body: JSON.stringify(body),
   });
   if (!resp.ok) {
-    let detail = "";
-    try {
-      const errBody = (await resp.json()) as { message?: string };
-      detail = errBody.message ? `: ${errBody.message}` : "";
-    } catch {
-      // Non-JSON body — swallow.
-    }
-    const error = new Error(`[catalog-request] HTTP ${resp.status}${detail}`) as Error & {
-      status?: number;
-    };
-    error.status = resp.status;
-    throw error;
+    throw await toSubmitError(resp, "catalog-request");
   }
   const created = (await resp.json()) as { id: string; ref?: string };
   return { id: created.id, ref: created.ref ?? created.id };
