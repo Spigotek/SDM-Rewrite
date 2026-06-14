@@ -228,6 +228,7 @@
       "submit": "Submit request",
       "cancel": "Cancel",
       "submitFailed": "Our server isn't responding. Try again shortly.",
+      "forbidden": "You don't have permission to do that.",
       "estimatedCost": "Estimated cost"
     },
     "fields": {
@@ -285,7 +286,8 @@
       "cancel": "Cancel"
     },
     "errors": {
-      "submitFailed": "Our server isn't responding. Try again shortly."
+      "submitFailed": "Our server isn't responding. Try again shortly.",
+      "forbidden": "You don't have permission to do that."
     },
     "success": {
       "title": "Ticket submitted",

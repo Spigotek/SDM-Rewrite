@@ -27,7 +27,17 @@ export interface EntityRouteConfig<TRow, TCreate, TUpdate> {
     | { readonly kind: "none" };
   /** Maps a raw CA SDM row → FE-facing shape. */
   readonly mapRow: (raw: Record<string, unknown>) => TRow;
-  /** Maps a FE-shaped create payload → CA SDM attribute map. */
+  /**
+   * Maps a FE-shaped create payload → CA SDM attribute map.
+   *
+   * When `customerMeAttr` is set, the registrar resolves the active caller
+   * after `mapCreate` runs (see `resolveCreateCustomer`): if the mapped attrs
+   * carry no value for `customerMeAttr`, the BFF injects
+   * `<customerMeAttr> REL_ATTR="<session.contactId>"`. So `mapCreate` should
+   * emit the customer FK only when the FE supplied a concrete contact GUID,
+   * and leave it absent for the "me" / omitted case — the portal never has
+   * the caller's contact GUID, exactly like the GET `customer=me` resolver.
+   */
   readonly mapCreate: (body: TCreate) => Record<string, unknown>;
   /** Maps a FE-shaped update payload → CA SDM attribute map. */
   readonly mapUpdate: (body: TUpdate) => Record<string, unknown>;
@@ -117,6 +127,7 @@ export function registerEntityRoutes<TRow, TCreate, TUpdate>(
   app.post(config.route, async (c) => {
     const body = (await c.req.json()) as TCreate;
     const attrs = config.mapCreate(body);
+    await resolveCreateCustomer(c, deps, attrs, config);
     const xml = toCaSdmXmlBody(wrapper, attrs);
     const result = await proxyToSdm(c, deps, {
       method: "POST",
@@ -221,6 +232,38 @@ function extractCreatedId(raw: unknown): string | null {
  * `customer` value is left untouched (callers may already inject explicit
  * contact GUIDs via `filter=`).
  */
+/**
+ * Create-time mirror of the GET `customer=me` resolver. When the entity opts
+ * in via `customerMeAttr` and `mapCreate` left that attribute absent (the FE
+ * sent `customer="me"` / `requesterId="me"` or omitted it entirely — the portal
+ * never holds the caller's contact GUID), inject
+ * `<customerMeAttr> REL_ATTR="<session.contactId>"` so CA SDM accepts the
+ * record. CA SDM requires the "Affected End User" / customer FK on create;
+ * `session.contactId` is the 32-char-hex GUID in `U'…'` form.
+ *
+ * Mutates `attrs` in place. No-op when the entity has no `customerMeAttr` or
+ * when `mapCreate` already emitted a concrete customer FK.
+ */
+async function resolveCreateCustomer<TRow, TCreate, TUpdate>(
+  c: Parameters<typeof requireActiveSession>[0],
+  deps: RestProxyDeps,
+  attrs: Record<string, unknown>,
+  config: EntityRouteConfig<TRow, TCreate, TUpdate>,
+): Promise<void> {
+  const attr = config.customerMeAttr;
+  if (!attr) return;
+  const existing = attrs[attr];
+  const hasConcrete =
+    existing !== undefined &&
+    existing !== null &&
+    typeof existing === "object" &&
+    typeof (existing as { relAttr?: unknown }).relAttr === "string" &&
+    (existing as { relAttr: string }).relAttr.length > 0;
+  if (hasConcrete) return;
+  const session = await requireActiveSession(c, deps);
+  attrs[attr] = { relAttr: session.contactId };
+}
+
 async function resolveListWcFilter<TRow, TCreate, TUpdate>(
   c: Parameters<typeof requireActiveSession>[0],
   deps: RestProxyDeps,

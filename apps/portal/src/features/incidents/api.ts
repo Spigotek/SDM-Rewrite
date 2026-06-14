@@ -1,4 +1,5 @@
 import type { Incident, Priority } from "@sdm/domain";
+import { toSubmitError } from "../../lib/submit-error";
 import type { CategoryCode, NewIncidentFormValues, UrgencyLevel } from "./schema";
 
 /**
@@ -27,6 +28,16 @@ export interface NewIncidentInput {
   readonly priority: Priority;
   readonly urgency: Priority;
   readonly category: CategoryCode;
+  /**
+   * Portal "me" signal — the BFF resolves it to the session contact GUID
+   * (`apps/bff/src/api/endpoints/_entity-routes.ts` create-time resolver).
+   * Without it CA SDM rejects the create with "Required attribute Affected
+   * End User is missing" (M.3).
+   */
+  readonly customer: "me";
+  /** Portal taxonomy + urgency carried so the BFF can fold them into description. */
+  readonly categoryCode: CategoryCode;
+  readonly urgencyCode: UrgencyLevel;
 }
 
 export function mapFormToInput(values: NewIncidentFormValues): NewIncidentInput {
@@ -37,6 +48,9 @@ export function mapFormToInput(values: NewIncidentFormValues): NewIncidentInput 
     priority,
     urgency: priority,
     category: values.category,
+    customer: "me",
+    categoryCode: values.category,
+    urgencyCode: values.urgency,
   };
 }
 
@@ -59,18 +73,7 @@ export async function postIncident(input: NewIncidentInput): Promise<Incident> {
     body: JSON.stringify(input),
   });
   if (!resp.ok) {
-    let detail = "";
-    try {
-      const body = (await resp.json()) as { message?: string };
-      detail = body.message ? `: ${body.message}` : "";
-    } catch {
-      // Ignore non-JSON bodies.
-    }
-    const error = new Error(`[incident-create] HTTP ${resp.status}${detail}`) as Error & {
-      status?: number;
-    };
-    error.status = resp.status;
-    throw error;
+    throw await toSubmitError(resp, "incident-create");
   }
   return (await resp.json()) as Incident;
 }

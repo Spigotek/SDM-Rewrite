@@ -19,6 +19,7 @@ import {
   type CatalogRequestResponse,
 } from "./api";
 import { DynamicForm } from "./components/DynamicForm";
+import { submitErrorMessage } from "../../lib/submit-error";
 import "./catalog.css";
 
 /**
@@ -75,6 +76,17 @@ export function CatalogItemRoute() {
   });
 
   const [created, setCreated] = useState<CatalogRequestResponse | null>(null);
+
+  const serverErrorText = mutation.error
+    ? (() => {
+        const mapped = submitErrorMessage(
+          mutation.error,
+          "catalogBrowse.form.submitFailed",
+          "catalogBrowse.form.forbidden",
+        );
+        return mapped.key === null ? (mapped.literal ?? "") : t(mapped.key);
+      })()
+    : null;
 
   const onSubmit = useCallback(
     async (values: Readonly<Record<string, unknown>>) => {
@@ -176,7 +188,7 @@ export function CatalogItemRoute() {
             onSubmit={onSubmit}
             onCancel={onCancel}
             submitting={mutation.isPending}
-            serverError={mutation.isError ? t("catalogBrowse.form.submitFailed") : null}
+            serverError={serverErrorText}
           />
         </Card>
       )}

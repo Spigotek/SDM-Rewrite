@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Button, Select, Skeleton, TextArea, TextField } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
 import { usePendingChanges } from "../../../shell/pending-changes";
+import { submitErrorMessage } from "../../../lib/submit-error";
 import { useNewIncident } from "../hooks";
 import {
   CATEGORY_CODES,
@@ -184,6 +185,16 @@ export function NewIncidentForm({ onSuccess, onCancel }: NewIncidentFormProps) {
 
   const isSubmitting = mutation.isPending;
 
+  const submitErrorText = (() => {
+    if (!mutation.error) return "";
+    const mapped = submitErrorMessage(
+      mutation.error,
+      "newIncident.errors.submitFailed",
+      "newIncident.errors.forbidden",
+    );
+    return mapped.key === null ? (mapped.literal ?? "") : t(mapped.key);
+  })();
+
   return (
     <form
       className="sdm-portal-new-incident-form"
@@ -294,7 +305,7 @@ export function NewIncidentForm({ onSuccess, onCancel }: NewIncidentFormProps) {
               className="sdm-portal-new-incident-submit-error"
               data-testid="portal-new-incident-submit-error"
             >
-              {t("newIncident.errors.submitFailed")}
+              {submitErrorText}
             </p>
           ) : null}
           <Button

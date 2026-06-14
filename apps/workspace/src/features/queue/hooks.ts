@@ -95,74 +95,90 @@ export function useQueueFilters(): UseQueueFiltersResult {
   const filters = useMemo(() => filtersFromParams(searchParams), [searchParams]);
   const selectedId = searchParams.get(URL_KEY_SELECTED);
 
-  const setFilters = useCallback(
-    (next: QueueFilters) => {
-      setSearchParams((prev) => writeFiltersToParams(prev, next), { replace: true });
+  // ── M.3.B — synchronous param-chaining ref ─────────────────────────────────
+  //
+  // React Router's `setSearchParams((prev) => next)` updater does NOT thread
+  // pending state the way React's `useState` updater does: every updater in the
+  // same tick receives the SAME committed `searchParams` as `prev`, computes its
+  // `next` independently, and the last `navigate` wins — silently dropping all
+  // earlier writes. The owner's intermittent "I toggle a criterion and the wrong
+  // state shows" desync was exactly this: fast successive chip toggles each read
+  // the stale committed URL, so only the final toggle survived while the others
+  // were lost (e.g. toggling assignee → assignee → status in one burst landed on
+  // `?status=…` alone). The result-count and the table both read the surviving —
+  // partial — filter set, so they stay numerically in lockstep yet no longer
+  // match the chips the user actually clicked.
+  //
+  // Fix: chain every write through a ref holding the latest REQUESTED params.
+  // Each writer reads the ref (the true pending state, updated synchronously),
+  // derives the next params, advances the ref, then hands the result to
+  // `setSearchParams`. Whenever the router commits a NEW location the ref
+  // re-adopts it as the base for the next chain — so external navigations (rail
+  // links, back/forward, deep links) stay authoritative and are never clobbered
+  // by a stale ref. `useSearchParams` returns a referentially stable instance
+  // for an unchanged query string, so this compare fires only on real commits.
+  const pendingRef = useRef<URLSearchParams>(searchParams);
+  const committedRef = useRef<URLSearchParams>(searchParams);
+  if (committedRef.current !== searchParams) {
+    committedRef.current = searchParams;
+    pendingRef.current = searchParams;
+  }
+
+  const commit = useCallback(
+    (next: URLSearchParams) => {
+      pendingRef.current = next;
+      setSearchParams(next, { replace: true });
     },
     [setSearchParams],
+  );
+
+  const setFilters = useCallback(
+    (next: QueueFilters) => {
+      commit(writeFiltersToParams(pendingRef.current, next));
+    },
+    [commit],
   );
 
   const toggleFilterValue = useCallback(
     (axis: keyof Omit<QueueFilters, "search">, value: string) => {
-      setSearchParams(
-        (prev) => {
-          const current = filtersFromParams(prev);
-          const list = current[axis] as ReadonlyArray<string>;
-          const has = list.includes(value);
-          const nextList = has ? list.filter((v) => v !== value) : [...list, value];
-          return writeFiltersToParams(prev, {
-            ...current,
-            [axis]: nextList,
-          } as QueueFilters);
-        },
-        { replace: true },
+      const current = filtersFromParams(pendingRef.current);
+      const list = current[axis] as ReadonlyArray<string>;
+      const has = list.includes(value);
+      const nextList = has ? list.filter((v) => v !== value) : [...list, value];
+      commit(
+        writeFiltersToParams(pendingRef.current, { ...current, [axis]: nextList } as QueueFilters),
       );
     },
-    [setSearchParams],
+    [commit],
   );
 
   const setSearch = useCallback(
     (value: string) => {
-      setSearchParams(
-        (prev) => {
-          const current = filtersFromParams(prev);
-          return writeFiltersToParams(prev, { ...current, search: value });
-        },
-        { replace: true },
-      );
+      const current = filtersFromParams(pendingRef.current);
+      commit(writeFiltersToParams(pendingRef.current, { ...current, search: value }));
     },
-    [setSearchParams],
+    [commit],
   );
 
   const resetFilters = useCallback(() => {
-    setSearchParams(
-      (prev) => {
-        // Preserve `selected` so the open right pane survives a filter reset.
-        const next = new URLSearchParams();
-        const sel = prev.get(URL_KEY_SELECTED);
-        if (sel) next.set(URL_KEY_SELECTED, sel);
-        return next;
-      },
-      { replace: true },
-    );
-  }, [setSearchParams]);
+    // Preserve `selected` so the open right pane survives a filter reset.
+    const next = new URLSearchParams();
+    const sel = pendingRef.current.get(URL_KEY_SELECTED);
+    if (sel) next.set(URL_KEY_SELECTED, sel);
+    commit(next);
+  }, [commit]);
 
   const setSelectedId = useCallback(
     (id: string | null) => {
-      setSearchParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          if (id) {
-            next.set(URL_KEY_SELECTED, id);
-          } else {
-            next.delete(URL_KEY_SELECTED);
-          }
-          return next;
-        },
-        { replace: true },
-      );
+      const next = new URLSearchParams(pendingRef.current);
+      if (id) {
+        next.set(URL_KEY_SELECTED, id);
+      } else {
+        next.delete(URL_KEY_SELECTED);
+      }
+      commit(next);
     },
-    [setSearchParams],
+    [commit],
   );
 
   return {

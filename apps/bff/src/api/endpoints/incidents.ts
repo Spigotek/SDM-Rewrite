@@ -34,10 +34,21 @@ export interface IncidentRowFe {
 export interface IncidentCreateFe {
   readonly summary: string;
   readonly description?: string;
-  readonly customerId: string; // U'...' contact GUID
+  /**
+   * Concrete CA SDM contact GUID (`U'…'`). Operator/agent callers that already
+   * hold the contact GUID pass it here. The portal does NOT — it passes
+   * `customer: "me"` (or omits both) and the BFF resolves the session contact.
+   */
+  readonly customerId?: string;
+  /** Portal "me" signal — `"me"` ⇒ resolve to `session.contactId` server-side. */
+  readonly customer?: string;
   readonly priorityCode?: string;
   readonly statusCode?: string;
   readonly assigneeId?: string;
+  /** Portal taxonomy code (hardware/software/…) — folded into description. */
+  readonly categoryCode?: string;
+  /** Portal urgency radio (1=cannot work … 3=minor) — folded into description. */
+  readonly urgencyCode?: string;
 }
 
 export interface IncidentUpdateFe {
@@ -77,14 +88,53 @@ function mapRow(raw: Record<string, unknown>): IncidentRowFe {
 }
 
 function mapCreate(body: IncidentCreateFe): Record<string, unknown> {
+  const concreteCustomer =
+    typeof body.customerId === "string" && body.customerId.length > 0 && body.customer !== "me";
+  const description = foldIncidentDescription(body);
   return {
     summary: body.summary,
-    ...(body.description !== undefined ? { description: body.description } : {}),
-    customer: { relAttr: body.customerId },
+    ...(description !== undefined ? { description } : {}),
+    // Concrete GUID only — the "me" / omitted case is filled by the BFF's
+    // create-time customer resolver from `session.contactId`.
+    ...(concreteCustomer ? { customer: { relAttr: body.customerId } } : {}),
     ...(body.priorityCode !== undefined ? { priority: { relAttr: body.priorityCode } } : {}),
     ...(body.statusCode !== undefined ? { status: { relAttr: body.statusCode } } : {}),
     ...(body.assigneeId !== undefined ? { assignee: { relAttr: body.assigneeId } } : {}),
   };
+}
+
+const CATEGORY_LABELS: Readonly<Record<string, string>> = {
+  hardware: "Hardvér",
+  software: "Softvér",
+  network: "Sieť / VPN / Wi-Fi",
+  account: "Účet / Heslo / Prístup",
+  other: "Iné",
+};
+
+const URGENCY_LABELS: Readonly<Record<string, string>> = {
+  "1": "Nemôžem pracovať",
+  "2": "Pracujem, ale s problémami",
+  "3": "Drobnosť, nie je to akútne",
+};
+
+/**
+ * Fold the portal taxonomy (category / urgency) into a human-readable Slovak
+ * description so the requester's selections survive to CA SDM — the portal
+ * codes are not CA SDM category/priority REL_ATTRs and would be rejected as
+ * FKs, so we carry them as text rather than dropping them.
+ */
+function foldIncidentDescription(body: IncidentCreateFe): string | undefined {
+  const lines: string[] = [];
+  if (typeof body.categoryCode === "string" && body.categoryCode.length > 0) {
+    lines.push(`Kategória: ${CATEGORY_LABELS[body.categoryCode] ?? body.categoryCode}`);
+  }
+  if (typeof body.urgencyCode === "string" && body.urgencyCode.length > 0) {
+    lines.push(`Súrnosť: ${URGENCY_LABELS[body.urgencyCode] ?? body.urgencyCode}`);
+  }
+  const base = body.description?.trim();
+  if (lines.length === 0) return base !== undefined && base.length > 0 ? base : undefined;
+  const header = lines.join("\n");
+  return base !== undefined && base.length > 0 ? `${header}\n\n${base}` : header;
 }
 
 function mapUpdate(body: IncidentUpdateFe): Record<string, unknown> {
