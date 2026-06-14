@@ -43,7 +43,9 @@ test("H.7 queue — load, keyboard nav, filter chip, saved view", async ({ isola
 
   await isolatedPage.keyboard.press("Enter");
   await expect(isolatedPage).toHaveURL(/selected=/);
-  await expect(isolatedPage.getByTestId("queue-split-pane-placeholder")).toBeVisible();
+  // M.1.A — the H.8 placeholder was replaced by `QueueDetailPane`; the pane
+  // exposes `queue-detail-pane` and renders a row's ref + tabbed body.
+  await expect(isolatedPage.getByTestId("queue-detail-pane")).toBeVisible();
 
   await isolatedPage.keyboard.press("Escape");
   await expect(isolatedPage).not.toHaveURL(/selected=/);

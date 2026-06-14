@@ -6,8 +6,14 @@
   background-color: var(--color-background-surface);
 }
 
+/* M.1.C — give the default surface a single hairline border + a 1-px ground
+   shadow so cards read as elevated objects on the app background instead of
+   flat fills. K.1 brief §5 stays satisfied: this is still flat-leaning, not
+   borderless. */
 .surface {
-  box-shadow: var(--shadow-xs);
+  box-shadow:
+    0 1px 0 rgba(15, 23, 42, 0.03),
+    0 0 0 1px var(--color-border-default);
   border: var(--border-width-thin) solid transparent;
 }
 
@@ -17,8 +23,10 @@
 }
 
 .interactive {
-  box-shadow: var(--shadow-xs);
-  border: var(--border-width-thin) solid var(--color-border-default);
+  box-shadow:
+    0 1px 0 rgba(15, 23, 42, 0.03),
+    0 0 0 1px var(--color-border-default);
+  border: var(--border-width-thin) solid transparent;
   cursor: pointer;
   transition:
     box-shadow var(--motion-duration-fast) var(--motion-easing-standard),
@@ -49,9 +57,22 @@
   }
 }
 
+/* Subtle = flat fill only. No shadow, no border. Used for inline notices /
+   secondary panels where the surface should disappear into the background. */
 .subtle {
   background-color: var(--color-background-subtle);
   border: var(--border-width-thin) solid transparent;
+  box-shadow: none;
+}
+
+/* Dark mode: swap the rgba ground shadow for one tuned to a black canvas
+   so the 3% slate tone doesn't disappear against `#0f0f11`. The 1-px
+   border ring keeps separation regardless. */
+[data-theme="dark"] .surface,
+[data-theme="dark"] .interactive {
+  box-shadow:
+    0 1px 0 rgba(0, 0, 0, 0.4),
+    0 0 0 1px var(--color-border-default);
 }
 
 .header {

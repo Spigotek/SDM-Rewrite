@@ -56,12 +56,24 @@
 }
 
 .sdm-queue-sidebar-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1_5);
   font-size: var(--font-size-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
-  color: var(--color-text-tertiary);
+  letter-spacing: 0;
+  color: var(--color-text-secondary);
   margin: 0;
   font-weight: var(--font-weight-semibold);
+}
+
+.sdm-queue-sidebar-heading::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--color-brand-400);
+  flex-shrink: 0;
 }
 
 .sdm-queue-sidebar-list {
@@ -203,11 +215,24 @@
 }
 
 .sdm-queue-chip-group-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1_5);
   font-size: var(--font-size-xs);
-  color: var(--color-text-tertiary);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: 0;
   margin-right: var(--spacing-1);
+}
+
+.sdm-queue-chip-group-label::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--color-brand-400);
+  flex-shrink: 0;
 }
 
 .sdm-queue-chip {
@@ -340,38 +365,46 @@
 }
 
 .sdm-queue-table tbody td {
-  /* K.1 brief §10.2 — 32-px row density. `--spacing-1` (4 px) padding + 24 px
-     content height yields a 32 px row. Tabular numerals everywhere in the
-     body so the columns line up regardless of glyph width. */
-  padding: var(--spacing-1) var(--spacing-2);
+  /* M.1.C — 36 px row density. K.2 tightened to 32 px but the owner reads
+     it as too cramped to scan; 36 px restores breathing room while still
+     well under Polaris 40 px. Tabular numerals everywhere in the body so
+     the columns line up regardless of glyph width. */
+  padding: var(--spacing-1_5) var(--spacing-3);
   border-bottom: var(--border-width-thin) solid
     var(--color-border-subtle, var(--color-border-default));
   vertical-align: middle;
-  height: 2rem;
+  height: 2.25rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 
-.sdm-queue-table tbody tr:nth-child(even) {
-  /* Stripe: must keep --color-text-tertiary (neutral-500 #64748b) readable.
-     Was `--color-background-subtle` (neutral-100 #f1f5f9) → 4.34:1 (axe fail
-     against WCAG AA 4.5:1). `--color-background-app` (neutral-50 #f8fafc)
-     lands at 4.78:1, still distinct from the default white row. */
-  background-color: var(--color-background-app);
-}
+/* M.1.C — drop the zebra stripe; 36 px + hairline borders read fine on a
+   solid white surface, and the alternating tone added visual noise. */
 
 .sdm-queue-row {
   cursor: pointer;
+  transition:
+    background-color var(--motion-duration-fast) var(--motion-easing-standard),
+    transform var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
 .sdm-queue-row:hover {
   background-color: var(--color-background-hover);
+  transform: translateY(-0.5px);
 }
 
 .sdm-queue-row--selected {
   background-color: var(--color-background-selected);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sdm-queue-row,
+  .sdm-queue-row:hover {
+    transform: none;
+    transition: background-color var(--motion-duration-fast) var(--motion-easing-standard);
+  }
 }
 
 .sdm-queue-row:focus-visible {
@@ -467,6 +500,182 @@
   font-size: var(--font-size-sm);
 }
 
+/* ── M.1.A detail pane ───────────────────────────────────── */
+
+.sdm-queue-detail-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3);
+  min-height: 0;
+}
+
+.sdm-queue-detail-pane[data-state="empty"] {
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+}
+
+.sdm-queue-detail-pane-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1_5);
+}
+
+.sdm-queue-detail-pane-header-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--spacing-2);
+}
+
+.sdm-queue-detail-pane-ref {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-link);
+}
+
+.sdm-queue-detail-pane-summary {
+  margin: 0;
+  color: var(--color-text-body);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-snug);
+}
+
+.sdm-queue-detail-pane-customer {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-1_5);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+}
+
+.sdm-queue-detail-pane-tabs {
+  display: flex;
+  gap: var(--spacing-1);
+  border-bottom: var(--border-width-thin) solid var(--color-border-default);
+}
+
+.sdm-queue-detail-pane-tab {
+  background: transparent;
+  border: 0;
+  padding: var(--spacing-1_5) var(--spacing-2);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+
+.sdm-queue-detail-pane-tab[data-active] {
+  color: var(--color-text-primary);
+  border-bottom-color: var(--color-brand-500);
+}
+
+.sdm-queue-detail-pane-tab:hover {
+  color: var(--color-text-primary);
+}
+
+.sdm-queue-detail-pane-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  font-size: var(--font-size-sm);
+}
+
+.sdm-queue-detail-pane-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1_5);
+}
+
+.sdm-queue-detail-pane-error {
+  color: var(--color-text-danger);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.sdm-queue-detail-pane-dl {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  margin: 0;
+}
+
+.sdm-queue-detail-pane-dl-row {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: var(--spacing-2);
+  align-items: baseline;
+}
+
+.sdm-queue-detail-pane-dl-row--block {
+  grid-template-columns: 1fr;
+}
+
+.sdm-queue-detail-pane-dl-row dt {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-weight: var(--font-weight-medium);
+}
+
+.sdm-queue-detail-pane-dl-row dd {
+  margin: 0;
+  color: var(--color-text-body);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-snug);
+  white-space: pre-wrap;
+}
+
+.sdm-queue-detail-pane-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+}
+
+.sdm-queue-detail-pane-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-0_5);
+  padding: var(--spacing-1_5) 0;
+  border-bottom: var(--border-width-thin) solid var(--color-border-subtle);
+}
+
+.sdm-queue-detail-pane-list-item:last-child {
+  border-bottom: 0;
+}
+
+.sdm-queue-detail-pane-list-meta {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+}
+
+.sdm-queue-detail-pane-list-body {
+  color: var(--color-text-body);
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-snug);
+  white-space: pre-wrap;
+}
+
+.sdm-queue-detail-pane-empty-text {
+  color: var(--color-text-tertiary);
+  font-size: var(--font-size-sm);
+  margin: 0;
+}
+
+.sdm-queue-detail-pane-footer {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: var(--spacing-2);
+  border-top: var(--border-width-thin) solid var(--color-border-subtle);
+}
+
 /* ── K.1 page header ─────────────────────────────────────── */
 
 .sdm-queue-page-header {
@@ -483,23 +692,245 @@
   color: var(--color-text-primary);
 }
 
+.sdm-queue-page-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-2);
+}
+
+.sdm-queue-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-0_5);
+  padding: var(--spacing-0_5);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-surface);
+}
+
+/* ── M.1.B — Kanban board ────────────────────────────────── */
+
+.sdm-queue-kanban {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--spacing-3);
+  align-items: stretch;
+  min-height: 30rem;
+}
+
+.sdm-queue-kanban-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  min-height: 0;
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  background-color: var(--color-background-subtle);
+  padding: var(--spacing-2);
+  outline: 2px dashed transparent;
+  outline-offset: -2px;
+  transition: outline-color 120ms ease;
+}
+
+.sdm-queue-kanban-column--dragover {
+  outline-color: var(--color-brand-400, var(--color-brand-bg));
+  background-color: var(--color-background-hover);
+}
+
+.sdm-queue-kanban-column-header {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-1_5);
+  padding: var(--spacing-0_5) var(--spacing-1);
+}
+
+.sdm-queue-kanban-column-label {
+  flex: 1 1 auto;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+}
+
+.sdm-queue-kanban-column-count {
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-secondary);
+  background-color: var(--color-background-surface);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-pill, 999px);
+  padding: var(--spacing-0_5) var(--spacing-1_5);
+  min-width: 1.5rem;
+  text-align: center;
+}
+
+.sdm-queue-kanban-column-add {
+  background: transparent;
+  border: 0;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: var(--spacing-0_5);
+  border-radius: var(--radius-sm, 4px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sdm-queue-kanban-column-add:hover {
+  background-color: var(--color-background-hover);
+  color: var(--color-text-primary);
+}
+
+.sdm-queue-kanban-column-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-2);
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.sdm-queue-kanban-empty {
+  margin: var(--spacing-3) auto;
+}
+
+.sdm-queue-kanban-card {
+  width: 280px;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1_5);
+  padding: var(--spacing-2_5);
+  background-color: var(--color-background-surface);
+  border: var(--border-width-thin) solid var(--color-border-default);
+  border-radius: var(--radius-md);
+  cursor: grab;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    border-color 120ms ease;
+}
+
+.sdm-queue-kanban-card:hover {
+  transform: translateY(-1px);
+  border-color: var(--color-border-strong, var(--color-border-default));
+  box-shadow: var(--shadow-sm, var(--shadow-md));
+}
+
+.sdm-queue-kanban-card:focus-visible {
+  outline: 2px solid var(--color-border-focus);
+  outline-offset: 1px;
+}
+
+.sdm-queue-kanban-card:active {
+  cursor: grabbing;
+}
+
+.sdm-queue-kanban-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+
+.sdm-queue-kanban-card-ref {
+  font-family: var(--font-family-mono, ui-monospace, monospace);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-link);
+  font-size: var(--font-size-sm);
+}
+
+.sdm-queue-kanban-card-summary {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-body);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sdm-queue-kanban-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+}
+
+.sdm-queue-kanban-card-age {
+  font-size: var(--font-size-xs);
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.sdm-queue-kanban-fallback {
+  padding: var(--spacing-3);
+  min-height: 20rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sdm-queue-kanban-card,
+  .sdm-queue-kanban-column {
+    transition: none;
+  }
+  .sdm-queue-kanban-card:hover {
+    transform: none;
+  }
+}
+
+@media (max-width: 1100px) {
+  .sdm-queue-kanban {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 /* ── KPI strip (QueueStats) ──────────────────────────────── */
 
 /* K-fix — reserve grid height before tile content lands so the table below
-   doesn't shift when `query.isPending` flips off. `.sdm-queue-stat` is
-   88 px tall (min-height 5.5rem); the outer container locks the same value. */
+   doesn't shift when `query.isPending` flips off. The `.sdm-queue-stats-wrap`
+   owns the strip min-height so the toggle row + grid both contribute to the
+   reservation. */
+.sdm-queue-stats-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-1);
+  min-height: 6.5rem;
+}
+
+.sdm-queue-stats-header {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.sdm-queue-stats-toggle {
+  background: transparent;
+  border: 0;
+  color: var(--color-text-tertiary);
+  font: inherit;
+  font-size: var(--font-size-xs);
+  cursor: pointer;
+  padding: var(--spacing-0_5) var(--spacing-1_5);
+  border-radius: var(--radius-sm);
+}
+
+.sdm-queue-stats-toggle:hover {
+  color: var(--color-text-body);
+  background-color: var(--color-background-hover);
+}
+
+.sdm-queue-stats-toggle:focus-visible {
+  outline: none;
+  box-shadow: var(--shadow-focus-brand);
+}
+
 .sdm-queue-stats {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: var(--spacing-3);
-  min-height: 5.5rem;
+  align-items: start;
 }
 
 @media (max-width: 900px) {
   .sdm-queue-stats {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    /* Two rows of 88 px + 12 px gap when wrapped. */
-    min-height: calc(5.5rem * 2 + var(--spacing-3));
   }
 }
 
@@ -514,15 +945,45 @@
   min-height: 5.5rem;
 }
 
+/* M.1.C — empty tiles collapse to a 28-px inline chip. Label + value live
+   on one line, padding shrinks, no big number block. Distinct neutral fill
+   so the chip reads as "deferred / no data" without competing with the
+   live tiles around it. */
+.sdm-queue-stat--chip {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--spacing-2);
+  min-height: 1.75rem;
+  height: 1.75rem;
+  padding: 0 var(--spacing-2_5);
+  background-color: var(--color-background-subtle);
+}
+
 .sdm-queue-stat-label {
   display: inline-flex;
   align-items: center;
-  gap: var(--spacing-1);
+  gap: var(--spacing-1_5);
   font-size: var(--font-size-xs);
-  text-transform: uppercase;
-  letter-spacing: var(--letter-spacing-wide);
+  letter-spacing: 0;
   color: var(--color-text-secondary);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--font-weight-medium);
+}
+
+.sdm-queue-stat-label::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--color-brand-400);
+  flex-shrink: 0;
+}
+
+/* Chip-variant suppresses the accent dot — the label already reads as a
+   secondary marker and the dot would crowd a one-line layout. */
+.sdm-queue-stat--chip .sdm-queue-stat-label::before {
+  display: none;
 }
 
 .sdm-queue-stat-icon {
@@ -536,6 +997,12 @@
   font-variant-numeric: tabular-nums;
   color: var(--color-text-primary);
   line-height: 1.1;
+}
+
+.sdm-queue-stat-value--chip {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--font-weight-medium);
 }
 
 .sdm-queue-stat-subtitle {

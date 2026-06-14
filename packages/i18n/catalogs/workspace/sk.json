@@ -31,7 +31,9 @@
       "overdue": "Po SLA",
       "lastHour": "< 1h",
       "today": "Dnes",
-      "noSla": "Bez SLA"
+      "noSla": "Bez SLA",
+      "showEmpty": "Zobraziť aj prázdne",
+      "hideEmpty": "Skryť prázdne"
     },
     "axis": {
       "status": "Stav",
@@ -92,8 +94,47 @@
     },
     "splitPane": {
       "ariaLabel": "Detail vybraného ticketu",
-      "empty": "Vyber ticket zo zoznamu (klikni alebo stlač Enter na vybranom riadku).",
-      "placeholder": "Plný detail ticketu dorazí v H.8."
+      "empty": "Vyber ticket zo zoznamu (klikni alebo stlač Enter na vybranom riadku)."
+    },
+    "view": {
+      "table": "Tabuľka",
+      "kanban": "Tabuľa",
+      "toggleAria": "Prepnúť zobrazenie"
+    },
+    "kanban": {
+      "columns": {
+        "open": "Otvorené",
+        "inProgress": "V riešení",
+        "waiting": "Čaká",
+        "resolved": "Vyriešené"
+      },
+      "empty": "Žiadne tickety v tomto stave",
+      "dragHint": "Pretiahni kartu na zmenu stavu",
+      "transitionForbidden": "Tento prechod nie je dovolený"
+    },
+    "detailPane": {
+      "empty": "Vyber ticket zľava pre zobrazenie detailu.",
+      "emptyTitle": "Žiadny ticket nie je vybraný",
+      "error": "Detail ticketu sa nepodarilo načítať.",
+      "openFull": "Otvoriť plný detail",
+      "tabsAria": "Sekcie detailu ticketu",
+      "tabs": {
+        "detail": "Detail",
+        "activity": "Aktivita",
+        "comments": "Komentáre"
+      },
+      "fields": {
+        "assignee": "Riešiteľ",
+        "openedAt": "Otvorený",
+        "description": "Popis",
+        "descriptionEmpty": "(bez popisu)"
+      },
+      "activity": {
+        "empty": "Zatiaľ žiadna aktivita."
+      },
+      "comments": {
+        "empty": "Zatiaľ žiadne verejné komentáre."
+      }
     }
   },
   "actions": {

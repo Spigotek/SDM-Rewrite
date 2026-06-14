@@ -407,6 +407,72 @@ export function caSdmCodeForType(type: UiTicketType, status: TicketStatus): stri
   return TYPE_REVERSE_STATUS[type][status] ?? null;
 }
 
+/**
+ * Forward map: CA SDM `status.code` → canonical `TicketStatus` (logical state).
+ * Derived from `TYPE_REVERSE_STATUS` plus a small supplement for codes the
+ * BFF emits but transitions don't reach (`NEW`, `ROOT_CAUSE_KNOWN`,
+ * `KNOWN_ERROR`, `IDENTIFIED` on problems, etc.). The queue uses this to
+ * resolve URL filters that come in as logical names (left-rail "Triáž" →
+ * `?status=new`) against the CA SDM codes carried by `r.status.code`.
+ *
+ * The map is intentionally many-to-one: `OP` exists on incidents + changes
+ * with the same logical meaning (`open`), `APPROVED` on requests + changes
+ * also maps to `open`. Conflicts resolve to the first definition encountered.
+ */
+const CA_CODE_TO_LOGICAL: Record<string, TicketStatus> = (() => {
+  const out: Record<string, TicketStatus> = {};
+  for (const type of Object.keys(TYPE_REVERSE_STATUS) as ReadonlyArray<UiTicketType>) {
+    const reverse = TYPE_REVERSE_STATUS[type];
+    for (const [logical, code] of Object.entries(reverse) as ReadonlyArray<
+      [TicketStatus, string]
+    >) {
+      if (!(code in out)) out[code] = logical;
+    }
+  }
+  // Supplement: codes that exist in BFF row data but aren't transition targets
+  // (so they never appear in `TYPE_REVERSE_STATUS`). Keep in sync with the
+  // `STATUS_MAP` in `QueueTable.tsx` so the table badge and the rail filter
+  // agree on what each row's logical status is.
+  const SUPPLEMENT: Record<string, TicketStatus> = {
+    NEW: "new",
+    ROOT_CAUSE_KNOWN: "in_progress",
+    KNOWN_ERROR: "in_progress",
+    INVESTIGATION: "in_progress",
+    IDENTIFIED: "new",
+    ESC: "in_progress",
+    RFC: "new",
+    EMG_RFC: "new",
+    EMG_IN_PROGRESS: "in_progress",
+    EMG_RETROSPECTIVE: "in_progress",
+    VERIFICATION_IN_PROGRESS: "in_progress",
+    VERIFIED: "resolved",
+  };
+  for (const [code, logical] of Object.entries(SUPPLEMENT) as ReadonlyArray<
+    [string, TicketStatus]
+  >) {
+    if (!(code in out)) out[code] = logical;
+  }
+  return out;
+})();
+
+/**
+ * Returns true when the row's status matches any value in the active filter
+ * list. The filter list may contain raw CA SDM codes (chip toggles in the
+ * `FilterBar` use codes verbatim) or logical status names (left-rail items
+ * use `new`/`in_progress`/...). Both are supported so the two affordances
+ * compose without translation at the caller.
+ */
+export function statusMatchesFilter(
+  rowCode: string | null | undefined,
+  filterValues: ReadonlyArray<string>,
+): boolean {
+  if (filterValues.length === 0) return true;
+  if (!rowCode) return false;
+  if (filterValues.includes(rowCode)) return true;
+  const logical = CA_CODE_TO_LOGICAL[rowCode];
+  return logical !== undefined && (filterValues as ReadonlyArray<string>).includes(logical);
+}
+
 export interface UseQueueStatusTransitionOptions {
   readonly tenantId: string;
   readonly onSuccess?: (label: string) => void;
@@ -521,6 +587,53 @@ export function useQueueStatusTransition(opts: UseQueueStatusTransitionOptions):
 
   return { transition, isPending: mutation.isPending };
 }
+
+// ─── M.1.B — view-mode toggle (table vs kanban) ──────────────────────────────
+
+export type QueueViewMode = "table" | "kanban";
+
+const VIEW_MODE_STORAGE_KEY = "sdm.workspace.queue.view";
+
+function readViewModeFromStorage(): QueueViewMode {
+  if (typeof window === "undefined") return "table";
+  try {
+    const raw = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+    return raw === "kanban" ? "kanban" : "table";
+  } catch {
+    return "table";
+  }
+}
+
+function writeViewModeToStorage(mode: QueueViewMode): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+  } catch {
+    /* swallow — quota / sandboxed iframe */
+  }
+}
+
+export interface UseQueueViewModeResult {
+  readonly mode: QueueViewMode;
+  readonly setMode: (next: QueueViewMode) => void;
+}
+
+/**
+ * Persists the user's table-vs-kanban choice in localStorage. The default is
+ * `"table"` so existing users land on the dense list they already know.
+ */
+export function useQueueViewMode(): UseQueueViewModeResult {
+  const [mode, setModeState] = useState<QueueViewMode>(readViewModeFromStorage);
+
+  const setMode = useCallback((next: QueueViewMode) => {
+    setModeState(next);
+    writeViewModeToStorage(next);
+  }, []);
+
+  return { mode, setMode };
+}
+
+export { VIEW_MODE_STORAGE_KEY };
 
 // ─── Page visibility (pollovanie tab-aktívne) ────────────────────────────────
 

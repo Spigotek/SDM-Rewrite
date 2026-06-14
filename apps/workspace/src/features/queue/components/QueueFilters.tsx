@@ -1,9 +1,34 @@
 import { useMemo } from "react";
 import { Plus, X } from "lucide-react";
 import { useTranslation } from "@sdm/i18n";
+import type { TicketStatus } from "@sdm/design-system";
 import type { UiQueueItem } from "@sdm/api-types";
 import type { QueueFilters as QueueFiltersValue, SavedView } from "../types";
 import { EMPTY_FILTERS } from "../types";
+
+/**
+ * Logical `TicketStatus` → SK label fallback for chips that come from URL
+ * filters using logical names (left-rail items emit `?status=new` etc.). The
+ * primary path remains `labelLookup` populated from row data; this kicks in
+ * only when no row in the current page carries that logical value as a raw
+ * code (i.e. the rail navigation set a filter that doesn't textually match
+ * any visible row code).
+ */
+const LOGICAL_STATUS_LABEL_SK: Partial<Record<TicketStatus, string>> = {
+  new: "Nový",
+  open: "Otvorený",
+  in_progress: "V riešení",
+  hold: "Pozastavený",
+  pending: "Čaká",
+  waiting_customer: "Čaká na zákazníka",
+  waiting_vendor: "Čaká na dodávateľa",
+  resolved: "Vyriešený",
+  closed: "Uzavretý",
+  cancelled: "Zrušený",
+  rejected: "Zamietnutý",
+  approval_pending: "Čaká na schválenie",
+  scheduled: "Naplánovaný",
+};
 
 /**
  * Saved-view selector + filter chip row (K.1 brief §10.2 row 2).
@@ -110,7 +135,19 @@ export function QueueFilters(props: QueueFiltersProps) {
         out.push({ axis, value: v, label: lookup?.get(v) ?? v, axisLabel });
       }
     };
-    pushAxis("status", t("queue.axis.status"), filters.status, labelLookup.status);
+    // Status axis falls back to the logical-name dictionary so rail-set
+    // filters like `?status=new` display "Stav: Nový" even when no current
+    // row carries that exact value as a raw CA SDM code.
+    for (const v of filters.status) {
+      const direct = labelLookup.status.get(v);
+      const logical = LOGICAL_STATUS_LABEL_SK[v as TicketStatus];
+      out.push({
+        axis: "status",
+        value: v,
+        label: direct ?? logical ?? v,
+        axisLabel: t("queue.axis.status"),
+      });
+    }
     pushAxis("priority", t("queue.axis.priority"), filters.priority, labelLookup.priority);
     pushAxis("assignee", t("queue.axis.assignee"), filters.assignee, labelLookup.assignee);
     pushAxis("customer", t("queue.axis.assignee"), filters.customer, labelLookup.customer);
