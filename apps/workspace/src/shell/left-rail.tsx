@@ -43,6 +43,15 @@ interface RailGroup {
   readonly defaultOpen: boolean;
 }
 
+/**
+ * Rail-item hrefs use the same URL filter contract as the `/queue` and `/changes`
+ * routes (`?status=…`, `?assignee=…`, `?scope=…`). Logical status names — `new`,
+ * `in_progress`, `waiting_customer`, etc. — are resolved against the row's CA
+ * SDM code by `statusMatchesFilter` (see `features/queue/hooks.ts`) so clicking
+ * the rail and a `FilterBar` chip compose AND, not replace. Stub query keys
+ * (`scope=inbox`, `starred=true`, `assignee=me`) hit the queue but are not yet
+ * honoured by the BFF — the table still renders, just without further filtering.
+ */
 const GROUPS: readonly RailGroup[] = [
   {
     key: "TOP",
@@ -50,19 +59,19 @@ const GROUPS: readonly RailGroup[] = [
     defaultOpen: true,
     items: [
       {
-        href: "/queue?view=inbox",
+        href: "/queue?scope=inbox",
         slug: "inbox",
         labelKey: "nav.items.inbox",
         icon: <Inbox size={16} aria-hidden="true" />,
       },
       {
-        href: "/queue",
+        href: "/queue?assignee=me",
         slug: "myqueue",
         labelKey: "nav.queue",
         icon: <Clock size={16} aria-hidden="true" />,
       },
       {
-        href: "/queue?view=starred",
+        href: "/queue?starred=true",
         slug: "starred",
         labelKey: "nav.items.starred",
         icon: <Star size={16} aria-hidden="true" />,
@@ -75,25 +84,25 @@ const GROUPS: readonly RailGroup[] = [
     defaultOpen: true,
     items: [
       {
-        href: "/queue?view=triage",
+        href: "/queue?status=new",
         slug: "triage",
         labelKey: "nav.items.triage",
         icon: <ClipboardList size={16} aria-hidden="true" />,
       },
       {
-        href: "/queue?view=in-progress",
+        href: "/queue?status=in_progress",
         slug: "in-progress",
         labelKey: "nav.items.inProgress",
         icon: <Play size={16} aria-hidden="true" />,
       },
       {
-        href: "/queue?view=on-hold",
+        href: "/queue?status=waiting_customer,waiting_vendor,hold",
         slug: "on-hold",
         labelKey: "nav.items.onHold",
         icon: <PauseCircle size={16} aria-hidden="true" />,
       },
       {
-        href: "/queue?view=resolved",
+        href: "/queue?status=resolved,closed",
         slug: "resolved",
         labelKey: "nav.items.resolved",
         icon: <Clipboard size={16} aria-hidden="true" />,
@@ -112,13 +121,15 @@ const GROUPS: readonly RailGroup[] = [
     defaultOpen: true,
     items: [
       {
-        href: "/changes?view=pending-approval",
+        // CHANGES filter uses raw CA SDM codes; `APPR_PENDING` / `SCHEDULED`
+        // are the canonical change-status values (see `features/changes/hooks.ts`).
+        href: "/changes?status=APPR_PENDING",
         slug: "pending-approval",
         labelKey: "nav.items.pendingApproval",
         icon: <ShieldQuestion size={16} aria-hidden="true" />,
       },
       {
-        href: "/changes?view=scheduled",
+        href: "/changes?status=SCHEDULED",
         slug: "scheduled",
         labelKey: "nav.items.scheduled",
         icon: <GitBranch size={16} aria-hidden="true" />,

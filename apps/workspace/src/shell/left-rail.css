@@ -124,14 +124,25 @@
   padding: var(--spacing-1) var(--spacing-3);
   background-color: transparent;
   border: 0;
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
   cursor: pointer;
   font: inherit;
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
-  letter-spacing: var(--letter-spacing-wide);
-  text-transform: uppercase;
+  letter-spacing: 0;
   text-align: left;
+}
+
+.sdm-rail-group-label::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background-color: var(--color-brand-400);
+  margin-right: var(--spacing-1_5);
+  vertical-align: middle;
+  flex-shrink: 0;
 }
 
 .sdm-rail-group-header:hover {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef } from "react";
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
-import { useTranslation } from "@sdm/i18n";
+import { formatAge, useLocale, useTranslation } from "@sdm/i18n";
 import {
   CA_SDM_TRANSITIONS,
   PriorityBadge,
@@ -50,20 +50,6 @@ const PRIORITY_MAP: Record<string, Severity> = {
   "5": "low",
 };
 
-function relativeAge(iso: string | null): string {
-  if (!iso) return "—";
-  const then = Date.parse(iso);
-  if (!Number.isFinite(then)) return "—";
-  const diffMs = Date.now() - then;
-  const minutes = Math.round(diffMs / 60_000);
-  if (minutes < 1) return "<1m";
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.round(hours / 24);
-  return `${days}d`;
-}
-
 export interface QueueTableProps {
   readonly rows: ReadonlyArray<UiQueueItem>;
   readonly visibleColumns: ReadonlyArray<QueueColumnKey>;
@@ -94,6 +80,7 @@ export function QueueTable(props: QueueTableProps) {
     statusTransitionPending = false,
   } = props;
   const { t } = useTranslation("workspace");
+  const { locale } = useLocale("workspace");
 
   const columns = useMemo<ColumnDef<UiQueueItem>[]>(() => {
     const all: Record<QueueColumnKey, ColumnDef<UiQueueItem>> = {
@@ -207,13 +194,18 @@ export function QueueTable(props: QueueTableProps) {
         header: t("queue.columns.age"),
         accessorKey: "openedAt",
         size: 70,
-        cell: (info) => (
-          <span className="sdm-queue-cell-age">{relativeAge(info.row.original.openedAt)}</span>
-        ),
+        cell: (info) => {
+          const { text, absolute } = formatAge(info.row.original.openedAt, locale);
+          return (
+            <span className="sdm-queue-cell-age" title={absolute ?? undefined}>
+              {text}
+            </span>
+          );
+        },
       },
     };
     return visibleColumns.map((k) => all[k]);
-  }, [visibleColumns, t, onStatusTransition, statusTransitionPending]);
+  }, [visibleColumns, t, locale, onStatusTransition, statusTransitionPending]);
 
   const table = useReactTable<UiQueueItem>({
     data: rows as UiQueueItem[],

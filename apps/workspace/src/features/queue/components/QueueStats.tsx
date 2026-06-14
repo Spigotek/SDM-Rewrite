@@ -1,4 +1,4 @@
-import { useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { AlertTriangle, Calendar, Clock, Inbox, User } from "lucide-react";
 import { useTranslation } from "@sdm/i18n";
 import { Skeleton, useCountUp } from "@sdm/design-system";
@@ -14,13 +14,16 @@ import type { UiQueueItem } from "@sdm/api-types";
  *  - < 1h      — rows opened in the last 60 minutes
  *  - Dnes      — rows opened today (local timezone)
  *
- * Degraded SLA state is intentional and documented per the K-phase scope: the
- * BFF aggregator does not yet project `dueDate`/`slaState` onto `UiQueueItem`.
- * The tile renders an em-dash + "(no SLA)" subtitle until the field lands.
+ * M.1.C — zero-collapse: tiles with `count === 0` or `count === null` render
+ * as a compact 28-px chip instead of the full 88-px tile, so a quiet queue
+ * doesn't look like a wall of empty placeholders. A header toggle restores
+ * the full tile layout for users who want the symmetric strip; the choice
+ * persists per browser via `localStorage`.
  */
 
 const ONE_HOUR_MS = 60 * 60 * 1000;
 const OPEN_STATUS_CODES: ReadonlySet<string> = new Set(["OP", "WIP", "NEW", "IN_PROGRESS", "HLD"]);
+const SHOW_EMPTY_STORAGE_KEY = "sdm.workspace.queue.stats.showEmpty";
 
 export interface QueueStatsProps {
   readonly rows: ReadonlyArray<UiQueueItem>;
@@ -52,9 +55,26 @@ function startOfTodayMs(now: Date): number {
   return d.getTime();
 }
 
+function readShowEmpty(): boolean {
+  if (typeof localStorage === "undefined") return false;
+  return localStorage.getItem(SHOW_EMPTY_STORAGE_KEY) === "true";
+}
+
+function writeShowEmpty(value: boolean): void {
+  if (typeof localStorage === "undefined") return;
+  localStorage.setItem(SHOW_EMPTY_STORAGE_KEY, value ? "true" : "false");
+}
+
 export function QueueStats(props: QueueStatsProps) {
   const { rows, currentUserId, isLoading } = props;
   const { t } = useTranslation("workspace");
+  const [showEmpty, setShowEmpty] = useState<boolean>(false);
+
+  // Hydrate from localStorage on mount — keeps SSR/first-paint identical
+  // so the chip/tile layout doesn't flicker on reload.
+  useEffect(() => {
+    setShowEmpty(readShowEmpty());
+  }, []);
 
   const tiles: ReadonlyArray<StatValue> = useMemo(() => {
     const now = Date.now();
@@ -117,33 +137,84 @@ export function QueueStats(props: QueueStatsProps) {
     ];
   }, [rows, currentUserId, t]);
 
+  const handleToggle = () => {
+    setShowEmpty((prev) => {
+      const next = !prev;
+      writeShowEmpty(next);
+      return next;
+    });
+  };
+
+  // While loading we render the canonical full-tile layout so the skeleton
+  // strip occupies a stable footprint. Once data resolves, empty tiles
+  // either collapse to chips or stay as tiles depending on `showEmpty`.
   return (
-    <div
-      className="sdm-queue-stats"
-      data-testid="queue-stats"
-      role="group"
-      aria-label={t("queue.stats.ariaLabel")}
-    >
-      {tiles.map((tile) => (
-        <div key={tile.testid} className="sdm-queue-stat" data-testid={tile.testid}>
-          <span className="sdm-queue-stat-label">
-            <span className="sdm-queue-stat-icon" aria-hidden="true">
-              {tile.icon}
-            </span>
-            {tile.label}
-          </span>
-          {isLoading ? (
-            <Skeleton variant="text" width={42} height={28} />
-          ) : tile.count === null ? (
-            <span className="sdm-queue-stat-value">{tile.value}</span>
-          ) : (
-            <span className="sdm-queue-stat-value">
-              <QueueStatNumber value={tile.count} />
-            </span>
-          )}
-          {tile.subtitle ? <span className="sdm-queue-stat-subtitle">{tile.subtitle}</span> : null}
-        </div>
-      ))}
+    <div className="sdm-queue-stats-wrap">
+      <div className="sdm-queue-stats-header">
+        <button
+          type="button"
+          className="sdm-queue-stats-toggle"
+          aria-pressed={showEmpty}
+          onClick={handleToggle}
+          data-testid="queue-stats-toggle"
+        >
+          {showEmpty ? t("queue.stats.hideEmpty") : t("queue.stats.showEmpty")}
+        </button>
+      </div>
+      <div
+        className="sdm-queue-stats"
+        data-testid="queue-stats"
+        data-show-empty={showEmpty ? "true" : "false"}
+        role="group"
+        aria-label={t("queue.stats.ariaLabel")}
+      >
+        {tiles.map((tile) => {
+          const isEmpty = tile.count === null || tile.count === 0;
+          const collapseToChip = !isLoading && isEmpty && !showEmpty;
+          if (collapseToChip) {
+            return (
+              <div
+                key={tile.testid}
+                className="sdm-queue-stat sdm-queue-stat--chip"
+                data-testid={tile.testid}
+                data-empty="true"
+              >
+                <span className="sdm-queue-stat-label">
+                  <span className="sdm-queue-stat-icon" aria-hidden="true">
+                    {tile.icon}
+                  </span>
+                  {tile.label}
+                </span>
+                <span className="sdm-queue-stat-value sdm-queue-stat-value--chip">
+                  {tile.value}
+                </span>
+              </div>
+            );
+          }
+          return (
+            <div key={tile.testid} className="sdm-queue-stat" data-testid={tile.testid}>
+              <span className="sdm-queue-stat-label">
+                <span className="sdm-queue-stat-icon" aria-hidden="true">
+                  {tile.icon}
+                </span>
+                {tile.label}
+              </span>
+              {isLoading ? (
+                <Skeleton variant="text" width={42} height={28} />
+              ) : tile.count === null ? (
+                <span className="sdm-queue-stat-value">{tile.value}</span>
+              ) : (
+                <span className="sdm-queue-stat-value">
+                  <QueueStatNumber value={tile.count} />
+                </span>
+              )}
+              {tile.subtitle ? (
+                <span className="sdm-queue-stat-subtitle">{tile.subtitle}</span>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

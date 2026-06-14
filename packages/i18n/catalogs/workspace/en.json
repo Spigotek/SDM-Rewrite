@@ -31,7 +31,9 @@
       "overdue": "Overdue",
       "lastHour": "< 1h",
       "today": "Today",
-      "noSla": "No SLA"
+      "noSla": "No SLA",
+      "showEmpty": "Show empty",
+      "hideEmpty": "Hide empty"
     },
     "axis": {
       "status": "Status",
@@ -92,8 +94,47 @@
     },
     "splitPane": {
       "ariaLabel": "Selected ticket detail",
-      "empty": "Pick a ticket from the list (click or press Enter on a selected row).",
-      "placeholder": "Full ticket detail arrives in H.8."
+      "empty": "Pick a ticket from the list (click or press Enter on a selected row)."
+    },
+    "view": {
+      "table": "Table",
+      "kanban": "Board",
+      "toggleAria": "Toggle view"
+    },
+    "kanban": {
+      "columns": {
+        "open": "Open",
+        "inProgress": "In progress",
+        "waiting": "Waiting",
+        "resolved": "Resolved"
+      },
+      "empty": "No tickets in this state",
+      "dragHint": "Drag a card to change status",
+      "transitionForbidden": "This transition isn't allowed"
+    },
+    "detailPane": {
+      "empty": "Pick a ticket on the left to view its detail.",
+      "emptyTitle": "No ticket selected",
+      "error": "Could not load ticket detail.",
+      "openFull": "Open full detail",
+      "tabsAria": "Ticket detail sections",
+      "tabs": {
+        "detail": "Detail",
+        "activity": "Activity",
+        "comments": "Comments"
+      },
+      "fields": {
+        "assignee": "Assignee",
+        "openedAt": "Opened",
+        "description": "Description",
+        "descriptionEmpty": "(no description)"
+      },
+      "activity": {
+        "empty": "No activity yet."
+      },
+      "comments": {
+        "empty": "No public comments yet."
+      }
     }
   },
   "actions": {

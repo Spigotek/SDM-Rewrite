@@ -1,11 +1,13 @@
-import { useCallback, useMemo, useState } from "react";
+import { Suspense, lazy, useCallback, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { LayoutGrid, Plus, Rows3 } from "lucide-react";
 import { useTranslation } from "@sdm/i18n";
 import {
   Button,
   EmptyState,
+  IconButton,
   IllustrationNoTicketsAssigned,
+  Skeleton,
   Toast,
   ToastViewport,
   type TicketStatus,
@@ -15,15 +17,18 @@ import { tenantId as toTenantId } from "@sdm/domain";
 import { useSession } from "../../shell/session-context";
 import { queueQuery } from "./api";
 import {
+  statusMatchesFilter,
   useColumnConfig,
   useQueueFilters,
   useQueueKeyboardNav,
   useQueueStatusTransition,
+  useQueueViewMode,
   useSavedViews,
 } from "./hooks";
 import { ChangeCalendarTeaser } from "./components/ChangeCalendarTeaser";
 import { ColumnConfig } from "./components/ColumnConfig";
 import { FilterBar } from "./components/FilterBar";
+import { QueueDetailPane } from "./components/QueueDetailPane";
 import { QueueFilters } from "./components/QueueFilters";
 import { QueueSidebar } from "./components/QueueSidebar";
 import { QueueStats } from "./components/QueueStats";
@@ -31,6 +36,12 @@ import { QueueTable } from "./components/QueueTable";
 import { RecentActivityCard } from "./components/RecentActivityCard";
 import { SavedViewsManager } from "./components/SavedViewsManager";
 import type { QueueFilters as QueueFiltersValue, SavedView } from "./types";
+
+// Kanban is opt-in — lazy so the dense table view (default) keeps shipping
+// without the board layout + drag-and-drop wiring.
+const QueueKanban = lazy(() =>
+  import("./components/QueueKanban").then((m) => ({ default: m.QueueKanban })),
+);
 import "./queue.css";
 
 /**
@@ -51,7 +62,10 @@ function filterRows(
 ): ReadonlyArray<UiQueueItem> {
   const needle = f.search.trim().toLowerCase();
   return rows.filter((r) => {
-    if (f.status.length > 0 && !(r.status && f.status.includes(r.status.code))) return false;
+    // Status filter accepts both raw CA SDM codes (chip toggles) and logical
+    // names like `new` / `in_progress` (left-rail items) — `statusMatchesFilter`
+    // normalises both inputs against the row's `r.status.code`.
+    if (!statusMatchesFilter(r.status?.code ?? null, f.status)) return false;
     if (f.priority.length > 0 && !(r.priority && f.priority.includes(r.priority.code)))
       return false;
     if (f.assignee.length > 0 && !(r.assignee && f.assignee.includes(r.assignee.id))) return false;
@@ -107,6 +121,7 @@ export default function QueueRoute() {
 
   const { views, saveView, deleteView } = useSavedViews();
   const { config, toggleColumn, resetColumns, allColumns } = useColumnConfig();
+  const { mode: viewMode, setMode: setViewMode } = useQueueViewMode();
 
   // Local toast bus — keeps parity with KbEditorRoute. The transitionable
   // status badge in each row drives success/error/unsupported toasts.
@@ -217,19 +232,47 @@ export default function QueueRoute() {
     <section data-testid="workspace-queue" className="sdm-queue-page">
       <header className="sdm-queue-page-header">
         <h1 className="sdm-queue-page-title sdm-heading-serif">{t("queue.title")}</h1>
-        <Button
-          type="button"
-          variant="primary"
-          size="sm"
-          data-testid="queue-new-ticket"
-          leadingIcon={<Plus size={14} aria-hidden="true" />}
-          onClick={() => {
-            // v1.1.4 placeholder — "New ticket" composer lands with cmd+K in v1.2.
-            console.info("[queue] New-ticket composer placeholder (v1.2)");
-          }}
-        >
-          {t("queue.newTicket")}
-        </Button>
+        <div className="sdm-queue-page-actions">
+          <div
+            className="sdm-queue-view-toggle"
+            role="group"
+            aria-label={t("queue.view.toggleAria")}
+          >
+            <IconButton
+              data-testid="queue-view-toggle-table"
+              aria-label={t("queue.view.table")}
+              title={t("queue.view.table")}
+              size="sm"
+              variant={viewMode === "table" ? "solid" : "ghost"}
+              aria-pressed={viewMode === "table"}
+              icon={<Rows3 size={14} aria-hidden="true" />}
+              onClick={() => setViewMode("table")}
+            />
+            <IconButton
+              data-testid="queue-view-toggle-kanban"
+              aria-label={t("queue.view.kanban")}
+              title={t("queue.view.kanban")}
+              size="sm"
+              variant={viewMode === "kanban" ? "solid" : "ghost"}
+              aria-pressed={viewMode === "kanban"}
+              icon={<LayoutGrid size={14} aria-hidden="true" />}
+              onClick={() => setViewMode("kanban")}
+            />
+          </div>
+          <Button
+            type="button"
+            variant="primary"
+            size="sm"
+            data-testid="queue-new-ticket"
+            leadingIcon={<Plus size={14} aria-hidden="true" />}
+            onClick={() => {
+              // v1.1.4 placeholder — "New ticket" composer lands with cmd+K in v1.2.
+              console.info("[queue] New-ticket composer placeholder (v1.2)");
+            }}
+          >
+            {t("queue.newTicket")}
+          </Button>
+        </div>
       </header>
 
       <QueueStats rows={rows} currentUserId={currentUserId} isLoading={query.isPending} />
@@ -296,6 +339,23 @@ export default function QueueRoute() {
               className="sdm-queue-state sdm-queue-empty"
               data-testid="queue-empty"
             />
+          ) : viewMode === "kanban" ? (
+            <Suspense
+              fallback={
+                <div className="sdm-queue-kanban-fallback" data-testid="queue-kanban-fallback">
+                  <Skeleton variant="block" height="20rem" />
+                </div>
+              }
+            >
+              <QueueKanban
+                rows={filteredRows}
+                onStatusTransition={onStatusTransition}
+                onTransitionForbidden={() =>
+                  pushToast("info", t("queue.kanban.transitionForbidden"))
+                }
+                statusTransitionPending={statusTransition.isPending}
+              />
+            </Suspense>
           ) : (
             <QueueTable
               rows={filteredRows}
@@ -314,17 +374,7 @@ export default function QueueRoute() {
           data-testid="queue-split-pane"
           aria-label={t("queue.splitPane.ariaLabel")}
         >
-          {selectedRow ? (
-            <div data-testid="queue-split-pane-placeholder" className="sdm-queue-split-placeholder">
-              <p className="sdm-queue-split-ref">#{selectedRow.ref}</p>
-              <p className="sdm-queue-split-summary">{selectedRow.summary}</p>
-              <p className="sdm-queue-split-hint">{t("queue.splitPane.placeholder")}</p>
-            </div>
-          ) : (
-            <div className="sdm-queue-split-placeholder">
-              <p className="sdm-queue-split-hint">{t("queue.splitPane.empty")}</p>
-            </div>
-          )}
+          <QueueDetailPane row={selectedRow} />
         </aside>
       </div>
 

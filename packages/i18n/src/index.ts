@@ -17,7 +17,8 @@ export { useTranslation, useLocale, useDynamic } from "./hooks";
 export type { UseLocaleResult } from "./hooks";
 
 export { dynamic } from "./dynamic";
-export { formatDate, formatNumber, formatRelative } from "./format";
+export { formatAge, formatDate, formatNumber, formatRelative } from "./format";
+export type { FormattedAge } from "./format";
 export { detectLocale, persistLocale } from "./default-locale";
 export { loadCatalog } from "./load";
 
