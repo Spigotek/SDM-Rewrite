@@ -127,7 +127,7 @@ function RailGroupSection({ group, pathname, open, onToggle }: RailGroupSectionP
     ? t("nav.rail.collapseGroup", { name: groupLabel })
     : t("nav.rail.expandGroup", { name: groupLabel });
   return (
-    <section className="sdm-rail-group" data-open={open ? "true" : "false"}>
+    <section className="sdm-rail-group" data-group={group.slug} data-open={open ? "true" : "false"}>
       <div className="sdm-rail-group-headerrow">
         <button
           type="button"

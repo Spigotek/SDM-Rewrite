@@ -160,6 +160,30 @@ export default function QueueRoute() {
   );
   const filteredRows = useMemo(() => filterRows(rows, filters), [rows, filters]);
 
+  // v1.7.1 — force the list view to remount when the active filter set changes.
+  // `@tanstack/react-table` v8 can return a STALE `getRowModel()` (a superset of
+  // old + new rows) when `data` shrinks via filtering: the `<table>` reflects
+  // the fresh `rows.length` (aria-rowcount) while the body still renders cached
+  // Row objects, so the count and the rendered rows disagree (owner repro:
+  // "click a status chip from the full list → wrong rows"; their workaround of
+  // filtering to an empty list and back worked only because the empty state
+  // unmounts the table). Keying the view on the filter signature gives it a
+  // clean mount on every filter change — the same effect, deterministically.
+  // The entrance stagger already re-runs on row-count changes, so this adds no
+  // new animation cost.
+  const filterViewKey = useMemo(
+    () =>
+      JSON.stringify([
+        filters.status,
+        filters.priority,
+        filters.assignee,
+        filters.ticketType,
+        filters.customer,
+        filters.search,
+      ]),
+    [filters],
+  );
+
   useQueueKeyboardNav<UiQueueItem>({
     rows: filteredRows,
     getRowId: (r) => r.id,
@@ -302,6 +326,7 @@ export default function QueueRoute() {
               }
             >
               <QueueKanban
+                key={filterViewKey}
                 rows={filteredRows}
                 onStatusTransition={onStatusTransition}
                 onTransitionForbidden={() =>
@@ -312,6 +337,7 @@ export default function QueueRoute() {
             </Suspense>
           ) : (
             <QueueTable
+              key={filterViewKey}
               rows={filteredRows}
               visibleColumns={config.visible}
               selectedId={selectedId}

@@ -189,6 +189,24 @@
   --color-env-development: #2563eb;
   --color-env-sandbox: #7c3aed;
 
+  /* ── §4c Navigation category accents (N.2) ──────────────────────
+     Per-functional-group identity for the workspace left-rail so the six
+     logical groups read as distinct, not one flat brand wash. Each category
+     ships a vivid token (dot / active bar / icon) and an `-fg` token tuned to
+     clear AA as small label / active-link text on the rail surface. */
+  --color-cat-service-desk: #6366f1; /* indigo */
+  --color-cat-service-desk-fg: #4f46e5;
+  --color-cat-change: #f59e0b; /* amber */
+  --color-cat-change-fg: #b45309;
+  --color-cat-knowledge: #10b981; /* emerald */
+  --color-cat-knowledge-fg: #059669;
+  --color-cat-cmdb: #06b6d4; /* cyan */
+  --color-cat-cmdb-fg: #0e7490;
+  --color-cat-admin: #f43f5e; /* rose */
+  --color-cat-admin-fg: #e11d48;
+  --color-cat-reports: #8b5cf6; /* violet */
+  --color-cat-reports-fg: #7c3aed;
+
   /* ── §5 Spacing scale ───────────────────────────────────────── */
   --spacing-0: 0;
   --spacing-px: 1px;
@@ -430,6 +448,21 @@
   --color-env-development: #60a5fa;
   --color-env-sandbox: #a78bfa;
 
+  /* Navigation category accents (dark) — lifted to 300/400 ramps so dot,
+     active bar and label clear AA on the dark rail surface. */
+  --color-cat-service-desk: #818cf8;
+  --color-cat-service-desk-fg: #a5b4fc;
+  --color-cat-change: #fbbf24;
+  --color-cat-change-fg: #fcd34d;
+  --color-cat-knowledge: #34d399;
+  --color-cat-knowledge-fg: #6ee7b7;
+  --color-cat-cmdb: #22d3ee;
+  --color-cat-cmdb-fg: #67e8f9;
+  --color-cat-admin: #fb7185;
+  --color-cat-admin-fg: #fda4af;
+  --color-cat-reports: #a78bfa;
+  --color-cat-reports-fg: #c4b5fd;
+
   /* Shadows (dark — higher opacity, dark bg eats shadows) */
   --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4), 0 1px 2px -1px rgba(0, 0, 0, 0.2);
@@ -468,6 +501,21 @@
   --color-brand-bg-hover: #312e81;
   --color-brand-fg: #1e1b4b;
   --color-brand-border: #1e1b4b;
+
+  /* High-contrast: drop per-category hues to pure black — hc separates
+     sections by border + weight, never tint (matches the canvas/brand rule). */
+  --color-cat-service-desk: #000000;
+  --color-cat-service-desk-fg: #000000;
+  --color-cat-change: #000000;
+  --color-cat-change-fg: #000000;
+  --color-cat-knowledge: #000000;
+  --color-cat-knowledge-fg: #000000;
+  --color-cat-cmdb: #000000;
+  --color-cat-cmdb-fg: #000000;
+  --color-cat-admin: #000000;
+  --color-cat-admin-fg: #000000;
+  --color-cat-reports: #000000;
+  --color-cat-reports-fg: #000000;
 
   --shadow-xs: none;
   --shadow-sm: none;
