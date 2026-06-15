@@ -46,6 +46,7 @@ export interface ConfigMeta {
 export interface RuntimeConfig {
   readonly apiBaseUrl: string;
   readonly apiBasePath: string;
+  readonly portalOrigin?: string;
   readonly auth: AuthConfig;
   readonly tenants: TenantsConfig;
   readonly features: FeatureFlags;

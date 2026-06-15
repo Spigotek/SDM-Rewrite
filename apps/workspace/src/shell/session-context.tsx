@@ -9,6 +9,8 @@ import {
 } from "react";
 import type { ReactNode } from "react";
 import { setSentryUser, setSentryTag } from "../bootstrap/sentry-bridge";
+import { getConfig } from "../bootstrap/config";
+import { resolvePortalOrigin } from "./portal-redirect";
 import type { Session } from "@sdm/auth";
 import type { TenantId } from "@sdm/domain";
 import { createCrossTabChannel, pseudonymize, type CrossTabChannel } from "@sdm/api-client";
@@ -100,6 +102,21 @@ export function SessionProvider({ children }: { children: ReactNode }) {
       channelRef.current = null;
     };
   }, [refresh]);
+
+  // Requester sessions (`app: "portal"`) don't belong in the workspace SPA —
+  // bounce them to the portal app. Explicit `portalOrigin` from /config wins;
+  // otherwise derive :88 from the current origin (workspace runs on :89).
+  useEffect(() => {
+    if (status !== "ready" || session?.app !== "portal") return;
+    if (typeof window === "undefined") return;
+    window.location.assign(
+      resolvePortalOrigin(getConfig().portalOrigin, {
+        protocol: window.location.protocol,
+        hostname: window.location.hostname,
+        port: window.location.port,
+      }),
+    );
+  }, [status, session?.app]);
 
   // Heartbeat 401 → drop to anonymous (auth-flow.md §2.4 idle path).
   useEffect(() => {

@@ -54,6 +54,7 @@ export const ConfigMetaSchema = z.object({
 export const RuntimeConfigSchema = z.object({
   apiBaseUrl: z.string().url(),
   apiBasePath: z.string().default("/api"),
+  portalOrigin: z.string().url().optional(),
   auth: AuthConfigSchema,
   tenants: TenantsConfigSchema,
   features: FeatureFlagsSchema,

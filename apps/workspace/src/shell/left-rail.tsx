@@ -1,175 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { MouseEvent, ReactNode } from "react";
+import type { MouseEvent } from "react";
 import { NavLink, Avatar, ThemeToggle, useTheme } from "@sdm/design-system";
 import { useTranslation } from "@sdm/i18n";
-import {
-  AlertTriangle,
-  BookOpen,
-  Box,
-  CalendarClock,
-  ChevronDown,
-  ChevronRight,
-  Clipboard,
-  ClipboardList,
-  Clock,
-  GitBranch,
-  Inbox,
-  Info,
-  PauseCircle,
-  Play,
-  Search,
-  Settings,
-  ShieldQuestion,
-  Star,
-} from "lucide-react";
+import { ChevronDown, ChevronRight, Eye, Info, Search, Settings } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { getConfig } from "../bootstrap/config";
 import { openWorkspaceCommandPalette } from "./command-palette-mount";
 import { LanguageSwitcher } from "./language-switcher";
+import {
+  visibleNavFor,
+  type GroupKey,
+  type VisibleRailGroup,
+  type VisibleRailItem,
+} from "./nav-model";
 import { useSession } from "./session-context";
 import { TenantSwitcher } from "./tenant-switcher";
-
-type GroupKey = "TOP" | "INCIDENTS" | "CHANGES" | "KNOWLEDGE" | "CMDB";
-
-interface RailItem {
-  readonly href: string;
-  readonly slug: string;
-  readonly labelKey: string;
-  readonly icon: ReactNode;
-}
-
-interface RailGroup {
-  readonly key: GroupKey;
-  readonly labelKey: string;
-  readonly items: readonly RailItem[];
-  readonly defaultOpen: boolean;
-}
-
-/**
- * Rail-item hrefs use the same URL filter contract as the `/queue` and `/changes`
- * routes (`?status=…`, `?assignee=…`, `?scope=…`). Logical status names — `new`,
- * `in_progress`, `waiting_customer`, etc. — are resolved against the row's CA
- * SDM code by `statusMatchesFilter` (see `features/queue/hooks.ts`) so clicking
- * the rail and a `FilterBar` chip compose AND, not replace. Stub query keys
- * (`scope=inbox`, `starred=true`, `assignee=me`) hit the queue but are not yet
- * honoured by the BFF — the table still renders, just without further filtering.
- */
-const GROUPS: readonly RailGroup[] = [
-  {
-    key: "TOP",
-    labelKey: "nav.groups.top",
-    defaultOpen: true,
-    items: [
-      {
-        href: "/queue?scope=inbox",
-        slug: "inbox",
-        labelKey: "nav.items.inbox",
-        icon: <Inbox size={16} aria-hidden="true" />,
-      },
-      {
-        href: "/queue?assignee=me",
-        slug: "myqueue",
-        labelKey: "nav.queue",
-        icon: <Clock size={16} aria-hidden="true" />,
-      },
-      {
-        href: "/queue?starred=true",
-        slug: "starred",
-        labelKey: "nav.items.starred",
-        icon: <Star size={16} aria-hidden="true" />,
-      },
-    ],
-  },
-  {
-    key: "INCIDENTS",
-    labelKey: "nav.groups.incidents",
-    defaultOpen: true,
-    items: [
-      {
-        href: "/queue?status=new",
-        slug: "triage",
-        labelKey: "nav.items.triage",
-        icon: <ClipboardList size={16} aria-hidden="true" />,
-      },
-      {
-        href: "/queue?status=in_progress",
-        slug: "in-progress",
-        labelKey: "nav.items.inProgress",
-        icon: <Play size={16} aria-hidden="true" />,
-      },
-      {
-        href: "/queue?status=waiting_customer,waiting_vendor,hold",
-        slug: "on-hold",
-        labelKey: "nav.items.onHold",
-        icon: <PauseCircle size={16} aria-hidden="true" />,
-      },
-      {
-        href: "/queue?status=resolved,closed",
-        slug: "resolved",
-        labelKey: "nav.items.resolved",
-        icon: <Clipboard size={16} aria-hidden="true" />,
-      },
-      {
-        href: "/problems",
-        slug: "problems",
-        labelKey: "nav.problems",
-        icon: <AlertTriangle size={16} aria-hidden="true" />,
-      },
-    ],
-  },
-  {
-    key: "CHANGES",
-    labelKey: "nav.groups.changes",
-    defaultOpen: true,
-    items: [
-      {
-        // CHANGES filter uses raw CA SDM codes; `APPR_PENDING` / `SCHEDULED`
-        // are the canonical change-status values (see `features/changes/hooks.ts`).
-        href: "/changes?status=APPR_PENDING",
-        slug: "pending-approval",
-        labelKey: "nav.items.pendingApproval",
-        icon: <ShieldQuestion size={16} aria-hidden="true" />,
-      },
-      {
-        href: "/changes?status=SCHEDULED",
-        slug: "scheduled",
-        labelKey: "nav.items.scheduled",
-        icon: <GitBranch size={16} aria-hidden="true" />,
-      },
-      {
-        href: "/changes/calendar",
-        slug: "calendar",
-        labelKey: "nav.items.calendar",
-        icon: <CalendarClock size={16} aria-hidden="true" />,
-      },
-    ],
-  },
-  {
-    key: "KNOWLEDGE",
-    labelKey: "nav.groups.knowledge",
-    defaultOpen: false,
-    items: [
-      {
-        href: "/kb",
-        slug: "kb",
-        labelKey: "nav.kb",
-        icon: <BookOpen size={16} aria-hidden="true" />,
-      },
-    ],
-  },
-  {
-    key: "CMDB",
-    labelKey: "nav.groups.cmdb",
-    defaultOpen: false,
-    items: [
-      {
-        href: "/cmdb",
-        slug: "cmdb",
-        labelKey: "nav.cmdb",
-        icon: <Box size={16} aria-hidden="true" />,
-      },
-    ],
-  },
-];
 
 const STORAGE_PREFIX = "sdm.workspace.rail.";
 
@@ -207,13 +52,14 @@ function isActive(pathname: string, href: string): boolean {
 }
 
 interface RailLinkProps {
-  item: RailItem;
+  item: VisibleRailItem;
   active: boolean;
   label: string;
   help: string;
+  readonlyLabel: string;
 }
 
-function RailLink({ item, active, label, help }: RailLinkProps) {
+function RailLink({ item, active, label, help, readonlyLabel }: RailLinkProps) {
   const navigate = useNavigate();
   const handleClick = (event: MouseEvent<HTMLAnchorElement>) => {
     if (
@@ -229,24 +75,45 @@ function RailLink({ item, active, label, help }: RailLinkProps) {
     event.preventDefault();
     navigate(item.href);
   };
+  const accessibleLabel = item.isReadonly
+    ? help
+      ? `${label} — ${help} (${readonlyLabel})`
+      : `${label} (${readonlyLabel})`
+    : help
+      ? `${label} — ${help}`
+      : label;
   return (
-    <li className="sdm-rail-item" data-testid={`workspace-rail-item-${item.slug}`}>
+    <li
+      className="sdm-rail-item"
+      data-testid={`workspace-rail-item-${item.slug}`}
+      data-readonly={item.isReadonly ? "true" : undefined}
+    >
       <NavLink
         href={item.href}
         label={label}
-        icon={item.icon}
+        icon={<item.icon size={16} aria-hidden="true" />}
         variant="vertical"
         active={active}
         onClick={handleClick}
         title={help}
-        aria-label={help ? `${label} — ${help}` : label}
+        aria-label={accessibleLabel}
       />
+      {item.isReadonly && (
+        <span
+          className="sdm-rail-item-readonly-badge"
+          data-testid={`workspace-rail-item-readonly-${item.slug}`}
+          title={readonlyLabel}
+          aria-hidden="true"
+        >
+          <Eye size={12} />
+        </span>
+      )}
     </li>
   );
 }
 
 interface RailGroupSectionProps {
-  group: RailGroup;
+  group: VisibleRailGroup;
   pathname: string;
   open: boolean;
   onToggle: () => void;
@@ -255,7 +122,7 @@ interface RailGroupSectionProps {
 function RailGroupSection({ group, pathname, open, onToggle }: RailGroupSectionProps) {
   const { t } = useTranslation("workspace");
   const groupLabel = t(group.labelKey);
-  const groupHelp = t(`nav.groups.help.${group.key.toLowerCase()}`);
+  const groupHelp = t(group.helpKey);
   const toggleLabel = open
     ? t("nav.rail.collapseGroup", { name: groupLabel })
     : t("nav.rail.expandGroup", { name: groupLabel });
@@ -265,7 +132,7 @@ function RailGroupSection({ group, pathname, open, onToggle }: RailGroupSectionP
         <button
           type="button"
           className="sdm-rail-group-header"
-          data-testid={`workspace-rail-group-${group.key.toLowerCase()}`}
+          data-testid={`workspace-rail-group-${group.slug}`}
           aria-expanded={open}
           aria-label={toggleLabel}
           onClick={onToggle}
@@ -278,7 +145,7 @@ function RailGroupSection({ group, pathname, open, onToggle }: RailGroupSectionP
         <button
           type="button"
           className="sdm-rail-group-help"
-          data-testid={`workspace-rail-group-help-${group.key.toLowerCase()}`}
+          data-testid={`workspace-rail-group-help-${group.slug}`}
           aria-label={t("nav.rail.groupHelp", { name: groupLabel, description: groupHelp })}
           title={groupHelp}
           onClick={(event) => event.currentTarget.blur()}
@@ -295,6 +162,7 @@ function RailGroupSection({ group, pathname, open, onToggle }: RailGroupSectionP
               active={isActive(pathname, item.href)}
               label={t(item.labelKey)}
               help={t(`nav.help.${item.slug}`)}
+              readonlyLabel={t("nav.rail.readonly")}
             />
           ))}
         </ul>
@@ -376,13 +244,29 @@ export function LeftRail() {
   const { pathname } = useLocation();
   const { session, logout } = useSession();
 
-  const [openState, setOpenState] = useState<Record<GroupKey, boolean>>(() => {
-    const initial = {} as Record<GroupKey, boolean>;
-    for (const group of GROUPS) {
-      initial[group.key] = readStoredOpen(group.key, group.defaultOpen);
-    }
-    return initial;
-  });
+  // v1.7.0 — the rail is a pure projection of the role-driven nav model.
+  // `applySwitchedSession` swaps `session.roles` on role switch and re-renders
+  // the SessionProvider, so this memo recomputes and the rail follows the
+  // active role (the v1.6.0 bug was the rail ignoring roles entirely).
+  const groups = useMemo(
+    () => visibleNavFor(session?.roles ?? [], getConfig().features),
+    [session?.roles],
+  );
+
+  // Open-state is keyed on the group key but derived from the *currently
+  // visible* groups — a group can vanish per role, so a missing key falls back
+  // to its `defaultOpen`.
+  const [openState, setOpenState] = useState<Partial<Record<GroupKey, boolean>>>({});
+
+  useEffect(() => {
+    setOpenState((prev) => {
+      const next: Partial<Record<GroupKey, boolean>> = {};
+      for (const group of groups) {
+        next[group.key] = prev[group.key] ?? readStoredOpen(group.key, group.defaultOpen);
+      }
+      return next;
+    });
+  }, [groups]);
 
   const toggleGroup = useCallback((key: GroupKey) => {
     setOpenState((prev) => {
@@ -394,21 +278,9 @@ export function LeftRail() {
 
   const displayName = session?.displayName ?? "";
 
-  // Group list is stable across renders but route changes still need a
-  // re-evaluation of `isActive` per item. Memoising the rendered groups also
-  // keeps React from rebuilding the lucide icon trees on unrelated state changes.
-  const renderedGroups = useMemo(
-    () =>
-      GROUPS.map((group) => (
-        <RailGroupSection
-          key={group.key}
-          group={group}
-          pathname={pathname}
-          open={openState[group.key]}
-          onToggle={() => toggleGroup(group.key)}
-        />
-      )),
-    [pathname, openState, toggleGroup],
+  const isGroupOpen = useCallback(
+    (group: VisibleRailGroup): boolean => openState[group.key] ?? group.defaultOpen,
+    [openState],
   );
 
   return (
@@ -434,7 +306,17 @@ export function LeftRail() {
           </span>
         </button>
       </div>
-      <nav className="sdm-rail-nav">{renderedGroups}</nav>
+      <nav className="sdm-rail-nav">
+        {groups.map((group) => (
+          <RailGroupSection
+            key={group.key}
+            group={group}
+            pathname={pathname}
+            open={isGroupOpen(group)}
+            onToggle={() => toggleGroup(group.key)}
+          />
+        ))}
+      </nav>
       <div className="sdm-rail-footer">
         <a
           href="/settings"

@@ -176,12 +176,20 @@
       "changes": "Changes",
       "knowledge": "Knowledge",
       "cmdb": "CMDB",
+      "serviceDesk": "Service Desk",
+      "change": "Changes",
+      "admin": "Administration",
+      "reports": "Reports",
       "help": {
         "top": "Your quick views — inbox, assigned to you and starred.",
         "incidents": "Incident lifecycle from triage to resolution.",
         "changes": "Change requests — approval, schedule and calendar.",
         "knowledge": "Knowledge base and resolution procedures.",
-        "cmdb": "Configuration database — items and relationships."
+        "cmdb": "Configuration database — items and relationships.",
+        "serviceDesk": "Incidents and problems — from intake to resolution.",
+        "change": "Change requests — approval, schedule, calendar and CAB.",
+        "admin": "Service provider and tenant administration.",
+        "reports": "Reports and metrics across modules."
       }
     },
     "items": {
@@ -193,7 +201,14 @@
       "resolved": "Resolved",
       "pendingApproval": "Pending approval",
       "scheduled": "Scheduled",
-      "calendar": "Calendar"
+      "calendar": "Calendar",
+      "cab": "CAB",
+      "browseKb": "Browse KB",
+      "manageKb": "Manage KB",
+      "kbAnalytics": "KB analytics",
+      "configItems": "Configuration items",
+      "serviceProvider": "Service Provider",
+      "reports": "Reports"
     },
     "help": {
       "inbox": "New submissions awaiting assignment.",
@@ -208,12 +223,19 @@
       "scheduled": "Scheduled changes ready for implementation.",
       "calendar": "Calendar of planned changes.",
       "kb": "Knowledge base articles.",
-      "cmdb": "Configuration items and their relationships."
+      "cmdb": "Configuration items and their relationships.",
+      "cab": "Change Advisory Board — changes awaiting CAB approval.",
+      "browse-kb": "Browse knowledge base articles.",
+      "manage-kb": "Create and edit KB articles.",
+      "kb-analytics": "Usage stats and knowledge gaps.",
+      "service-provider": "Provider cockpit — health across tenants.",
+      "reports": "Reports and metrics (coming soon)."
     },
     "rail": {
       "collapseGroup": "Collapse {name} group",
       "expandGroup": "Expand {name} group",
-      "groupHelp": "{name}: {description}"
+      "groupHelp": "{name}: {description}",
+      "readonly": "read-only"
     },
     "userMenu": {
       "themeToggle": "Theme",

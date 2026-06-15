@@ -12,8 +12,8 @@
  * (workspace access is already gated by the AppShell session check).
  */
 
-import type { Permission } from "@sdm/domain";
-import { RouteGuard } from "@sdm/auth";
+import type { Permission, ScreenId } from "@sdm/domain";
+import { RouteGuard, ScreenGuard } from "@sdm/auth";
 import { ForbiddenElement } from "./error-boundaries";
 import { useSession } from "../shell/session-context";
 
@@ -47,4 +47,39 @@ export async function guardedLazy(
 ): Promise<LazyModule> {
   const { default: Component } = await module;
   return { Component: withGuard(Component, permission) };
+}
+
+/**
+ * Screen-visibility variant of `withGuard`. Matrix-backed routes gate on
+ * SCREEN VISIBILITY (not a single permission) so readonly roles still reach
+ * the route and render it read-only — mirroring the screen-driven left-rail.
+ * `mode: "view"` lets `readonly` pass; `"edit"` requires fully-visible access.
+ */
+export function withScreenGuard(
+  Component: React.ComponentType,
+  screen: ScreenId,
+  mode: "view" | "edit" = "view",
+): React.ComponentType {
+  return function ScreenGuarded() {
+    const { session } = useSession();
+    const roles = session?.roles ?? [];
+    return (
+      <ScreenGuard roles={roles} screen={screen} mode={mode} onDenied={() => <ForbiddenElement />}>
+        <Component />
+      </ScreenGuard>
+    );
+  };
+}
+
+/**
+ * Adapter for React Router's `lazy:` API mirroring `guardedLazy`, but gating
+ * on screen visibility instead of a permission.
+ */
+export async function screenGuardedLazy(
+  module: LazyImport,
+  screen: ScreenId,
+  mode: "view" | "edit" = "view",
+): Promise<LazyModule> {
+  const { default: Component } = await module;
+  return { Component: withScreenGuard(Component, screen, mode) };
 }
