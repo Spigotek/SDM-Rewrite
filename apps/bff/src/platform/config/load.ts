@@ -76,6 +76,7 @@ function defaultConfig(env: NodeJS.ProcessEnv): Record<string, unknown> {
     },
     features: {},
     observability: {},
+    portalOrigin: env.PORTAL_PUBLIC_ORIGIN,
     meta: {
       appVersion: env.BFF_APP_VERSION ?? "0.0.0-dev",
       buildId: env.BFF_BUILD_ID ?? "local",
@@ -98,5 +99,6 @@ function applyEnvOverrides(raw: unknown, env: NodeJS.ProcessEnv): unknown {
     out.auth = auth;
     if (!out.apiBaseUrl) out.apiBaseUrl = env.BFF_PUBLIC_ORIGIN;
   }
+  if (env.PORTAL_PUBLIC_ORIGIN) out.portalOrigin = env.PORTAL_PUBLIC_ORIGIN;
   return out;
 }

@@ -176,12 +176,20 @@
       "changes": "Zmeny",
       "knowledge": "Znalosti",
       "cmdb": "CMDB",
+      "serviceDesk": "Service Desk",
+      "change": "Zmeny",
+      "admin": "Administrácia",
+      "reports": "Reporty",
       "help": {
         "top": "Tvoje rýchle pohľady — inbox, pridelené tebe a sledované.",
         "incidents": "Životný cyklus incidentov od triáže po vyriešenie.",
         "changes": "Žiadosti o zmenu — schvaľovanie, plán a kalendár.",
         "knowledge": "Databáza znalostí a postupy riešenia.",
-        "cmdb": "Konfiguračná databáza — položky a vzťahy."
+        "cmdb": "Konfiguračná databáza — položky a vzťahy.",
+        "serviceDesk": "Incidenty a problémy — od príjmu po vyriešenie.",
+        "change": "Žiadosti o zmenu — schvaľovanie, plán, kalendár a CAB.",
+        "admin": "Správa poskytovateľa služieb a tenantov.",
+        "reports": "Reporty a metriky naprieč modulmi."
       }
     },
     "items": {
@@ -193,7 +201,14 @@
       "resolved": "Vyriešené",
       "pendingApproval": "Na schválenie",
       "scheduled": "Naplánované",
-      "calendar": "Kalendár"
+      "calendar": "Kalendár",
+      "cab": "CAB",
+      "browseKb": "Prehľadávať KB",
+      "manageKb": "Spravovať KB",
+      "kbAnalytics": "Analytika KB",
+      "configItems": "Konfiguračné položky",
+      "serviceProvider": "Service Provider",
+      "reports": "Reporty"
     },
     "help": {
       "inbox": "Nové podania čakajúce na priradenie.",
@@ -208,12 +223,19 @@
       "scheduled": "Naplánované zmeny pripravené na realizáciu.",
       "calendar": "Kalendár plánovaných zmien.",
       "kb": "Články databázy znalostí.",
-      "cmdb": "Konfiguračné položky a ich väzby."
+      "cmdb": "Konfiguračné položky a ich väzby.",
+      "cab": "Change Advisory Board — zmeny čakajúce na CAB schválenie.",
+      "browse-kb": "Prehľadávať články databázy znalostí.",
+      "manage-kb": "Vytvárať a upravovať KB články.",
+      "kb-analytics": "Štatistiky využitia a medzery v znalostiach.",
+      "service-provider": "Cockpit poskytovateľa — zdravie naprieč tenantmi.",
+      "reports": "Reporty a metriky (čoskoro)."
     },
     "rail": {
       "collapseGroup": "Zbaliť skupinu {name}",
       "expandGroup": "Rozbaliť skupinu {name}",
-      "groupHelp": "{name}: {description}"
+      "groupHelp": "{name}: {description}",
+      "readonly": "len na čítanie"
     },
     "userMenu": {
       "themeToggle": "Téma",

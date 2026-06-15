@@ -26,19 +26,11 @@ import {
   type CommandPaletteAction,
   type ThemeChoice,
 } from "@sdm/design-system";
-import {
-  AlertTriangle,
-  BookOpen,
-  Box,
-  CalendarClock,
-  ClipboardList,
-  Cpu,
-  GitBranch,
-  LogOut,
-  SunMoon,
-  Ticket,
-} from "lucide-react";
+import { BookOpen, Cpu, LogOut, SunMoon, Ticket } from "lucide-react";
+import { canAccessScreen, hasPermission } from "@sdm/domain";
 import { useSession } from "./session-context";
+import { visibleNavFor } from "./nav-model";
+import { getConfig } from "../bootstrap/config";
 
 const BODY_OPEN_ATTR = "data-workspace-cmdk-open";
 
@@ -182,53 +174,18 @@ export function CommandPaletteMount(): ReactNode {
       ids.push(action.id);
     };
 
-    register({
-      id: "nav:queue",
-      group: "navigate",
-      title: t("nav.queue"),
-      icon: <ClipboardList size={16} aria-hidden="true" />,
-      shortcut: "G Q",
-      onActivate: () => navigate("/queue"),
-    });
-    register({
-      id: "nav:changes",
-      group: "navigate",
-      title: t("nav.changes"),
-      icon: <GitBranch size={16} aria-hidden="true" />,
-      shortcut: "G C",
-      onActivate: () => navigate("/changes"),
-    });
-    register({
-      id: "nav:problems",
-      group: "navigate",
-      title: t("nav.problems"),
-      icon: <AlertTriangle size={16} aria-hidden="true" />,
-      shortcut: "G P",
-      onActivate: () => navigate("/problems"),
-    });
-    register({
-      id: "nav:cmdb",
-      group: "navigate",
-      title: t("nav.cmdb"),
-      icon: <Box size={16} aria-hidden="true" />,
-      shortcut: "G M",
-      onActivate: () => navigate("/cmdb"),
-    });
-    register({
-      id: "nav:kb",
-      group: "navigate",
-      title: t("nav.kb"),
-      icon: <BookOpen size={16} aria-hidden="true" />,
-      shortcut: "G K",
-      onActivate: () => navigate("/kb"),
-    });
-    register({
-      id: "nav:calendar",
-      group: "navigate",
-      title: t("nav.calendar"),
-      icon: <CalendarClock size={16} aria-hidden="true" />,
-      onActivate: () => navigate("/changes/calendar"),
-    });
+    for (const group of visibleNavFor(session?.roles ?? [], getConfig().features)) {
+      for (const item of group.items) {
+        const Icon = item.icon;
+        register({
+          id: `nav:${item.slug}`,
+          group: "navigate",
+          title: t(item.labelKey),
+          icon: <Icon size={16} aria-hidden="true" />,
+          onActivate: () => navigate(item.href),
+        });
+      }
+    }
     register({
       id: "act:theme",
       group: "actions",
@@ -247,13 +204,15 @@ export function CommandPaletteMount(): ReactNode {
     return () => {
       for (const id of ids) registry.unregister(id);
     };
-  }, [registry, status, t, navigate, choice, setChoice, logout]);
+  }, [registry, status, t, navigate, choice, setChoice, logout, session?.roles]);
+
+  const roles = session?.roles ?? [];
 
   // ── Lazy ticket group ──────────────────────────────────────────────────
   const ticketsQuery = useQuery({
     queryKey: ["cmdk", "workspace", "tickets", session?.tenantId ?? "__pending__"] as const,
     queryFn: fetchOpenIncidents,
-    enabled: open && status === "ready",
+    enabled: open && status === "ready" && canAccessScreen(roles, "WORKSPACE_INCIDENT_QUEUE"),
     staleTime: 60_000,
   });
 
@@ -277,7 +236,8 @@ export function CommandPaletteMount(): ReactNode {
   const kbQuery = useQuery({
     queryKey: ["cmdk", "workspace", "kb", searchTerm] as const,
     queryFn: () => fetchKbHits(searchTerm),
-    enabled: open && status === "ready" && searchTerm.length > 0,
+    enabled:
+      open && status === "ready" && searchTerm.length > 0 && hasPermission(roles, "kb.search"),
     staleTime: 30_000,
   });
 
@@ -301,7 +261,8 @@ export function CommandPaletteMount(): ReactNode {
   const cmdbQuery = useQuery({
     queryKey: ["cmdk", "workspace", "cmdb", searchTerm] as const,
     queryFn: () => fetchCmdbHits(searchTerm),
-    enabled: open && status === "ready" && searchTerm.length > 2,
+    enabled:
+      open && status === "ready" && searchTerm.length > 2 && hasPermission(roles, "ci.search"),
     staleTime: 30_000,
   });
 

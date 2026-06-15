@@ -26,6 +26,9 @@ services:
       # BFF_PUBLIC_ORIGIN is the externally-reachable BFF URL on this host;
       # BFF_DEPLOYED_AT is set fresh on every compose-up (default = now()).
       BFF_PUBLIC_ORIGIN: "${BFF_PUBLIC_ORIGIN}"
+      # Portal app public origin — requester sessions are redirected here from
+      # the workspace SPA (surfaces in /config as portalOrigin).
+      PORTAL_PUBLIC_ORIGIN: "${PORTAL_PUBLIC_ORIGIN}"
       BFF_DEPLOYED_AT: "${BFF_DEPLOYED_AT:-}"
     volumes:
       - bff-attachments:/var/lib/sdm/attachments-kb

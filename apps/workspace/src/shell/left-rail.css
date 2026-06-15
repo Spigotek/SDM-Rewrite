@@ -219,6 +219,29 @@
   width: 100%;
 }
 
+/* v1.7.0 — read-only affordance. The item is shown but the route renders
+   read-only for this role; a subtle muted eye badge sits at the trailing edge
+   of the row without competing with the label. */
+.sdm-rail-item {
+  position: relative;
+}
+
+.sdm-rail-item[data-readonly="true"] > a {
+  padding-right: var(--spacing-5);
+}
+
+.sdm-rail-item-readonly-badge {
+  position: absolute;
+  top: 50%;
+  right: var(--spacing-2);
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+}
+
 /* M.2.C — make the active rail item pop. The DS NavLink ships only a 2px left
    bar + colour shift for `vertical` variant; on the workspace rail we add a
    brand-tinted fill so the current section is unmistakable. Scoped to the rail

@@ -16,7 +16,7 @@ import { ErrorBoundary } from "../shell/error-boundary";
 import { EventSourceProvider } from "../shell/event-source";
 import { SessionProvider } from "../shell/session-context";
 import { RootErrorBoundary, NotFoundElement } from "./error-boundaries";
-import { guardedLazy } from "./guards";
+import { guardedLazy, screenGuardedLazy } from "./guards";
 
 function RootLayout() {
   return (
@@ -44,69 +44,67 @@ export const router = createBrowserRouter([
       },
       {
         path: "queue",
-        lazy: async () => ({
-          Component: (await import("../features/queue/QueueRoute")).default,
-        }),
+        lazy: () =>
+          screenGuardedLazy(import("../features/queue/QueueRoute"), "WORKSPACE_INCIDENT_QUEUE"),
       },
       {
         path: "tickets/:id",
-        lazy: async () => ({
-          Component: (await import("../features/tickets/TicketDetailRoute")).default,
-        }),
+        lazy: () =>
+          screenGuardedLazy(
+            import("../features/tickets/TicketDetailRoute"),
+            "WORKSPACE_INCIDENT_DETAIL",
+          ),
       },
       {
         path: "changes",
-        lazy: async () => ({
-          Component: (await import("../features/changes/ChangesRoute")).default,
-        }),
+        lazy: () =>
+          screenGuardedLazy(import("../features/changes/ChangesRoute"), "WORKSPACE_CHANGE_LIST"),
       },
       {
         path: "changes/calendar",
-        lazy: async () => ({
-          Component: (await import("../features/changes/ChangeCalendarRoute")).default,
-        }),
+        lazy: () =>
+          screenGuardedLazy(
+            import("../features/changes/ChangeCalendarRoute"),
+            "WORKSPACE_CHANGE_CALENDAR",
+          ),
       },
       {
         path: "changes/:id",
-        lazy: async () => ({
-          Component: (await import("../features/changes/ChangeDetailRoute")).default,
-        }),
+        lazy: () =>
+          screenGuardedLazy(
+            import("../features/changes/ChangeDetailRoute"),
+            "WORKSPACE_CHANGE_DETAIL",
+          ),
       },
       {
         path: "problems",
-        lazy: async () => ({
-          Component: (await import("../features/problems/ProblemsRoute")).default,
-        }),
+        lazy: () =>
+          screenGuardedLazy(import("../features/problems/ProblemsRoute"), "WORKSPACE_PROBLEM_LIST"),
       },
       {
         path: "problems/:id",
-        lazy: async () => ({
-          Component: (await import("../features/problems/ProblemDetailRoute")).default,
-        }),
+        lazy: () =>
+          screenGuardedLazy(
+            import("../features/problems/ProblemDetailRoute"),
+            "WORKSPACE_PROBLEM_DETAIL",
+          ),
       },
       {
         path: "cmdb",
-        lazy: async () => ({
-          Component: (await import("../features/cmdb/CmdbRoute")).default,
-        }),
+        lazy: () => screenGuardedLazy(import("../features/cmdb/CmdbRoute"), "WORKSPACE_CMDB_LIST"),
       },
       {
         path: "cmdb/ci/:id",
-        lazy: async () => ({
-          Component: (await import("../features/cmdb/CmdbCiRoute")).default,
-        }),
+        lazy: () =>
+          screenGuardedLazy(import("../features/cmdb/CmdbCiRoute"), "WORKSPACE_CI_DETAIL"),
       },
       {
         path: "kb",
-        lazy: async () => ({
-          Component: (await import("../features/kb/KbBrowseRoute")).default,
-        }),
+        lazy: () => guardedLazy(import("../features/kb/KbBrowseRoute"), "kb.search"),
       },
       {
         path: "kb/article/:id",
-        lazy: async () => ({
-          Component: (await import("../features/kb/KbArticleRoute")).default,
-        }),
+        lazy: () => guardedLazy(import("../features/kb/KbArticleRoute"), "kb.search"),
       },
       {
         path: "kb/editor",
