@@ -116,6 +116,36 @@
   border-top: 0;
 }
 
+/* N.2 — per-functional-group colour identity. Each group exposes its accent as
+   two local custom properties; the dot, label, active item and hover all read
+   `--rail-accent*`, so the six logical groups read as distinct sections instead
+   of one flat brand wash. `--rail-accent` is the vivid hue (dot / left bar /
+   active icon); `--rail-accent-fg` is tuned to clear AA as label / link text. */
+.sdm-rail-group[data-group="service-desk"] {
+  --rail-accent: var(--color-cat-service-desk);
+  --rail-accent-fg: var(--color-cat-service-desk-fg);
+}
+.sdm-rail-group[data-group="change"] {
+  --rail-accent: var(--color-cat-change);
+  --rail-accent-fg: var(--color-cat-change-fg);
+}
+.sdm-rail-group[data-group="knowledge"] {
+  --rail-accent: var(--color-cat-knowledge);
+  --rail-accent-fg: var(--color-cat-knowledge-fg);
+}
+.sdm-rail-group[data-group="cmdb"] {
+  --rail-accent: var(--color-cat-cmdb);
+  --rail-accent-fg: var(--color-cat-cmdb-fg);
+}
+.sdm-rail-group[data-group="admin"] {
+  --rail-accent: var(--color-cat-admin);
+  --rail-accent-fg: var(--color-cat-admin-fg);
+}
+.sdm-rail-group[data-group="reports"] {
+  --rail-accent: var(--color-cat-reports);
+  --rail-accent-fg: var(--color-cat-reports-fg);
+}
+
 /* M.2.C — group header row: collapse toggle + inline help affordance. */
 .sdm-rail-group-headerrow {
   display: flex;
@@ -170,17 +200,20 @@
 .sdm-rail-group-label::before {
   content: "";
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 999px;
-  background-color: var(--color-brand-400);
-  margin-right: var(--spacing-1_5);
+  background-color: var(--rail-accent, var(--color-brand-400));
+  /* Faint halo so the category dot reads as a status pip, not a stray pixel. */
+  box-shadow: 0 0 0 3px
+    color-mix(in srgb, var(--rail-accent, var(--color-brand-400)) 18%, transparent);
+  margin-right: var(--spacing-2);
   vertical-align: middle;
   flex-shrink: 0;
 }
 
-.sdm-rail-group-header:hover {
-  color: var(--color-text-body);
+.sdm-rail-group-header:hover .sdm-rail-group-label {
+  filter: brightness(0.92);
 }
 
 .sdm-rail-group-header:focus-visible {
@@ -198,8 +231,11 @@
   flex-shrink: 0;
 }
 
+/* Category-tinted group label — each logical group gets its own identity at
+   rest (was a uniform `text-secondary` for all six). */
 .sdm-rail-group-label {
   flex: 1 1 auto;
+  color: var(--rail-accent-fg, var(--color-text-secondary));
 }
 
 .sdm-rail-list {
@@ -242,18 +278,32 @@
   pointer-events: none;
 }
 
-/* M.2.C — make the active rail item pop. The DS NavLink ships only a 2px left
-   bar + colour shift for `vertical` variant; on the workspace rail we add a
-   brand-tinted fill so the current section is unmistakable. Scoped to the rail
-   via `data-active` (set by NavLink) so the shared DS primitive is untouched. */
+/* N.2 — category-accented item states (was a single brand wash for every row).
+   Rest rows stay neutral; hover lifts a faint category tint; the active row gets
+   a solid 3px category bar + a stronger tint + accent label & icon, so the
+   current section is unmistakable AND colour-coded to its group. `color-mix`
+   derives the tints from the one accent hue (evergreen-only; app targets modern
+   browsers) so no extra per-theme fill tokens are needed. */
+.sdm-rail-item > a:hover {
+  background-color: color-mix(in srgb, var(--rail-accent, var(--color-brand-500)) 8%, transparent);
+}
+
 .sdm-rail-item > a[data-active="true"],
 .sdm-rail-item > a[data-active="true"]:hover {
-  background-color: var(--color-brand-bg-subtle);
-  /* `text-primary` (not `brand-fg`) — brand-fg = brand-400 in dark drops to
-     ≈3.8:1 on the brand-900 fill; text-primary clears AA in both themes. The
-     2px DS active bar + brand fill already signal "active". */
+  background-color: color-mix(in srgb, var(--rail-accent, var(--color-brand-500)) 15%, transparent);
+  /* Text stays `text-primary` (guaranteed AA on the tint in both themes); the
+     category identity reads via the accent left-bar, icon and group dot, so we
+     never risk an accent-on-tint contrast failure for the label text. */
   color: var(--color-text-primary);
   font-weight: var(--font-weight-semibold);
+  box-shadow: inset 3px 0 0 0 var(--rail-accent, var(--color-brand-500));
+}
+
+/* Tint the leading icon to the category accent on hover + active so the colour
+   identity carries down to the object level, not just the group header. */
+.sdm-rail-item > a:hover svg,
+.sdm-rail-item > a[data-active="true"] svg {
+  color: var(--rail-accent, currentColor);
 }
 
 .sdm-rail-footer {
