@@ -291,9 +291,10 @@
 .sdm-rail-item > a[data-active="true"],
 .sdm-rail-item > a[data-active="true"]:hover {
   background-color: color-mix(in srgb, var(--rail-accent, var(--color-brand-500)) 15%, transparent);
-  /* Accent text clears AA on the ~15% tint in both themes (light = 600/700
-     hue, dark = 300/400 hue per the cat tokens). */
-  color: var(--rail-accent-fg, var(--color-text-primary));
+  /* Text stays `text-primary` (guaranteed AA on the tint in both themes); the
+     category identity reads via the accent left-bar, icon and group dot, so we
+     never risk an accent-on-tint contrast failure for the label text. */
+  color: var(--color-text-primary);
   font-weight: var(--font-weight-semibold);
   box-shadow: inset 3px 0 0 0 var(--rail-accent, var(--color-brand-500));
 }
